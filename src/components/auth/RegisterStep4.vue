@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref, defineProps } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const props = defineProps({
@@ -29,7 +29,9 @@ const props = defineProps({
     agencyData: Object,
 });
 
+// eslint-disable-next-line no-unused-vars
 const emit = defineEmits(['go-to-next-step']);
+// eslint-disable-next-line no-unused-vars
 const route = useRoute();
 const router = useRouter();
 
