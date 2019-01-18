@@ -22,6 +22,12 @@ const router = createRouter({
       component: () => import('../views/auth/RegisterView.vue'),
       meta: { title: 'Register' }
     },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../components/navbar/SideNavbar.vue'),
+      meta: { title: 'dashboard' }
+    },
   ]
 })
 
