@@ -31,10 +31,6 @@
                             </button>
                         </div>
                     </div>
-                    <div class="text-center">
-                        <button class="btn btn-primary continue-button " :disabled="!selectedOption"
-                            @click="continueToPage">Continue</button>
-                    </div>
                     <p class="text-center mt-3" style="color: #2B656F; ">
                         Already have an account? <br><a href="#" @click="toggleForm"
                             style="color: #2B656F; font-weight: bold">Sign In</a>
@@ -55,7 +51,7 @@ const selectUserType = (type) => {
 </script>
 
 <style scoped>
-.body {
+.mainbg {
     background-image: url('@/assets/images/thePemabg.png');
     background-size: cover;
     background-repeat: no-repeat;
