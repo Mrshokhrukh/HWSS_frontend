@@ -1,5 +1,5 @@
 <template>
-    <div class="container mt-5 text-center">
+    <div class="container mt-5 text-center bg-white">
         <h2 class="mb-4">Step 2: New User Registration</h2>
         <form @submit.prevent="fetchCitizenDetails">
             <div class="form-group">
