@@ -1,9 +1,9 @@
 <template>
     <div class="container-fluid authbg p-5">
       <div class="card shadow-card">
-        <div class="row g-0">
-          <div class="col-md-8">
-            <div class="card-body loginbg">
+        <div class="row g-0 loginbg" >
+          <div class="col-md-7">
+            <div class="card-body">
               <div class="auth-form">
                 <h2 class="text-center mb-4" style="color: #2B656F; font-weight: bold">Sign In</h2>
                 <form @submit.prevent="">
@@ -31,8 +31,11 @@
               </div>
             </div>
           </div>
-          <div class="col-md-4">
-            <img src="@/assets/images/signin.png" class="img-fluid rounded-start" alt="Sign In Image" />
+          <div class="col-md-5 custombg text-center ">
+            <img class="mt-5" src="../../assets/images/Logo.png" alt="Logo">
+            <h2 class="text-white display-4">Mental Health matters</h2>
+            <img src="" alt="">
+            <img class="float-start" src="../../assets/images/shape.png" alt="">
           </div>
         </div>
       </div>
@@ -59,6 +62,11 @@
   /* Add darker shadow to the card */
   .shadow-card {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  .custombg{
+    background-color: #2C6975;
+    border-radius: 20% 0 0 20%;
+    height: 60vh;
   }
   </style>
   
