@@ -116,11 +116,14 @@ const confirmDetails = (isTrue) => {
     }
 };
 
+const loading = ref(false);
+
 const proceed = async () => {
+    loading.value = true;
     // Data preparation for the API call
     let apiURL;
     if (selectedAgency.value === 'RCSC' && selectedParameter.value === 'Citizen ID') {
-        apiURL = 'http://localhost:8000/api/v1/access/get-rcsc-details/' + parameterValue.value;
+        apiURL = `http://localhost:8000/api/v1/access/get-rcsc-details/${parameterValue.value}`;
     }
     else if (selectedAgency.value === 'EMIS') {
         if (selectedParameter.value === 'Student ID') {
@@ -141,13 +144,16 @@ const proceed = async () => {
         const data = await response.json();
         console.log('API Response:', data);
 
-        // Emit an event to parent to change to Step 4, along with necessary data
+        // Update the user data with the RCSC details
         emit('go-to-next-step', 'step-four', {
-            userData: props.userData,
+            userData: { ...props.userData, ...data },
             agencyData: data
         });
     } catch (error) {
         console.error('Error fetching data:', error);
+    } finally {
+        // Set loading to false after the API call completes
+        loading.value = false;
     }
 };
 

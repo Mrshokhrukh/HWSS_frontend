@@ -59,7 +59,9 @@ const createUser = async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Origin': 'http://localhost:5173',  // Ensure this matches your frontend origin
             },
+            credentials: 'include',  // Include this line for cross-origin requests with cookies
             body: JSON.stringify(userSubmissionData),
         });
 
@@ -76,6 +78,7 @@ const createUser = async () => {
         // Handle the error appropriately, e.g., show an error message to the user
     }
 };
+
 </script>
 
 <style>
