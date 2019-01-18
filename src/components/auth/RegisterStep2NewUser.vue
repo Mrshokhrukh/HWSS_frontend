@@ -3,11 +3,10 @@
         <div class="card mt-5">
             <div class="card-body">
                 <form @submit.prevent="fetchCitizenDetails">
-                    <h4 class="mb-4"> <span class="rounded-number bg-primary">1</span> Fetch User Details</h4>
-                    <small class="text-muted">Select any Identifier </small>
+                    <h4 class="mb-2"> <span class="rounded-number bg-primary">1</span> Fetch User Details</h4>
+                    <small class="text-muted mb-5">Select any Identifier </small>
 
-                    <div class="form-group">
-                        <label class="text-muted">Select Identifier:</label>
+                    <div class="form-group mb-3">
                         <div class="form-check form-check-inline" v-for="identifier in identifiers" :key="identifier.value">
                             <input class="form-check-input" type="radio" :id="identifier.id" :value="identifier.value"
                                 v-model="formData.selectedIdentifier">
@@ -15,43 +14,48 @@
                         </div>
                     </div>
 
-                    <div v-if="formData.selectedIdentifier === 'cid'" class="form-group">
+                    <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-3">
+                        <!-- Display CID-specific fields -->
                         <label for="cid" class="text-muted">CID Number:</label>
                         <input type="text" id="cid" v-model="formData.cid" class="form-control">
+
+                        <!-- Date pickers for month, date, and year -->
+                        <div class="form-group">
+                            <label for="dob" class="text-muted">Date of Birth:</label>
+                            <div class="row">
+                                <div class="col">
+                                    <select class="form-select" v-model="formData.selectedMonth">
+                                        <option v-for="month in months" :key="month.value" :value="month.value">{{
+                                            month.label }}</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <select class="form-select" v-model="formData.selectedDate">
+                                        <option v-for="date in dates" :key="date.value" :value="date.value">{{ date.label }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <select class="form-select" v-model="formData.selectedYear">
+                                        <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div v-if="formData.selectedIdentifier === 'casefile'" class="form-group">
-                        <label for="casefile" class="text-muted">Case File Number:</label>
-                        <input type="text" id="casefile" v-model="formData.casefile" class="form-control">
+                        <!-- Display message or prompt for Case File -->
+                        <p class="text-danger">Please Contact The PEMA,directly if you are a Case File holder for proceeding
+                            with registration.</p>
                     </div>
 
                     <div v-if="formData.selectedIdentifier === 'passport'" class="form-group">
+                        <!-- Display input fields for Passport -->
                         <label for="passport" class="text-muted">Passport Number:</label>
                         <input type="text" id="passport" v-model="formData.passport" class="form-control">
-                    </div>
 
-                    <!-- Date pickers for month, date, and year -->
-                    <div class="form-group">
-                        <label for="dob" class="text-muted">Date of Birth:</label>
-                        <div class="row">
-                            <div class="col">
-                                <select class="form-select" v-model="formData.selectedMonth">
-                                    <option v-for="month in months" :key="month.value" :value="month.value">{{ month.label
-                                    }}</option>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <select class="form-select" v-model="formData.selectedDate">
-                                    <option v-for="date in dates" :key="date.value" :value="date.value">{{ date.label }}
-                                    </option>
-                                </select>
-                            </div>
-                            <div class="col">
-                                <select class="form-select" v-model="formData.selectedYear">
-                                    <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
-                                </select>
-                            </div>
-                        </div>
+                        <!-- Include additional input fields for Passport registration here -->
                     </div>
 
                     <button type="submit" class="btn btn-primary my-3">Next</button>
@@ -126,47 +130,57 @@ const showSuccessMessage = ref(false);
 const emit = defineEmits(['go-to-next-step']);
 
 const fetchCitizenDetails = async () => {
-    try {
-        // Ensure that the CSRF token is set in the headers
-        const csrfToken = getCSRFToken();
-        const headers = { 'X-CSRFToken': csrfToken };
+    if (formData.value.selectedIdentifier === 'cid') {
+        try {
+            // Ensure that the CSRF token is set in the headers
+            const csrfToken = getCSRFToken();
+            const headers = { 'X-CSRFToken': csrfToken };
 
-        const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.selectedIdentifier}/`, { headers });
+            const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers });
 
+            if (response.data) {
+                const citizenDetails = response.data;
+                const temporaryUsername = generateTemporaryUsername();
+                const mappedData = {
+                    identity_number: citizenDetails[formData.value.selectedIdentifier],
+                    first_name: citizenDetails.firstName,
+                    middle_name: citizenDetails.middleName || '',
+                    last_name: citizenDetails.lastName,
+                    date_of_birth: formatDOB(citizenDetails.dob),
+                    gender: mapGender(citizenDetails.gender),
+                    mob_number: citizenDetails.mobileNumber,
+                    perm_add_village: citizenDetails.villageName,
+                    perm_add_gewog: citizenDetails.gewogName,
+                    perm_add_dzongkhag: citizenDetails.dzongkhagName,
+                    nationality: mapNationality(citizenDetails.country),
+                    username: temporaryUsername,
+                };
 
-        if (response.data) {
-            const citizenDetails = response.data;
-            const temporaryUsername = generateTemporaryUsername();
-            const mappedData = {
-                identity_number: citizenDetails[formData.value.selectedIdentifier],
-                first_name: citizenDetails.firstName,
-                middle_name: citizenDetails.middleName || '',
-                last_name: citizenDetails.lastName,
-                date_of_birth: formatDOB(citizenDetails.dob),
-                gender: mapGender(citizenDetails.gender),
-                mob_number: citizenDetails.mobileNumber,
-                perm_add_village: citizenDetails.villageName,
-                perm_add_gewog: citizenDetails.gewogName,
-                perm_add_dzongkhag: citizenDetails.dzongkhagName,
-                nationality: mapNationality(citizenDetails.country),
-                username: temporaryUsername,
-            };
+                console.log(mappedData);
 
-            console.log(mappedData);
+                await registerUser(mappedData);
 
-            await registerUser(mappedData);
+                // Delay fetch action by 3 seconds
+                await new Promise(resolve => setTimeout(resolve, 3000));
 
-            // Delay fetch action by 3 seconds
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            // Show success message and move to the next step
-            showSuccessMessage.value = true;
-            moveToStep3(mappedData);
-        } else {
-            showSuccessMessage.value = 'Citizen details not found';
+                // Show success message and move to the next step
+                showSuccessMessage.value = true;
+                moveToStep3(mappedData);
+            } else {
+                showSuccessMessage.value = 'Citizen details not found';
+            }
+        } catch (error) {
+            console.error('An error occurred during fetching details', error);
         }
-    } catch (error) {
-        console.error('An error occurred during fetching details', error);
+    } else if (formData.value.selectedIdentifier === 'casefile') {
+        // Display a prompt for Case File registration
+        window.alert('Contact PEMA directly for Case File registration.');
+    } else if (formData.value.selectedIdentifier === 'passport') {
+        // Display input fields for Passport registration
+        const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to next step?');
+        if (proceed) {
+            // Handle Passport registration logic here
+        }
     }
 };
 
