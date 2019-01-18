@@ -45,14 +45,7 @@
   <script setup lang="ts"></script>
   
   <style scoped>
-  .authbg {
-    background-image: url('@/assets/images/thePemabg.png');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    height: 100vh;
-  }
-  
+
   .loginbg {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
