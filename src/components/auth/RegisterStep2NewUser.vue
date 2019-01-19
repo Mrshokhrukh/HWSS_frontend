@@ -14,14 +14,20 @@
                         </div>
                     </div>
 
-                    <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-3">
+                    <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
                         <!-- Display CID-specific fields -->
-                        <label for="cid" class="text-muted">CID Number:</label>
+                        <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
                         <input type="text" id="cid" v-model="formData.cid" class="form-control">
+<<<<<<< Updated upstream
 
                         <!-- Date pickers for month, date, and year --> 
                         <div class="form-group">
                             <label for="dob" class="text-muted">Date of Birth:</label>
+=======
+                        <!-- Date pickers for month, date, and year -->
+                        <div class="form-group mt-3">
+                            <small for="dob" class="text-muted">When is your Date of Birth?</small>
+>>>>>>> Stashed changes
                             <div class="row">
                                 <div class="col">
                                     <select class="form-select" v-model="formData.selectedMonth">
@@ -52,13 +58,71 @@
 
                     <div v-if="formData.selectedIdentifier === 'passport'" class="form-group">
                         <!-- Display input fields for Passport -->
-                        <label for="passport" class="text-muted">Passport Number:</label>
-                        <input type="text" id="passport" v-model="formData.passport" class="form-control">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="passport" class="text-muted">Passport Number:</label>
+                                <input type="text" id="passport" v-model="formData.passport" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="nationality" class="text-muted">Nationality:</label>
+                                <input type="text" id="nationality" v-model="formData.nationality" class="form-control">
+                            </div>
+                        </div>
 
-                        <!-- Include additional input fields for Passport registration here -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="first_name" class="text-muted">First Name:</label>
+                                <input type="text" id="first_name" v-model="formData.first_name" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="middle_name" class="text-muted">Middle Name:</label>
+                                <input type="text" id="middle_name" v-model="formData.middle_name" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="last_name" class="text-muted">Last Name:</label>
+                                <input type="text" id="last_name" v-model="formData.last_name" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="date_of_birth" class="text-muted">Date of Birth:</label>
+                                <input type="date" id="date_of_birth" v-model="formData.date_of_birth" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="gender" class="text-muted">Gender:</label>
+                                <select id="gender" v-model="formData.gender" class="form-select">
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="mob_number" class="text-muted">Mobile Number:</label>
+                                <input type="text" id="mob_number" v-model="formData.mob_number" class="form-control">
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="perm_add_village" class="text-muted">Permanent Address Village:</label>
+                                <input type="text" id="perm_add_village" v-model="formData.perm_add_village"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="perm_add_gewog" class="text-muted">Permanent Address Gewog:</label>
+                                <input type="text" id="perm_add_gewog" v-model="formData.perm_add_gewog"
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="perm_add_dzongkhag" class="text-muted">Permanent Address Dzongkhag:</label>
+                                <input type="text" id="perm_add_dzongkhag" v-model="formData.perm_add_dzongkhag"
+                                    class="form-control">
+                            </div>
+                        </div>
                     </div>
-
-                    <button type="submit" class="btn btn-primary my-3">Next</button>
+                    <button type="submit" class="btn btn-primary reg-btn my-3">Next</button>
                 </form>
             </div>
         </div>
@@ -97,6 +161,8 @@ const formData = ref({
     selectedMonth: '',
     selectedDate: '',
     selectedYear: '',
+    date_of_birth: '',
+    gender: '',
 });
 
 const identifiers = [
@@ -140,7 +206,11 @@ const fetchCitizenDetails = async () => {
 
             if (response.data) {
                 const citizenDetails = response.data;
-                const temporaryUsername = generateTemporaryUsername();
+
+                const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
+                const formattedDate = formData.value.selectedDate.padStart(2, '0');
+                const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
+                console.log(usernameSuffix);
                 const mappedData = {
                     identity_number: citizenDetails[formData.value.selectedIdentifier],
                     first_name: citizenDetails.firstName,
@@ -153,12 +223,10 @@ const fetchCitizenDetails = async () => {
                     perm_add_gewog: citizenDetails.gewogName,
                     perm_add_dzongkhag: citizenDetails.dzongkhagName,
                     nationality: mapNationality(citizenDetails.country),
-                    username: temporaryUsername,
+                    username: usernameSuffix,
                 };
 
                 console.log(mappedData);
-
-                await registerUser(mappedData);
 
                 // Delay fetch action by 3 seconds
                 await new Promise(resolve => setTimeout(resolve, 3000));
@@ -184,14 +252,27 @@ const fetchCitizenDetails = async () => {
     }
 };
 
-const registerUser = async (userData) => {
-    try {
-        const response = await axios.post('http://localhost:8000/api/v1/access/register-api-user/', userData);
-        console.log('User registration response:', response.data);
-    } catch (error) {
-        console.error('Error registering user:', error.response?.data?.error || 'An error occurred during user registration');
-    }
-};
+// const registerUser = async (userData) => {
+//     try {
+//         const formData = new FormData();
+
+//         // Append each field to the FormData object
+//         for (const key in userData) {
+//             formData.append(key, userData[key]);
+//         }
+
+//         formData.append('email', 'placeholder@email.com');
+
+//         console.log('User Data for Registration:', formData);
+
+//         const response = await axios.post('http://localhost:8000/api/v1/access/register-api-user/', formData);
+
+//         console.log('User registration response:', response.data);
+//     } catch (error) {
+//         console.error('Error registering user:', error.response?.data?.error || 'An error occurred during user registration');
+//     }
+// };
+
 
 function getCSRFToken() {
     const name = 'csrftoken';
@@ -204,20 +285,6 @@ function getCSRFToken() {
 
     return null;
 }
-
-const generateTemporaryUsername = () => {
-    const generateRandomString = (length) => {
-        let result = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-    return `temp_user_${generateRandomString(8)}`;
-};
-
 
 // Helper functions
 function formatDOB(dob) {
@@ -253,6 +320,7 @@ const moveToStep3 = (citizenDetails) => {
 
 .reg-btn {
     background-color: #2B656F !important;
+    width: 100%;
 }
 
 .text-muted {
