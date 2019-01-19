@@ -32,7 +32,7 @@
           </div>
         </div>
         <div class="col-md-5 custombg text-center ">
-          <img class="mt-5" src="../../assets/images/Logo.png" alt="Logo">
+          <img class="mt-5" src="../../assets/images/Logo.png" alt="Logo" style="width: 350px;">
           <h2 class="text-white display-4">Mental Health matters</h2>
           <img src="" alt="">
           <img class="float-start" src="../../assets/images/shape.png" alt="">
