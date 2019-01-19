@@ -14,7 +14,7 @@
                   <input type="password" class="form-control" placeholder="Password" required />
                 </div>
                 <div class="text-center col-md-8">
-                  <button type="submit" class="btn btn-success col-md-12 rounded-pill singin-button" >Sign In</button>
+                  <button type="submit" class="btn  col-md-12 rounded-pill singin-button btnbg" >Sign In</button>
                 </div>
               </form>
               <br />
@@ -72,6 +72,11 @@
 
 .auth-form .signin-button {
   border-radius: 20px; /* Adjust the border-radius as needed for rounded corners */
+ 
+}
+.btnbg{
+  background-color: #2B656F;
+  color: white;
 }
   </style>
   
