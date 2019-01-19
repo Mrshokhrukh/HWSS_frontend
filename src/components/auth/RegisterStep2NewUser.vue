@@ -18,16 +18,9 @@
                         <!-- Display CID-specific fields -->
                         <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
                         <input type="text" id="cid" v-model="formData.cid" class="form-control">
-<<<<<<< Updated upstream
-
-                        <!-- Date pickers for month, date, and year --> 
-                        <div class="form-group">
-                            <label for="dob" class="text-muted">Date of Birth:</label>
-=======
                         <!-- Date pickers for month, date, and year -->
                         <div class="form-group mt-3">
                             <small for="dob" class="text-muted">When is your Date of Birth?</small>
->>>>>>> Stashed changes
                             <div class="row">
                                 <div class="col">
                                     <select class="form-select" v-model="formData.selectedMonth">
@@ -60,7 +53,7 @@
                         <!-- Display input fields for Passport -->
                         <div class="row">
                             <div class="col-md-6">
-                                <label for="passport" class="text-muted">Passport Number:</label>
+                                <label for="passport" class="text-muted">Foreign Passport Number:</label>
                                 <input type="text" id="passport" v-model="formData.passport" class="form-control">
                             </div>
                             <div class="col-md-6">
@@ -90,11 +83,10 @@
                                 <input type="date" id="date_of_birth" v-model="formData.date_of_birth" class="form-control">
                             </div>
                             <div class="col-md-4">
-                                <label for="gender" class="text-muted">Gender:</label>
+                                <label for="gender" class="text-muted">Sex:</label>
                                 <select id="gender" v-model="formData.gender" class="form-select">
                                     <option value="male">Male</option>
                                     <option value="female">Female</option>
-                                    <option value="other">Other</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -168,7 +160,7 @@ const formData = ref({
 const identifiers = [
     { id: 'cidRadio', value: 'cid', label: 'CID Number' },
     { id: 'casefileRadio', value: 'casefile', label: 'Casefile No' },
-    { id: 'passportRadio', value: 'passport', label: 'Passport/Work Permit' },
+    { id: 'passportRadio', value: 'passport', label: 'Foreign Passport/Work Permit' },
 ];
 
 const months = [

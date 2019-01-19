@@ -1,8 +1,4 @@
 <template>
-<<<<<<< Updated upstream
-    <div class="container mt-5 shadow-card" style="background-color: #DFE9E8;">
-        <h2 class="bold my-5 cst-color">Step 3: Verify User Details</h2>
-=======
     <div class="container mt-5">
         <div class="card mt-3">
             <div class="card-body text-muted">
@@ -10,7 +6,6 @@
             </div>
         </div>
 
->>>>>>> Stashed changes
         <form @submit.prevent="submitForm">
             <h4 class="mb-2"> <span class="rounded-number bg-primary">1</span>2. User Details</h4>
             <small class="text-muted mb-5">Select any Identifier </small>
@@ -23,24 +18,21 @@
             <div class="form-group row">
                 <label for="phoneNumber" class="col-sm-3 col-form-label cst-color bold">Phone Number:</label>
                 <div class="col-sm-9">
-                    <input type="text" id="phoneNumber" :value="userData.mob_number" class="form-control cst-color" readonly>
+                    <input type="text" id="phoneNumber" :value="userData.mob_number" class="form-control cst-color"
+                        readonly>
                 </div>
             </div>
             <div class="form-group row">
                 <label for="email" class="col-sm-3 col-form-label cst-color bold">Email:</label>
                 <div class="col-sm-9">
-<<<<<<< Updated upstream
-                    <input type="email" id="email" v-model="userData.email" class="form-control cst-color" required>
-=======
-                    // eslint-disable-next-line vue/no-mutating-props
-                    <input type="email" id="email" v-model="userData.email" class="form-control" required>
->>>>>>> Stashed changes
+                    <input type="email" id="email" v-model="regEmail" class="form-control" required>
                 </div>
             </div>
             <div class="form-group row">
                 <label for="nationality" class="col-sm-3 col-form-label cst-color bold">Nationality:</label>
                 <div class="col-sm-9">
-                    <input type="text" id="nationality" :value="userData.nationality" class="form-control cst-color" readonly>
+                    <input type="text" id="nationality" :value="userData.nationality" class="form-control cst-color"
+                        readonly>
                 </div>
             </div>
             <div class="form-group row">
@@ -90,20 +82,20 @@
                 </div>
             </div>
 
-            <div class="card mt-3">
-                <div class="card-body text-muted">
-                    <h5 class="mb-4">3. Login Info</h5>
-                </div>
-            </div>
-
             <!-- Input for parameter value -->
             <div v-if="selectedParameter" class="form-group">
                 <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter }}:</label>
-                <input  type="text" id="parameterValue" v-model="parameterValue" class="form-control mt-2">
+                <input type="text" id="parameterValue" v-model="parameterValue" class="form-control mt-2">
             </div>
 
             <!-- Proceed button -->
             <button type="button" @click="proceed" class="btn btn-primary mt-3">Proceed</button>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body text-muted">
+                <h5 class="mb-4">3. Login Info</h5>
+            </div>
         </div>
     </div>
 </template>
@@ -111,7 +103,7 @@
 <script setup>
 import { ref, defineProps, computed, defineEmits } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+// import axios from 'axios';
 
 const props = defineProps({
     userData: Object,
@@ -128,13 +120,13 @@ const detailsConfirmed = ref(false);
 const selectedAgency = ref('');
 const selectedParameter = ref('');
 const parameterValue = ref('');
+const regEmail = ref('');
 
 const confirmDetails = async (isTrue) => {
     if (isTrue) {
         const registrationData = {
             userData: { ...props.userData },
-            // eslint-disable-next-line no-undef
-            userEmail: userData.email,
+            userEmail: regEmail,
         };
 
         await registerUser(registrationData);
@@ -147,15 +139,17 @@ const confirmDetails = async (isTrue) => {
 };
 
 const registerUser = async (registrationData) => {
-    const { userData, userEmail } = registrationData;
+    const { userData, regEmail } = registrationData;
 
     try {
         const registrationPayload = {
             ...userData,
-            email: userEmail,
+            email: regEmail,
         };
 
-        await axios.post('http://localhost:8000/api/v1/access/register-api-user/', registrationPayload);
+        console.log(registrationPayload);
+
+        // await axios.post('http://localhost:8000/api/v1/access/register-api-user/', registrationPayload);
     } catch (error) {
         console.error('Error registering user:', error.response?.data?.error || 'An error occurred during user registration');
     }
@@ -174,7 +168,7 @@ const proceed = async () => {
         if (selectedParameter.value === 'Student ID') {
             apiURL = '/path/to/emis/student/api';
         } else if (selectedParameter.value === 'Employee ID') {
-            apiURL = '/path/to/emis/employee/api'; 
+            apiURL = '/path/to/emis/employee/api';
         }
     }
 
@@ -202,14 +196,5 @@ const proceed = async () => {
 </script>
 
 <style>
-<<<<<<< Updated upstream
- .shadow-card {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  }
-  .cst-color{
-    color: #2B656F;
-  }
-=======
 /* Add your custom styles here */
->>>>>>> Stashed changes
 </style>

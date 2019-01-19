@@ -1,6 +1,6 @@
 <template>
     <div class="container mt-5">
-        <h2>Step 4: Create Credentials</h2>
+        <h2>3. Login Details</h2>
         <form @submit.prevent="createUser">
             <!-- Username and password fields -->
             <div class="form-group">
@@ -21,14 +21,20 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from 'vue';
+
+import { ref, defineProps, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const props = defineProps({
     userData: Object,
     agencyData: Object,
+    fetchedDataStepOne: Object,
 });
 
+// onMounted(() => {
+//   console.log('Fetched Data from Previous Steps:', fetchedDataStepOne);
+// });
+``
 // eslint-disable-next-line no-unused-vars
 const emit = defineEmits(['go-to-next-step']);
 // eslint-disable-next-line no-unused-vars

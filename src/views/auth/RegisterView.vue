@@ -6,6 +6,7 @@
         <div v-else>
             <component :is="currentStepComponent" :user-data="fetchedCitizenDetails" @go-to-next-step="goToNextStep"
                 @select-user-type="handleUserTypeSelection" />
+            <last-component v-if="currentStep === 'step-four'" :fetchedDataStepOne="fetchedCitizenDetails"/>
         </div>
         <div v-if="error" class="alert alert-danger mt-3" role="alert">
             Oops! Something went wrong. Please try again.
@@ -34,11 +35,13 @@ const currentStepComponent = computed(() => steps[currentStep.value]);
 let fetchedCitizenDetails = ref({});
 
 const goToNextStep = (targetStep, data) => {
+    console.log('Fetched Data for Current Step:', fetchedCitizenDetails.value);
     currentStep.value = targetStep;
     if (data) {
         fetchedCitizenDetails.value = data;
     }
 };
+
 
 const handleUserTypeSelection = (type) => {
     if (type === 'pre-recorded') {

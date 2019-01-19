@@ -69,7 +69,7 @@ const continueToPage = () => {
   
 <style scoped>
 .card-reg {
-    height: 70vh;
+    height: 100%;
 }
 
 .loginbg {
