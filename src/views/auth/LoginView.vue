@@ -1,46 +1,46 @@
 <template>
-    <div class="container-fluid authbg p-5">
-      <div class="card shadow-card">
-        <div class="row g-0 loginbg" >
-          <div class="col-md-7">
-            <div class="card-body">
-              <div class="auth-form">
-                <h2 class="text-center mb-4" style="color: #2B656F; font-weight: bold">Sign In</h2>
-                <form @submit.prevent="">
-                  <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Username" required />
-                  </div>
-                  <div class="mb-3">
-                    <input type="password" class="form-control" placeholder="Password" required />
-                  </div>
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-primary signin-button">Sign In</button>
-                  </div>
-                </form>
-                <br />
-                <div>
-                  <p class="text-center mt-3">
-                    <img src="@/assets/images/NDILogo.png" alt="NDI Logo" />
-                    <a href="#" style="color: black; font-weight: bold"> Login with NDI</a>
-                  </p>
+  <div class="container authbg cust-margin">
+    <div class="card shadow-card">
+      <div class="row g-0 loginbg">
+        <div class="col-md-7">
+          <div class="card-body">
+            <div class="auth-form text-center">
+              <h1 class="text-center mb-4 bold" style="color: #2B656F;">Sign In</h1>
+              <form class="row justify-content-center" @submit.prevent="">
+                <div class="mb-3 col-md-8">
+                  <input type="text" class="form-control" placeholder="Username" required />
                 </div>
-                <p class="text-center mt-3" style="color: #2B656F;">
-                  Don't have an account? <br />
-                  <router-link to="/register" style="color: #2B656F; font-weight: bold">Sign Up</router-link>
+                <div class="mb-3 col-md-8">
+                  <input type="password" class="form-control" placeholder="Password" required />
+                </div>
+                <div class="text-center col-md-8">
+                  <button type="submit" class="btn btn-success col-md-12 rounded-pill singin-button" >Sign In</button>
+                </div>
+              </form>
+              <br />
+              <div>
+                <p class="text-center mt-3">
+                  <img src="@/assets/images/NDILogo.png" alt="NDI Logo" />
+                  <a href="#" style="color: black; font-weight: bold"> Login with NDI</a>
                 </p>
               </div>
+              <p class="text-center mt-3" style="color: #2B656F;">
+                Don't have an account? <br />
+                <router-link to="/register" style="color: #2B656F; font-weight: bold">Sign Up</router-link>
+              </p>
             </div>
           </div>
-          <div class="col-md-5 custombg text-center ">
-            <img class="mt-5" src="../../assets/images/Logo.png" alt="Logo">
-            <h2 class="text-white display-4">Mental Health matters</h2>
-            <img src="" alt="">
-            <img class="float-start" src="../../assets/images/shape.png" alt="">
-          </div>
+        </div>
+        <div class="col-md-5 custombg text-center ">
+          <img class="mt-5" src="../../assets/images/Logo.png" alt="Logo">
+          <h2 class="text-white display-4">Mental Health matters</h2>
+          <img src="" alt="">
+          <img class="float-start" src="../../assets/images/shape.png" alt="">
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
   
   <script setup lang="ts"></script>
   
@@ -61,5 +61,17 @@
     border-radius: 20% 0 0 20%;
     height: 60vh;
   }
+  .cust-margin{
+    margin-top: 7%;
+    margin-bottom: auto;
+  }
+  .cust-border{
+    border-radius: 50%;
+  }
+
+
+.auth-form .signin-button {
+  border-radius: 20px; /* Adjust the border-radius as needed for rounded corners */
+}
   </style>
   

@@ -19,7 +19,7 @@
                         <label for="cid" class="text-muted">CID Number:</label>
                         <input type="text" id="cid" v-model="formData.cid" class="form-control">
 
-                        <!-- Date pickers for month, date, and year -->
+                        <!-- Date pickers for month, date, and year --> 
                         <div class="form-group">
                             <label for="dob" class="text-muted">Date of Birth:</label>
                             <div class="row">

@@ -40,7 +40,7 @@
                         </button>
                         <p style="color: #2B656F; margin-bottom: 5px;">
                             Already have an account? <br />
-                            <a href="#" @click="toggleForm" style="color: #2B656F; font-weight: bold">Sign In</a>
+                            <router-link to="/login" style="color: #2B656F; font-weight: bold" class="text-decoration-underline">Sign In</router-link>
                         </p>
                     </div>
                 </div>
