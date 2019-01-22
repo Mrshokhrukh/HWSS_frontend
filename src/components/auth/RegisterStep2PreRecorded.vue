@@ -29,7 +29,7 @@
             <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
             <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
           </div>
-
+          <div class="container p-5">
           <div class="card-body text-start form">
             <h5 class="card-title cust-text bold h2">User Details</h5>
             <p class="card-text cust-text bold">Please kindly enter your details below to check if you are prerecorded or not</p>
@@ -57,7 +57,7 @@
             </form>
             <p v-if="errorMessage" class="mt-2 text-danger">{{ errorMessage }}</p>
           </div>
-
+        </div>
           <div class="card-footer text-muted text-center">
             Already have an Account? 
             <router-link to="/login" class="text-primary">Sign In</router-link>
