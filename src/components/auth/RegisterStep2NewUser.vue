@@ -19,10 +19,10 @@
               <div class="step-circle" @click="handleProgressBarClick(2)">2</div>
               <div class="step-circle" @click="handleProgressBarClick(3)">3</div>
             </div>
-            <div class="container p-5">
-                <div class="card-body text-start form ">
+            <div class="container p-5 ">
+                <div class="card-body text-start form rounded">
                     <form @submit.prevent="fetchCitizenDetails">
-                        <h4 class="mb-2"> <span class="rounded-number bg-primary">1</span> Fetch User Details</h4>
+                        <h4 class="mb-2 text-muted"> <span class="rounded-number bg-success p-3">1</span> Fetch User Details</h4>
                         <small class="text-muted mb-5">Select any Identifier </small>
     
                         <div class="form-group mb-3">
@@ -209,62 +209,63 @@ const showSuccessMessage = ref(false);
 
 const emit = defineEmits(['go-to-next-step']);
 
-const fetchCitizenDetails = async () => {
-    if (formData.value.selectedIdentifier === 'cid') {
-        try {
-            // Ensure that the CSRF token is set in the headers
-            const csrfToken = getCSRFToken();
-            const headers = { 'X-CSRFToken': csrfToken };
+// this is the comment which needs to be removed after the css is applied
+// const fetchCitizenDetails = async () => {
+//     if (formData.value.selectedIdentifier === 'cid') {
+//         try {
+//             // Ensure that the CSRF token is set in the headers
+//             const csrfToken = getCSRFToken();
+//             const headers = { 'X-CSRFToken': csrfToken };
 
-            const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers });
+//             const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers });
 
-            if (response.data) {
-                const citizenDetails = response.data;
+//             if (response.data) {
+//                 const citizenDetails = response.data;
 
-                const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
-                const formattedDate = formData.value.selectedDate.padStart(2, '0');
-                const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
-                console.log(usernameSuffix);
-                const mappedData = {
-                    identity_number: citizenDetails[formData.value.selectedIdentifier],
-                    first_name: citizenDetails.firstName,
-                    middle_name: citizenDetails.middleName || '',
-                    last_name: citizenDetails.lastName,
-                    date_of_birth: formatDOB(citizenDetails.dob),
-                    gender: mapGender(citizenDetails.gender),
-                    mob_number: citizenDetails.mobileNumber,
-                    perm_add_village: citizenDetails.villageName,
-                    perm_add_gewog: citizenDetails.gewogName,
-                    perm_add_dzongkhag: citizenDetails.dzongkhagName,
-                    nationality: mapNationality(citizenDetails.country),
-                    username: usernameSuffix,
-                };
+//                 const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
+//                 const formattedDate = formData.value.selectedDate.padStart(2, '0');
+//                 const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
+//                 console.log(usernameSuffix);
+//                 const mappedData = {
+//                     identity_number: citizenDetails[formData.value.selectedIdentifier],
+//                     first_name: citizenDetails.firstName,
+//                     middle_name: citizenDetails.middleName || '',
+//                     last_name: citizenDetails.lastName,
+//                     date_of_birth: formatDOB(citizenDetails.dob),
+//                     gender: mapGender(citizenDetails.gender),
+//                     mob_number: citizenDetails.mobileNumber,
+//                     perm_add_village: citizenDetails.villageName,
+//                     perm_add_gewog: citizenDetails.gewogName,
+//                     perm_add_dzongkhag: citizenDetails.dzongkhagName,
+//                     nationality: mapNationality(citizenDetails.country),
+//                     username: usernameSuffix,
+//                 };
 
-                console.log(mappedData);
+//                 console.log(mappedData);
 
-                // Delay fetch action by 3 seconds
-                await new Promise(resolve => setTimeout(resolve, 3000));
+//                 // Delay fetch action by 3 seconds
+//                 await new Promise(resolve => setTimeout(resolve, 3000));
 
-                // Show success message and move to the next step
-                showSuccessMessage.value = true;
-                moveToStep3(mappedData);
-            } else {
-                showSuccessMessage.value = 'Citizen details not found';
-            }
-        } catch (error) {
-            console.error('An error occurred during fetching details', error);
-        }
-    } else if (formData.value.selectedIdentifier === 'casefile') {
-        // Display a prompt for Case File registration
-        window.alert('Contact PEMA directly for Case File registration.');
-    } else if (formData.value.selectedIdentifier === 'passport') {
-        // Display input fields for Passport registration
-        const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to next step?');
-        if (proceed) {
-            // Handle Passport registration logic here
-        }
-    }
-};
+//                 // Show success message and move to the next step
+//                 showSuccessMessage.value = true;
+//                 moveToStep3(mappedData);
+//             } else {
+//                 showSuccessMessage.value = 'Citizen details not found';
+//             }
+//         } catch (error) {
+//             console.error('An error occurred during fetching details', error);
+//         }
+//     } else if (formData.value.selectedIdentifier === 'casefile') {
+//         // Display a prompt for Case File registration
+//         window.alert('Contact PEMA directly for Case File registration.');
+//     } else if (formData.value.selectedIdentifier === 'passport') {
+//         // Display input fields for Passport registration
+//         const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to next step?');
+//         if (proceed) {
+//             // Handle Passport registration logic here
+//         }
+//     }
+// };
 
 // const registerUser = async (userData) => {
 //     try {
@@ -287,38 +288,47 @@ const fetchCitizenDetails = async () => {
 //     }
 // };
 
+// this is the comment which needs to be removed after the css is applied
 
-function getCSRFToken() {
-    const name = 'csrftoken';
-    const value = "; " + document.cookie;
-    const parts = value.split("; " + name + "=");
+// function getCSRFToken() {
+//     const name = 'csrftoken';
+//     const value = "; " + document.cookie;
+//     const parts = value.split("; " + name + "=");
 
-    if (parts.length === 2) {
-        return parts.pop().split(";").shift();
-    }
+//     if (parts.length === 2) {
+//         return parts.pop().split(";").shift();
+//     }
 
-    return null;
-}
+//     return null;
+// }
 
+// this is the comment which needs to be removed after the css is applied
 // Helper functions
-function formatDOB(dob) {
-    return dob.split('/').reverse().join('-');
-}
+// function formatDOB(dob) {
+//     return dob.split('/').reverse().join('-');
+// }
 
-function mapGender(gender) {
-    return gender === 'F' ? 'Female' : 'Male';
-}
-function mapNationality(country) {
-    if (!country || country.trim() === '') {
-        return 'Bhutanese';
-    }
-    return country;
-}
+// function mapGender(gender) {
+//     return gender === 'F' ? 'Female' : 'Male';
+// }
+// function mapNationality(country) {
+//     if (!country || country.trim() === '') {
+//         return 'Bhutanese';
+//     }
+//     return country;
+// }
 
-const moveToStep3 = (citizenDetails) => {
-    emit('go-to-next-step', 'step-three', citizenDetails);
+// this is the end of the comment for CSS
+
+
+
+
+// const moveToStep3 = (citizenDetails) => {
+//     emit('go-to-next-step', 'step-three', citizenDetails);
+// };
+const fetchCitizenDetails = () => {
+    emit('go-to-next-step', 'step-three');
 };
-
 </script>
 
 <style scoped>
