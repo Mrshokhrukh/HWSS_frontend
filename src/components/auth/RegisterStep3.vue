@@ -10,7 +10,18 @@
 
             <div class="text-center mt-3">
                 <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
-                <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
+                <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
+            </div>
+            <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0"
+                aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
+            </div>
+
+            <div class="step-container d-flex justify-content-between align-items-center px-5">
+                <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(1)">1</div>
+                <hr class="flex-grow-1 mx-2">
+                <div class="step-circle" @click="handleProgressBarClick(2)">2</div>
+                <hr class="flex-grow-1 mx-2">
+                <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(3)">3</div>
             </div>
 
             <div class="container mt-5">
