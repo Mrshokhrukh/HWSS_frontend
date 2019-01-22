@@ -1,4 +1,3 @@
-<template>
     <!-- <div>
         <h2>Step 2: Pre-Recorded User Verification</h2>
         <form @submit.prevent="verifyUser">
@@ -14,12 +13,12 @@
         </form>
         <p v-if="errorMessage">{{ errorMessage }}</p>
     </div> -->
-
+<template>
   <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-8">
         <div class="card shadow">
-          <!-- New logo and login link added -->
+
           <div class="logo-container">
             <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
             <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
@@ -69,7 +68,7 @@
 </template>
 
 <style>
-  /* Add styles for the logo container and NDI logo */
+
   .logo-container {
     position: absolute;
     top: 20px;
@@ -104,30 +103,32 @@
 
 <script setup>
 import { ref } from 'vue';
-import axios from 'axios';
+// import axios from 'axios';
 
 const cid = ref('');
 const day = ref('');
 const month = ref('');
 const year = ref('');
 const errorMessage = ref('');
-const { emit } = defineEmits(['go-to-next-step']);
+const emit = defineEmits(['go-to-next-step']);
 
+// const verifyUser = async () => {
+//   try {
+//     const response = await axios.post('http://localhost:8000/api/v1/access/verify-pre-recorded-user/', {
+//       cid: cid.value,
+//       dob: `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`
+//     });
+//     if (response.data.success) {
+//       emit('go-to-next-step');
+//     } else {
+//       errorMessage.value = response.data.message || 'Verification failed';
+//     }
+//   } catch (error) {
+//     errorMessage.value = error.response.data.message || 'An error occurred during verification';
+//   }
+// };
 const verifyUser = async () => {
-  try {
-    const response = await axios.post('http://localhost:8000/api/v1/access/verify-pre-recorded-user/', {
-      cid: cid.value,
-      dob: `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`
-    });
-    if (response.data.success) {
-      emit('go-to-next-step');
-    } else {
-      errorMessage.value = response.data.message || 'Verification failed';
-    }
-  } catch (error) {
-    errorMessage.value = error.response.data.message || 'An error occurred during verification';
-  }
-};
-</script>
+  emit('go-to-next-step','step-two-prerecorded')
+}
 
-  
+</script>

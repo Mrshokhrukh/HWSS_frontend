@@ -23,8 +23,6 @@
 <script setup>
 import { ref, defineProps} from 'vue';
 
-import { ref, defineProps} from 'vue';
-
 import { useRoute, useRouter } from 'vue-router';
 
 const props = defineProps({
