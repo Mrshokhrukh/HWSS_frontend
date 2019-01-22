@@ -1,7 +1,26 @@
 <template>
     <div class="container mt-5">
         <div class="card mt-5">
-            <div class="card-body">
+            <div class="logo-container">
+                <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+                <a href="#" class="text-dark font-weight-bold">Use Bhutan NDI</a>
+              </div>
+    
+              <div class="text-center mt-3">
+                <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
+                <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
+              </div>
+
+              <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
+            </div>
+    
+            <div class="step-container d-flex justify-content-between">
+              <div class="step-circle" @click="handleProgressBarClick(1)">1</div>
+              <div class="step-circle" @click="handleProgressBarClick(2)">2</div>
+              <div class="step-circle" @click="handleProgressBarClick(3)">3</div>
+            </div>
+            <div class="card-body text-start form">
+               
                 <form @submit.prevent="fetchCitizenDetails">
                     <h4 class="mb-2"> <span class="rounded-number bg-primary">1</span> Fetch User Details</h4>
                     <small class="text-muted mb-5">Select any Identifier </small>
@@ -326,4 +345,27 @@ const moveToStep3 = (citizenDetails) => {
 .form-check-label {
     color: #2B656F !important;
 }
+.form {
+    background-color:  #2B656F24;
+  }
+  .step-container {
+    position: relative;
+    text-align: center;
+    transform: translateY(-43%);
+  }
+
+  .step-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #007bff;
+    line-height: 30px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    cursor: pointer; /* Added cursor pointer */
+  }
 </style>
