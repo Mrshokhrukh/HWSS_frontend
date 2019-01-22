@@ -87,6 +87,7 @@
   }
   .form {
     background-color:  #2B656F24;
+    border-radius: 15px;
   }
   .custom-btn {
     background-color: #2B656F;

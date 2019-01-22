@@ -7,7 +7,7 @@
               <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
               <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
             </div>
-            <div class="container p-5">
+            <div class="container p-5 rounded">
             <div class="card-body text-start  form">
               <h5 class="card-title cust-tex ">User Detail</h5>
               <p class="card-text cust-tex ">Please set a unique Username and a strong password</p>
@@ -111,6 +111,7 @@
   /* Add custom styles */
   .form {
     background-color:  #2B656F24;
+    border-radius: 15px;
   }
   .custom-btn {
     background-color: #2B656F;
