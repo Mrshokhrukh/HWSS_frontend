@@ -18,18 +18,18 @@
 import { ref, computed } from 'vue';
 import RegisterStep1 from '@/components/auth/RegisterStep1.vue';
 import RegisterStep2PreRecorded from '@/components/auth/RegisterStep2PreRecorded.vue';
-import RegisterStep2PreRecorded2 from '@/components/auth/RegisterStep2PreRecorded2.vue';
 import RegisterStep2NewUser from '@/components/auth/RegisterStep2NewUser.vue';
 import RegisterStep3 from '@/components/auth/RegisterStep3.vue';
 import RegisterStep4 from '@/components/auth/RegisterStep4.vue';
+import RegisterStep4PreRecorded from '@/components/auth/RegisterStep4PreRecorded.vue';
 
 const steps = {
     'start': RegisterStep1,
     'pre-recorded': RegisterStep2PreRecorded,
-    'pre-recorded2': RegisterStep2PreRecorded2,
     'new-user': RegisterStep2NewUser,
     'step-three': RegisterStep3,
     'step-four': RegisterStep4,
+    'step-two-prerecorded': RegisterStep4PreRecorded,
 };
 
 const currentStep = ref('start');
