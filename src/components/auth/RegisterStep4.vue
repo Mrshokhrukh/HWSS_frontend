@@ -21,12 +21,10 @@
 </template>
 
 <script setup>
-
-<<<<<<< HEAD
 import { ref, defineProps} from 'vue';
-=======
-import { ref, defineProps } from 'vue';
->>>>>>> a82a84bce194680954372ac5bd2c98beae8a3cf6
+
+import { ref, defineProps} from 'vue';
+
 import { useRoute, useRouter } from 'vue-router';
 
 const props = defineProps({
