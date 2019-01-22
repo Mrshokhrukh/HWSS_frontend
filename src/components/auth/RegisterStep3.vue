@@ -1,59 +1,82 @@
 <template>
-    <div class="container mt-5">
+<div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow">
+            <div class="logo-container">
+                <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+                <a href="#" class="text-dark font-weight-bold">Use Bhutan NDI</a>
+              </div>
+
+            <div class="text-center mt-3">
+                <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
+                <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
+            </div>
+
+            <div class="container mt-5">
         <div class="card mt-3">
-            <div class="card-body text-muted">
+            <div class="card-body text-muted form">
                 <h5 class="mb-4">1. Fetch Details</h5>
             </div>
         </div>
 
-        <form @submit.prevent="submitForm">
-            <h4 class="mb-2"> <span class="rounded-number bg-primary">1</span>2. User Details</h4>
-            <small class="text-muted mb-5">Select any Identifier </small>
-            <div class="form-group row">
-                <label for="fullName" class="col-sm-3 col-form-label cst-color bold">Full Name:</label>
-                <div class="col-sm-9">
-                    <input type="text" id="fullName" :value="fullName" class="form-control cst-color" readonly>
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="phoneNumber" class="col-sm-3 col-form-label cst-color bold">Phone Number:</label>
-                <div class="col-sm-9">
-                    <input type="text" id="phoneNumber" :value="userData.mob_number" class="form-control cst-color"
-                        readonly>
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="email" class="col-sm-3 col-form-label cst-color bold">Email:</label>
-                <div class="col-sm-9">
-                    <input type="email" id="email" v-model="regEmail" class="form-control" required>
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="nationality" class="col-sm-3 col-form-label cst-color bold">Nationality:</label>
-                <div class="col-sm-9">
-                    <input type="text" id="nationality" :value="userData.nationality" class="form-control cst-color"
-                        readonly>
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="gender" class="col-sm-3 col-form-label cst-color bold">Gender:</label>
-                <div class="col-sm-9">
-                    <input type="text" id="gender" :value="userData.gender" class="form-control cst-color" readonly>
-                </div>
-            </div>
-        </form>
 
-        <!-- True/Not True buttons -->
+        <div class="container mt-5 form p-5">
+            <form @submit.prevent="submitForm">
+                <h4 class="mb-2"><span class="rounded-number bg-success">2</span> User Details</h4>
+                <small class="text-muted mb-5">Select any Identifier </small>
+
+                <div class="form-group row">
+                    <label for="fullName" class="col-sm-6 col-form-label cst-color bold"></label>
+                    <div class="col-sm-9">
+                        <input type="text" id="fullName" :value="fullName" placeholder="Full Name" class="form-control cst-color" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="phoneNumber" class="cst-color bold"></label>
+                            <input type="text" id="phoneNumber" placeholder="Phone Number" :value="userData.mob_number" class="form-control cst-color"
+                                readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email" class="cst-color bold"></label>
+                            <input type="email" id="email" placeholder="Email" v-model="regEmail" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="nationality" class="cst-color bold"></label>
+                            <input type="text" id="nationality" placeholder="Nationality" :value="userData.nationality" class="form-control cst-color"
+                                readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="gender" class="cst-color bold"></label>
+                            <input type="text" id="gender"  placeholder="Gender" :value="userData.gender" class="form-control cst-color" readonly>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+             <!-- True/Not True buttons -->
         <div class="mt-4">
-            <button type="button" @click="confirmDetails(true)" class="btn btn-success mx-2">True</button>
-            <button type="button" @click="confirmDetails(false)" class="btn btn-danger ml-2">Not True</button>
+            <button type="button" @click="confirmDetails(true)" class="btn  mx-2 custom-btn">True</button>
+            <button type="button" @click="confirmDetails(false)" class="btn  ml-2 custom-btn">Not True</button>
         </div>
 
         <!-- Additional fields shown after 'True' is clicked -->
         <div v-if="detailsConfirmed" class="mt-4">
             <!-- Agency dropdown -->
             <div class="form-group">
-                <label class="h3 cst-color" for="agency">Select Agency:</label>
+                <label class="h3 cust-text bold" for="agency">Select Agency:</label>
                 <select id="agency" v-model="selectedAgency" class="form-control">
                     <option class="cst-color" value="EMIS">EMIS</option>
                     <option value="RCSC">RCSC</option>
@@ -62,42 +85,51 @@
 
             <!-- Parameter selection -->
             <div v-if="selectedAgency" class="form-group">
-                <label class="mt-5 h3 cst-color">Select Parameter Type:</label>
+                <label class="mt-5 h3 cust-text">Select Parameter Type:</label>
                 <div class="mt-2">
                     <div class="form-check form-check-inline">
                         <input type="radio" id="studentID" value="Student ID" v-model="selectedParameter"
                             class="form-check-input">
-                        <label for="studentID" class="form-check-label cst-color">Student ID/Code</label>
+                        <label for="studentID" class="form-check-label cust-text">Student ID/Code</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input type="radio" id="employeeID" value="Employee ID" v-model="selectedParameter"
                             class="form-check-input">
-                        <label for="employeeID" class="form-check-label cst-color">Employee ID</label>
+                        <label for="employeeID" class="form-check-label cust-text">Employee ID</label>
                     </div>
                     <div class="form-check form-check-inline">
                         <input type="radio" id="citizenID" value="Citizen ID" v-model="selectedParameter"
                             class="form-check-input">
-                        <label for="citizenID" class="form-check-label cst-color">Citizen ID</label>
+                        <label for="citizenID" class="form-check-label cust-text">Citizen ID</label>
                     </div>
                 </div>
             </div>
 
             <!-- Input for parameter value -->
-            <div v-if="selectedParameter" class="form-group">
+            <div v-if="selectedParameter" class="form-group cust-text">
                 <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter }}:</label>
                 <input type="text" id="parameterValue" v-model="parameterValue" class="form-control mt-2">
             </div>
 
             <!-- Proceed button -->
-            <button type="button" @click="proceed" class="btn btn-primary mt-3">Proceed</button>
+            <button type="button" @click="proceed" class="btn  ml-2 custom-btn mt-3">Proceed</button>
+        </div>
         </div>
 
-        <div class="card mt-3">
-            <div class="card-body text-muted">
+        <div class="card my-5">
+            <div class="card-body text-muted form">
                 <h5 class="mb-4">3. Login Info</h5>
             </div>
         </div>
     </div>
+
+
+
+        </div>
+      </div>
+    </div>
+</div>
+    
 </template>
 
 <script setup>
@@ -193,8 +225,24 @@ const proceed = async () => {
         loading.value = false;
     }
 };
+
 </script>
 
 <style>
-/* Add your custom styles here */
+
+.form {
+    background-color:  #2B656F24;
+    border-radius: 10px;
+  }
+  .custom-btn {
+    background-color: #2B656F;
+    color: #fff; 
+    font-size: inherit; 
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .cust-text{
+    color: #2B656F;
+  }
 </style>
