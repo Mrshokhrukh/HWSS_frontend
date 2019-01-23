@@ -1,45 +1,45 @@
 <template>
-    <div class="sidebar" :class="{ 'is-active': sidebarActive }">
-      <!-- User Profile Section -->
-      <div class="user-profile text-center">
-        <img :src="userStore.user.profilePic" alt="User" class="profile-pic mb-2">
-        <h5 class="user-name mb-0">{{ userStore.user.fullName }}</h5>
-      </div>
-  
-      <!-- Menu Items -->
-      <nav class="menu-items">
-        <router-link to="/profile" class="side-btn" active-class="active">
-          <i class="bi bi-person"></i>
-          <span class="link-text ms-2">Profile</span>
-        </router-link>
-        <router-link to="/dashboard" class="side-btn" active-class="active">
-          <i class="bi bi-bar-chart"></i>
-          <span class="link-text ms-2">Dashboard</span>
-        </router-link>
-        <router-link to="/help" class="side-btn" active-class="active">
-          <i class="bi bi-question-circle"></i>
-          <span class="link-text ms-2">Help</span>
-        </router-link>
-      </nav>
-  
-      <!-- Log Out Button -->
-      <div class="logout mt-auto">
-        <router-link to="#" class="side-btn">
-          <i class="bi bi-box-arrow-right"></i>
-          <span class="link-text ms-2">Log Out</span>
-        </router-link>
-      </div>
+  <div class="sidebar" :class="{ 'is-active': sidebarActive }">
+    <!-- User Profile Section -->
+    <div class="user-profile text-center">
+      <img src="@/assets/images/icon.png" alt="User" class="profile-pic mb-2">
+      <h5 class="user-name mb-0">Phurba Thinley</h5>
     </div>
-  </template>
-  
-  <script setup lang="ts">
-  import { ref, useStore } from 'pinia';
-  
-  const userStore = useStore('userStore');
-  const sidebarActive = ref(false);
-  </script>
-  
-  <style scoped>
+
+    <!-- Menu Items -->
+    <nav class="menu-items">
+      <router-link to="/profile" class="side-btn" active-class="active">
+        <i class="bi bi-person"></i>
+        <span class="link-text ms-2">Profile</span>
+      </router-link>
+      <router-link to="/dashboard" class="side-btn" active-class="active">
+        <i class="bi bi-bar-chart"></i>
+        <span class="link-text ms-2">Dashboard</span>
+      </router-link>
+      <router-link to="/help" class="side-btn" active-class="active">
+        <i class="bi bi-question-circle"></i>
+        <span class="link-text ms-2">Help</span>
+      </router-link>
+    </nav>
+
+    <!-- Log Out Button -->
+    <div class="logout mt-auto">
+      <router-link to="#" class="side-btn">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="link-text ms-2">Log Out</span>
+      </router-link>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+
+const { sidebarActive  }: { sidebarActive: boolean } = defineProps(['sidebarActive']);
+
+
+</script>
+
+<style scoped>
 .sidebar {
   width: 250px;
   background-color: #2c6975; /* Dark blue background */
@@ -50,9 +50,6 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  position: fixed; /* Fixed position for responsiveness */
-  top: 0;
-  left: 0;
 }
 
 .user-profile {
@@ -105,6 +102,9 @@
 
 @media (max-width: 768px) {
   .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
     transform: translateX(-100%);
   }
 

@@ -25,7 +25,7 @@ const router = createRouter({
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: () => import('../components/navbar/SideNavbar.vue'),
+      component: () => import('../views/dashboard/StudentDashboardView.vue'),
       meta: { title: 'dashboard' }
     },
   ]
