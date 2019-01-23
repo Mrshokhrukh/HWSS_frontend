@@ -65,24 +65,9 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 
-import { ref, defineProps } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-
-const props = defineProps({
-    userData: Object,
-    agencyData: Object,
-    fetchedDataStepOne: Object,
-});
-
-// onMounted(() => {
-//   console.log('Fetched Data from Previous Steps:', fetchedDataStepOne);
-// });
-``
-// eslint-disable-next-line no-unused-vars
-const emit = defineEmits(['go-to-next-step']);
-// eslint-disable-next-line no-unused-vars
-const route = useRoute();
+import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const username = ref('');
@@ -95,37 +80,55 @@ const createUser = async () => {
         return;
     }
 
-    // Prepare user data for submission
     const userSubmissionData = {
-        ...props.userData,
         username: username.value,
         password: password.value,
-        // Include any other necessary fields from userData or agencyData
     };
 
-    // API call to create user
     try {
-        const response = await fetch('http://localhost:8000/api/v1/access/register/', {
+        const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
+        console.log('CSRF Token:', csrftoken);
+
+        // First API call to register the user
+        const userResponse = await fetch('http://localhost:8000/api/v1/access/register-user/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Origin': 'http://localhost:5173',  // Ensure this matches your frontend origin
+                'X-CSRFToken': csrftoken,
             },
-            credentials: 'include',  // Include this line for cross-origin requests with cookies
+            credentials: 'include',
+            mode: 'cors',
             body: JSON.stringify(userSubmissionData),
         });
 
-        if (response.status === 201) {
-            console.log('User created successfully');
-            // Redirect to login or other appropriate page after successful account creation
-            router.push({ name: 'login' });
+        if (userResponse.status === 201) {
+            // Extract the user ID from the response
+            const { userId } = await userResponse.json();
+            console.log('User ID:', userId);
+
+            const agencyResponse = await fetch('http://localhost:8000/api/v1/access/register-agency/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                credentials: 'include',
+                mode: 'cors',
+            });
+
+            if (agencyResponse.status === 201) {
+                alert('Registration successful!');
+                router.push({ name: 'login' });
+            } else {
+                alert('Error creating agency:', agencyResponse.statusText);
+            }
+            // Clear local storage after using the data
+            localStorage.removeItem('agencyData');
         } else {
-            console.error('Error creating user:', response.statusText);
-            // Handle the error appropriately, e.g., show an error message to the user
+            alert('Error creating user:', userResponse.statusText);
         }
     } catch (error) {
-        console.error('Error creating user:', error);
-        // Handle the error appropriately, e.g., show an error message to the user
+        alert('Error creating user:', error);
     }
 };
 

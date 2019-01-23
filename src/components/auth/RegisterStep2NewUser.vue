@@ -44,6 +44,34 @@
                             </div>
                         </div>
 
+                    <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
+                        <!-- Display CID-specific fields -->
+                        <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
+                        <input type="number" id="cid" v-model="formData.cid" class="form-control" maxlength="13" autocomplete="true" placeholder="11506005090" value="11506005090">
+                        <!-- Date pickers for month, date, and year -->
+                        <div class="form-group mt-3">
+                            <small for="dob" class="text-muted">When is your Date of Birth?</small>
+                            <div class="row">
+                                <div class="col">
+                                    <select class="form-select" v-model="formData.selectedMonth">
+                                        <option v-for="month in months" :key="month.value" :value="month.value">{{
+                                            month.label }}</option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <select class="form-select" v-model="formData.selectedDate">
+                                        <option v-for="date in dates" :key="date.value" :value="date.value">{{ date.label }}
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <select class="form-select" v-model="formData.selectedYear">
+                                        <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                         <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
                             <!-- Display CID-specific fields -->
                             <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
@@ -223,18 +251,70 @@ const showSuccessMessage = ref(false);
 
 const emit = defineEmits(['go-to-next-step']);
 
+const fetchCitizenDetails = async () => {
+    if (formData.value.selectedIdentifier === 'cid') {
+        try {
+            // Ensure that the CSRF token is set in the headers
+            const csrfToken = getCSRFToken();
+            const headers = { 'X-CSRFToken': csrfToken };
 
-const fetchCitizenDetails =  () => {
-    
-                moveToStep3();
+            const response = formData.value.cid !== '' ?
+                await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers }) :
+                await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/11506005090/`, { headers });
+
+            if (response.data) {
+                const citizenDetails = response.data;
+
+                const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
+                const formattedDate = formData.value.selectedDate.padStart(2, '0');
+                const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
+                console.log(usernameSuffix);
+                const mappedData = {
+                    identity_number: citizenDetails[formData.value.selectedIdentifier],
+                    first_name: citizenDetails.firstName,
+                    middle_name: citizenDetails.middleName || '',
+                    last_name: citizenDetails.lastName,
+                    date_of_birth: formatDOB(citizenDetails.dob),
+                    gender: mapGender(citizenDetails.gender),
+                    mob_number: citizenDetails.mobileNumber,
+                    perm_add_village: citizenDetails.villageName,
+                    perm_add_gewog: citizenDetails.gewogName,
+                    perm_add_dzongkhag: citizenDetails.dzongkhagName,
+                    nationality: mapNationality(citizenDetails.country),
+                    username: usernameSuffix,
+                };
+
+                console.log(mappedData);
+
+                // Delay fetch action by 3 seconds
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Show success message and move to the next step
+                showSuccessMessage.value = true;
+                moveToStep3(mappedData);
+            } else {
+                showSuccessMessage.value = 'Citizen details not found';
+            }
+        } catch (error) {
+            console.error('An error occurred during fetching details', error);
+        }
+    } else if (formData.value.selectedIdentifier === 'casefile') {
+        // Display a prompt for Case File registration
+        window.alert('Contact PEMA directly for Case File registration.');
+    } else if (formData.value.selectedIdentifier === 'passport') {
+        // Display input fields for Passport registration
+        const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to next step?');
+        if (proceed) {
+            // Handle Passport registration logic here
+        }
+    }
 };
 
 
-
-// function getCSRFToken() {
-//     const name = 'csrftoken';
-//     const value = "; " + document.cookie;
-//     const parts = value.split("; " + name + "=");
+function getCSRFToken() {
+    const name = 'csrftoken';
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
 
 //     if (parts.length === 2) {
 //         return parts.pop().split(";").shift();

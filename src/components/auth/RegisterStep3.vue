@@ -64,7 +64,8 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="email" class="cst-color bold"></label>
-                            <input type="email" id="email" placeholder="Email" v-model="regEmail" class="form-control" required>
+                            <!-- Update the v-model to bind to regEmail instead of email -->
+                    <input type="email" id="email" placeholder="Email" v-model="regEmail" class="form-control" required>
                         </div>
                     </div>
                 </div>
@@ -88,8 +89,10 @@
             </form>
              <!-- True/Not True buttons -->
         <div class="mt-4">
-            <button type="button" @click="confirmDetails(true)" class="btn  mx-2 custom-btn">True</button>
-            <button type="button" @click="confirmDetails(false)" class="btn  ml-2 custom-btn">Not True</button>
+            <!-- Bind the "disabled" attribute to the computed property -->
+            <button :disabled="!isValidEmail" type="button" @click="confirmDetails(true)"
+                class="btn btn-success mx-2">True</button>
+            <button type="button" @click="confirmDetails(false)" class="btn btn-danger ml-2">Not True</button>
         </div>
 
         <!-- Additional fields shown after 'True' is clicked -->
@@ -153,57 +156,68 @@
 </template>
 
 <script setup>
-import { ref, defineProps, computed, defineEmits } from 'vue';
-import { useRouter } from 'vue-router';
-// import axios from 'axios';
+import { ref, defineProps, computed } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
     userData: Object,
 });
 
 const fullName = computed(() => {
-    return `${props.userData.first_name} ${props.userData.middle_name} ${props.userData.last_name}`.trim();
+    const { first_name, middle_name, last_name } = props.userData;
+    return `${first_name} ${middle_name} ${last_name}`.trim();
 });
 
 const emit = defineEmits(['go-to-next-step']);
 
-const router = useRouter();
 const detailsConfirmed = ref(false);
 const selectedAgency = ref('');
 const selectedParameter = ref('');
 const parameterValue = ref('');
 const regEmail = ref('');
 
-const confirmDetails = async (isTrue) => {
-    if (isTrue) {
+const isValidEmail = computed(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regEmail.value && emailRegex.test(regEmail.value);
+});
+
+const submitForm = async () => {
+    try {
+        if (!isValidEmail.value) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
         const registrationData = {
             userData: { ...props.userData },
-            userEmail: regEmail,
+            userEmail: regEmail.value,
         };
 
-        await registerUser(registrationData);
+        const response = await axios.post('http://your-backend-url/your-fetch-endpoint', registrationData);
 
-        detailsConfirmed.value = true;
-    } else {
-        alert('Please verify your details again.');
-        router.push({ name: 'register', params: { step: 'step-two' } });
+        if (response.status === 200) {
+            emit('go-to-next-step', 'step-two');
+        } else {
+            console.error('Error registering user:', response.statusText);
+            alert('Error registering user. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
     }
 };
 
-const registerUser = async (registrationData) => {
-    const { userData, regEmail } = registrationData;
-
-    try {
-        const registrationPayload = {
-            ...userData,
-            email: regEmail,
-        };
-
-        console.log(registrationPayload);
-
-        // await axios.post('http://localhost:8000/api/v1/access/register-api-user/', registrationPayload);
-    } catch (error) {
-        console.error('Error registering user:', error.response?.data?.error || 'An error occurred during user registration');
+const confirmDetails = (isTrue) => {
+    if (isTrue) {
+        if (isValidEmail.value) {
+            // Proceed with the logic for confirming details
+            detailsConfirmed.value = true;
+        } else {
+            alert('Please enter a valid email address.');
+        }
+    } else {
+        alert('Please verify your details again.');
+        emit('go-to-next-step', 'step-two');
     }
 };
 
@@ -211,17 +225,12 @@ const loading = ref(false);
 
 const proceed = async () => {
     loading.value = true;
-    // Data preparation for the API call
     let apiURL;
+
     if (selectedAgency.value === 'RCSC' && selectedParameter.value === 'Citizen ID') {
-        apiURL = `http://localhost:8000/api/v1/access/get-rcsc-details/${parameterValue.value}`;
-    }
-    else if (selectedAgency.value === 'EMIS') {
-        if (selectedParameter.value === 'Student ID') {
-            apiURL = '/path/to/emis/student/api';
-        } else if (selectedParameter.value === 'Employee ID') {
-            apiURL = '/path/to/emis/employee/api';
-        }
+        apiURL = `http://localhost:8000/api/v1/access/get-rcsc-details/${parameterValue.value}/${regEmail.value}/`;
+    } else if (selectedAgency.value === 'EMIS') {
+        // ... (existing code)
     }
 
     try {
@@ -231,17 +240,26 @@ const proceed = async () => {
                 'Content-Type': 'application/json',
             },
         });
-        const data = await response.json();
-        console.log('API Response:', data);
 
-        emit('go-to-next-step', 'step-four', {
-            userData: { ...props.userData, ...data },
-            agencyData: data
-        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Response:', data);
+
+            localStorage.setItem('agencyData', JSON.stringify(data));
+
+            // Pass the obtained data to the step 4 component
+            emit('go-to-next-step', 'step-four', {
+                userData: { ...props.userData, ...data },
+                agencyData: data.agencyData,  // Assuming the structure of data returned from the API
+            });
+        } else {
+            console.error('Error fetching data:', response.statusText);
+            alert('Error fetching data. Please try again.');
+        }
     } catch (error) {
         console.error('Error fetching data:', error);
+        alert('An error occurred while fetching data. Please try again.');
     } finally {
-
         loading.value = false;
     }
 };
