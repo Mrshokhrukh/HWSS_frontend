@@ -1,10 +1,15 @@
 <template>
     <div class="container mt-5">
+        <div class="text-center mt-3">
+            <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
+            <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
+          </div> <br>
         <div class="card mt-3">
             <div class="card-body text-muted">
                 <h5 class="mb-4">1. Fetch Details</h5>
             </div>
         </div>
+        
 
         <form @submit.prevent="submitForm">
             <h4 class="mb-2"> <span class="rounded-number bg-primary">1</span>2. User Details</h4>
