@@ -1,11 +1,12 @@
 <template>
-<<<<<<< HEAD
+
     <div class="container mt-5">
         <div class="text-center mt-3">
             <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
             <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
           </div> <br>
-=======
+          </div>
+
 <div class="container mt-5">
     <div class="row justify-content-center">
       <div class="col-md-8">
