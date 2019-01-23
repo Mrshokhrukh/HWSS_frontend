@@ -33,7 +33,6 @@
             </div>
 
             <div class="container mt-5">
->>>>>>> 8cf3608fd9a5c9955a813a9e85b46e60b9c78819
         <div class="card mt-3">
             <div class="card-body text-muted form">
                 <h5 class="mb-4">1. Fetch Details</h5>

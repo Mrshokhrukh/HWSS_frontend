@@ -82,7 +82,7 @@
   }
 
   .ndi-logo {
-    height: 30px; /* Adjust the height as needed */
+    height: 30px; 
     margin-right: 5px;
   }
   .form {
