@@ -44,38 +44,11 @@
                             </div>
                         </div>
 
-                    <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
-                        <!-- Display CID-specific fields -->
-                        <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
-                        <input type="number" id="cid" v-model="formData.cid" class="form-control" maxlength="13" autocomplete="true" placeholder="11506005090" value="11506005090">
-                        <!-- Date pickers for month, date, and year -->
-                        <div class="form-group mt-3">
-                            <small for="dob" class="text-muted">When is your Date of Birth?</small>
-                            <div class="row">
-                                <div class="col">
-                                    <select class="form-select" v-model="formData.selectedMonth">
-                                        <option v-for="month in months" :key="month.value" :value="month.value">{{
-                                            month.label }}</option>
-                                    </select>
-                                </div>
-                                <div class="col">
-                                    <select class="form-select" v-model="formData.selectedDate">
-                                        <option v-for="date in dates" :key="date.value" :value="date.value">{{ date.label }}
-                                        </option>
-                                    </select>
-                                </div>
-                                <div class="col">
-                                    <select class="form-select" v-model="formData.selectedYear">
-                                        <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                         <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
                             <!-- Display CID-specific fields -->
                             <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
-                            <input type="text" id="cid" v-model="formData.cid" class="form-control">
+                            <input type="number" id="cid" v-model="formData.cid" class="form-control" maxlength="13"
+                                autocomplete="true" placeholder="11506005090" value="11506005090">
                             <!-- Date pickers for month, date, and year -->
                             <div class="form-group mt-3">
                                 <small for="dob" class="text-muted">When is your Date of Birth?</small>
@@ -207,7 +180,7 @@
   
 <script setup>
 import { ref } from 'vue';
-// import axios from 'axios';
+import axios from 'axios';
 
 const formData = ref({
     selectedIdentifier: '',
@@ -316,31 +289,30 @@ function getCSRFToken() {
     const value = "; " + document.cookie;
     const parts = value.split("; " + name + "=");
 
-//     if (parts.length === 2) {
-//         return parts.pop().split(";").shift();
-//     }
+    if (parts.length === 2) {
+        return parts.pop().split(";").shift();
+    }
 
-//     return null;
-// }
+    return null;
+}
 
+// Helper functions
+function formatDOB(dob) {
+    return dob.split('/').reverse().join('-');
+}
 
-// // Helper functions
-// function formatDOB(dob) {
-//     return dob.split('/').reverse().join('-');
-// }
+function mapGender(gender) {
+    return gender === 'F' ? 'Female' : 'Male';
+}
+function mapNationality(country) {
+    if (!country || country.trim() === '') {
+        return 'Bhutanese';
+    }
+    return country;
+}
 
-// function mapGender(gender) {
-//     return gender === 'F' ? 'Female' : 'Male';
-// }
-// function mapNationality(country) {
-//     if (!country || country.trim() === '') {
-//         return 'Bhutanese';
-//     }
-//     return country;
-// }
-
-const moveToStep3 = () => {
-    emit('go-to-next-step', 'step-three');
+const moveToStep3 = (citizenDetails) => {
+    emit('go-to-next-step', 'step-three', citizenDetails);
 };
 
 </script>
@@ -405,4 +377,5 @@ const moveToStep3 = () => {
     margin-bottom: 10px;
     cursor: pointer;
     /* Added cursor pointer */
-}</style>
+}
+</style>
