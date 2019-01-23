@@ -104,7 +104,7 @@
 
 <script setup>
 import { ref } from 'vue';
-// import axios from 'axios';
+import axios from 'axios';
 
 const cid = ref('');
 const day = ref('');
@@ -113,23 +113,20 @@ const year = ref('');
 const errorMessage = ref('');
 const emit = defineEmits(['go-to-next-step']);
 
-// const verifyUser = async () => {
-//   try {
-//     const response = await axios.post('http://localhost:8000/api/v1/access/verify-pre-recorded-user/', {
-//       cid: cid.value,
-//       dob: `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`
-//     });
-//     if (response.data.success) {
-//       emit('go-to-next-step');
-//     } else {
-//       errorMessage.value = response.data.message || 'Verification failed';
-//     }
-//   } catch (error) {
-//     errorMessage.value = error.response.data.message || 'An error occurred during verification';
-//   }
-// };
 const verifyUser = async () => {
-  emit('go-to-next-step','step-two-prerecorded')
-}
+  try {
+    const response = await axios.post('http://localhost:8000/api/v1/access/verify-pre-recorded-user/', {
+      cid: cid.value,
+      dob: `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`
+    });
+    if (response.data.success) {
+      emit('go-to-next-step');
+    } else {
+      errorMessage.value = response.data.message || 'Verification failed';
+    }
+  } catch (error) {
+    errorMessage.value = error.response.data.message || 'An error occurred during verification';
+  }
+};
 
 </script>
