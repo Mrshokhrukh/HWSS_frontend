@@ -5,8 +5,8 @@
         </div>
         <div v-else>
             <component :is="currentStepComponent" :user-data="fetchedCitizenDetails" @go-to-next-step="goToNextStep"
-                @select-user-type="handleUserTypeSelection" />
-            <last-component v-if="currentStep === 'step-four'" :fetchedDataStepOne="fetchedCitizenDetails"/>
+                @select-user-type="handleUserTypeSelection" @go-to-prev-step="goBack" />
+            <last-component v-if="currentStep === 'step-four'" :fetchedDataStepOne="fetchedCitizenDetails" />
         </div>
         <div v-if="error" class="alert alert-danger mt-3" role="alert">
             Oops! Something went wrong. Please try again.
@@ -37,10 +37,21 @@ const currentStepComponent = computed(() => steps[currentStep.value]);
 let fetchedCitizenDetails = ref({});
 
 const goToNextStep = (targetStep, data) => {
-    console.log('Fetched Data for Current Step:', fetchedCitizenDetails.value);
+    // console.log('Fetched Data for Current Step:', fetchedCitizenDetails.value);
     currentStep.value = targetStep;
     if (data) {
         fetchedCitizenDetails.value = data;
+    }
+};
+
+const goBack = () => {
+    const stepOrder = ['start', 'pre-recorded', 'new-user', 'step-three', 'step-four', 'step-two-prerecorded'];
+
+    const currentIndex = stepOrder.indexOf(currentStep.value);
+
+    if (currentIndex > 0) {
+        const prevStep = stepOrder[currentIndex - 1];
+        currentStep.value = prevStep;
     }
 };
 
@@ -56,7 +67,7 @@ const handleUserTypeSelection = (type) => {
         currentStep.value = 'step-three';
     } else if (type === 'step-four') {
         currentStep.value = 'step-four';
-    }else {
+    } else {
         throw new Error('Invalid user type');
     }
 };

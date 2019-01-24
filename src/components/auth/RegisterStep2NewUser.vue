@@ -47,8 +47,9 @@
                         <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
                             <!-- Display CID-specific fields -->
                             <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
-                            <input type="number" id="cid" v-model="formData.cid" class="form-control" maxlength="13"
-                                autocomplete="true" placeholder="11506005090" value="11506005090">
+                            <input type="text" id="cid" v-model="formData.cid" class="form-control" maxlength="11"
+                                @input="validateCID">
+                            <small v-if="state.cidError" class="text-danger">{{ state.cidError }}</small>
                             <!-- Date pickers for month, date, and year -->
                             <div class="form-group mt-3">
                                 <small for="dob" class="text-muted">When is your Date of Birth?</small>
@@ -168,9 +169,18 @@
             </div>
         </div>
 
-        <div v-if="showSuccessMessage" class="alert alert-success mt-3" role="alert">
-            Details fetched successfully! Registering user...
+        <div v-if="showLoadingOverlay" class="loading-overlay">
+            <!-- Your loading content goes here -->
         </div>
+
+        <div v-if="showSuccessMessage" class="modal">
+            <!-- Your success message content goes here -->
+        </div>
+
+        <div v-if="showFailedMessage" class="modal">
+            <!-- Your failed message content goes here -->
+        </div>
+
 
         <div class="text-center mt-3">
             Already Have an Account? <a href="#" @click="toggleForm" style="color: #2B656F; font-weight: bold">Sign In</a>
@@ -179,7 +189,7 @@
 </template>
   
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import axios from 'axios';
 
 const formData = ref({
@@ -215,74 +225,106 @@ const months = [
     { value: '12', label: 'December' },
 ];
 
+const showLoadingOverlay = ref(false);
+const showSuccessMessage = ref(false);
+const showFailedMessage = ref(false);
+const state = reactive({
+    cidError: '',
+});
+
+const validateCID = () => {
+    const cidPattern = /^\d+$/;
+
+    if (formData.value.cid.length > 11) {
+        formData.value.cid = formData.value.cid.slice(0, 11);
+    }
+
+    if (!cidPattern.test(formData.value.cid)) {
+        state.cidError = 'Please enter only numbers for CID.';
+    } else if (parseInt(formData.value.cid) > 49999999999) {
+        state.cidError = 'Invalid CID entered. Please enter a valid CID.';
+    } else {
+        state.cidError = '';
+    }
+};
+
+
+
 const dates = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1) }));
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
-const showSuccessMessage = ref(false);
-
 const emit = defineEmits(['go-to-next-step']);
 
 const fetchCitizenDetails = async () => {
-    if (formData.value.selectedIdentifier === 'cid') {
+    if (!formData.value.selectedMonth || !formData.value.selectedDate || !formData.value.selectedYear) {
+        alert('Please Select Date Month and Year');
+        return;
+    }
+
+    if (formData.value.selectedIdentifier === 'cid' && state.cidError === '') {
         try {
-            // Ensure that the CSRF token is set in the headers
+            showLoadingOverlay.value = true;
             const csrfToken = getCSRFToken();
             const headers = { 'X-CSRFToken': csrfToken };
 
-            const response = formData.value.cid !== '' ?
-                await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers }) :
-                await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/11506005090/`, { headers });
+            const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers });
 
             if (response.data) {
                 const citizenDetails = response.data;
+                console.log(citizenDetails)
+                localStorage.setItem('userCID', citizenDetails.cid);
 
                 const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
                 const formattedDate = formData.value.selectedDate.padStart(2, '0');
-                const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
-                console.log(usernameSuffix);
-                const mappedData = {
-                    identity_number: citizenDetails[formData.value.selectedIdentifier],
-                    first_name: citizenDetails.firstName,
-                    middle_name: citizenDetails.middleName || '',
-                    last_name: citizenDetails.lastName,
-                    date_of_birth: formatDOB(citizenDetails.dob),
-                    gender: mapGender(citizenDetails.gender),
-                    mob_number: citizenDetails.mobileNumber,
-                    perm_add_village: citizenDetails.villageName,
-                    perm_add_gewog: citizenDetails.gewogName,
-                    perm_add_dzongkhag: citizenDetails.dzongkhagName,
-                    nationality: mapNationality(citizenDetails.country),
-                    username: usernameSuffix,
-                };
 
-                console.log(mappedData);
+                const enteredDOB = `${formattedDate}/${formattedMonth}/${formData.value.selectedYear}`;
+                const apiDOB = citizenDetails.dob;
 
-                // Delay fetch action by 3 seconds
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                console.log(enteredDOB, apiDOB);
 
-                // Show success message and move to the next step
-                showSuccessMessage.value = true;
-                moveToStep3(mappedData);
+                if (enteredDOB === apiDOB) {
+                    const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
+                    const mappedData = {
+                        identity_number: citizenDetails[formData.value.selectedIdentifier],
+                        first_name: citizenDetails.firstName,
+                        middle_name: citizenDetails.middleName || '',
+                        last_name: citizenDetails.lastName,
+                        date_of_birth: formatDOB(citizenDetails.dob),
+                        gender: mapGender(citizenDetails.gender),
+                        mob_number: citizenDetails.mobileNumber,
+                        perm_add_village: citizenDetails.villageName,
+                        perm_add_gewog: citizenDetails.gewogName,
+                        perm_add_dzongkhag: citizenDetails.dzongkhagName,
+                        nationality: mapNationality(citizenDetails.country),
+                        username: usernameSuffix,
+                    };
+
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    showSuccessMessage.value = true;
+                    moveToStep3(mappedData);
+                } else {
+                    alert('Entered date of birth does not match with the records under your CID. Please re-enter your details correctly.');
+                }
             } else {
-                showSuccessMessage.value = 'Citizen details not found';
+                alert('Citizen details not found');
             }
         } catch (error) {
+            showFailedMessage.value = true;
             console.error('An error occurred during fetching details', error);
+        } finally {
+            showLoadingOverlay.value = false;
         }
     } else if (formData.value.selectedIdentifier === 'casefile') {
-        // Display a prompt for Case File registration
         window.alert('Contact PEMA directly for Case File registration.');
     } else if (formData.value.selectedIdentifier === 'passport') {
-        // Display input fields for Passport registration
-        const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to next step?');
+        const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to the next step?');
         if (proceed) {
             // Handle Passport registration logic here
         }
     }
 };
-
 
 function getCSRFToken() {
     const name = 'csrftoken';
@@ -296,7 +338,6 @@ function getCSRFToken() {
     return null;
 }
 
-// Helper functions
 function formatDOB(dob) {
     return dob.split('/').reverse().join('-');
 }

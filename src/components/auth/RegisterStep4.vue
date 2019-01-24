@@ -87,7 +87,7 @@ const createUser = async () => {
 
     try {
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
-        console.log('CSRF Token:', csrftoken);
+        // console.log('CSRF Token:', csrftoken);
 
         // First API call to register the user
         const userResponse = await fetch('http://localhost:8000/api/v1/access/register-user/', {
