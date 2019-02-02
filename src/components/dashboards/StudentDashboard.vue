@@ -44,7 +44,10 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
-
+import ContactDetailCard  from "@/components/dashboards/dashboardCard/ContactDetailCard.vue";
+import LandingDashboardCard from '@/components/dashboards/dashboardCard/LandingDashboardCard.vue';
+import ImageCard from '@/components/dashboards/dashboardCard/ImageCard.vue';
+import PemaResponseServicesCard from '@/components/dashboards/dashboardCard/PemaResponseServicesCard.vue';
 const router = useRouter();
 
 // const userDetails = ref(null);

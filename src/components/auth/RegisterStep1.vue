@@ -80,7 +80,6 @@ const continueToPage = () => {
 .loginbg {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
-    height: 100%;
 }
 
 #reg-img {

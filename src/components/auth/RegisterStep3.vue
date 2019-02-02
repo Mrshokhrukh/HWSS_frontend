@@ -1,19 +1,10 @@
 <template>
-    <div class="container mt-5">
-        <div class="text-center mt-3">
-            <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
-            <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
-        </div> <br>
-    </div>
 
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow p-4">
-                    <div class="logo-container">
-                        <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
-                        <a href="#" class="text-dark font-weight-bold">Use Bhutan NDI</a>
-                    </div>
+                <div class="card shadow p-3 mb-5">
+                 
 
                     <div class="text-center mt-3">
                         <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
@@ -34,20 +25,20 @@
                     <div class="container mt-5">
                         <div class="card mt-3">
                             <div class="card-body text-muted form">
-                                <h5 class="mb-4">1. Fetch Details</h5>
+                                <h5 class="text-start mb-4">1. Fetch Details</h5>
                             </div>
                         </div>
 
-                        <div class="container mt-5 form p-5">
+                        <div class="container text-start mt-5 form p-5">
                             <form @submit.prevent="submitForm">
-                                <h4 class="mb-2"><span class="rounded-number bg-success">2</span> User Details</h4>
+                                <h5 class="mb-2"><span class="rounded-number p-3 ">2</span> User Details</h5>
                                 <small class="text-muted mb-5">Agree to the Details </small>
 
                                 <div class="form-group row">
                                     <label for="fullName" class="col-sm-6 col-form-label cst-color bold"></label>
                                     <div class="col-md-12">
                                         <input type="text" id="fullName" :value="fullName" placeholder="Full Name"
-                                            class="form-control cst-color" readonly disabled>
+                                            class="form-control cst-color bg-transparent border-dark" readonly disabled>
                                     </div>
                                 </div>
 
@@ -56,7 +47,7 @@
                                         <div class="form-group">
                                             <label for="phoneNumber" class="cst-color bold"></label>
                                             <input type="text" id="phoneNumber" placeholder="Phone Number"
-                                                :value="userData.mob_number" class="form-control cst-color" readonly
+                                                :value="userData.mob_number" class="form-control cst-color bg-transparent border-dark" readonly
                                                 disabled>
                                         </div>
                                     </div>
@@ -64,7 +55,7 @@
                                         <div class="form-group">
                                             <label for="email" class="cst-color bold"></label>
                                             <input type="email" id="email" placeholder="Email" v-model="regEmail"
-                                                class="form-control" required :disabled="detailsConfirmed"
+                                                class="form-control bg-transparent border-dark" required :disabled="detailsConfirmed"
                                                 :readonly="detailsConfirmed">
                                             <!-- Validation message -->
                                             <small v-if="!isValidEmail && !detailsConfirmed" class="text-danger">Please
@@ -78,7 +69,7 @@
                                         <div class="form-group">
                                             <label for="nationality" class="cst-color bold"></label>
                                             <input type="text" id="nationality" placeholder="Nationality"
-                                                :value="userData.nationality" class="form-control cst-color" readonly
+                                                :value="userData.nationality" class="form-control cst-color bg-transparent border-dark" readonly
                                                 disabled>
                                         </div>
                                     </div>
@@ -86,30 +77,31 @@
                                         <div class="form-group">
                                             <label for="gender" class="cst-color bold"></label>
                                             <input type="text" id="gender" placeholder="Gender" :value="userData.gender"
-                                                class="form-control cst-color" readonly disabled>
+                                                class="form-control cst-color bg-transparent border-dark" readonly disabled>
                                         </div>
                                     </div>
                                 </div>
 
                             </form>
                             <!-- True/Not True buttons -->
-                            <div class="mt-4">
+                            <div class="mt-4 ">
                                 <!-- Bind the "disabled" attribute to the computed property -->
                                 <button :disabled="!isValidEmail || detailsConfirmed" type="button"
-                                    @click="confirmDetails(true)" class="btn btn-success mx-2"
+                                    @click="confirmDetails(true)" class="btn custom-btn col-md-5 mb-2 mx-4 true-btn"
                                     :style="{ cursor: detailsConfirmed ? 'not-allowed' : 'pointer' }">True</button>
                                 <button :disabled="detailsConfirmed" type="button" @click="confirmDetails(false)"
-                                    class="btn btn-danger ml-2"
+                                    class="btn custom-btn col-md-5 mb-2 not-true-btn"
                                     :style="{ cursor: detailsConfirmed ? 'not-allowed' : 'pointer' }">Not
                                     True</button>
                             </div>
 
                             <!-- Additional fields shown after 'True' is clicked -->
-                            <div v-if="detailsConfirmed" class="mt-4">
+                            <div v-if="detailsConfirmed" class="mt-5">
                                 <!-- Agency dropdown -->
                                 <div class="form-group">
-                                    <label class="h3 cust-text bold" for="agency">Select Agency:</label>
-                                    <select id="agency" v-model="selectedAgency" class="form-control">
+                                    <!-- <label class="h3 cust-text bold " for="agency">Select Your Agency:</label> -->
+                                    <select id="agency" v-model="selectedAgency" class="form-control bg-transparent border-dark">
+                                        <option class="cst-color text-center" value="" selected disabled>Select Your Agency</option>
                                         <option class="cst-color" value="EMIS">EMIS</option>
                                         <option value="RCSC">RCSC</option>
                                     </select>
@@ -117,16 +109,16 @@
 
                                 <!-- Parameter selection -->
                                 <div v-if="selectedAgency === 'EMIS'" class="form-group">
-                                    <label class="mt-5 h3 cust-text">Select Parameter Type:</label>
+                                    <label class="mt-5 cust-text bg-transparent border-dark">Select any of the Identifier:</label>
                                     <div class="mt-2">
                                         <div class="form-check form-check-inline">
                                             <input type="radio" id="studentID" value="Student CID"
-                                                v-model="selectedParameter" class="form-check-input">
+                                                v-model="selectedParameter" class="form-check-input bg-transparent border-dark">
                                             <label for="studentID" class="form-check-label cust-text">Student CID</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input type="radio" id="employeeID" value="Employee ID"
-                                                v-model="selectedParameter" class="form-check-input">
+                                                v-model="selectedParameter" class="form-check-input bg-transparent border-dark">
                                             <label for="employeeID" class="form-check-label cust-text">Employee ID</label>
                                         </div>
                                     </div>
@@ -137,19 +129,19 @@
                                             records</small>
                                         <div class="row">
                                             <div class="col">
-                                                <select class="form-select" v-model="formData.selectedMonth">
+                                                <select class="form-select bg-transparent border-dark" v-model="formData.selectedMonth">
                                                     <option v-for="month in months" :key="month.value" :value="month.value">
                                                         {{ month.label }}</option>
                                                 </select>
                                             </div>
                                             <div class="col">
-                                                <select class="form-select" v-model="formData.selectedDate">
+                                                <select class="form-select bg-transparent border-dark" v-model="formData.selectedDate">
                                                     <option v-for="date in dates" :key="date.value" :value="date.value">{{
                                                         date.label }}</option>
                                                 </select>
                                             </div>
                                             <div class="col">
-                                                <select class="form-select" v-model="formData.selectedYear">
+                                                <select class="form-select bg-transparent border-dark" v-model="formData.selectedYear">
                                                     <option v-for="year in years" :key="year" :value="year">{{ year }}
                                                     </option>
                                                 </select>
@@ -161,12 +153,12 @@
 
                                 <!-- RCSC Parameter selection -->
                                 <div v-else-if="selectedAgency === 'RCSC'" class="form-group">
-                                    <label class="mt-5 h3 cust-text">Select Parameter Type:</label>
+                                    <label class="mt-5 cust-text">Select any of the Identifier:</label>
                                     <div class="mt-2">
                                         <div class="form-check form-check-inline">
                                             <input type="radio" id="citizenID" value="Citizen ID"
                                                 v-model="selectedParameter" class="form-check-input">
-                                            <label for="citizenID" class="form-check-label cust-text">Citizen ID</label>
+                                            <label for="citizenID" class="form-check-label cust-text bg-transparent border-dark">Citizen ID</label>
                                         </div>
                                     </div>
                                 </div>
@@ -176,11 +168,11 @@
                             <div v-if="selectedParameter" class="form-group cust-text">
                                 <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter
                                 }}:</label>
-                                <input type="text" id="parameterValue" v-model="parameterValue" class="form-control mt-2">
+                                <input type="text" id="parameterValue" v-model="parameterValue" class="form-control mt-2 bg-transparent border-dark">
                             </div>
 
                             <!-- Proceed button -->
-                            <button type="button" @click="proceed" class="btn  ml-2 custom-btn mt-3">Proceed</button>
+                            <button type="button" @click="proceed" class="btn  col-md-12 custom-btn mt-3">Next</button>
                         </div>
                     </div>
 
@@ -189,9 +181,13 @@
                             <h5 class="mb-4">3. Login Info</h5>
                         </div>
                     </div>
+                    <div class="text-center mt-4">
+                        Already Have an Account? <a href="#" @click="toggleForm" style="color: #2B656F; font-weight: bold">Sign In</a>
+                    </div>
                 </div>
             </div>
         </div>
+        
     </div>
 </template>
 
@@ -360,19 +356,38 @@ const proceed = async () => {
 
 
 
-<style>
+<style scoped>
+.rounded-number {
+    background-color: #2B656F;
+    color: #fff;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 .form {
     background-color: #2B656F24;
     border-radius: 10px;
 }
 
 .custom-btn {
-    background-color: #2B656F;
-    color: #fff;
     font-size: inherit;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+}
+
+.true-btn{
+    background-color: #2B656F;
+    color: #fff;
+}
+
+.not-true-btn{
+    background-color: #afcfd5;
+    border: 1px solid #2B656F;
+    color: #2B656F;
 }
 
 .cust-text {

@@ -1,12 +1,8 @@
 <template>
-    <div class="container mt-5">
+    <div class="container my-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow p-5">
-                    <div class="logo-container">
-                        <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
-                        <a href="#" class="text-dark font-weight-bold">Use Bhutan NDI</a>
-                    </div>
+                <div class="card shadow p-3 mb-5">
 
                     <div class="text-center mt-3">
                         <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
@@ -37,30 +33,35 @@
                     </div>
 
 
-                    <div class="container p-5" style="background-color: #E2E9EB; border-radius: 15px;">
-                        <h2 class="cust-text">3. Login Details</h2>
+                    <div class="container p-5 text-start" style="background-color: #E2E9EB; border-radius: 15px;">
+                        <h5 class="mb-3 text-mutedcust-text"> <span class="rounded-number  p-3">3</span> Login Details
+                        </h5>
                         <form @submit.prevent="createUser">
                             <!-- Username and password fields -->
                             <div class="form-group cust-text  mx-auto">
                                 <label for="username">Username:</label>
-                                <input type="text" id="username" v-model="username" class="form-control p-2" required>
+                                <input type="text" id="username" v-model="username" class="form-control p-2 bg-transparent border-dark" required>
                             </div>
                             <div class="form-group cust-text mt-3 mx-auto">
                                 <label for="password">Password:</label>
-                                <input type="password" id="password" v-model="password" class="form-control p-2" required>
+                                <input type="password" id="password" v-model="password" class="form-control p-2 bg-transparent border-dark" required>
                             </div>
                             <div class="form-group cust-text mt-3 mx-auto">
                                 <label for="confirmPassword">Confirm Password:</label>
                                 <input type="password" id="confirmPassword" v-model="confirmPassword"
-                                    class="form-control p-2" required>
+                                    class="form-control p-2 bg-transparent border-dark" required>
                             </div>
-                            <button type="submit" class="btn  ml-2 custom-btn mt-3">Create Account</button>
+                            <button type="submit" class="btn  ml-2 custom-btn mt-3 col-md-12">Sign Up</button>
                         </form>
+                    </div>
+                    <div class="text-center mt-4">
+                        Already Have an Account? <a href="#" @click="toggleForm" style="color: #2B656F; font-weight: bold">Sign In</a>
                     </div>
 
                 </div>
             </div>
         </div>
+        
     </div>
 </template>
 
@@ -135,9 +136,19 @@ const createUser = async () => {
 </script>
 
 
-<style>
+<style scoped>
 cust-radi {
     border-radius: 15%;
+}
+.rounded-number {
+    background-color: #2B656F;
+    color: #fff;
+    height: 1rem;
+    width: 1rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .step-container {
     position: relative;

@@ -5,7 +5,7 @@
                 <div class="col-md-7">
                     <div class="card-body">
                         <div class="auth-form text-center">
-                            <h1 class="text-center my-5 bold" style="color: #2B656F;">Sign In</h1>
+                            <h1 class="text-center my-3 bold" style="color: #2B656F;">Sign In</h1>
                             <form class="row justify-content-center" @submit.prevent="loginUser">
                                 <div class="mb-3 col-md-8">
                                     <input v-model="username" type="text" class="form-control" placeholder="Username"
@@ -30,12 +30,12 @@
                             </div>
                             <br />
                             <div>
-                                <p class="text-center mt-3">
+                                <p class="text-center my-4">
                                     <img src="@/assets/images/NDILogo.png" alt="NDI Logo" />
                                     <a href="#" style="color: black; font-weight: bold"> Login with NDI</a>
                                 </p>
                             </div>
-                            <p class="text-center mt-3" style="color: #2B656F;">
+                            <p class="text-center my-3" style="color: #2B656F;">
                                 Don't have an account? <br />
                                 <router-link to="/register" style="color: #2B656F; font-weight: bold">Sign Up</router-link>
                             </p>
