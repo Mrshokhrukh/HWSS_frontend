@@ -347,6 +347,7 @@ function mapNationality(country) {
 }
 
 const moveToStep3 = (citizenDetails) => {
+    sessionStorage.setItem('user_data', JSON.stringify(citizenDetails));
     emit('go-to-next-step', 'step-three', citizenDetails);
 };
 

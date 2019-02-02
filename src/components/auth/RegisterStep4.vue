@@ -90,7 +90,7 @@ const createUser = async () => {
     userData.password = password.value;
 
     // Remove 'user' field from agencyData object
-    delete agencyData.user;
+    // delete agencyData.user;
 
     const userSubmissionData = {
         userData,
