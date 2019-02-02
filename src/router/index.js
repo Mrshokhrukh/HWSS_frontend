@@ -29,19 +29,19 @@ const createAppRouter = () => {
       {
         path: '/student-dashboard',
         name: 'student-dashboard',
-        component: () => import('@/views/dashboard/DashboardView.vue'),
+        component: () => import('@/views/Dashboard/DashboardView.vue'),
         meta: { title: 'Student Dashboard', requiresAuth: true }
       },
       {
         path: '/counsellor-dashboard',
         name: 'counsellor-dashboard',
-        component: () => import('@/views/dashboard/DashboardView.vue'),
+        component: () => import('@/views/Dashboard/DashboardView.vue'),
         meta: { title: 'Counsellor Dashboard', requiresAuth: true }
       },
       {
         path: '/admin-dashboard',
         name: 'admin-dashboard',
-        component: () => import('@/views/dashboard/DashboardView.vue'),
+        component: () => import('@/views/Dashboard/DashboardView.vue'),
         meta: { title: 'Admin Dashboard', requiresAuth: true }
       },
     ],

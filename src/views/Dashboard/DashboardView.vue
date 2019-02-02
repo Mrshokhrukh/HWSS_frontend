@@ -2,7 +2,7 @@
   <div class="container-fluid">
     <div class="row">
       <!-- Sidebar -->
-      <aside class="col-lg-3 col-md-4 col-sm-12" :class="{ 'sidebar-open': sidebarOpen }">
+      <aside class="col-lg-3 col-md-4 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
         <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" :userName="userName" />
       </aside>
 

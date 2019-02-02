@@ -74,7 +74,7 @@ const logout = async () => {
 
 // Menu items data
 const menus = ref([
-  { text: 'Dashboard', route: '/dashboard', iconClass: 'fas fa-chart-bar' },
+  { text: 'Dashboard', route: '/student-dashboard', iconClass: 'fas fa-chart-bar' },
   { text: 'Profile', route: '/profile', iconClass: 'fas fa-user' },
   { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' }
 ]);
@@ -133,7 +133,8 @@ const menus = ref([
 
 .side-btn.active,
 .side-btn:hover {
-  background-color: #3fa0a0; /* Active and hover background color */
+  background-color: #cde0c9; 
+  color: #2c6975;
 }
 
 .side-btn i {
