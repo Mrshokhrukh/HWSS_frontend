@@ -72,6 +72,7 @@ const logout = async () => {
         if (response.data.message === 'Logout successful') {
             sessionStorage.removeItem('userDetails');
             sessionStorage.removeItem('agencyDetails');
+            sessionStorage.removeItem('userAgencyDetails');
             sessionStorage.removeItem('userRole');
             localStorage.removeItem('authToken');
             router.push('/login');
