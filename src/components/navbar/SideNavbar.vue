@@ -135,6 +135,7 @@ const menus = ref([
 .side-btn:hover {
   background-color: #cde0c9; 
   color: #2c6975;
+  border-radius: 50px 0 0 50px;
 }
 
 .side-btn i {
@@ -154,4 +155,5 @@ const menus = ref([
   width: 50px;
   /* Adjust according to your icon size */
 }
+
 </style>
