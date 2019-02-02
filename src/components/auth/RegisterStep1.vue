@@ -73,9 +73,6 @@ const continueToPage = () => {
 </script>
   
 <style scoped>
-.card-reg {
-    height: 500px;
-}
 
 .loginbg {
     background-image: url('@/assets/images/thePemabg2.png');
