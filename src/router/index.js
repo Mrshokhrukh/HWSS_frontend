@@ -50,7 +50,7 @@ const createAppRouter = () => {
   router.beforeEach((to, from, next) => {
     if (to.matched.some(record => record.meta.requiresAuth)) {
       const isAuthenticated = localStorage.getItem('authToken') !== null;
-  
+
       if (!isAuthenticated) {
         alert('Access Denied! You need to be logged in to view this page.')
         next({ name: 'login' });
