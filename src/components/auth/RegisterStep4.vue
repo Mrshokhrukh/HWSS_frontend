@@ -81,25 +81,26 @@ const createUser = async () => {
         return;
     }
 
-    // Get user and agency data from sessionStorage
-    const userData = JSON.parse(sessionStorage.getItem('user_data'));
-    const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
-
-    // Assign username and password from input fields
-    userData.username = username.value;
-    userData.password = password.value;
-
-    // Remove 'user' field from agencyData object
-    // delete agencyData.user;
-
-    const userSubmissionData = {
-        userData,
-        agencyData,
-        username: username.value, // Add username from input field
-        password: password.value, // Add password from input field
-    };
-
     try {
+        // Get user and agency data from sessionStorage
+        let userData = JSON.parse(sessionStorage.getItem('user_data'));
+        const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
+
+        // Update username and password in the userData object
+        userData.username = username.value;
+        userData.password = password.value;
+
+        // Set the updated userData back to sessionStorage
+        sessionStorage.setItem('user_data', JSON.stringify(userData));
+
+        // Prepare userSubmissionData
+        const userSubmissionData = {
+            userData, 
+            agencyData,
+        };
+
+        console.log(userSubmissionData);
+
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
 
         // API call to register the user and agency together
@@ -131,14 +132,15 @@ const createUser = async () => {
         alert('Error creating user:', error);
     }
 };
-
 </script>
+
 
 
 <style>
 cust-radi {
     border-radius: 15%;
 }
+
 .step-container {
     position: relative;
     text-align: center;
