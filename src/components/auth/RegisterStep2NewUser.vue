@@ -1,10 +1,6 @@
 <template>
     <div class="container mt-5">
         <div class="card mt-5">
-            <div class="logo-container">
-                <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
-                <a href="#" class="text-dark font-weight-bold">Use Bhutan NDI</a>
-            </div>
 
             <div class="logo-container">
                 <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
@@ -191,6 +187,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
+import endpoints from '@/api'; // Import endpoints from centralized api.js file
 
 const formData = ref({
     selectedIdentifier: '',
@@ -248,10 +245,7 @@ const validateCID = () => {
     }
 };
 
-
-
 const dates = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1) }));
-
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
@@ -269,7 +263,7 @@ const fetchCitizenDetails = async () => {
             const csrfToken = getCSRFToken();
             const headers = { 'X-CSRFToken': csrfToken };
 
-            const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${formData.value.cid}/`, { headers });
+            const response = await axios.get(`${endpoints.getCitizenDetails}${formData.value.cid}/`, { headers });
 
             if (response.data) {
                 const citizenDetails = response.data;
@@ -357,6 +351,7 @@ const moveToStep3 = (citizenDetails) => {
 };
 
 </script>
+
 
 <style scoped>
 .rounded-number {

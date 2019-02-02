@@ -1,14 +1,19 @@
 <template>
     <div class="container-fluid rounded">
-        <div class="card mb-3 shadow-lg mb-5 bg-body rounded card-reg">
+        <div class="card my-5 shadow-lg bg-body rounded card-reg">
             <div class="row g-0 loginbg rounded">
-                <div class="col-md-5 d-flex flex-column align-items-center justify-content-center">
+                <div class="col-md-5 d-flex flex-column align-items-center justify-content-center position-relative">
+                    <!-- Float-start image -->
+                    <img class="position-absolute start-0 bottom-0" src="@/assets/images/shape.png" alt="Shape Image" style="z-index: 999;">
+
                     <!-- Centered and sized logo -->
-                    <div id="reg-img" class="position-relative">
-                        <img src="@/assets/images/logoxs.png" class="img-fluid rounded reg-img" alt="Logo">
-                        <h2 class="reg-heading">Mental Health Matters</h2>
+                    <div id="reg-img">
+                        <img src="@/assets/images/logoxs.png" class="img-fluid rounded reg-img" alt="Logo"
+                            style="width: 250px;">
+                        <h2 class="reg-heading display-7">Mental Health Matters</h2>
                     </div>
                 </div>
+
                 <div class="col-md-7 d-flex flex-column justify-content-between">
                     <div class="auth-form text-center">
                         <h2 class="text-center mt-5 mb-4" style="color: #2B656F; font-weight: bold">Sign Up</h2>
@@ -17,8 +22,7 @@
                             <div :class="['card', 'reg-card', { 'active': selectedOption === 'pre-recorded' }]"
                                 @click="updateSelectedUserType('pre-recorded')">
                                 <div class="card-body">
-                                    <!-- <i class="fas fa-video" style="color: #2B656F;"></i> -->
-                                    <img src="@/assets/images/pre-recorded-icon.png" alt="" class="img-fluid"> <br/>
+                                    <img src="@/assets/images/pre-recorded-icon.png" alt="" class="img-fluid"> <br />
                                     <h6 class="card-text" style="color: #2B656F;">Pre Recorded User</h6>
                                 </div>
                             </div>
@@ -27,7 +31,7 @@
                                 @click="updateSelectedUserType('new-user')">
                                 <div class="card-body">
                                     <!-- <i class="fas fa-user" style="color: #2B656F;"></i> -->
-                                    <img src="@/assets/images/agency-based-icon.png" alt="" class="img-fluid"> <br/>
+                                    <img src="@/assets/images/agency-based-icon.png" alt="" class="img-fluid"> <br />
                                     <h6 class="card-text" style="color: #2B656F;">Agency Based User</h6>
                                 </div>
                             </div>
@@ -40,7 +44,8 @@
                         </button>
                         <p style="color: #2B656F; margin-bottom: 5px;">
                             Already have an account? <br />
-                            <router-link to="/login" style="color: #2B656F; font-weight: bold" class="text-decoration-underline">Sign In</router-link>
+                            <router-link to="/login" style="color: #2B656F; font-weight: bold"
+                                class="text-decoration-underline">Sign In</router-link>
                         </p>
                     </div>
                 </div>
@@ -69,7 +74,7 @@ const continueToPage = () => {
   
 <style scoped>
 .card-reg {
-    height: 100%;
+    height: 500px;
 }
 
 .loginbg {

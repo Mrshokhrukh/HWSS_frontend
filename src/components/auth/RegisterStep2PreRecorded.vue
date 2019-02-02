@@ -1,18 +1,3 @@
-    <!-- <div>
-        <h2>Step 2: Pre-Recorded User Verification</h2>
-        <form @submit.prevent="verifyUser">
-            <div>
-                <label for="cid">CID Number:</label>
-                <input type="text" id="cid" v-model="cid" required>
-            </div>
-            <div>
-                <label for="dob">Date of Birth:</label>
-                <input type="date" id="dob" v-model="dob" required>
-            </div>
-            <button type="submit">Verify</button>
-        </form>
-        <p v-if="errorMessage">{{ errorMessage }}</p>
-    </div> -->
 <template>
   <div class="container mt-5">
     <div class="row justify-content-center">
@@ -29,36 +14,37 @@
             <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
           </div>
           <div class="container p-4">
-          <div class="card-body text-start form">
-            <h5 class="card-title cust-text bold h2">User Details</h5>
-            <p class="card-text cust-text bold">Please kindly enter your details below to check if you are prerecorded or not</p>
-            <form @submit.prevent="verifyUser">
-              <div class="mb-3">
-                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID</label>
-                <input type="text" class="form-control" id="cid" v-model="cid" required>
-              </div>
-              <div class="row g-3">
-                <p class="cust-text bold">What’s your date of birth?</p>
-                <div class="col-md-4">
-                  <label for="day" class="form-label text-success">Day:</label>
-                  <input type="number" id="day" v-model="day" min="1" max="31" class="form-control" required>
+            <div class="card-body text-start form">
+              <h5 class="card-title cust-text bold h2">User Details</h5>
+              <p class="card-text cust-text bold">Please kindly enter your details below to check if you are prerecorded
+                or not</p>
+              <form @submit.prevent="verifyUser">
+                <div class="mb-3">
+                  <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID</label>
+                  <input type="text" class="form-control" id="cid" v-model="cid" required>
                 </div>
-                <div class="col-md-4">
-                  <label for="month" class="form-label text-success">Month:</label>
-                  <input type="number" id="month" v-model="month" min="1" max="12" class="form-control" required>
+                <div class="row g-3">
+                  <p class="cust-text bold">What’s your date of birth?</p>
+                  <div class="col-md-4">
+                    <label for="day" class="form-label text-success">Day:</label>
+                    <input type="number" id="day" v-model="day" min="1" max="31" class="form-control" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="month" class="form-label text-success">Month:</label>
+                    <input type="number" id="month" v-model="month" min="1" max="12" class="form-control" required>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="year" class="form-label text-success">Year:</label>
+                    <input type="number" id="year" v-model="year" min="1900" max="2100" class="form-control" required>
+                  </div>
                 </div>
-                <div class="col-md-4">
-                  <label for="year" class="form-label text-success">Year:</label>
-                  <input type="number" id="year" v-model="year" min="1900" max="2100" class="form-control" required>
-                </div>
-              </div>
-              <button type="submit" class="custom-btn mt-3 col-12 p-2">Check</button>
-            </form>
-            <p v-if="errorMessage" class="mt-2 text-danger">{{ errorMessage }}</p>
+                <button type="submit" class="custom-btn mt-3 col-12 p-2">Check</button>
+              </form>
+              <p v-if="errorMessage" class="mt-2 text-danger">{{ errorMessage }}</p>
+            </div>
           </div>
-        </div>
           <div class="card-footer text-muted text-center">
-            Already have an Account? 
+            Already have an Account?
             <router-link to="/login" class="text-primary">Sign In</router-link>
           </div>
         </div>
@@ -67,44 +53,12 @@
   </div>
 </template>
 
-<style>
-
-  .logo-container {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 10px;
-    background-color: #69B2A0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 30px;
-  }
-
-  .ndi-logo {
-    height: 30px; 
-    margin-right: 5px;
-  }
-  .form {
-    background-color:  #2B656F24;
-    border-radius: 15px;
-  }
-  .custom-btn {
-    background-color: #2B656F;
-    color: #fff; 
-    font-size: inherit; 
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .cust-text{
-    color: #2B656F;
-  }
-</style>
 
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router';
+import endpoints from '@/api';
 
 const cid = ref('');
 const day = ref('');
@@ -112,21 +66,102 @@ const month = ref('');
 const year = ref('');
 const errorMessage = ref('');
 const emit = defineEmits(['go-to-next-step']);
+const router = useRouter();
 
 const verifyUser = async () => {
   try {
-    const response = await axios.post('http://localhost:8000/api/v1/access/verify-pre-recorded-user/', {
-      cid: cid.value,
-      dob: `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`
+    const response = await axios.get(endpoints.verifyPreRecordedUser, {
+      params: {
+        cid: cid.value,
+      },
     });
+
     if (response.data.success) {
-      emit('go-to-next-step');
+      const userDOB = response.data.user_data.date_of_birth;
+
+      if (userDOB !== `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`) {
+        // Display alert for mismatched DOB
+        alert(`Dear ${response.data.user_data.first_name}, the entered DOB does not match with the records. Please re-enter the correct DOB.`);
+      } else {
+        // Remove agency_data from user_data
+        const { agency_data, ...userDataWithoutAgency } = response.data.user_data;
+
+        // Save user_data and agency_data to session/local storage
+        saveUserData(userDataWithoutAgency);
+        saveAgencyData(agency_data);
+
+        // Display success message
+        alert(`Dear ${response.data.user_data.first_name}, records successfully found. Please proceed to the next step and create a username and a strong password to log into the system and start using.`);
+
+        // Move to the next step
+        emit('go-to-next-step', 'step-two-prerecorded');
+      }
     } else {
+      // Display error message to the user
       errorMessage.value = response.data.message || 'Verification failed';
+
+      // Check if the error is due to user not found
+      if (response.data.message && response.data.message.toLowerCase().includes('not found')) {
+        // Alert the user to register as a new user
+        alert('User not found. Please register as a new user and continue your registration.');
+
+        // Redirect to the registration page
+        router.push('/register');
+      }
     }
   } catch (error) {
+    // Display error message to the user
     errorMessage.value = error.response.data.message || 'An error occurred during verification';
   }
 };
 
+// Helper method to save user_data to session/local storage
+const saveUserData = (userData) => {
+  sessionStorage.setItem('user_data', JSON.stringify(userData));
+};
+
+// Helper method to save agency_data to session/local storage
+const saveAgencyData = (agencyData) => {
+  sessionStorage.setItem('agency_data', JSON.stringify(agencyData));
+};
+
 </script>
+
+
+
+<style scoped>
+.logo-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  background-color: #69B2A0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 30px;
+}
+
+.ndi-logo {
+  height: 30px;
+  margin-right: 5px;
+}
+
+.form {
+  background-color: #2B656F24;
+  border-radius: 15px;
+}
+
+.custom-btn {
+  background-color: #2B656F;
+  color: #fff;
+  font-size: inherit;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cust-text {
+  color: #2B656F;
+}
+</style>

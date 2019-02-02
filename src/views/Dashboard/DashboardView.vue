@@ -1,0 +1,94 @@
+<template>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <aside class="col-lg-3 col-md-4 col-sm-12" :class="{ 'sidebar-open': sidebarOpen }">
+        <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" :userName="userName" />
+      </aside>
+
+      <!-- Main Content -->
+      <main class="col-lg-9 col-md-8 col-sm-12">
+        <div class="row">
+          <!-- Dashboard Component -->
+          <div class="col-12">
+            <component :is="dashboardComponent" />
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed, ref, onMounted } from 'vue';
+import SideNavbar from '@/components/navbar/SideNavbar.vue';
+import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
+import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
+import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
+import axios from 'axios';
+import endpoints from '@/api';
+
+const sidebarOpen = ref(false);
+const userName = ref('');
+
+const dashboardComponent = computed(() => {
+  const role = sessionStorage.getItem('userRole');
+  console.log('User Role:', role);
+
+  switch (role) {
+    case 'student':
+      console.log('Loading Student Dashboard');
+      return StudentDashboard;
+    case 'school counsellor':
+      console.log('Loading Counsellor Dashboard');
+      return CounsellorDashboard;
+    default:
+      console.log('Loading Admin Dashboard');
+      return AdminDashboard;
+  }
+});
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value;
+};
+
+// Fetch user and agency details and store them in sessionStorage
+const fetchUserAndAgencyDetails = async () => {
+  try {
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      console.error('Authentication token not found. Redirecting to login.');
+      return;
+    }
+
+    const response = await axios.get(endpoints.getUserDetails, {
+      headers: {
+        Authorization: `Token ${authToken}`,
+      },
+    });
+
+    const data = response.data;
+
+    if (data.user && data.agency) {
+      sessionStorage.setItem('userDetails', JSON.stringify(data.user));
+      sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
+
+      console.log('User details fetched successfully:', data.user);
+
+      // Update the user's name
+      userName.value = `${data.user.first_name} ${data.user.last_name}`;
+    } else {
+      console.error('Error: Incomplete user or agency details in response');
+    }
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+  }
+};
+
+// Call fetchUserAndAgencyDetails when the component is mounted
+onMounted(fetchUserAndAgencyDetails);
+</script>
+
+<style scoped>
+/* Add any additional styles if needed */
+</style>

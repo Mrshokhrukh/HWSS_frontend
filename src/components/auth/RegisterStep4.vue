@@ -66,8 +66,9 @@
 
 <script setup>
 import { ref } from 'vue';
-
 import { useRouter } from 'vue-router';
+import endpoints from '@/api'; // Import endpoints from centralized api.js file
+
 const router = useRouter();
 
 const username = ref('');
@@ -80,17 +81,29 @@ const createUser = async () => {
         return;
     }
 
+    // Get user and agency data from sessionStorage
+    const userData = JSON.parse(sessionStorage.getItem('user_data'));
+    const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
+
+    // Assign username and password from input fields
+    userData.username = username.value;
+    userData.password = password.value;
+
+    // Remove 'user' field from agencyData object
+    delete agencyData.user;
+
     const userSubmissionData = {
-        username: username.value,
-        password: password.value,
+        userData,
+        agencyData,
+        username: username.value, // Add username from input field
+        password: password.value, // Add password from input field
     };
 
     try {
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
-        // console.log('CSRF Token:', csrftoken);
 
-        // First API call to register the user
-        const userResponse = await fetch('http://localhost:8000/api/v1/access/register-user/', {
+        // API call to register the user and agency together
+        const response = await fetch(endpoints.registerUser, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -101,31 +114,18 @@ const createUser = async () => {
             body: JSON.stringify(userSubmissionData),
         });
 
-        if (userResponse.status === 201) {
-            // Extract the user ID from the response
-            const { userId } = await userResponse.json();
-            console.log('User ID:', userId);
+        if (response.status === 201) {
+            // Registration successful
+            alert('Registration successful!');
+            router.push({ name: 'login' });
 
-            const agencyResponse = await fetch('http://localhost:8000/api/v1/access/register-agency/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken,
-                },
-                credentials: 'include',
-                mode: 'cors',
-            });
-
-            if (agencyResponse.status === 201) {
-                alert('Registration successful!');
-                router.push({ name: 'login' });
-            } else {
-                alert('Error creating agency:', agencyResponse.statusText);
-            }
-            // Clear local storage after using the data
-            localStorage.removeItem('agencyData');
+            // Clear user and agency data from sessionStorage
+            sessionStorage.removeItem('user_data');
+            sessionStorage.removeItem('agencyData');
         } else {
-            alert('Error creating user:', userResponse.statusText);
+            // Registration failed
+            const responseData = await response.json();
+            alert(`Error: ${responseData.error}`);
         }
     } catch (error) {
         alert('Error creating user:', error);
@@ -133,6 +133,7 @@ const createUser = async () => {
 };
 
 </script>
+
 
 <style>
 cust-radi {

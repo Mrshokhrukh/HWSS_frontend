@@ -1,0 +1,31 @@
+// api.js
+
+const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
+
+// Define base URL based on the condition
+const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
+
+// Define api middle params
+const accessMiddleParams = '/api/v1/access';
+
+// Combine BaseURL and middle params for ease of use
+const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
+
+// Define your API endpoints
+const endpoints = {
+  getCitizenDetails: `${accessBaseUrl}/get-citizen-details/`,
+  getRcscDetails: `${accessBaseUrl}/get-rcsc-details/`,
+  registerUser: `${accessBaseUrl}/register-user/`,
+  registerAgency: `${accessBaseUrl}/register-agency/`,
+  getEmisStudent: `${accessBaseUrl}/get-emis-student/`,
+  getEmisEmployee: `${accessBaseUrl}/get-emis-employee/`,
+
+  verifyPreRecordedUser: `${accessBaseUrl}/verify-pre-recorded-user/`,
+  registerPreRecordedUser: `${accessBaseUrl}/register-pre-recorded-user/`,
+  registerPreRecordedAgency: `${accessBaseUrl}/register-pre-recorded-agency/`,
+  loginUsers: `${accessBaseUrl}/login/`,
+  getUserDetails: `${accessBaseUrl}/get-user-details/`,
+  logOutUser: `${accessBaseUrl}/user-logout/`,
+};
+
+export default endpoints;

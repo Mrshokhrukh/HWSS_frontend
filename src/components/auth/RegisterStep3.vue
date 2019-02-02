@@ -9,7 +9,7 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow">
+                <div class="card shadow p-4">
                     <div class="logo-container">
                         <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
                         <a href="#" class="text-dark font-weight-bold">Use Bhutan NDI</a>
@@ -120,10 +120,9 @@
                                     <label class="mt-5 h3 cust-text">Select Parameter Type:</label>
                                     <div class="mt-2">
                                         <div class="form-check form-check-inline">
-                                            <input type="radio" id="studentID" value="Student ID"
+                                            <input type="radio" id="studentID" value="Student CID"
                                                 v-model="selectedParameter" class="form-check-input">
-                                            <label for="studentID" class="form-check-label cust-text">Student
-                                                ID/Code</label>
+                                            <label for="studentID" class="form-check-label cust-text">Student CID</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input type="radio" id="employeeID" value="Employee ID"
@@ -131,8 +130,36 @@
                                             <label for="employeeID" class="form-check-label cust-text">Employee ID</label>
                                         </div>
                                     </div>
+
+                                    <!-- Date of Birth fields for Student ID -->
+                                    <div v-if="selectedParameter === 'Student CID'" class="form-group mt-3">
+                                        <small for="dob" class="text-muted">Your Date of Birth as per your school
+                                            records</small>
+                                        <div class="row">
+                                            <div class="col">
+                                                <select class="form-select" v-model="formData.selectedMonth">
+                                                    <option v-for="month in months" :key="month.value" :value="month.value">
+                                                        {{ month.label }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col">
+                                                <select class="form-select" v-model="formData.selectedDate">
+                                                    <option v-for="date in dates" :key="date.value" :value="date.value">{{
+                                                        date.label }}</option>
+                                                </select>
+                                            </div>
+                                            <div class="col">
+                                                <select class="form-select" v-model="formData.selectedYear">
+                                                    <option v-for="year in years" :key="year" :value="year">{{ year }}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
+
+                                <!-- RCSC Parameter selection -->
                                 <div v-else-if="selectedAgency === 'RCSC'" class="form-group">
                                     <label class="mt-5 h3 cust-text">Select Parameter Type:</label>
                                     <div class="mt-2">
@@ -144,7 +171,6 @@
                                     </div>
                                 </div>
                             </div>
-
 
                             <!-- Input for parameter value -->
                             <div v-if="selectedParameter" class="form-group cust-text">
@@ -170,8 +196,12 @@
 </template>
 
 <script setup>
-import { ref, defineProps, computed, onMounted } from 'vue';
-// import axios from 'axios';
+import { ref, defineProps, computed, onMounted, defineEmits } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const props = defineProps({
     userData: Object,
@@ -189,6 +219,30 @@ const selectedAgency = ref('');
 const selectedParameter = ref('');
 const parameterValue = ref('');
 const regEmail = ref('');
+const formData = {
+    selectedMonth: '',
+    selectedDate: '',
+    selectedYear: ''
+};
+
+const months = [
+    { value: '01', label: 'January' },
+    { value: '02', label: 'February' },
+    { value: '03', label: 'March' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'May' },
+    { value: '06', label: 'June' },
+    { value: '07', label: 'July' },
+    { value: '08', label: 'August' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+];
+
+const dates = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1) }));
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 
 const isValidEmail = computed(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -202,6 +256,11 @@ const confirmDetails = async (isTrue) => {
         if (userConfirmed) {
             // Proceed with the logic for confirming details
             detailsConfirmed.value = true;
+
+            // Update the user_data object in session storage with the email field
+            const userData = JSON.parse(sessionStorage.getItem('user_data')) || {};
+            userData.email = regEmail.value;
+            sessionStorage.setItem('user_data', JSON.stringify(userData));
         } else {
             // User didn't confirm, allow them to edit
             detailsConfirmed.value = false;
@@ -210,12 +269,10 @@ const confirmDetails = async (isTrue) => {
         const userVerified = window.confirm("Please verify your details again.");
 
         if (userVerified) {
-            emit('go-to-prev-step');
+            emit('go-to-prev-step', 'step-two');
         }
-        // If the user doesn't agree to verify, you can handle it accordingly
     }
 };
-
 
 const loading = ref(false);
 
@@ -229,45 +286,79 @@ const proceed = async () => {
     loading.value = true;
     let apiURL;
 
-    if (selectedAgency.value === 'RCSC' && selectedParameter.value === 'Citizen ID') {
-        apiURL = `http://localhost:8000/api/v1/access/get-rcsc-details/${parameterValue.value}/${regEmail.value}/`;
-        localStorage.removeItem('userCID');
-    } else if (selectedAgency.value === 'EMIS') {
-        // ... (existing code)
+    switch (selectedAgency.value) {
+        case 'RCSC':
+            if (selectedParameter.value === 'Citizen ID') {
+                apiURL = `${endpoints.getRcscDetails}${parameterValue.value}/${regEmail.value}/`;
+                localStorage.removeItem('userCID');
+            }
+            break;
+        case 'EMIS':
+            if (selectedParameter.value === 'Student CID') {
+                const dob = `${formData.selectedYear}-${formData.selectedMonth}-${formData.selectedDate}`;
+                apiURL = `${endpoints.getEmisStudent}${parameterValue.value}/${regEmail.value}/${dob}/`;
+                localStorage.removeItem('userCID');
+            } else if (selectedParameter.value === 'Employee ID') {
+                apiURL = `${endpoints.getEmisEmployee}${parameterValue.value}/${regEmail.value}/`;
+            }
+            break;
+        default:
+            console.error('Invalid agency selected');
+            return;
     }
 
     try {
-        const response = await fetch(apiURL, {
-            method: 'GET',
+        console.log('Sending request to:', apiURL);
+
+        if (!apiURL) {
+            console.error('apiURL is undefined');
+            return;
+        }
+
+        const response = await axios.get(apiURL, {
             headers: {
                 'Content-Type': 'application/json',
             },
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            // console.log('API Response:', data);
+        console.log('Response status:', response.status);
+        console.log('RCSC data:', response.data);
 
-            localStorage.setItem('agencyData', JSON.stringify(data));
+        if (response.status === 200) {
+            let userData = JSON.parse(sessionStorage.getItem('user_data')) || {}; // Read user_data from sessionStorage
+            const data = response.data;
 
-            // Pass the obtained data to the step 4 component
-            emit('go-to-next-step', 'step-four', {
-                userData: { ...props.userData, ...data },
-                agencyData: data.agencyData,  // Assuming the structure of data returned from the API
-            });
-        } else {
-            console.error('Error fetching data:', response.statusText);
-            alert('Error fetching data. Please try again.');
+            if (!data.error) {
+                // Add user_role from response to userData as 'role'
+                userData = { ...userData, role: data.user_role };
+
+                // Remove user_role from agencyData and save the rest of the data
+                const agencyData = { ...data };
+                delete agencyData.user_role;
+
+                // Store modified data in session storage
+                sessionStorage.setItem('user_data', JSON.stringify(userData));
+                sessionStorage.setItem('agencyData', JSON.stringify(agencyData));
+
+                emit('go-to-next-step', 'step-four', {
+                    userData,
+                    agencyData,
+                });
+            } else {
+                alert(data.error);
+            }
         }
     } catch (error) {
         console.error('Error fetching data:', error);
         alert('An error occurred while fetching data. Please try again.');
+        router.push('/register');
     } finally {
         loading.value = false;
     }
 };
-
 </script>
+
+
 
 <style>
 .form {

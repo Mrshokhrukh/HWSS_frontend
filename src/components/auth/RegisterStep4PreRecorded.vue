@@ -1,127 +1,151 @@
 <template>
-    <div class="container mt-5">
-      <div class="row justify-content-center">
-        <div class="col-md-8">
-          <div class="card shadow">
-            <div class="text-center mt-3">
-              <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
-              <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
-            </div>
-            <div class="container p-5 rounded">
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow">
+          <div class="text-center mt-3">
+            <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
+            <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
+          </div>
+          <div class="container p-5 rounded">
             <div class="card-body text-start  form">
               <h5 class="card-title cust-tex ">User Detail</h5>
               <p class="card-text cust-tex ">Please set a unique Username and a strong password</p>
               <form @submit.prevent="createUser">
                 <!-- Username and password fields -->
                 <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" v-model="username" class=" cust-tex form-control bg-transparent border border-secondary" required>
+                  <label for="username">Username:</label>
+                  <input type="text" id="username" v-model="username"
+                    class=" cust-tex form-control bg-transparent border border-secondary" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" v-model="password" class=" cust-tex form-control bg-transparent border border-secondary" required>
+                  <label for="password">Password:</label>
+                  <input type="password" id="password" v-model="password"
+                    class=" cust-tex form-control bg-transparent border border-secondary" required>
                 </div>
                 <div class="form-group">
-                    <label for="confirmPassword">Confirm Password:</label>
-                    <input type="password" id="confirmPassword" v-model="confirmPassword" class=" cust-tex form-control bg-transparent border border-secondary" required>
+                  <label for="confirmPassword">Confirm Password:</label>
+                  <input type="password" id="confirmPassword" v-model="confirmPassword"
+                    class=" cust-tex form-control bg-transparent border border-secondary" required>
                 </div>
                 <button type="submit" class="btn btn-primary custom-btn mt-3 col-12 p-2">Sign Up</button>
               </form>
-          
+
             </div>
           </div>
-            <div class="card-footer text-muted text-center" style="color: #2B656F; font-weight: bold">
-              Already have an Account? 
-              <router-link to="/login" class="text-primary cust-tex">Sign In</router-link>
-            </div>
+          <div class="card-footer text-muted text-center" style="color: #2B656F; font-weight: bold">
+            Already have an Account?
+            <router-link to="/login" class="text-primary cust-tex">Sign In</router-link>
           </div>
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
   
-  <script setup>
-  
-  import { ref, defineProps} from 'vue';
-  import { useRoute, useRouter } from 'vue-router';
-  
-  const props = defineProps({
-    userData: Object,
-    agencyData: Object,
-    fetchedDataStepOne: Object,
-  });
-  
-  // onMounted(() => {
-  //   console.log('Fetched Data from Previous Steps:', fetchedDataStepOne);
-  // });
-  ``
-  // eslint-disable-next-line no-unused-vars
-  const emit = defineEmits(['go-to-next-step']);
-  // eslint-disable-next-line no-unused-vars
-  const route = useRoute();
-  const router = useRouter();
-  
-  const username = ref('');
-  const password = ref('');
-  const confirmPassword = ref('');
-  
-  const createUser = async () => {
-    if (password.value !== confirmPassword.value) {
-        alert('Passwords do not match.');
-        return;
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import endpoints from '@/api';
+
+const username = ref('');
+const password = ref('');
+const confirmPassword = ref('');
+const router = useRouter();
+
+const createUser = async () => {
+  console.log('Username:', username.value);
+  console.log('Password:', password.value);
+
+  if (password.value !== confirmPassword.value) {
+    alert('Passwords do not match.');
+    return;
+  }
+
+  // Retrieve user data and agency data from session storage
+  const userData = JSON.parse(sessionStorage.getItem('user_data'));
+  const agencyData = JSON.parse(sessionStorage.getItem('agency_data'));
+
+  if (!userData || !agencyData) {
+    alert('User data or agency data not found in session storage.');
+    return;
+  }
+
+  // Insert username and password into userData
+  userData.username = username.value;
+  userData.password = password.value;
+
+  try {
+    const csrfToken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
+
+    // Register pre-recorded user
+    const userResponse = await axios.post(endpoints.registerPreRecordedUser, userData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      withCredentials: true,
+    });
+
+    if (userResponse.status === 201) {
+      const userId = userResponse.data.userId;
+      console.log('User ID received:', userId);
+
+      agencyData.user = userId;
+
+      console.log('User data being sent:', userData);
+      console.log('Agency data being sent:', agencyData.user);
+
+      // Register pre-recorded agency
+      const agencyResponse = await axios.post(endpoints.registerPreRecordedAgency, { agency_data: agencyData }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        withCredentials: true,
+      });
+
+      console.log('Agency registration response:', agencyResponse);
+
+      if (agencyResponse.status === 201) {
+        alert('Registration successful!');
+        router.push({ name: 'login' });
+      } else {
+        alert('Error creating agency:', agencyResponse.statusText);
+      }
+
+      // Clear session storage after successful registration
+      sessionStorage.removeItem('user_data');
+      sessionStorage.removeItem('agency_data');
+    } else {
+      alert('Error creating user:', userResponse.statusText);
     }
-  
-    // Prepare user data for submission
-    const userSubmissionData = {
-        ...props.userData,
-        username: username.value,
-        password: password.value,
-        // Include any other necessary fields from userData or agencyData
-    };
-  
-    // API call to create user
-    try {
-        const response = await fetch('http://localhost:8000/api/v1/access/register/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Origin': 'http://localhost:5173',  // Ensure this matches your frontend origin
-            },
-            credentials: 'include',  // Include this line for cross-origin requests with cookies
-            body: JSON.stringify(userSubmissionData),
-        });
-  
-        if (response.status === 201) {
-            console.log('User created successfully');
-            // Redirect to login or other appropriate page after successful account creation
-            router.push({ name: 'login' });
-        } else {
-            console.error('Error creating user:', response.statusText);
-            // Handle the error appropriately, e.g., show an error message to the user
-        }
-    } catch (error) {
-        console.error('Error creating user:', error);
-        // Handle the error appropriately, e.g., show an error message to the user
-    }
-  };
-  
-  </script>
-  
-  <style>
-  /* Add custom styles */
-  .form {
-    background-color:  #2B656F24;
-    border-radius: 15px;
+  } catch (error) {
+    alert('Error creating user:', error);
   }
-  .custom-btn {
-    background-color: #2B656F;
-    color: #fff; 
-    font-size: inherit; 
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .cust-text{
-    color: #2B656F;
-  }
-  </style>
+};
+</script>
+
+
+  
+<style>
+/* Add custom styles */
+.form {
+  background-color: #2B656F24;
+  border-radius: 15px;
+}
+
+.custom-btn {
+  background-color: #2B656F;
+  color: #fff;
+  font-size: inherit;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.cust-text {
+  color: #2B656F;
+}
+</style>
