@@ -55,7 +55,7 @@
                         </form>
                     </div>
                     <div class="text-center mt-4">
-                        Already Have an Account? <a href="#" @click="toggleForm" style="color: #2B656F; font-weight: bold">Sign In</a>
+                        Already Have an Account? <router-link to="login" style="color: #2B656F; font-weight: bold">Sign In</router-link>
                     </div>
 
                 </div>
@@ -86,6 +86,7 @@ const createUser = async () => {
         // Get user and agency data from sessionStorage
         let userData = JSON.parse(sessionStorage.getItem('user_data'));
         const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
+        const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'));
 
         // Update username and password in the userData object
         userData.username = username.value;
@@ -98,6 +99,7 @@ const createUser = async () => {
         const userSubmissionData = {
             userData, 
             agencyData,
+            userAgencyData
         };
 
         console.log(userSubmissionData);
@@ -124,6 +126,7 @@ const createUser = async () => {
             // Clear user and agency data from sessionStorage
             sessionStorage.removeItem('user_data');
             sessionStorage.removeItem('agencyData');
+            sessionStorage.removeItem('userAgencyData');
         } else {
             // Registration failed
             const responseData = await response.json();

@@ -17,7 +17,7 @@
                 <div class="col-md-7 d-flex flex-column justify-content-between">
                     <div class="auth-form text-center">
                         <h2 class="text-center mt-5 mb-4" style="color: #2B656F; font-weight: bold">Sign Up</h2>
-                        <p class="text-center" style="color: #2B656F; font-weight: bold">Select any type of user</p>
+                        <p class="text-center" style="color: #2B656F; font-weight: bold">Select type of user</p>
                         <div class="row justify-content-center">
                             <div :class="['card', 'reg-card', { 'active': selectedOption === 'pre-recorded' }]"
                                 @click="updateSelectedUserType('pre-recorded')">
@@ -44,7 +44,7 @@
                         </button>
                         <p style="color: #2B656F; margin-bottom: 5px;">
                             Already have an account? <br />
-                            <router-link to="/login" style="color: #2B656F; font-weight: bold"
+                            <router-link to="/login" style="color: #2B656F; font-weight: bold; text-decoration: none;"
                                 class="text-decoration-underline">Sign In</router-link>
                         </p>
                     </div>
@@ -77,6 +77,7 @@ const continueToPage = () => {
 .loginbg {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
+    height: 500px;
 }
 
 #reg-img {

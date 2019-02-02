@@ -192,8 +192,8 @@
                         </div>
                     </div>
                     <div class="text-center mt-4">
-                        Already Have an Account? <a href="#" @click="toggleForm"
-                            style="color: #2B656F; font-weight: bold">Sign In</a>
+                        Already Have an Account? <router-link to="/login"
+                            style="color: #2B656F; font-weight: bold">Sign In</router-link>
                     </div>
                 </div>
             </div>
@@ -332,25 +332,23 @@ const proceed = async () => {
         console.log('RCSC data:', response.data);
 
         if (response.status === 200) {
-            let userData = JSON.parse(sessionStorage.getItem('user_data')) || {}; // Read user_data from sessionStorage
             const data = response.data;
 
             if (!data.error) {
-                // Add user_role from response to userData as 'role'
-                userData = { ...userData, role: data.user_role };
+                // Store agencyData and userAgencyData in session storage
+                sessionStorage.setItem('agencyData', JSON.stringify(data.agency_data));
+                sessionStorage.setItem('userAgencyData', JSON.stringify(data.user_agency_data));
 
-                // Remove user_role from agencyData and save the rest of the data
-                const agencyData = { ...data };
-                delete agencyData.user_role;
+                // Retrieve existing userData from session storage
+                let userData = JSON.parse(sessionStorage.getItem('user_data'));
 
-                // Store modified data in session storage
+                // Update userData with role from API response
+                userData.role = data.user_agency_data.user_role_agency;
+
+                // Save updated userData back to session storage
                 sessionStorage.setItem('user_data', JSON.stringify(userData));
-                sessionStorage.setItem('agencyData', JSON.stringify(agencyData));
 
-                emit('go-to-next-step', 'step-four', {
-                    userData,
-                    agencyData,
-                });
+                emit('go-to-next-step', 'step-four');
             } else {
                 alert(data.error);
             }
@@ -362,7 +360,9 @@ const proceed = async () => {
     } finally {
         loading.value = false;
     }
-};
+}
+
+
 </script>
 
 

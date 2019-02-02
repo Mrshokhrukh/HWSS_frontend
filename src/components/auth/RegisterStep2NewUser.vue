@@ -187,7 +187,7 @@
             
             
                     <div class="text-center my-5">
-                        Already Have an Account? <a href="#" @click="toggleForm" style="color: #2B656F; font-weight: bold">Sign In</a>
+                        Already Have an Account? <router-link to="/login" style="color: #2B656F; font-weight: bold">Sign In</router-link>
                     </div>
         
                 </div>
@@ -296,7 +296,7 @@ const fetchCitizenDetails = async () => {
                 if (enteredDOB === apiDOB) {
                     const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
                     const mappedData = {
-                        identity_number: citizenDetails[formData.value.selectedIdentifier],
+                        identity_number: citizenDetails.cid,
                         first_name: citizenDetails.firstName,
                         middle_name: citizenDetails.middleName || '',
                         last_name: citizenDetails.lastName,
@@ -307,10 +307,22 @@ const fetchCitizenDetails = async () => {
                         perm_add_gewog: citizenDetails.gewogName,
                         perm_add_dzongkhag: citizenDetails.dzongkhagName,
                         nationality: mapNationality(citizenDetails.country),
+                        father_name: citizenDetails.fatherName,
+                        mother_name: citizenDetails.motherName,
+                        parent_occupation: citizenDetails.occupation,
+                        ps_add_village: citizenDetails.villageName,
+                        ps_add_gewog: citizenDetails.gewogName,
+                        ps_add_dzongkhag: citizenDetails.dzongkhagName,
+                        user_role_agency: '',
+                        user_class: '',
+                        user_sub_class: '',
+                        academy_code: '',
                         username: usernameSuffix,
+                        password: '',
+                        email: '',
                     };
 
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    sessionStorage.setItem('user_data', JSON.stringify(mappedData));
                     showSuccessMessage.value = true;
                     moveToStep3(mappedData);
                 } else {

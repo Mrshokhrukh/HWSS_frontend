@@ -27,6 +27,10 @@ import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import { useRouter } from 'vue-router';
+
+
+const router = useRouter();
 
 const sidebarOpen = ref(false);
 const userName = ref('');
@@ -52,13 +56,13 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
-// Fetch user and agency details and store them in sessionStorage
+// Fetch user, agency, and user agency details and store them in sessionStorage
 const fetchUserAndAgencyDetails = async () => {
   try {
     const authToken = localStorage.getItem('authToken');
     if (!authToken) {
-      console.error('Authentication token not found. Redirecting to login.');
-      return;
+      alert('User not Authenticated. Redirecting to login.');
+      router.push('/login');
     }
 
     const response = await axios.get(endpoints.getUserDetails, {
@@ -69,21 +73,23 @@ const fetchUserAndAgencyDetails = async () => {
 
     const data = response.data;
 
-    if (data.user && data.agency) {
+    if (data.user && data.agency && data.userAgency) {
       sessionStorage.setItem('userDetails', JSON.stringify(data.user));
       sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
+      sessionStorage.setItem('userAgencyDetails', JSON.stringify(data.userAgency));
 
       console.log('User details fetched successfully:', data.user);
 
       // Update the user's name
       userName.value = `${data.user.first_name} ${data.user.last_name}`;
     } else {
-      console.error('Error: Incomplete user or agency details in response');
+      console.error('Error: Incomplete user, agency, or user agency details in response');
     }
   } catch (error) {
     console.error('Error fetching user details:', error);
   }
 };
+
 
 // Call fetchUserAndAgencyDetails when the component is mounted
 onMounted(fetchUserAndAgencyDetails);

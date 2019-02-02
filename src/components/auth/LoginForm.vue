@@ -1,23 +1,21 @@
 <template>
     <div class="container authbg cust-margin">
-        <div class="card shadow-card">
+        <div class="card shadow-card my-5  shadow-lg bg-body rounded">
             <div class="row g-0 loginbg">
                 <div class="col-md-7">
                     <div class="card-body">
                         <div class="auth-form text-center">
                             <h1 class="text-center my-3 bold" style="color: #2B656F;">Sign In</h1>
-                            <form class="row justify-content-center" @submit.prevent="loginUser">
+                            
+                            <form class="row justify-content-center align-items-center" @submit.prevent="loginUser">
                                 <div class="mb-3 col-md-8">
-                                    <input v-model="username" type="text" class="form-control" placeholder="Username"
-                                        required />
+                                    <input v-model="username" type="text" class="form-control" placeholder="Username" required />
                                 </div>
                                 <div class="mb-5 col-md-8">
-                                    <input v-model="password" type="password" class="form-control" placeholder="Password"
-                                        required />
+                                    <input v-model="password" type="password" class="form-control" placeholder="Password" required />
                                 </div>
                                 <div class="text-center col-md-8">
-                                    <button type="submit" class="btn col-md-12 singin-button btnbg">Sign
-                                        In</button>
+                                    <button type="submit" class="btn col-md-12 singin-button btnbg">Sign In</button>
                                 </div>
                             </form>
 
@@ -36,8 +34,11 @@
                                 </p>
                             </div>
                             <p class="text-center my-3" style="color: #2B656F;">
-                                Don't have an account? <br />
-                                <router-link to="/register" style="color: #2B656F; font-weight: bold">Sign Up</router-link>
+                                Don't have an account? <router-link to="/register" style="color: #2B656F; font-weight: bold">Sign Up</router-link>
+                            </p>
+                            <!-- Add Forgot Password link -->
+                            <p class="text-center my-3">
+                                <router-link to="/forgot-password" style="color: #2B656F; font-weight: bold;">Forgot Password?</router-link>
                             </p>
                         </div>
                     </div>
@@ -67,6 +68,7 @@
         </div>
     </div>
 </template>
+
     
 <script setup>
 import { ref } from 'vue';
@@ -94,7 +96,7 @@ const loginUser = async () => {
 
         localStorage.setItem('authToken', token);
 
-        const userRole = response.data.user_role_agency;
+        const userRole = response.data.user_role;
 
         sessionStorage.setItem('userRole', userRole)
 
@@ -145,19 +147,14 @@ const loginUser = async () => {
 }
 
 /* Add darker shadow to the card */
-.shadow-card {
+/* .shadow-card {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
+} */
 
 .custombg {
     background-color: #2C6975;
     border-radius: 20% 10px 10px 20%;
     height: 100%;
-}
-
-.cust-margin {
-    margin-top: 7%;
-    margin-bottom: auto;
 }
 
 .auth-form .signin-button {
