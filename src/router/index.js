@@ -44,6 +44,12 @@ const createAppRouter = () => {
         component: () => import('@/views/Dashboard/DashboardView.vue'),
         meta: { title: 'Admin Dashboard', requiresAuth: true }
       },
+      {
+        path: '/screening',
+        name: 'screening',
+        component: () => import('@/views/screening/ScreeningView.vue'),
+        meta: { title: 'screening test' }
+      },
     ],
   });
 
