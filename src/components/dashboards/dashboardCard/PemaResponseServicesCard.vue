@@ -1,7 +1,12 @@
 <template>
     <div class="container text-center">
-        <img class="" src="@/assets/images/logoDashbopard.png" alt="">
-        <h1>The Pema Services</h1>
+        <div class="row">
+            <div class="col-md-12">
+                <img class="img-fluid logo" src="@/assets/images/logoDashbopard.png" alt="">
+                <h3 class="company-name">The Pema Services</h3>
+            </div>
+        </div>
+
         <div class="row text-content-center">
             <h5 class="text-center">Response Services</h5>
             <hr/>
@@ -27,8 +32,17 @@
 </template>
 <script setup>
 </script>
-<style>
+<style scoped>
 ul{
     list-style-type: none;
+}
+.logo {
+    max-width: 100px; /* Adjust the max-width as needed */
+}
+
+.company-name {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px; /* Adjust the left margin as needed */
 }
 </style>
