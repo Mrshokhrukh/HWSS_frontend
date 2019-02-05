@@ -55,81 +55,56 @@ const confirmPassword = ref('');
 const router = useRouter();
 
 const createUser = async () => {
-  console.log('Username:', username.value);
-  console.log('Password:', password.value);
-
   if (password.value !== confirmPassword.value) {
     alert('Passwords do not match.');
     return;
   }
 
-  // Retrieve user data and agency data from session storage
-  const userData = JSON.parse(sessionStorage.getItem('user_data'));
-  const agencyData = JSON.parse(sessionStorage.getItem('agency_data'));
-
-  if (!userData || !agencyData) {
-    alert('User data or agency data not found in session storage.');
-    return;
-  }
-
-  // Insert username and password into userData
-  userData.username = username.value;
-  userData.password = password.value;
-
   try {
-    const csrfToken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
+    // Get user and agency data from sessionStorage
+    let userData = JSON.parse(sessionStorage.getItem('user_data'));
+    const agencyData = JSON.parse(sessionStorage.getItem('agency_data'));
+    const userAgencyData = JSON.parse(sessionStorage.getItem('user_agency_data'));
 
-    // Register pre-recorded user
-    const userResponse = await axios.post(endpoints.registerPreRecordedUser, userData, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken,
-      },
-      withCredentials: true,
-    });
+    // Update username and password in the userData object
+    userData.username = username.value;
+    userData.password = password.value;
 
-    if (userResponse.status === 201) {
-      const userId = userResponse.data.userId;
-      console.log('User ID received:', userId);
+    // Set the updated userData back to sessionStorage
+    sessionStorage.setItem('user_data', JSON.stringify(userData));
 
-      agencyData.user = userId;
+    // Prepare userSubmissionData
+    const userSubmissionData = {
+      userData,
+      agencyData,
+      userAgencyData
+    };
 
-      console.log('User data being sent:', userData);
-      console.log('Agency data being sent:', agencyData.user);
+    console.log(userSubmissionData);
 
-      // Register pre-recorded agency
-      const agencyResponse = await axios.post(endpoints.registerPreRecordedAgency, { agency_data: agencyData }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
-        },
-        withCredentials: true,
-      });
+    // API call to register the user and agency together
+    const response = await axios.post(endpoints.registerPreRecordedUser, userSubmissionData);
 
-      console.log('Agency registration response:', agencyResponse);
+    if (response.status === 201) {
+      // Registration successful
+      alert('Registration successful!');
+      router.push({ name: 'login' });
 
-      if (agencyResponse.status === 201) {
-        alert('Registration successful!');
-        router.push({ name: 'login' });
-      } else {
-        alert('Error creating agency:', agencyResponse.statusText);
-      }
-
-      // Clear session storage after successful registration
+      // Clear user and agency data from sessionStorage
       sessionStorage.removeItem('user_data');
       sessionStorage.removeItem('agency_data');
+      sessionStorage.removeItem('user_agency_data');
     } else {
-      alert('Error creating user:', userResponse.statusText);
+      // Registration failed
+      alert(`Error: ${response.data.error}`);
     }
   } catch (error) {
     alert('Error creating user:', error);
   }
 };
 </script>
-
-
   
-<style>
+<style scoped>
 /* Add custom styles */
 .form {
   background-color: #2B656F24;
