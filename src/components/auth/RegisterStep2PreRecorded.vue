@@ -53,9 +53,8 @@
   </div>
 </template>
 
-
 <script setup>
-import { ref } from 'vue';
+import { ref, defineEmits } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
@@ -70,63 +69,93 @@ const router = useRouter();
 
 const verifyUser = async () => {
   try {
+    console.log('Sending request to verify user...');
+    console.log('CID:', cid.value);
+
     const response = await axios.get(endpoints.verifyPreRecordedUser, {
       params: {
         cid: cid.value,
       },
     });
 
-    if (response.data.success) {
-      const userDOB = response.data.user_data.date_of_birth;
+    console.log('Response received:', response.data);
+
+    const dataArray = response.data;
+
+    // Check if dataArray is an array and retrieve the first element
+    const dataObject = Array.isArray(dataArray) ? dataArray[0] : dataArray;
+
+    if (dataObject.success) {
+      console.log('User verification successful.');
+
+      const userDOB = dataObject.user.date_of_birth;
 
       if (userDOB !== `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`) {
         // Display alert for mismatched DOB
-        alert(`Dear ${response.data.user_data.first_name}, the entered DOB does not match with the records. Please re-enter the correct DOB.`);
+        alert(`Dear ${dataObject.user.first_name}, the entered DOB does not match with the records. Please re-enter the correct DOB.`);
       } else {
-        // Remove agency_data from user_data
-        const { agency_data, ...userDataWithoutAgency } = response.data.user_data;
-
         // Save user_data and agency_data to session/local storage
-        saveUserData(userDataWithoutAgency);
-        saveAgencyData(agency_data);
+        saveUserData(dataObject.user);
+        saveAgencyData(dataObject.agency);
+        saveUserAgencyData(dataObject.userAgency);
 
         // Display success message
-        alert(`Dear ${response.data.user_data.first_name}, records successfully found. Please proceed to the next step and create a username and a strong password to log into the system and start using.`);
+        alert(`Dear ${dataObject.user.first_name}, records successfully found. Please proceed to the next step and create a username and a strong password to log into the system and start using.`);
 
         // Move to the next step
         emit('go-to-next-step', 'step-two-prerecorded');
       }
     } else {
-      // Display error message to the user
-      errorMessage.value = response.data.message || 'Verification failed';
+      console.log('User verification failed:', dataObject.message);
 
-      // Check if the error is due to user not found
-      if (response.data.message && response.data.message.toLowerCase().includes('not found')) {
-        // Alert the user to register as a new user
-        alert('User not found. Please register as a new user and continue your registration.');
+      // Check if the user is already registered
+      if (response.status === 400 && dataObject.message === 'Pre-recorded user is already registered.') {
+        // Display alert to inform the user that they are already registered
+        alert('User with this ID card is already registered. Please log in to continue.');
+      } else {
+        // Display error message to the user
+        errorMessage.value = dataObject.message || 'Verification failed';
 
-        // Redirect to the registration page
-        router.push('/register');
+        // Check if the error is due to user not found
+        if (dataObject.message && dataObject.message.toLowerCase().includes('not found')) {
+          // Alert the user to register as a new user
+          alert('User not found. Please register as a new user and continue your registration.');
+
+          // Redirect to the registration page
+          router.push('/register');
+        }
       }
     }
   } catch (error) {
     // Display error message to the user
+    console.error('An error occurred during verification:', error);
+    console.error('Error response data:', error.response.data);
+    console.error('Error response status:', error.response.status);
+    console.error('Error response headers:', error.response.headers);
+
     errorMessage.value = error.response.data.message || 'An error occurred during verification';
   }
 };
 
+
 // Helper method to save user_data to session/local storage
 const saveUserData = (userData) => {
+  console.log('Saving user data to session storage:', userData);
   sessionStorage.setItem('user_data', JSON.stringify(userData));
 };
 
 // Helper method to save agency_data to session/local storage
 const saveAgencyData = (agencyData) => {
+  console.log('Saving agency data to session storage:', agencyData);
   sessionStorage.setItem('agency_data', JSON.stringify(agencyData));
 };
 
+// Helper method to save user_agency_data to session/local storage
+const saveUserAgencyData = (userAgencyData) => {
+  console.log('Saving user agency data to session storage:', userAgencyData);
+  sessionStorage.setItem('user_agency_data', JSON.stringify(userAgencyData));
+};
 </script>
-
 
 
 <style scoped>

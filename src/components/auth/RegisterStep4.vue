@@ -69,6 +69,8 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api'; // Import endpoints from centralized api.js file
+import axios from 'axios';
+
 
 const router = useRouter();
 
@@ -104,18 +106,14 @@ const createUser = async () => {
 
         console.log(userSubmissionData);
 
-        const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
-
         // API call to register the user and agency together
-        const response = await fetch(endpoints.registerUser, {
-            method: 'POST',
+        const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
+        const response = await axios.post(endpoints.registerUser, userSubmissionData, {
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrftoken,
             },
-            credentials: 'include',
-            mode: 'cors',
-            body: JSON.stringify(userSubmissionData),
+            withCredentials: true, // Include credentials
         });
 
         if (response.status === 201) {
@@ -129,8 +127,7 @@ const createUser = async () => {
             sessionStorage.removeItem('userAgencyData');
         } else {
             // Registration failed
-            const responseData = await response.json();
-            alert(`Error: ${responseData.error}`);
+            alert(`Error: ${response.data.error}`);
         }
     } catch (error) {
         alert('Error creating user:', error);
@@ -144,6 +141,10 @@ const createUser = async () => {
 <style scoped>
 cust-radi {
     border-radius: 15%;
+}
+.form {
+    background-color: #2B656F24;
+    border-radius: 10px;
 }
 
 .rounded-number {
@@ -177,5 +178,13 @@ cust-radi {
     margin-bottom: 10px;
     cursor: pointer;
     /* Added cursor pointer */
+}
+.custom-btn {
+    background-color: #2B656F;
+    color: white;
+    font-size: inherit;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 </style>
