@@ -142,6 +142,10 @@ const createUser = async () => {
 cust-radi {
     border-radius: 15%;
 }
+.form {
+    background-color: #2B656F24;
+    border-radius: 10px;
+}
 
 .rounded-number {
     background-color: #2B656F;
@@ -174,5 +178,13 @@ cust-radi {
     margin-bottom: 10px;
     cursor: pointer;
     /* Added cursor pointer */
+}
+.custom-btn {
+    background-color: #2B656F;
+    color: white;
+    font-size: inherit;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
 </style>

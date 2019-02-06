@@ -385,6 +385,8 @@ const proceed = async () => {
 }
 
 .custom-btn {
+    background-color: #2B656F;
+    color: white;
     font-size: inherit;
     border: none;
     border-radius: 5px;
