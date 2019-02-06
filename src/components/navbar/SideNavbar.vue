@@ -1,8 +1,8 @@
 <template>
-  <div :class="{ 'sidebar': true, 'sidebar-open': sidebarActive }">
+  <div :class="{ 'sidebar': true, 'sidebar-open': sidebarStore.isOpen }">
 
     <!-- User Profile Section -->
-    <div class="user-profile text-center" v-if="sidebarActive">
+    <div class="user-profile text-center" v-if="sidebarStore.isOpen">
       <img src="@/assets/images/icon.png" alt="User" class="profile-pic mb-2">
       <h5 class="user-name mb-0">{{ userName }}</h5>
     </div>
@@ -14,7 +14,7 @@
                      :class="{ 'active': $route.path === menu.route }"
                      v-b-tooltip.hover.bottom="menu.text">
           <i :class="menu.iconClass"></i>
-          <span class="link-text" v-if="sidebarActive">{{ menu.text }}</span>
+          <span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
         </router-link>
       </nav>
     </div>
@@ -23,35 +23,37 @@
     <div class="logout mt-auto p-0">
       <router-link to="#" class="side-btn" @click="logout">
         <i class="fas fa-sign-out-alt"></i>
-        <span class="link-text" v-if="sidebarActive">Log Out</span>
+        <span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
       </router-link>
       <router-link to="#" class="side-btn" @click="toggle">
-        <i :class="[sidebarActive ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
-        <span class="link-text" v-if="sidebarActive">Collapse</span>
+        <i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
+        <span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
       </router-link>
     </div>
   </div>
 </template>
 
+
 <script setup>
-import { defineProps, ref, defineEmits } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios'
+import axios from 'axios';
 import endpoints from '@/api';
+import { useSidebarStore } from '@/stores/sidebarStore'; // Ensure this path matches where you've defined your store
 
 const router = useRouter();
-// Define props and emits
-const { sidebarActive, userName } = defineProps(['sidebarActive', 'userName']);
-const emits = defineEmits(['toggleSidebar']);
+const { userName } = defineProps(['userName']); // Removed 'sidebarActive' since it's now managed by Pinia
 
-// Define toggleSidebar as a ref
-const toggleSidebar = ref(false);
+const sidebarStore = useSidebarStore(); // Use Pinia store
 
-// Function to toggle the sidebar
+// Initialize sidebar state when component mounts
+onMounted(() => {
+  sidebarStore.initializeSidebarState();
+});
+
+// Function to toggle the sidebar, now updates the Pinia store
 const toggle = () => {
-  toggleSidebar.value = !toggleSidebar.value;
-  // Emit an event to toggle the sidebar in the parent component
-  emits('toggleSidebar');
+  sidebarStore.toggle();
 };
 
 // Function to logout the user
@@ -73,13 +75,14 @@ const logout = async () => {
   }
 };
 
-// Menu items data
+// Menu items data remains unchanged
 const menus = ref([
   { text: 'Dashboard', route: '/student-dashboard', iconClass: 'fas fa-chart-bar' },
   { text: 'Profile', route: '/profile', iconClass: 'fas fa-user' },
   { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' }
 ]);
 </script>
+
 
 <style scoped>
 .sidebar {
