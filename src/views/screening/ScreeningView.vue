@@ -4,4 +4,4 @@
 
 <script setup>
 import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
-</script >
+</script>
