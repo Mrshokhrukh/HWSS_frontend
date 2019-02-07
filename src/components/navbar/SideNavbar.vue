@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ 'sidebar': true, 'sidebar-open': sidebarActive }">
+  <div :class="{'sidebar': true, 'sidebar-open': sidebarActive }">
 
     <!-- User Profile Section -->
     <div class="user-profile text-center" v-if="sidebarActive">
@@ -77,7 +77,7 @@ const logout = async () => {
 const menus = ref([
   { text: 'Dashboard', route: '/student-dashboard', iconClass: 'fas fa-chart-bar' },
   { text: 'Profile', route: '/profile', iconClass: 'fas fa-user' },
-  { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' }
+  { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' },
 ]);
 </script>
 
