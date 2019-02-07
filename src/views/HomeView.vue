@@ -39,6 +39,8 @@ import { RouterLink } from 'vue-router';
 .landingimgbg {
   position: relative;
   background-color: #ffffff;
+  height: 100vh; /* Set the height to cover the entire viewport */
+  overflow: hidden; /* Hide any content that overflows */
 }
 
 .quote {
