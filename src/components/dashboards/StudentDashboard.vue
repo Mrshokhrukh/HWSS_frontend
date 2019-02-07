@@ -4,7 +4,7 @@
       <div class="col-md-8">
         <div class="card">
           <div class="card-body">
-            <LandingDashboardCard />
+            <LandingDashboardCard :userName="userName" />
           </div>
         </div>
       </div>
@@ -56,13 +56,13 @@ const agencyDetails = ref(null);
 const userName = ref('');
 
 // Function to retrieve username from sessionStorage
-const getUsername = () => {
-  const userData = JSON.parse(sessionStorage.getItem('userDetails'));
-  if (userData) {
-    userName.value = userData.first_name;
-    console.log('Username retrieved from sessionStorage:', userName.value);
-  }
-};
+// const getUsername = () => {
+//   const userData = JSON.parse(sessionStorage.getItem('userDetails'));
+//   if (userData) {
+//     userName.value = userData.first_name;
+//     console.log('Username retrieved from sessionStorage:', userName.value);
+//   }
+// };
 
 // Function to fetch user details and agency details
 const fetchUserAndAgencyDetails = async () => {
@@ -90,7 +90,7 @@ const fetchUserAndAgencyDetails = async () => {
       userDetails.value = data.user;
       agencyDetails.value = data.agency;
 
-      getUsername();
+      // getUsername();
       console.log('User details fetched successfully:', userDetails.value);
       console.log('Agency details fetched successfully:', agencyDetails.value);
     } else {
