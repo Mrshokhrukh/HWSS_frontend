@@ -1,9 +1,13 @@
 <template>
-    <div>
-        <HelplineServices />
-    </div>
-    <div class="bg-white rounded">
-        <ScreeningQuestion />
+    <div class="row">
+        <div class="col-md-12">
+            <div>
+                <HelplineServices />
+            </div>
+            <div class="bg-white rounded">
+                <ScreeningQuestion />
+            </div>
+        </div>
     </div>
 </template>
 

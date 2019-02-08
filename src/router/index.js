@@ -44,11 +44,14 @@ const createAppRouter = () => {
         component: () => import('@/views/Dashboard/DashboardView.vue'),
         meta: { title: 'Admin Dashboard', requiresAuth: true }
       },
+
+
+      // User Specific Routes from here forward
       {
-        path: '/screening',
+        path: '/student-dashboard/screening',
         name: 'screening',
         component: () => import('@/views/screening/ScreeningView.vue'),
-        meta: { title: 'screening test' }
+        meta: { title: 'screening test', requiresAuth: true }
       },
     ],
   });
