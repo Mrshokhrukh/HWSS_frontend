@@ -54,7 +54,8 @@
                                         <div class="form-group">
                                             <label for="email" class="cst-color bold"></label>
                                             <input type="email" id="email" placeholder="Email" v-model="regEmail"
-                                                class="form-control bg-white" :class="detailsConfirmed ?  border-secondary :  border-danger" required
+                                                class="form-control bg-white"
+                                                :class="detailsConfirmed ? border - secondary : border - danger" required
                                                 :disabled="detailsConfirmed" :readonly="detailsConfirmed">
                                             <!-- Validation message -->
                                             <small v-if="!isValidEmail && !detailsConfirmed" class="text-danger">Please
@@ -114,10 +115,10 @@
                                         Identifier:</label>
                                     <div class="mt-2">
                                         <div class="form-check form-check-inline">
-                                            <input type="radio" id="studentID" value="Student CID"
+                                            <input type="radio" id="studentCode" value="Student Code"
                                                 v-model="selectedParameter"
                                                 class="form-check-input bg-transparent border-dark">
-                                            <label for="studentID" class="form-check-label cust-text">Student CID</label>
+                                            <label for="studentCode" class="form-check-label cust-text">Student Code</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input type="radio" id="employeeID" value="Employee ID"
@@ -128,7 +129,7 @@
                                     </div>
 
                                     <!-- Date of Birth fields for Student ID -->
-                                    <div v-if="selectedParameter === 'Student CID'" class="form-group mt-3">
+                                    <div v-if="selectedParameter === 'Student Code'" class="form-group mt-3">
                                         <small for="dob" class="text-muted">Your Date of Birth as per your school
                                             records</small>
                                         <div class="row">
@@ -174,11 +175,20 @@
                             </div>
 
                             <!-- Input for parameter value -->
-                            <div v-if="selectedParameter" class="form-group cust-text">
+                            <div v-if="selectedParameter && selectedParameter !== 'Student Code'"
+                                class="form-group cust-text">
                                 <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter
                                 }}:</label>
                                 <input type="text" id="parameterValue" v-model="parameterValue"
                                     class="form-control mt-2 bg-transparent border-dark">
+                            </div>
+
+                            <div v-if="selectedParameter === 'Student Code'" class="form-group mt-3">
+                                <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter
+                                }}:</label>
+                                <input type="text" id="parameterValue" v-model="formattedStudentCode"
+                                    @input="formatStudentCode" class="form-control mt-2 bg-transparent border-dark"
+                                    maxlength="16">
                             </div>
 
                             <!-- Proceed button -->
@@ -192,8 +202,8 @@
                         </div>
                     </div>
                     <div class="text-center mt-4">
-                        Already Have an Account? <router-link to="/login"
-                            style="color: #2B656F; font-weight: bold">Sign In</router-link>
+                        Already Have an Account? <router-link to="/login" style="color: #2B656F; font-weight: bold">Sign
+                            In</router-link>
                     </div>
                 </div>
             </div>
@@ -288,6 +298,25 @@ const storedApiCID = localStorage.getItem('userCID');
 onMounted(() => {
     parameterValue.value = storedApiCID || '';
 });
+
+
+const formattedStudentCode = computed(() => {
+    // Format the student code with periods at the specified intervals
+    return parameterValue.value.replace(/[^0-9]/g, '')  // Remove any non-digit characters
+        .replace(/(\d{3})(\d{5})(\d{2})(\d{4})/, '$1.$2.$3.$4');  // Insert periods at specified intervals
+});
+
+function formatStudentCode(event) {
+    // Update the parameterValue with the formatted input
+    const input = event.target.value.replace(/[^0-9]/g, '');
+    parameterValue.value = input.substr(0, 3)
+        + (input.length > 3 ? '.' : '')
+        + input.substr(3, 5)
+        + (input.length > 8 ? '.' : '')
+        + input.substr(8, 2)
+        + (input.length > 10 ? '.' : '')
+        + input.substr(10);
+}
 
 const proceed = async () => {
     loading.value = true;
@@ -406,4 +435,5 @@ const proceed = async () => {
 
 .cust-text {
     color: #2B656F;
-}</style>
+}
+</style>

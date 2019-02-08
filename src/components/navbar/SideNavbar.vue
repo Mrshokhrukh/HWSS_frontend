@@ -11,8 +11,7 @@
     <div>
       <nav class="menu-items">
         <router-link v-for="(menu, index) in menus" :key="index" :to="menu.route" class="side-btn"
-                     :class="{ 'active': $route.path === menu.route }"
-                     v-b-tooltip.hover.bottom="menu.text">
+          :class="{ 'active': $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
           <i :class="menu.iconClass"></i>
           <span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
         </router-link>
@@ -145,7 +144,7 @@ const menus = ref([
 
 .side-btn.active,
 .side-btn:hover {
-  background-color: #cde0c9; 
+  background-color: #cde0c9;
   color: #2c6975;
   border-radius: 50px 0 0 50px;
 }
@@ -167,5 +166,4 @@ const menus = ref([
   width: 50px;
   /* Adjust according to your icon size */
 }
-
 </style>
