@@ -80,8 +80,12 @@ const fetchUserAndAgencyDetails = async () => {
 
       console.log('User details fetched successfully:', data.user);
 
-      // Update the user's name
-      userName.value = `${data.user.first_name} ${data.user.last_name}`;
+      let userFullName = JSON.parse(sessionStorage.getItem('userDetails'));
+
+      userFullName = `${data.user[0].first_name} ${data.user[0].middle_name} ${data.user[0].last_name}`;
+      console.log('User Name is:', userName)
+
+      userName.value = userFullName
     } else {
       console.error('Error: Incomplete user, agency, or user agency details in response');
     }

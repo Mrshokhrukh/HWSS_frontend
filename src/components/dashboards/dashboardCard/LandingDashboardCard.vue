@@ -110,9 +110,11 @@ const logout = async () => {
 .arrow-button::after {
   content: '\2192';
   /* Unicode character for right arrow */
-  font-size: 20px;
+  font-size: 25px;
+  font-weight: 800;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
   position: absolute;
-  right: 10px;
+  right: -10px;
   /* Adjust this value to control the distance of the arrow from the right edge */
 }
 
@@ -132,4 +134,6 @@ const logout = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-}</style>
+  border: 2px solid #fff;
+}
+</style>

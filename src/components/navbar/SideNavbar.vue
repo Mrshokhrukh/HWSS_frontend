@@ -39,7 +39,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
-import { useSidebarStore } from '@/stores/sidebarStore'; // Ensure this path matches where you've defined your store
+import { useSidebarStore } from '@/stores/sidebarStore';
 
 const router = useRouter();
 const userName = ref('')
