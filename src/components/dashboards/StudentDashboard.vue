@@ -31,11 +31,6 @@
         </div>
       </div>
     </div>
-    <div class="row my-5">
-      <div class="col-md-12">
-        <button class="btn btn-secondary text-center" @click="logout">Log Out</button>
-      </div>
-    </div>
   </div>
 </template>
   
@@ -104,23 +99,7 @@ const fetchUserAndAgencyDetails = async () => {
 // Call the function to fetch user details and agency details at the beginning of setup()
 onMounted(fetchUserAndAgencyDetails);
 
-// Function to logout the user
-const logout = async () => {
-  try {
-    const response = await axios.post(endpoints.logOutUser);
-    if (response.data.message === 'Logout successful') {
-      sessionStorage.removeItem('userDetails');
-      sessionStorage.removeItem('agencyDetails');
-      localStorage.removeItem('authToken');
-      router.push('/login');
-      console.log('User logged out successfully.');
-    } else {
-      console.error('Logout failed:', response.data.message);
-    }
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
+// Function to logout the us
 </script>
 
   

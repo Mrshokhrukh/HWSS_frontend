@@ -1,7 +1,25 @@
 <template>
-    <ScreeningTest/>
-</template>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <aside class="col-lg-3 col-md-4 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
+          <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
+        </aside>
+  
+        <!-- Main Content -->
+        <main class="col-lg-9 col-md-8 col-sm-12">
+          <div class="row">
+            <!-- ScreeningTest Component -->
+            <div class="col-12">
+              <ScreeningTest />
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </template>
 
 <script setup>
-import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
+import SideNavbar from '@/components/navbar/SideNavbar.vue';
+import ScreeningTest from '@/components/screenings/ScreeningTest.vue'; // Import ScreeningTest component
 </script>
