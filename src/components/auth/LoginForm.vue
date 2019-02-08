@@ -104,15 +104,21 @@ const loginUser = async () => {
 
         sessionStorage.setItem('userRole', userRole)
 
-        switch (userRole) {
-            case 'student':
-                router.push({ name: 'student-dashboard' });
-                break;
-            case 'school_counselor':
-                router.push({ name: 'counselor-dashboard' });
-                break;
-            default:
-                router.push({ name: 'admin-dashboard' });
+        // Define a mapping of user roles to dashboard route names
+        const dashboardRoutes = {
+            student: 'student-dashboard',
+            school_counselor: 'counselor-dashboard',
+            admin: 'admin-dashboard'
+            // Add more roles and corresponding dashboard route names as needed
+        };
+
+        // Check if the user role exists in the mapping
+        if (userRole in dashboardRoutes) {
+            // Route to the corresponding dashboard based on user role
+            router.push({ name: dashboardRoutes[userRole] });
+        } else {
+            // Route to a default dashboard or handle the case when user role doesn't match any known roles
+            router.push({ name: 'default-dashboard' });
         }
 
     } catch (error) {
@@ -131,6 +137,7 @@ const loginUser = async () => {
         loading.value = false;
     }
 };
+
 
 </script>
 

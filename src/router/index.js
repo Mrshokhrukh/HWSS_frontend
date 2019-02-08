@@ -1,10 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-// import { useAuthStore } from '@/stores/auth';
+
+// Define a reusable dashboard component
+const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
+
+// Define a function to generate routes for user dashboards
+const generateDashboardRoutes = (userType) => {
+  const dashboardRoutes = [
+    {
+      path: `/${userType}-dashboard`,
+      name: `${userType}-dashboard`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Dashboard`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/screening`,
+      name: `${userType}-screening`,
+      component: () => import('@/views/screening/ScreeningView.vue'),
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Screening Test`, requiresAuth: true }
+    },
+    // Add more routes specific to the user type as needed
+  ];
+
+  return dashboardRoutes;
+};
 
 const createAppRouter = () => {
-  // const authStore = useAuthStore(pinia);
-
   const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
@@ -26,33 +47,10 @@ const createAppRouter = () => {
         component: () => import('@/views/auth/RegisterView.vue'),
         meta: { title: 'Register' }
       },
-      {
-        path: '/student-dashboard',
-        name: 'student-dashboard',
-        component: () => import('@/views/Dashboard/DashboardView.vue'),
-        meta: { title: 'Student Dashboard', requiresAuth: true }
-      },
-      {
-        path: '/counselor-dashboard',
-        name: 'counselor-dashboard',
-        component: () => import('@/views/Dashboard/DashboardView.vue'),
-        meta: { title: 'Counsellor Dashboard', requiresAuth: true }
-      },
-      {
-        path: '/admin-dashboard',
-        name: 'admin-dashboard',
-        component: () => import('@/views/Dashboard/DashboardView.vue'),
-        meta: { title: 'Admin Dashboard', requiresAuth: true }
-      },
-
-
-      // User Specific Routes from here forward
-      {
-        path: '/student-dashboard/screening',
-        name: 'screening',
-        component: () => import('@/views/screening/ScreeningView.vue'),
-        meta: { title: 'screening test', requiresAuth: true }
-      },
+      // Use route nesting to dynamically generate user dashboard routes
+      ...generateDashboardRoutes('student'),
+      ...generateDashboardRoutes('counselor'),
+      ...generateDashboardRoutes('admin'),
     ],
   });
 
