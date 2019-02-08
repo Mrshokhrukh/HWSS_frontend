@@ -1,9 +1,5 @@
 <template>
-<<<<<<< HEAD
-  <div :class="{'sidebar': true, 'sidebar-open': sidebarActive }">
-=======
   <div :class="{ 'sidebar': true, 'sidebar-open': sidebarStore.isOpen }">
->>>>>>> de8e6375a7f15ee9e542bfcd258cfe817359aef3
 
     <!-- User Profile Section -->
     <div class="user-profile text-center" v-if="sidebarStore.isOpen">
@@ -46,14 +42,22 @@ import endpoints from '@/api';
 import { useSidebarStore } from '@/stores/sidebarStore'; // Ensure this path matches where you've defined your store
 
 const router = useRouter();
-const { userName } = defineProps(['userName']); // Removed 'sidebarActive' since it's now managed by Pinia
+const userName = ref('')
 
 const sidebarStore = useSidebarStore(); // Use Pinia store
 
 // Initialize sidebar state when component mounts
 onMounted(() => {
   sidebarStore.initializeSidebarState();
+  defineUserName();
 });
+
+const defineUserName = ()=>{
+  let userFullName = JSON.parse(sessionStorage.getItem('userDetails'));
+  if(userFullName){
+    userName.value = `${userFullName[0].first_name} ${userFullName[0].last_name}`
+  }
+}
 
 // Function to toggle the sidebar, now updates the Pinia store
 const toggle = () => {

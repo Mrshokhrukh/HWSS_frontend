@@ -3,7 +3,7 @@
     <div class="row">
       <!-- Sidebar -->
       <aside class="col-lg-3 col-md-4 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
-        <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" :userName="userName" />
+        <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
       </aside>
 
       <!-- Main Content -->
@@ -11,7 +11,7 @@
         <div class="row">
           <!-- Dashboard Component -->
           <div class="col-12">
-            <component :is="dashboardComponent" />
+            <dashboardComponent />
           </div>
         </div>
       </main>
