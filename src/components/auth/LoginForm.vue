@@ -6,13 +6,15 @@
                     <div class="card-body">
                         <div class="auth-form text-center">
                             <h1 class="text-center my-3 bold" style="color: #2B656F;">Sign In</h1>
-                            
+
                             <form class="row justify-content-center align-items-center" @submit.prevent="loginUser">
                                 <div class="mb-3 col-md-8">
-                                    <input v-model="username" type="text" class="form-control" placeholder="Username" required />
+                                    <input v-model="username" type="text" class="form-control" placeholder="Username"
+                                        required />
                                 </div>
                                 <div class="mb-5 col-md-8">
-                                    <input v-model="password" type="password" class="form-control" placeholder="Password" required />
+                                    <input v-model="password" type="password" class="form-control" placeholder="Password"
+                                        required />
                                 </div>
                                 <div class="text-center col-md-8">
                                     <button type="submit" class="btn col-md-12 singin-button btnbg">Sign In</button>
@@ -34,11 +36,13 @@
                                 </p>
                             </div>
                             <p class="text-center my-3" style="color: #2B656F;">
-                                Don't have an account? <router-link to="/register" style="color: #2B656F; font-weight: bold">Sign Up</router-link>
+                                Don't have an account? <router-link to="/register"
+                                    style="color: #2B656F; font-weight: bold">Sign Up</router-link>
                             </p>
                             <!-- Add Forgot Password link -->
                             <p class="text-center my-3">
-                                <router-link to="/forgot-password" style="color: #2B656F; font-weight: bold;">Forgot Password?</router-link>
+                                <router-link to="/forgot-password" style="color: #2B656F; font-weight: bold;">Forgot
+                                    Password?</router-link>
                             </p>
                         </div>
                     </div>
@@ -104,8 +108,8 @@ const loginUser = async () => {
             case 'student':
                 router.push({ name: 'student-dashboard' });
                 break;
-            case 'school counsellor':
-                router.push({ name: 'counsellor-dashboard' });
+            case 'school_counselor':
+                router.push({ name: 'counselor-dashboard' });
                 break;
             default:
                 router.push({ name: 'admin-dashboard' });
@@ -130,11 +134,8 @@ const loginUser = async () => {
 
 </script>
 
-
-
-
 <style scoped>
-.tag-line-login{
+.tag-line-login {
     font-family: "Boogaloo", sans-serif;
     font-weight: 200;
 }

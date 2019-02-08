@@ -2,12 +2,12 @@
   <div class="container-fluid">
     <div class="row">
       <!-- Sidebar -->
-      <aside class="col-lg-3 col-md-4 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
+      <aside class="col-lg-2 col-md-2 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
         <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
       </aside>
 
       <!-- Main Content -->
-      <main class="col-lg-9 col-md-8 col-sm-12">
+      <main class="col-lg-10 col-md-10 col-sm-12">
         <div class="row">
           <!-- Dashboard Component -->
           <div class="col-12">
@@ -18,6 +18,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { computed, ref, onMounted } from 'vue';
@@ -43,7 +44,7 @@ const dashboardComponent = computed(() => {
     case 'student':
       console.log('Loading Student Dashboard');
       return StudentDashboard;
-    case 'school counsellor':
+    case 'school_counselor':
       console.log('Loading Counsellor Dashboard');
       return CounsellorDashboard;
     default:

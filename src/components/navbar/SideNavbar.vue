@@ -3,7 +3,7 @@
 
     <!-- User Profile Section -->
     <div class="user-profile text-center" v-if="sidebarStore.isOpen">
-      <img src="@/assets/images/icon.png" alt="User" class="profile-pic mb-2">
+      <img :src="profilePictureUrl" alt="User" class="profile-pic mb-2">
       <h5 class="user-name mb-0">{{ userName }}</h5>
     </div>
 
@@ -32,31 +32,32 @@
   </div>
 </template>
 
-
 <script setup>
-import { onMounted, ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useSidebarStore } from '@/stores/sidebarStore';
 
 const router = useRouter();
-const userName = ref('')
+const userName = ref('');
+const profilePicture = ref('');
 
 const sidebarStore = useSidebarStore(); // Use Pinia store
 
 // Initialize sidebar state when component mounts
-onMounted(() => {
-  sidebarStore.initializeSidebarState();
-  defineUserName();
-});
-
-const defineUserName = ()=>{
-  let userFullName = JSON.parse(sessionStorage.getItem('userDetails'));
-  if(userFullName){
-    userName.value = `${userFullName[0].first_name} ${userFullName[0].last_name}`
+// Function to define the user name and profile picture
+const defineUserData = () => {
+  let userData = JSON.parse(sessionStorage.getItem('userDetails'));
+  if (userData) {
+    userName.value = `${userData[0].first_name} ${userData[0].last_name}`;
+    profilePicture.value = userData[0].profile_picture;
   }
-}
+};
+
+// Call the function directly
+sidebarStore.initializeSidebarState(); // Assuming this function is defined elsewhere
+defineUserData();
 
 // Function to toggle the sidebar, now updates the Pinia store
 const toggle = () => {
@@ -71,6 +72,7 @@ const logout = async () => {
       sessionStorage.removeItem('userDetails');
       sessionStorage.removeItem('agencyDetails');
       sessionStorage.removeItem('userAgencyDetails');
+      sessionStorage.removeItem('userRole');
       localStorage.removeItem('authToken');
       router.push('/login');
       console.log('User logged out successfully.');
@@ -88,6 +90,17 @@ const menus = ref([
   { text: 'Profile', route: '/profile', iconClass: 'fas fa-user' },
   { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' },
 ]);
+
+// Computed property to generate profile picture URL with fallback
+const profilePictureUrl = computed(() => {
+  const baseUrl = 'http://localhost:8000'; // Your Django base URL
+  const defaultImageUrl = '@/assets/images/icon.png'; // Path to default image
+  if (profilePicture.value) {
+    return baseUrl + profilePicture.value;
+  } else {
+    return defaultImageUrl;
+  }
+});
 </script>
 
 
@@ -100,6 +113,7 @@ const menus = ref([
   height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .sidebar-open {

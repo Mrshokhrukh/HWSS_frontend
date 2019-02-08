@@ -17,8 +17,8 @@ const endpoints = {
   getRcscDetails: `${accessBaseUrl}/get-rcsc-details/`,
   registerUser: `${accessBaseUrl}/register-user/`,
   registerAgency: `${accessBaseUrl}/register-agency/`,
-  getEmisStudent: `${accessBaseUrl}/get-emis-student/`,
-  getEmisEmployee: `${accessBaseUrl}/get-emis-employee/`,
+  getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
+  getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,
 
   verifyPreRecordedUser: `${accessBaseUrl}/verify-pre-recorded-user/`,
   registerPreRecordedUser: `${accessBaseUrl}/register-pre-recorded-user/`,

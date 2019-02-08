@@ -99,7 +99,25 @@ const fetchUserAndAgencyDetails = async () => {
 // Call the function to fetch user details and agency details at the beginning of setup()
 onMounted(fetchUserAndAgencyDetails);
 
-// Function to logout the us
+// Function to logout the user
+const logout = async () => {
+  try {
+    const response = await axios.post(endpoints.logOutUser);
+    if (response.data.message === 'Logout successful') {
+      sessionStorage.removeItem('userDetails');
+      sessionStorage.removeItem('agencyDetails');
+      sessionStorage.removeItem('userAgencyDetails');
+      sessionStorage.removeItem('userRole');
+      localStorage.removeItem('authToken');
+      router.push('/login');
+      console.log('User logged out successfully.');
+    } else {
+      console.error('Logout failed:', response.data.message);
+    }
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
 </script>
 
   

@@ -33,8 +33,8 @@ const createAppRouter = () => {
         meta: { title: 'Student Dashboard', requiresAuth: true }
       },
       {
-        path: '/counsellor-dashboard',
-        name: 'counsellor-dashboard',
+        path: '/counselor-dashboard',
+        name: 'counselor-dashboard',
         component: () => import('@/views/Dashboard/DashboardView.vue'),
         meta: { title: 'Counsellor Dashboard', requiresAuth: true }
       },

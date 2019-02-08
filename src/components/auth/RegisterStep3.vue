@@ -330,9 +330,9 @@ const proceed = async () => {
             }
             break;
         case 'EMIS':
-            if (selectedParameter.value === 'Student CID') {
+            if (selectedParameter.value === 'Student Code') {
                 const dob = `${formData.selectedYear}-${formData.selectedMonth}-${formData.selectedDate}`;
-                apiURL = `${endpoints.getEmisStudent}${parameterValue.value}/${regEmail.value}/${dob}/`;
+                apiURL = `${endpoints.getEmisStudent}${parameterValue.value}/${dob}/${regEmail.value}/`;
                 localStorage.removeItem('userCID');
             } else if (selectedParameter.value === 'Employee ID') {
                 apiURL = `${endpoints.getEmisEmployee}${parameterValue.value}/${regEmail.value}/`;
