@@ -35,7 +35,7 @@
 </template>
   
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
@@ -49,15 +49,6 @@ const router = useRouter();
 const userDetails = ref(null);
 const agencyDetails = ref(null);
 const userName = ref('');
-
-// Function to retrieve username from sessionStorage
-// const getUsername = () => {
-//   const userData = JSON.parse(sessionStorage.getItem('userDetails'));
-//   if (userData) {
-//     userName.value = userData.first_name;
-//     console.log('Username retrieved from sessionStorage:', userName.value);
-//   }
-// };
 
 // Function to fetch user details and agency details
 const fetchUserAndAgencyDetails = async () => {
@@ -96,28 +87,8 @@ const fetchUserAndAgencyDetails = async () => {
   }
 };
 
-// Call the function to fetch user details and agency details at the beginning of setup()
-onMounted(fetchUserAndAgencyDetails);
+fetchUserAndAgencyDetails();
 
-// Function to logout the user
-const logout = async () => {
-  try {
-    const response = await axios.post(endpoints.logOutUser);
-    if (response.data.message === 'Logout successful') {
-      sessionStorage.removeItem('userDetails');
-      sessionStorage.removeItem('agencyDetails');
-      sessionStorage.removeItem('userAgencyDetails');
-      sessionStorage.removeItem('userRole');
-      localStorage.removeItem('authToken');
-      router.push('/login');
-      console.log('User logged out successfully.');
-    } else {
-      console.error('Logout failed:', response.data.message);
-    }
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
 </script>
 
   
