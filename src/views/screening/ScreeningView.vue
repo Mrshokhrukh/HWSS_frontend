@@ -23,3 +23,4 @@
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import ScreeningTest from '@/components/screenings/ScreeningTest.vue'; // Import ScreeningTest component
 </script>
+

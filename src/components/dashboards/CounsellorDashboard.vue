@@ -1,39 +1,48 @@
 <template>
-    <div class="container">
-    <div class="row row-cols-1 row-cols-md-2 g-4">
-      <div class="col">
+    <div class="container vh-100">
+    <div class="row ">
+      <div class="row col-md-12">
+        <TopNavbarCard/>
+      </div> 
+      <div class="col-md-4">
         <div class="card">
           <div class="card-body">
-            <LandingDashboardCard />
+            <QuickToolCard />
           </div>
         </div>
       </div>
-      <div class="col">
+      <div class="col-md-4">
         <div class="card">
           <div class="card-body">
-            <ContactDetailCard />
+            <Screening2023Card />
           </div>
         </div>
       </div>
-      <div class="col">
+      <div class="col-md-4">
         <div class="card">
           <div class="card-body">
-            <ImageCard />
+            <Screening2022Card />
+          </div>
+        </div>
+      </div> 
+      <div class="row col-md-12">
+        <SeverityCountsCard/>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-body">
+            <SuicidalBehaviourCard />
           </div>
         </div>
       </div>
-      <div class="col">
+
+      <div class="col-md-6">
         <div class="card">
           <div class="container">
-            <PemaResponseServicesCard />
+            <GraphCard />
           </div>
 
         </div>
-      </div>
-    </div>
-    <div class="row my-5">
-      <div class="col-md-12">
-        <button class="btn btn-secondary text-center" @click="logout">Log Out</button>
       </div>
     </div>
   </div>
@@ -44,6 +53,13 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
+import GraphCard from '@/components/dashboards/CounsellorDashboardCard/GraphCard.vue';
+import QuickToolCard from '@/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue';
+import Screening2022Card from '@/components/dashboards/CounsellorDashboardCard/Screening2022Card.vue';
+import Screening2023Card from '@/components/dashboards/CounsellorDashboardCard/Screening2023Card.vue';
+import SeverityCountsCard from '@/components/dashboards/CounsellorDashboardCard/SeverityCountsCard.vue';
+import SuicidalBehaviourCard from '@/components/dashboards/CounsellorDashboardCard/SuicidalBehaviourCard.vue';
+import TopNavbarCard from '@/components/dashboards/CounsellorDashboardCard/TopNavbarCard.vue';
 
 const router = useRouter();
 
@@ -90,23 +106,23 @@ onMounted(async () => {
 });
 
 // Function to logout the user
-const logout = async () => {
-  // console.log('button click detected')
-  try {
-    const response = await axios.post(endpoints.logOutUser);
-    if (response.data.message === 'Logout successful') {
-      sessionStorage.removeItem('userDetails');
-      sessionStorage.removeItem('agencyDetails');
-      sessionStorage.removeItem('userAgencyDetails');
-      localStorage.removeItem('authToken');
-      router.push('/login');
-    } else {
-      console.error('Logout failed:', response.data.message);
-    }
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
+// const logout = async () => {
+//   // console.log('button click detected')
+//   try {
+//     const response = await axios.post(endpoints.logOutUser);
+//     if (response.data.message === 'Logout successful') {
+//       sessionStorage.removeItem('userDetails');
+//       sessionStorage.removeItem('agencyDetails');
+//       sessionStorage.removeItem('userAgencyDetails');
+//       localStorage.removeItem('authToken');
+//       router.push('/login');
+//     } else {
+//       console.error('Logout failed:', response.data.message);
+//     }
+//   } catch (error) {
+//     console.error('Logout failed:', error);
+//   }
+// };
 </script>
     
 <style scoped></style>
