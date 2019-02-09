@@ -117,14 +117,12 @@ const profilePictureUrl = computed(() => {
 
 <style scoped>
 .sidebar {
-  width: 100%;
   background-color: #2c6975;
   color: white;
   transition: width 0.3s ease-in-out;
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100vh;
 }
 
 .sidebar-open {
