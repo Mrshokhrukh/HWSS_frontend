@@ -1,5 +1,5 @@
 <template>
-  <div class="container d-flex align-items-center justify-content-center min-vh-100">
+  <div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
     <div class="row row-cols-1 row-cols-md-2 g-4">
       <div class="col-md-8">
         <div class="card">
@@ -16,8 +16,8 @@
         </div>
       </div>
       <div class="col-md-8">
-        <div class="card">
-          <div class="card-body">
+        <div class="card m-0 p-0">
+          <div class="card-body m-0 p-0">
             <ImageCard />
           </div>
         </div>
