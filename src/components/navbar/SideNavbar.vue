@@ -43,9 +43,8 @@ const router = useRouter();
 const userName = ref('');
 const profilePicture = ref('');
 
-const sidebarStore = useSidebarStore(); // Use Pinia store
+const sidebarStore = useSidebarStore();
 
-// Initialize sidebar state when component mounts
 // Function to define the user name and profile picture
 const defineUserData = () => {
   let userData = JSON.parse(sessionStorage.getItem('userDetails'));
@@ -56,7 +55,7 @@ const defineUserData = () => {
 };
 
 // Call the function directly
-sidebarStore.initializeSidebarState(); // Assuming this function is defined elsewhere
+sidebarStore.initializeSidebarState();
 defineUserData();
 
 // Function to toggle the sidebar, now updates the Pinia store
@@ -91,10 +90,13 @@ const menus = ref([
   { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' },
 ]);
 
-// Computed property to generate profile picture URL with fallback
 const profilePictureUrl = computed(() => {
-  const baseUrl = 'http://localhost:8000'; // Your Django base URL
-  const defaultImageUrl = '@/assets/images/icon.png'; // Path to default image
+  // Determine if the app is running on localhost:5173
+  const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
+  // Define base URL based on the condition
+  const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
+
+  const defaultImageUrl = '@/assets/images/icon.png';
   if (profilePicture.value) {
     return baseUrl + profilePicture.value;
   } else {
@@ -102,6 +104,7 @@ const profilePictureUrl = computed(() => {
   }
 });
 </script>
+
 
 
 <style scoped>
