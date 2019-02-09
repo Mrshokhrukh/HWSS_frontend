@@ -1,10 +1,10 @@
 <template>
     <div class="row">
         <div class="col-md-12">
-            <div>
+            <div class="me-5">
                 <HelplineServices />
             </div>
-            <div class="bg-white rounded">
+            <div class="bg-white rounded mt-5 me-5">
                 <ScreeningQuestion />
             </div>
         </div>
