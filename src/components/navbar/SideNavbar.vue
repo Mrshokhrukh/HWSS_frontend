@@ -44,6 +44,7 @@ const userName = ref('');
 const profilePicture = ref('');
 
 const sidebarStore = useSidebarStore();
+const userType = sessionStorage.getItem('userRole');
 
 // Function to define the user name and profile picture
 const defineUserData = () => {
@@ -54,7 +55,6 @@ const defineUserData = () => {
   }
 };
 
-// Call the function directly
 sidebarStore.initializeSidebarState();
 defineUserData();
 
@@ -74,7 +74,7 @@ const logout = async () => {
       sessionStorage.removeItem('userRole');
       localStorage.removeItem('authToken');
       router.push('/login');
-      console.log('User logged out successfully.');
+      // console.log('User logged out successfully.');
     } else {
       console.error('Logout failed:', response.data.message);
     }
@@ -84,16 +84,25 @@ const logout = async () => {
 };
 
 // Menu items data remains unchanged
-const menus = ref([
-  { text: 'Dashboard', route: '/student-dashboard', iconClass: 'fas fa-chart-bar' },
-  { text: 'Profile', route: '/profile', iconClass: 'fas fa-user' },
-  { text: 'Screening', route: '/help', iconClass: 'fas fa-question-circle' },
-]);
+const menus = computed(() => {
+  let baseRoute = `/${userType}-dashboard`;
+  let menuItems = [
+    { text: 'Dashboard', route: baseRoute, iconClass: 'fas fa-chart-bar' },
+    { text: 'Profile', route: `${baseRoute}/profile`, iconClass: 'fas fa-user' },
+  ];
+
+  if (userType === 'student') {
+    menuItems.push({ text: 'Screening', route: `${baseRoute}/screening`, iconClass: 'fas fa-question-circle' });
+  } else if (userType === 'admin') {
+    menuItems.push({ text: 'Settings', route: `${baseRoute}/settings`, iconClass: 'fas fa-cog' });
+  }
+  // Add more conditions and menu items as needed based on user roles
+
+  return menuItems;
+});
 
 const profilePictureUrl = computed(() => {
-  // Determine if the app is running on localhost:5173
   const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
-  // Define base URL based on the condition
   const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
 
   const defaultImageUrl = '@/assets/images/icon.png';
@@ -104,8 +113,6 @@ const profilePictureUrl = computed(() => {
   }
 });
 </script>
-
-
 
 <style scoped>
 .sidebar {
