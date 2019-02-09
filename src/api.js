@@ -8,8 +8,14 @@ const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
 // Define api middle params
 const accessMiddleParams = '/api/v1/access';
 
+// Define api middle params
+const settingsMiddleParams = '/api/v1/settings';
+
 // Combine BaseURL and middle params for ease of use
 const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
+
+// Combine BaseURL and middle params for ease of use
+const settingsBaseUrl = `${baseUrl}${settingsMiddleParams}`;
 
 // Define your API endpoints
 const endpoints = {
@@ -26,6 +32,8 @@ const endpoints = {
   loginUsers: `${accessBaseUrl}/login/`,
   getUserDetails: `${accessBaseUrl}/get-user-details/`,
   logOutUser: `${accessBaseUrl}/user-logout/`,
+
+  settings: `${settingsBaseUrl}/`,
 };
 
 export default endpoints;

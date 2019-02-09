@@ -2,8 +2,8 @@
   <div class="container">
     <div class="row">
       <div class="col-md-8">
-        <h1 class="text-center mb-5 mt-3"> Hi {{ userName }}! </h1>
-        <h3>Welcome to Mental Health & Well Being Screening!</h3>
+        <h1 class="text-center my-3"> Hi, <span class="text-capitalized">{{ userName }}</span>! </h1>
+        <h3 class="my-4">Welcome to <span class="text-capitalized">{{ appName }}</span> Dashboard!</h3>
         <div class="row justify-content-center">
           <button class="btn custom-btn arrow-button" @click="navigateToScreening">Screen your mental Health</button>
         </div>
@@ -32,9 +32,8 @@ import questions from '@/questions.json'; // Make sure the path is correct
 import endpoints from '@/api';
 
 const router = useRouter();
-const userDetails = ref(null);
-const agencyDetails = ref(null);
 const userName = ref('');
+const appName = ref('');
 const showModal = ref(false);
 
 const getUsername = () => {
@@ -45,27 +44,25 @@ const getUsername = () => {
 };
 
 onMounted(async () => {
+  getUsername();
+  fetchAppName();
+});
+
+async function fetchAppName() {
   try {
-    const authToken = localStorage.getItem('authToken');
-    const response = await axios.get(endpoints.getUserDetails, {
-      headers: {
-        Authorization: `Token ${authToken}`,
-      },
-    });
-    const data = response.data;
-    if (data.user && data.agency) {
-      sessionStorage.setItem('userDetails', JSON.stringify(data.user));
-      sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
-      userDetails.value = data.user;
-      agencyDetails.value = data.agency;
-      getUsername();
+    const cachedAppName = sessionStorage.getItem('appName');
+    if (cachedAppName) {
+      appName.value = cachedAppName;
     } else {
-      console.error('Error: Incomplete user or agency details in response');
+      const response = await axios.get(endpoints.settings); 
+      appName.value = response.data[0].app_name;
+      sessionStorage.setItem('appName', appName.value); 
     }
   } catch (error) {
-    console.error('Error fetching user details:', error);
+    console.error('Error fetching app name:', error);
   }
-});
+}
+
 
 async function navigateToScreening() {
   const hasActiveQuestions = questions.question_sets.some(set => set.status === "Active");
@@ -78,6 +75,7 @@ async function navigateToScreening() {
 </script>
 
 
+
 <style scoped>
 .custom-btn {
   background-color: #2B656F;
@@ -86,6 +84,11 @@ async function navigateToScreening() {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+
+span.text-capitalized{
+  color: #2B656F;
+  text-transform: uppercase;
 }
 
 .arrow-button {
