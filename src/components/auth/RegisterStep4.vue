@@ -40,11 +40,13 @@
                             <!-- Username and password fields -->
                             <div class="form-group cust-text  mx-auto">
                                 <label for="username">Username:</label>
-                                <input type="text" id="username" v-model="username" class="form-control p-2 bg-transparent border-dark" required>
+                                <input type="text" id="username" v-model="username"
+                                    class="form-control p-2 bg-transparent border-dark" required>
                             </div>
                             <div class="form-group cust-text mt-3 mx-auto">
                                 <label for="password">Password:</label>
-                                <input type="password" id="password" v-model="password" class="form-control p-2 bg-transparent border-dark" required>
+                                <input type="password" id="password" v-model="password"
+                                    class="form-control p-2 bg-transparent border-dark" required>
                             </div>
                             <div class="form-group cust-text mt-3 mx-auto">
                                 <label for="confirmPassword">Confirm Password:</label>
@@ -55,13 +57,14 @@
                         </form>
                     </div>
                     <div class="text-center mt-4">
-                        Already Have an Account? <router-link to="login" style="color: #2B656F; font-weight: bold">Sign In</router-link>
+                        Already Have an Account? <router-link to="login" style="color: #2B656F; font-weight: bold">Sign
+                            In</router-link>
                     </div>
 
                 </div>
             </div>
         </div>
-        
+
     </div>
 </template>
 
@@ -85,52 +88,55 @@ const createUser = async () => {
     }
 
     try {
-        // Get user and agency data from sessionStorage
         let userData = JSON.parse(sessionStorage.getItem('user_data'));
         const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
         const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'));
 
-        // Update username and password in the userData object
-        userData.username = username.value;
-        userData.password = password.value;
+        userData = { ...userData, username: username.value, password: password.value };
 
-        // Set the updated userData back to sessionStorage
         sessionStorage.setItem('user_data', JSON.stringify(userData));
 
-        // Prepare userSubmissionData
-        const userSubmissionData = {
-            userData, 
-            agencyData,
-            userAgencyData
-        };
+        const userSubmissionData = { userData, agencyData, userAgencyData };
 
         console.log(userSubmissionData);
 
-        // API call to register the user and agency together
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
         const response = await axios.post(endpoints.registerUser, userSubmissionData, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken,
-            },
-            withCredentials: true, // Include credentials
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            withCredentials: true,
         });
 
         if (response.status === 201) {
-            // Registration successful
             alert('Registration successful!');
             router.push({ name: 'login' });
-
-            // Clear user and agency data from sessionStorage
             sessionStorage.removeItem('user_data');
             sessionStorage.removeItem('agencyData');
             sessionStorage.removeItem('userAgencyData');
         } else {
-            // Registration failed
             alert(`Error: ${response.data.error}`);
         }
     } catch (error) {
-        alert('Error creating user:', error);
+        let message = 'Error creating user. Please try again.';
+        console.log(error)
+
+        if (error.response && error.response.data) {
+            console.log('Error response:', error.response.data); // Log the error response
+
+            const errors = error.response.data;
+            let errorMessages = [];
+
+            if (errors['identity_number']) {
+                errorMessages.push(errors['identity_number'][0].string);
+            }
+
+            if (errors['email']) {
+                errorMessages.push(errors['email'][0].string);
+            }
+
+            message = errorMessages.length > 0 ? errorMessages.join(' ') : message;
+        }
+
+        alert(message);
     }
 };
 </script>
@@ -142,6 +148,7 @@ const createUser = async () => {
 cust-radi {
     border-radius: 15%;
 }
+
 .form {
     background-color: #2B656F24;
     border-radius: 10px;
@@ -157,6 +164,7 @@ cust-radi {
     align-items: center;
     justify-content: center;
 }
+
 .step-container {
     position: relative;
     text-align: center;
@@ -179,6 +187,7 @@ cust-radi {
     cursor: pointer;
     /* Added cursor pointer */
 }
+
 .custom-btn {
     background-color: #2B656F;
     color: white;
