@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
@@ -42,21 +42,23 @@ import { useSidebarStore } from '@/stores/sidebarStore';
 const router = useRouter();
 const userName = ref('');
 const profilePicture = ref('');
-
 const sidebarStore = useSidebarStore();
 const userType = sessionStorage.getItem('userRole');
 
 // Function to define the user name and profile picture
 const defineUserData = () => {
   let userData = JSON.parse(sessionStorage.getItem('userDetails'));
-  if (userData) {
+  if (userData && userData[0]) {
     userName.value = `${userData[0].first_name} ${userData[0].last_name}`;
     profilePicture.value = userData[0].profile_picture;
   }
 };
 
+watchEffect(() => {
+  defineUserData()
+});
+
 sidebarStore.initializeSidebarState();
-defineUserData();
 
 // Function to toggle the sidebar, now updates the Pinia store
 const toggle = () => {
