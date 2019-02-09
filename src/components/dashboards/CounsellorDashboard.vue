@@ -1,7 +1,7 @@
 <template>
-    <div class="container vh-100">
+    <div class="container vh-100 p-4 ">
     <div class="row ">
-      <div class="row col-md-12">
+      <div class="row col-md-12 mb-5">
         <TopNavbarCard/>
       </div> 
       <div class="col-md-4">
@@ -25,10 +25,10 @@
           </div>
         </div>
       </div> 
-      <div class="row col-md-12">
+      <div class="row col-md-12 mt-4">
         <SeverityCountsCard/>
       </div>
-      <div class="col-md-6">
+      <div class=" col-md-6 mt-4">
         <div class="card">
           <div class="card-body">
             <SuicidalBehaviourCard />
@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <div class="col-md-6">
+      <div class="mt-4 col-md-6">
         <div class="card">
           <div class="container">
             <GraphCard />
