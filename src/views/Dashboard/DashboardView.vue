@@ -10,7 +10,10 @@
       <main class="col-lg-10 col-md-10 col-sm-12">
         <div class="row">
           <!-- Dashboard Component -->
-          <div class="col-12">
+          <div class="col-12" v-if="router === '/screening'">
+            <ScreeningTest />
+          </div>
+          <div class="col-12" v-else>
             <dashboardComponent />
           </div>
         </div>
@@ -26,6 +29,7 @@ import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
+import ScreeningTest from '@/components/screenings/ScreeningTest.vue'
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
