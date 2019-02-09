@@ -10,7 +10,10 @@
       <main class="col-lg-10 col-md-10 col-sm-12">
         <div class="row">
           <!-- Dashboard Component -->
-          <div class="col-12">
+          <div class="col-12" v-if="router === '/screening'">
+            <ScreeningTest />
+          </div>
+          <div class="col-12" v-else>
             <dashboardComponent />
           </div>
         </div>
@@ -21,35 +24,35 @@
 
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref } from 'vue';
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
+import ScreeningTest from '@/components/screenings/ScreeningTest.vue'
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
 
-
 const router = useRouter();
-
 const sidebarOpen = ref(false);
 const userName = ref('');
 
 const dashboardComponent = computed(() => {
   const role = sessionStorage.getItem('userRole');
-  console.log('User Role:', role);
+  // console.log('User Role:', role);
 
   switch (role) {
     case 'student':
-      console.log('Loading Student Dashboard');
       return StudentDashboard;
     case 'school_counselor':
-      console.log('Loading Counsellor Dashboard');
       return CounsellorDashboard;
-    default:
-      console.log('Loading Admin Dashboard');
+    case 'clinical_counselor':
+      return CounsellorDashboard;
+    case 'admin':
       return AdminDashboard;
+    default:
+      return false;
   }
 });
 
@@ -79,12 +82,12 @@ const fetchUserAndAgencyDetails = async () => {
       sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
       sessionStorage.setItem('userAgencyDetails', JSON.stringify(data.userAgency));
 
-      console.log('User details fetched successfully:', data.user);
+      // console.log('User details fetched successfully:', data.user);
 
       let userFullName = JSON.parse(sessionStorage.getItem('userDetails'));
 
       userFullName = `${data.user[0].first_name} ${data.user[0].middle_name} ${data.user[0].last_name}`;
-      console.log('User Name is:', userName)
+      // console.log('User Name is:', userName)
 
       userName.value = userFullName
     } else {
@@ -95,9 +98,7 @@ const fetchUserAndAgencyDetails = async () => {
   }
 };
 
-
-// Call fetchUserAndAgencyDetails when the component is mounted
-onMounted(fetchUserAndAgencyDetails);
+fetchUserAndAgencyDetails();
 </script>
 
 <style scoped>

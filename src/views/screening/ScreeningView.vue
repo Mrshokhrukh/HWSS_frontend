@@ -1,6 +1,6 @@
 <template>
-    <div class="container-fluid">
-      <div class="row">
+    <div class="container-fluid ">
+      <div class="row vh-100">
         <!-- Sidebar -->
         <aside class="col-lg-2 col-md-2 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
           <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
