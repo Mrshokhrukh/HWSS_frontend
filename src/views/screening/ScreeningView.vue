@@ -1,24 +1,24 @@
 <template>
-    <div class="container-fluid ">
-      <div class="row vh-100">
-        <aside class="col-lg-2 col-md-2 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
-          <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
-        </aside>
-  
-        
-        <main class="col-lg-10 col-md-10 col-sm-12">
-          <div class="row">
-            <div class="col-12">
-              <ScreeningTest />
-            </div>
+  <div class="container-fluid ">
+    <div class="row vh-100">
+      <aside class="col-lg-2 col-md-2 col-sm-12 px-0" :class="{ 'sidebar-open': sidebarOpen }">
+        <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
+      </aside>
+
+
+      <main class="col-lg-10 col-md-10 col-sm-12">
+        <div class="row">
+          <div class="col-12">
+            <ScreeningTest />
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
-  </template>
+  </div>
+</template>
 
 <script setup>
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
-import ScreeningTest from '@/components/screenings/ScreeningTest.vue'; // Import ScreeningTest component
+import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
 </script>
 

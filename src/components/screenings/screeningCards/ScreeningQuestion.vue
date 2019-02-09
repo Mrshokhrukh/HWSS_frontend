@@ -4,11 +4,11 @@
       <h1 class="text-center bold">{{ title }}</h1>
       <p class="custom-font">{{ content }}</p>
       <p class="custom-text-color">{{ disclaimer }}</p>
-      <div class="d-flex justify-content-center">
-      <button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">Continue</button>
+      <div class="d-flex justify-content-center mt-5">
+        <button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">Continue</button>
+      </div>
     </div>
-    </div>
-    <div class="col-md-4">
+    <div class="col-md-4 text-center">
       <img :src="imageUrl" :alt="imageAlt" class="img-fluid">
     </div>
   </div>
@@ -31,17 +31,19 @@ const continueAction = () => {
   
 <style scoped>
 .custom-size-btn {
-  width: 432px;
-  height: 62px;
-  /* Optional: Adjust font size and other properties as needed */
-  font-size: 18px; /* Example to increase font size */
+  width: 100%;
+  height: auto;
+  font-size: 18px;
+  /* Example to increase font size */
   background-color: #2C6975;
 }
-.custom-text-color{
+
+.custom-text-color {
   color: #2C6975;
   font-weight: 800;
 }
-.custom-font{
+
+.custom-font {
   font-weight: 600;
 }
 </style>
