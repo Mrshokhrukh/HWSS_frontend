@@ -15,7 +15,7 @@
 
     <!-- Modal Popup -->
     <div v-if="showModal" class="modal-overlay" @click="showModal = false">
-      <div class="modal-content" @click.stop>
+      <div class="modal-content" @click.stop style="max-width: 350px; z-index:9999;">
         <p>There are no active questions available at the moment.</p>
         <button @click="showModal = false">Close</button>
       </div>
@@ -27,7 +27,7 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-import questions from '@/questions.json'; // Make sure the path is correct
+import test_types from '@/questions.json';
 
 import endpoints from '@/api';
 
@@ -63,15 +63,24 @@ async function fetchAppName() {
   }
 }
 
-
 async function navigateToScreening() {
-  const hasActiveQuestions = questions.question_sets.some(set => set.status === "Active");
-  if (hasActiveQuestions) {
+  let clusterTestFound = false;
+  for (const test of Object.values(test_types)) {
+    if (test.name === "Cluster Test" && test.status === "Active") {
+      clusterTestFound = true;
+      break;
+    }
+  }
+
+  if (clusterTestFound) {
+    alert('Congratulations, the questions are now available to screen.');
     router.push('/student-dashboard/screening');
   } else {
-    showModal.value = true;
+    alert('Sorry, you cannot continue as there are no Cluster tests available to screen.');
+    // showModal.value = true;
   }
 }
+
 </script>
 
 

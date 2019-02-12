@@ -62,3 +62,42 @@ onMounted(async () => {
   }
 });
 </script>
+
+
+<style scoped>.carousel-item {
+  transition: opacity 0.5s ease-in-out;
+}
+
+.image-card {
+  width: 100%;
+  
+}
+
+.carousel-item img {
+  object-fit: contain;
+  margin: 0;
+  border: none;
+  aspect-ratio: 16/9;
+  max-height: 500px;
+}
+
+/* .carousel-indicators {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+} */
+
+.carousel-indicators button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ccc; /* Default color */
+  margin: 0 5px;
+  border: none;
+}
+
+.carousel-indicators button.active {
+  background-color: rgba(7, 114, 77, 0.671); /* Active color */
+}
+</style>

@@ -48,17 +48,19 @@ const continueAction = () => {
 </script>
 <style scoped>
 .custom-size-btn {
-  width: 432px;
-  height: 62px;
-  /* Optional: Adjust font size and other properties as needed */
-  font-size: 18px; /* Example to increase font size */
+  width: 100%;
+  height: auto;
+  font-size: 18px;
+  /* Example to increase font size */
   background-color: #2C6975;
 }
-.custom-text-color{
+
+.custom-text-color {
   color: #2C6975;
   font-weight: 800;
 }
-.custom-font{
+
+.custom-font {
   font-weight: 600;
 }
 </style>

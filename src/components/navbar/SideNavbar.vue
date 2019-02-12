@@ -70,11 +70,9 @@ const logout = async () => {
   try {
     const response = await axios.post(endpoints.logOutUser);
     if (response.data.message === 'Logout successful') {
-      sessionStorage.removeItem('userDetails');
-      sessionStorage.removeItem('agencyDetails');
-      sessionStorage.removeItem('userAgencyDetails');
-      sessionStorage.removeItem('userRole');
-      localStorage.removeItem('authToken');
+      sessionStorage.clear(); 
+      localStorage.clear();
+      alert('You have been successfully logged out of the System')
       router.push('/login');
       // console.log('User logged out successfully.');
     } else {
@@ -84,6 +82,7 @@ const logout = async () => {
     console.error('Logout failed:', error);
   }
 };
+
 
 // Menu items data remains unchanged
 const menus = computed(() => {
@@ -118,18 +117,16 @@ const profilePictureUrl = computed(() => {
 
 <style scoped>
 .sidebar {
-  width: 250px;
   background-color: #2c6975;
   color: white;
   transition: width 0.3s ease-in-out;
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100vh;
 }
 
 .sidebar-open {
-  width: 250px;
+  width: 100%;
 }
 
 .user-profile {
@@ -144,8 +141,10 @@ const profilePictureUrl = computed(() => {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  border: 0px solid white;
+  border: 5px solid white;
   object-fit: cover;
+  object-position: top;
+  margin: 10px auto
 }
 
 .user-name {

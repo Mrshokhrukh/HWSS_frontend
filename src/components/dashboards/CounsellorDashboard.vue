@@ -1,25 +1,25 @@
 <template>
-    <div class="container vh-100 p-4 ">
+  <div class="container vh-100 p-4 bg-color">
     <div class="row ">
       <div class="row col-md-12 mb-5">
         <TopNavbarCard/>
       </div> 
-      <div class="col-md-4">
-        <div class="card">
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
           <div class="card-body">
             <QuickToolCard />
           </div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card">
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
           <div class="card-body">
             <Screening2023Card />
           </div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card">
+      <div class="col-md-4 mb-4">
+        <div class="card h-100">
           <div class="card-body">
             <Screening2022Card />
           </div>
@@ -29,7 +29,7 @@
         <SeverityCountsCard/>
       </div>
       <div class=" col-md-6 mt-4">
-        <div class="card">
+        <div class="card h-100">
           <div class="card-body">
             <SuicidalBehaviourCard />
           </div>
@@ -37,11 +37,10 @@
       </div>
 
       <div class="mt-4 col-md-6">
-        <div class="card">
+        <div class="card h-100">
           <div class="container">
             <GraphCard />
           </div>
-
         </div>
       </div>
     </div>
@@ -125,4 +124,9 @@ onMounted(async () => {
 // };
 </script>
     
-<style scoped></style>
+<style scoped>
+.bg-color{
+  background-color:  #2C697529;
+  ;
+}
+</style>

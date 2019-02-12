@@ -10,11 +10,8 @@
       <main class="col-lg-10 col-md-10 col-sm-12">
         <div class="row">
           <!-- Dashboard Component -->
-          <div class="col-12" v-if="router === '/screening'">
-            <ScreeningTest />
-          </div>
-          <div class="col-12" v-else>
-            <dashboardComponent />
+          <div class="col-12">
+            <component :is="currentComponent"></component>
           </div>
         </div>
       </main>
@@ -22,14 +19,13 @@
   </div>
 </template>
 
-
 <script setup>
-import { computed, ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
-import ScreeningTest from '@/components/screenings/ScreeningTest.vue'
+import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
@@ -37,23 +33,26 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const sidebarOpen = ref(false);
 const userName = ref('');
+const currentRoute = ref(router.currentRoute.value.path); 
 
 const dashboardComponent = computed(() => {
   const role = sessionStorage.getItem('userRole');
-  // console.log('User Role:', role);
 
   switch (role) {
     case 'student':
       return StudentDashboard;
     case 'school_counselor':
-      return CounsellorDashboard;
     case 'clinical_counselor':
       return CounsellorDashboard;
     case 'admin':
       return AdminDashboard;
     default:
-      return false;
+      return null; 
   }
+});
+
+const currentComponent = computed(() => {
+  return currentRoute.value === '/student-dashboard/screening' ? ScreeningTest : dashboardComponent.value;
 });
 
 const toggleSidebar = () => {
@@ -82,14 +81,9 @@ const fetchUserAndAgencyDetails = async () => {
       sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
       sessionStorage.setItem('userAgencyDetails', JSON.stringify(data.userAgency));
 
-      // console.log('User details fetched successfully:', data.user);
+      let userFullName = `${data.user[0].first_name} ${data.user[0].middle_name} ${data.user[0].last_name}`;
 
-      let userFullName = JSON.parse(sessionStorage.getItem('userDetails'));
-
-      userFullName = `${data.user[0].first_name} ${data.user[0].middle_name} ${data.user[0].last_name}`;
-      // console.log('User Name is:', userName)
-
-      userName.value = userFullName
+      userName.value = userFullName;
     } else {
       console.error('Error: Incomplete user, agency, or user agency details in response');
     }
@@ -98,8 +92,19 @@ const fetchUserAndAgencyDetails = async () => {
   }
 };
 
-fetchUserAndAgencyDetails();
+// Watch for route changes
+const updateCurrentRoute = () => {
+  currentRoute.value = router.currentRoute.value.path;
+};
+
+onMounted(() => {
+  updateCurrentRoute();
+  router.afterEach(updateCurrentRoute); 
+  fetchUserAndAgencyDetails();
+});
 </script>
+
+
 
 <style scoped>
 /* Add any additional styles if needed */
