@@ -1,34 +1,51 @@
 <template>
   <div class="row container-fluid p-5">
     <div class="col-md-8">
-      <h1 class="text-center bold">{{ title }}</h1>
-      <p class="custom-font">{{ content }}</p>
-      <p class="custom-text-color">{{ disclaimer }}</p>
+      <h1 class="text-center bold">{{ clusterTestTitle }}</h1>
+      <p class="custom-font">{{ clusterTestContent }}</p>
+      <p class="custom-text-color">{{ clusterTestDisclaimer }}</p>
       <div class="d-flex justify-content-center">
-      <button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">Continue</button>
-    </div>
+        <button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">Continue</button>
+      </div>
     </div>
     <div class="col-md-4">
-      <img :src="imageUrl" :alt="imageAlt" class="img-fluid">
+      <img :src="clusterTestIcon" :alt="app_name" class="img-fluid">
     </div>
   </div>
 </template>
   
 <script setup>
-import { ref } from 'vue';
-import bookImage from '@/assets/images/book 1.png';
-const title = ref('"Your Mental Health Matters"');
-const content = ref('Your mental health is important for overall health and wellbeing. It affects how you feel, think, and behave. Good mental health allows you to cope with daily stressors and challenges and enjoy your life. Sometimes, life can get tough, and you may find yourself feeling stressed or sad. These are normal reactions, but sometimes it affects your day-to-day functioning. That is when you need professional support and it is okay to ask for help.');
-const disclaimer = ref('Please respond to all the questions. Your responses will help us determine the status of your mental health and safe interventions will be provided as per your need and convenience. Information will be handled with the highest level of integrity and confidentiality.');
-const imageUrl = ref(bookImage);
-const imageAlt = ref('Health and Well Being');
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+
+const clusterTestTitle = ref('');
+const clusterTestContent = ref('');
+const clusterTestDisclaimer = ref('');
+const clusterTestIcon = ref('');
+const app_name = ref('');
+
+// Fetch data from the API when the component is mounted
+onMounted(async () => {
+  try {
+    const response = await axios.get('http://localhost:8000/api/v1/settings/');
+    if (response && response.data && response.data.length > 0) {
+      const data = response.data[0];
+      clusterTestTitle.value = data.cluster_test_title;
+      clusterTestContent.value = data.cluster_test_content;
+      clusterTestDisclaimer.value = data.cluster_test_disclaimer;
+      clusterTestIcon.value = data.cluster_test_icon;
+      app_name.value = data.app_name;
+    }
+  } catch (error) {
+    console.error('There was an error fetching the data:', error);
+  }
+});
 
 const continueAction = () => {
   // Define what happens when the user clicks continue.
   // This could change the state, navigate to a new route, etc.
 };
 </script>
-  
 <style scoped>
 .custom-size-btn {
   width: 432px;

@@ -4,7 +4,7 @@
             <div class="me-5">
                 <HelplineServices />
             </div>
-            <div class="bg-white rounded mt-5 me-5">
+            <div class="bg-white rounded-5 mt-5 me-5">
                 <ScreeningQuestion />
             </div>
         </div>
