@@ -29,11 +29,13 @@ import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
+import { useUserDetailsStore } from '@/stores/userDetails'; // Import the store
 
 const router = useRouter();
 const sidebarOpen = ref(false);
-const userName = ref('');
 const currentRoute = ref(router.currentRoute.value.path); 
+
+const userDetailsStore = useUserDetailsStore(); // Use the store
 
 const dashboardComponent = computed(() => {
   const role = sessionStorage.getItem('userRole');
@@ -59,38 +61,41 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
-// Fetch user, agency, and user agency details and store them in sessionStorage
+/// Fetch user, agency, and user agency details and store them in sessionStorage
 const fetchUserAndAgencyDetails = async () => {
   try {
     const authToken = localStorage.getItem('authToken');
     if (!authToken) {
       alert('User not Authenticated. Redirecting to login.');
       router.push('/login');
+      return; // Stop further execution if not authenticated
     }
 
+    // Note: Ensure the request is a GET, as the backend endpoint expects a GET request
     const response = await axios.get(endpoints.getUserDetails, {
       headers: {
         Authorization: `Token ${authToken}`,
       },
     });
 
-    const data = response.data;
+    const { data } = response;
 
-    if (data.user && data.agency && data.userAgency) {
-      sessionStorage.setItem('userDetails', JSON.stringify(data.user));
-      sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
-      sessionStorage.setItem('userAgencyDetails', JSON.stringify(data.userAgency));
+    // Separating the data into user details, active agency details, and user agency details
+    const { active_agency, agency_details, ...userDetails } = data;
 
-      let userFullName = `${data.user[0].first_name} ${data.user[0].middle_name} ${data.user[0].last_name}`;
+    // Using the store to set user details
+    userDetailsStore.setUserDetails(`${userDetails.first_name} ${userDetails.middle_name || ''} ${userDetails.last_name}`, userDetails.profile_picture);
 
-      userName.value = userFullName;
-    } else {
-      console.error('Error: Incomplete user, agency, or user agency details in response');
-    }
+    // Storing each part as a separate object in sessionStorage
+    sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
+    sessionStorage.setItem('agencyDetails', JSON.stringify(active_agency));
+    sessionStorage.setItem('userAgencyDetails', JSON.stringify(agency_details));
+
   } catch (error) {
     console.error('Error fetching user details:', error);
   }
 };
+
 
 // Watch for route changes
 const updateCurrentRoute = () => {
@@ -103,7 +108,6 @@ onMounted(() => {
   fetchUserAndAgencyDetails();
 });
 </script>
-
 
 
 <style scoped>

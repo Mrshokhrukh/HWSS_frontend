@@ -33,30 +33,21 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from 'vue';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useSidebarStore } from '@/stores/sidebarStore';
+import { useUserDetailsStore } from '@/stores/userDetails'; // Import the userDetails store
 
 const router = useRouter();
-const userName = ref('');
-const profilePicture = ref('');
 const sidebarStore = useSidebarStore();
-const userType = sessionStorage.getItem('userRole');
+const userDetailsStore = useUserDetailsStore(); // Use the userDetails store
+const userType = sessionStorage.getItem('userRole'); // Assuming userType is still stored in sessionStorage
 
-// Function to define the user name and profile picture
-const defineUserData = () => {
-  let userData = JSON.parse(sessionStorage.getItem('userDetails'));
-  if (userData && userData[0]) {
-    userName.value = `${userData[0].first_name} ${userData[0].last_name}`;
-    profilePicture.value = userData[0].profile_picture;
-  }
-};
-
-watchEffect(() => {
-  defineUserData()
-});
+// Directly use computed properties to access user details from the store
+const userName = computed(() => userDetailsStore.userName);
+const profilePicture = computed(() => userDetailsStore.profilePicture);
 
 sidebarStore.initializeSidebarState();
 
@@ -70,11 +61,12 @@ const logout = async () => {
   try {
     const response = await axios.post(endpoints.logOutUser);
     if (response.data.message === 'Logout successful') {
-      sessionStorage.clear(); 
+      sessionStorage.clear();
       localStorage.clear();
-      alert('You have been successfully logged out of the System')
+      // Clear user details from the store
+      userDetailsStore.clearUserDetails();
+      alert('You have been successfully logged out of the System');
       router.push('/login');
-      // console.log('User logged out successfully.');
     } else {
       console.error('Logout failed:', response.data.message);
     }
@@ -82,7 +74,6 @@ const logout = async () => {
     console.error('Logout failed:', error);
   }
 };
-
 
 // Menu items data remains unchanged
 const menus = computed(() => {
@@ -97,7 +88,6 @@ const menus = computed(() => {
   } else if (userType === 'admin') {
     menuItems.push({ text: 'Settings', route: `${baseRoute}/settings`, iconClass: 'fas fa-cog' });
   }
-  // Add more conditions and menu items as needed based on user roles
 
   return menuItems;
 });
@@ -106,14 +96,13 @@ const profilePictureUrl = computed(() => {
   const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
   const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
 
-  const defaultImageUrl = '@/assets/images/icon.png';
-  if (profilePicture.value) {
-    return baseUrl + profilePicture.value;
-  } else {
-    return defaultImageUrl;
-  }
+  const defaultImageUrl = '/assets/images/icon.png';
+  return profilePicture.value ? baseUrl + profilePicture.value : defaultImageUrl;
 });
 </script>
+
+
+
 
 <style scoped>
 .sidebar {

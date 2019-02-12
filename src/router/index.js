@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 
 // Define a reusable dashboard component
-const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
+const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
 
 // Define a function to generate routes for user dashboards
 const generateDashboardRoutes = (userType) => {

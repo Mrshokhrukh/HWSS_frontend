@@ -102,7 +102,11 @@ const loginUser = async () => {
 
         const userRole = response.data.user_role;
 
-        sessionStorage.setItem('userRole', userRole)
+        sessionStorage.setItem('userRole', userRole);
+
+        const userId = response.data.user_id;
+
+        sessionStorage.setItem('user_id', userId)
 
         // Define a mapping of user roles to dashboard route names
         const dashboardRoutes = {
@@ -137,9 +141,8 @@ const loginUser = async () => {
         loading.value = false;
     }
 };
-
-
 </script>
+
 
 <style scoped>
 .tag-line-login {

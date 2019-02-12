@@ -81,7 +81,7 @@ function prevSlide() {
 
 const baseUrl = computed(() => {
   const isLocalhost = window.location.hostname === 'localhost' && window.location.port === '5173';
-  return isLocalhost ? `` : 'http://172.30.3.5';
+  return isLocalhost ? `` : '';
 });
 
 const prefixedCarouselImages = computed(() => {

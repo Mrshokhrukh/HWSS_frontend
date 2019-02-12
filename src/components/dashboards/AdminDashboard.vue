@@ -15,7 +15,7 @@
 </template> 
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import ProfileCard from '@/components/dashboards/dashboardCard/ProfileCard.vue';
@@ -36,34 +36,34 @@ const getUsername = () => {
     }
 };
 
-onMounted(async () => {
-    try {
-        const authToken = localStorage.getItem('authToken');
+// onMounted(async () => {
+//     try {
+//         const authToken = localStorage.getItem('authToken');
 
-        const response = await axios.get(endpoints.getUserDetails, {
-            headers: {
-                Authorization: `Token ${authToken}`,
-            },
-        });
+//         const response = await axios.get(endpoints.getUserDetails, {
+//             headers: {
+//                 Authorization: `Token ${authToken}`,
+//             },
+//         });
 
-        const data = response.data;
+//         const data = response.data;
 
-        // Check if both user and agency details are present in the response
-        if (data.user && data.agency) {
-            sessionStorage.setItem('userDetails', JSON.stringify(data.user));
-            sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
+//         // Check if both user and agency details are present in the response
+//         if (data.user && data.agency) {
+//             sessionStorage.setItem('userDetails', JSON.stringify(data.user));
+//             sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
 
-            userDetails.value = data.user;
-            agencyDetails.value = data.agency;
+//             userDetails.value = data.user;
+//             agencyDetails.value = data.agency;
 
-            getUsername();
-        } else {
-            console.error('Error: Incomplete user or agency details in response');
-        }
-    } catch (error) {
-        console.error('Error fetching user details:', error);
-    }
-});
+//             getUsername();
+//         } else {
+//             console.error('Error: Incomplete user or agency details in response');
+//         }
+//     } catch (error) {
+//         console.error('Error fetching user details:', error);
+//     }
+// });
 
 // Function to logout the user
 const logout = async () => {
@@ -83,6 +83,7 @@ const logout = async () => {
         console.error('Logout failed:', error);
     }
 };
+getUsername()
 </script>
 
 
