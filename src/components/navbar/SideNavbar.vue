@@ -101,9 +101,6 @@ const profilePictureUrl = computed(() => {
 </script>
 
 
-
-
-
 <style scoped>
 .sidebar {
   background-color: #2c6975;
@@ -112,6 +109,7 @@ const profilePictureUrl = computed(() => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding-bottom: 4rem;
 }
 
 .sidebar-open {
@@ -180,6 +178,4 @@ const profilePictureUrl = computed(() => {
   width: 50px;
   /* Adjust according to your icon size */
 }
-
-
 </style>
