@@ -198,7 +198,7 @@
 
                     <div class="card my-5">
                         <div class="card-body text-muted form">
-                            <h5 class="mb-4">3. Login Info</h5>
+                            <h5 class="mb-4 text-start">3. Login Info</h5>
                         </div>
                     </div>
                     <div class="text-center mt-4">
@@ -358,12 +358,14 @@ const proceed = async () => {
         });
 
         console.log('Response status:', response.status);
-        console.log('RCSC data:', response.data);
+        console.log('EMIS Details Response Data:', response.data);
 
         if (response.status === 200) {
             const data = response.data;
 
-            if (!data.error) {
+            if (Object.keys(data.studentDetails).length === 0) {
+                alert(`No data found for the user ${parameterValue.value}`);
+            } else if (!data.error) {
                 // Store agencyData and userAgencyData in session storage
                 sessionStorage.setItem('agencyData', JSON.stringify(data.agency_data));
                 sessionStorage.setItem('userAgencyData', JSON.stringify(data.user_agency_data));
@@ -384,8 +386,14 @@ const proceed = async () => {
         }
     } catch (error) {
         console.error('Error fetching data:', error);
-        alert('An error occurred while fetching data. Please try again.');
-        router.push('/register');
+        if (error.response && error.response.status === 200) {
+            // The response was successful, but the data is empty
+            alert(`No data found for the user with ${selectedParameter.value}: ${parameterValue.value}`);
+        } else {
+            // Other types of errors
+            alert('An error occurred while fetching data. Please try again.');
+            router.push('/register');
+        }
     } finally {
         loading.value = false;
     }

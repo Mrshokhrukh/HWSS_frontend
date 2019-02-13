@@ -33,12 +33,13 @@ import { useUserDetailsStore } from '@/stores/userDetails'; // Import the store
 
 const router = useRouter();
 const sidebarOpen = ref(false);
-const currentRoute = ref(router.currentRoute.value.path); 
+const currentRoute = ref(router.currentRoute.value.path);
 
-const userDetailsStore = useUserDetailsStore(); // Use the store
+const userDetailsStore = useUserDetailsStore(); // Use the store directly
 
 const dashboardComponent = computed(() => {
-  const role = sessionStorage.getItem('userRole');
+  // Use role from Pinia store
+  const role = userDetailsStore.userRole;
 
   switch (role) {
     case 'student':
@@ -49,7 +50,7 @@ const dashboardComponent = computed(() => {
     case 'admin':
       return AdminDashboard;
     default:
-      return null; 
+      return null;
   }
 });
 
@@ -61,7 +62,7 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
-/// Fetch user, agency, and user agency details and store them in sessionStorage
+/// Fetch user, agency, and user agency details and store them directly in Pinia
 const fetchUserAndAgencyDetails = async () => {
   try {
     const authToken = localStorage.getItem('authToken');
@@ -71,7 +72,6 @@ const fetchUserAndAgencyDetails = async () => {
       return; // Stop further execution if not authenticated
     }
 
-    // Note: Ensure the request is a GET, as the backend endpoint expects a GET request
     const response = await axios.get(endpoints.getUserDetails, {
       headers: {
         Authorization: `Token ${authToken}`,
@@ -80,22 +80,19 @@ const fetchUserAndAgencyDetails = async () => {
 
     const { data } = response;
 
-    // Separating the data into user details, active agency details, and user agency details
-    const { active_agency, agency_details, ...userDetails } = data;
-
-    // Using the store to set user details
-    userDetailsStore.setUserDetails(`${userDetails.first_name} ${userDetails.middle_name || ''} ${userDetails.last_name}`, userDetails.profile_picture);
-
-    // Storing each part as a separate object in sessionStorage
-    sessionStorage.setItem('userDetails', JSON.stringify(userDetails));
-    sessionStorage.setItem('agencyDetails', JSON.stringify(active_agency));
-    sessionStorage.setItem('userAgencyDetails', JSON.stringify(agency_details));
+    // Directly using the store to set user details including role, profile picture, and agency details
+    userDetailsStore.setUserDetails({
+      fullName: `${data.user.first_name} ${data.user.middle_name || ''} ${data.user.last_name}`,
+      profilePicture: data.user.profile_picture,
+      userRole: data.user.role, // Assuming you have a mechanism to set and get roles in your store
+      agencyDetails: data.agency,
+      userAgencyDetails: data.userAgency
+    });
 
   } catch (error) {
     console.error('Error fetching user details:', error);
   }
 };
-
 
 // Watch for route changes
 const updateCurrentRoute = () => {
@@ -104,10 +101,11 @@ const updateCurrentRoute = () => {
 
 onMounted(() => {
   updateCurrentRoute();
-  router.afterEach(updateCurrentRoute); 
+  router.afterEach(updateCurrentRoute);
   fetchUserAndAgencyDetails();
 });
 </script>
+
 
 
 <style scoped>

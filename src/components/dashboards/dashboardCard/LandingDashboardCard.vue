@@ -2,7 +2,7 @@
   <div class="container">
     <div class="row">
       <div class="col-md-8">
-        <h1 class="text-center my-3"> Hi, <span class="text-capitalized">{{ userName }}</span>! </h1>
+        <h1 class="text-center my-3"> Hi, <span class="text-capitalized">{{ fullName }}</span>! </h1>
         <h3 class="my-4">Welcome to <span class="text-capitalized">{{ appName }}</span> Dashboard!</h3>
         <div class="row justify-content-center">
           <button class="btn custom-btn arrow-button" @click="navigateToScreening">Screen your mental Health</button>
@@ -34,22 +34,18 @@ import endpoints from '@/api';
 const router = useRouter();
 const userDetailsStore = useUserDetailsStore(); // Use the store
 
-// Computed properties to reactively access userName and profilePicture
-const userName = computed(() => `${userDetailsStore.userName}`);
-const appName = ref('');
+// Computed properties to reactively access fullName and profilePicture
+const fullName = computed(() => userDetailsStore.fullName); // Adjusted to use fullName
+const appName = ref(''); // Consider moving this to a global or app-specific store if it's used across components
 const showModal = ref(false);
 const loading = ref(true); // Introduce loading state
 
+// Fetch the app name either from a global store or directly from the API
 async function fetchAppName() {
   try {
-    const cachedAppName = sessionStorage.getItem('appName');
-    if (cachedAppName) {
-      appName.value = cachedAppName;
-    } else {
-      const response = await axios.get(endpoints.settings);
-      appName.value = response.data[0].app_name;
-      sessionStorage.setItem('appName', appName.value);
-    }
+    // Removed the sessionStorage check to directly fetch the app name
+    const response = await axios.get(endpoints.settings);
+    appName.value = response.data[0].app_name;
     loading.value = false; // Set loading to false once app name is fetched
   } catch (error) {
     console.error('Error fetching app name:', error);
@@ -71,7 +67,7 @@ async function navigateToScreening() {
     router.push('/student-dashboard/screening');
   } else {
     alert('Sorry, you cannot continue as there are no Cluster tests available to screen.');
-    // showModal.value = true;
+    // showModal.value might be used for modal dialogs or alternative UI flows
   }
 }
 
@@ -79,8 +75,6 @@ onMounted(async () => {
   await fetchAppName(); // Only fetchAppName is needed on mounted
 });
 </script>
-
-
 
 
 <style scoped>

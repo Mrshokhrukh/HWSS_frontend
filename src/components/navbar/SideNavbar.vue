@@ -43,11 +43,11 @@ import { useUserDetailsStore } from '@/stores/userDetails'; // Import the userDe
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore(); // Use the userDetails store
-const userType = sessionStorage.getItem('userRole'); // Assuming userType is still stored in sessionStorage
 
-// Directly use computed properties to access user details from the store
-const userName = computed(() => userDetailsStore.userName);
+// Use computed properties to access user details and role from the store
+const userName = computed(() => userDetailsStore.fullName); // Adjusted based on the updated store
 const profilePicture = computed(() => userDetailsStore.profilePicture);
+const userType = computed(() => userDetailsStore.userRole); // Now using computed property
 
 sidebarStore.initializeSidebarState();
 
@@ -61,7 +61,6 @@ const logout = async () => {
   try {
     const response = await axios.post(endpoints.logOutUser);
     if (response.data.message === 'Logout successful') {
-      sessionStorage.clear();
       localStorage.clear();
       // Clear user details from the store
       userDetailsStore.clearUserDetails();
@@ -75,17 +74,17 @@ const logout = async () => {
   }
 };
 
-// Menu items data remains unchanged
+// Adjust menu items data to use userType from the store
 const menus = computed(() => {
-  let baseRoute = `/${userType}-dashboard`;
+  let baseRoute = `/${userType.value}-dashboard`; // Adjusted to use userType.value
   let menuItems = [
     { text: 'Dashboard', route: baseRoute, iconClass: 'fas fa-chart-bar' },
     { text: 'Profile', route: `${baseRoute}/profile`, iconClass: 'fas fa-user' },
   ];
 
-  if (userType === 'student') {
+  if (userType.value === 'student') {
     menuItems.push({ text: 'Screening', route: `${baseRoute}/screening`, iconClass: 'fas fa-question-circle' });
-  } else if (userType === 'admin') {
+  } else if (userType.value === 'admin') {
     menuItems.push({ text: 'Settings', route: `${baseRoute}/settings`, iconClass: 'fas fa-cog' });
   }
 
@@ -100,6 +99,7 @@ const profilePictureUrl = computed(() => {
   return profilePicture.value ? baseUrl + profilePicture.value : defaultImageUrl;
 });
 </script>
+
 
 
 
