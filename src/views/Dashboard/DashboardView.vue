@@ -29,13 +29,13 @@ import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
-import { useUserDetailsStore } from '@/stores/userDetails'; // Import the store
+import { useUserDetailsStore } from '@/stores/userDetails';
 
 const router = useRouter();
 const sidebarOpen = ref(false);
 const currentRoute = ref(router.currentRoute.value.path);
 
-const userDetailsStore = useUserDetailsStore(); // Use the store directly
+const userDetailsStore = useUserDetailsStore();
 
 const dashboardComponent = computed(() => {
   // Use role from Pinia store

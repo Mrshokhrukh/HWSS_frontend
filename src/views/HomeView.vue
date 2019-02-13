@@ -1,145 +1,140 @@
 <template>
-  <div class="landingimgbg d-flex justify-content-center align-items-center" style="height: 100vh;">
-    <div class="container-fluid">
-      <div class="mb-3">
-        <div class="row g-0">
-          <div>
-            <img src="../assets/images/landingpage_toprightcorner.svg" style="height: 100%;" class="top-right-image" alt="...">
+  <div class="landing d-flex flex-column vh-100">
+    <div class="container my-auto">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="content">
+            <p class="quote">"{{ landingTagLine }}"</p>
+            <h1 class="title">The PEMA</h1>
+            <h2 class="subtitle my-3">Health & Wellbeing Screening System</h2>
+            <router-link to="/login" class="btn btn-lg mt-2 text-white get-started">Get Started <i
+                class="fa-solid fa-arrow-right"></i></router-link>
           </div>
-          <div class="col-md-6 d-flex justify-content-center align-items-center mb-10">
-            <div class="card-body">
-              <p class="quote">"Touching People, Building Lives"</p>
-              <p class="thepema fw-bold mb-4 blacktext text-center"> The PEMA</p>
-              <p class="hwss fw-bold mb-5 bluetext text-center">Health & Wellbeing Screening <br
-                  class="d-sm-none"> <br> System</p>
-              <div class="getstarted_div d-flex justify-content-center">
-                <router-link to="/login" class="btn m-2 btn-lg custom-button rounded">Get Started <i class="arrow-right fa-solid fa-arrow-right"></i></router-link>
-                <!-- <router-link to="/register" class="btn m-2 btn-lg custom-button rounded">Sign Up</router-link> -->
-              </div>
-              <div class="lastrow_btns d-flex justify-content-center">
-                <router-link to="#" class="btn m-2 btn-lg custom-button-lr rounded">Google Play</router-link>
-                <router-link to="#" class="btn m-2 btn-lg custom-button-lr rounded">AppStore</router-link>
-              </div>
-            </div>
-          </div>          
         </div>
+
+        <div class="col-md-6">
+          <div class="image-background-container">
+            <img :src="landingImgBg" alt="Background" class="bg-image">
+            <img :src="logoUrl" alt="PEMA Logo" class="logo-image">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="download-group-container text-center mt-auto mb-5">
+      <h3 class="download-title mb-3">Download our app from:</h3>
+      <div class="store-buttons d-flex justify-content-center">
+        <!-- Bind the href to google_play_link -->
+        <a :href="googlePlayLink" class="btn btn-lg google-play me-2">
+          <i class="fab fa-google-play me-2 fa-lg"></i>Get it On Google Play
+        </a>
+        <!-- Bind the href to apple_appstore_link -->
+        <a :href="appleAppStoreLink" class="btn btn-lg app-store ms-2">
+          <i class="fab fa-app-store-ios me-2 fa-lg"></i>Download it from App Store
+        </a>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+
+// Declare reactive variables for the new dynamic links
+const logoUrl = ref('');
+const landingImgBg = ref('');
+const landingTagLine = ref('');
+const googlePlayLink = ref('');
+const appleAppStoreLink = ref('');
+
+onMounted(async () => {
+  try {
+    const response = await axios.get(endpoints.settings);
+    if (response.data && response.data.length > 0) {
+      const data = response.data[0];
+      logoUrl.value = data.landing_page_logo;
+      landingImgBg.value = data.landing_img_bg;
+      landingTagLine.value = data.landing_tag_line;
+      googlePlayLink.value = data.google_play_link;
+      appleAppStoreLink.value = data.apple_appstore_link;
+    }
+  } catch (error) {
+    console.error('Error fetching details:', error);
+  }
+});
 </script>
 
 <style scoped>
+.landing {
+  background-color: #FFFFFF;
+}
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Roboto:wght@300;400;700&family=Sriracha&display=swap');
+.content {
+  margin: 0 auto;
+  padding: 0 2rem;
+}
 
-.landingimgbg {
-  position: relative;
-  background-color: #ffffff;
-  height: 100vh; /* Set the height to cover the entire viewport */
-  overflow: hidden; /* Hide any content that overflows */
+.quote,
+.title,
+.subtitle {
+  text-align: start;
 }
 
 .quote {
   font-size: 2.5rem;
-  text-align: center;
-  font-family: 'Sriracha', cursive;
-  color: #000000;
+  font-family: Sriracha, cursive;
+  color: #000;
   font-weight: 300;
-  margin-bottom: 50px;
-  margin-top: 50px;
 }
 
-.thepema {
-  font-size: 3.5rem;
-  text-align: center;
+.title {
   font-family: Poppins;
+  font-size: 3.5rem;
+  color: #000;
 }
 
-.hwss{
-  font-size: 1.8rem;
-  text-align: center;
-  margin-top: -30px;
+.subtitle {
+  color: #2b656f;
 }
 
-.blacktext {
-  color: #000000;
+.get-started {
+  background-color: #2B656F;
 }
 
-.bluetext {
-  color: #2B656F;
+.download-group-container {
+  padding: 2rem 0 3rem 0;
 }
 
-.card-body {
-  margin-left: 70px;
+.download-title {
+  font-size: 1.2rem;
 }
 
-.bold {
-  font-weight: bold;
+.google-play,
+.app-store {
+  color: #363636;
+  font-size: 1rem;
 }
 
-.higtext {
-  color: #69B2A0;
+.image-background-container {
+  height: 100%;
+  width: 100%;
 }
 
-.custom-button {
-  background-color: #2B656F !important;
-  color: #ffffff !important;
-  width: 28%;
-  font-family: 'Roboto', sans-serif;
-  text-transform: none;
-  font-size: 16px;
-  cursor: pointer;
-  text-decoration: none;
+.bg-image {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: auto;
+  max-height: 100%;
 }
 
-.custom-button-lr {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: #d4cdcd 0.16px solid !important;
-  width: 28%;
-  font-family: 'Roboto', sans-serif;
-  text-transform: none;
-  font-size: 16px;
-  cursor: pointer;
-  text-decoration: none;
+.logo-image {
+  position: absolute;
+  max-width: 450px;
+  top: 50%;
+  right: 10rem;
+  transform: translateY(-50%);
 }
-
-.getstarted_div {
-  margin-top: -20px;
-  margin-bottom: 40px;
-}
-
-.arrow-right {
-  margin-left: 5px;
-}
-
-.lastrow_btns {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50%;
-  display: flex;
-  justify-content: center;
-}
-
-.lastrow_btns .btn {
-  margin: 0 1px; /* Adjust the space between the buttons */
-}
-
-.top-right-image {
-  position: absolute; /* Position the image absolutely */
-  top: 0; /* Place the image at the top */
-  right: 0; /* Place the image at the right */
-  transform: scale(0.85) translate(10%, -10%); /* Reduce the size of the image by 45% */
-  /* You can adjust the scale value to achieve the desired size */
-}
-
-
-
 </style>
-
