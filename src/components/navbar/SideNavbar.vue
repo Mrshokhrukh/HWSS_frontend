@@ -109,7 +109,7 @@ const profilePictureUrl = computed(() => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 4rem;
+  padding-bottom: 3rem;
 }
 
 .sidebar-open {
