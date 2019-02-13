@@ -17,6 +17,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
+import endpoints from '@/api';
 
 const clusterTestTitle = ref('');
 const clusterTestContent = ref('');
@@ -27,7 +28,7 @@ const app_name = ref('');
 // Fetch data from the API when the component is mounted
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:8000/api/v1/settings/');
+    const response = await axios.get(endpoints.settings);
     if (response && response.data && response.data.length > 0) {
       const data = response.data[0];
       clusterTestTitle.value = data.cluster_test_title;
