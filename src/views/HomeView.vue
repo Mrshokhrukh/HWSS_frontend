@@ -3,8 +3,8 @@
     <div class="container my-auto">
       <div class="row align-items-center">
         <div class="col-md-6">
-          <div class="content">
-            <p class="quote">"{{ landingTagLine }}"</p>
+          <div class="content text-center">
+            <p class="quote mb-5">"{{ landingTagLine }}"</p>
             <h1 class="title">The PEMA</h1>
             <h2 class="subtitle my-3">Health & Wellbeing Screening System</h2>
             <router-link to="/login" class="btn btn-lg mt-2 text-white get-started">Get Started <i
@@ -24,16 +24,39 @@
     <div class="download-group-container text-center mt-auto mb-5">
       <h3 class="download-title mb-3">Download our app from:</h3>
       <div class="store-buttons d-flex justify-content-center">
-        <!-- Bind the href to google_play_link -->
-        <a :href="googlePlayLink" class="btn btn-lg google-play me-2">
-          <i class="fab fa-google-play me-2 fa-lg"></i>Get it On Google Play
+        <!-- Google Play Button -->
+        <a :href="googlePlayLink" class="btn store-button google-play me-2">
+          <div class="button-content">
+            <div class="icon-area" v-if="googlePlayImg">
+              <img :src="googlePlayImg" @error="googlePlayImg = null" alt="Google Play" class="store-icon" />
+            </div>
+            <div v-else class="icon-area">
+              <i class="fab fa-google-play"></i>
+            </div>
+            <div class="text-area">
+              <div class="superscript-text">Get it On</div>
+              <div class="store-name">Google Play</div>
+            </div>
+          </div>
         </a>
-        <!-- Bind the href to apple_appstore_link -->
-        <a :href="appleAppStoreLink" class="btn btn-lg app-store ms-2">
-          <i class="fab fa-app-store-ios me-2 fa-lg"></i>Download it from App Store
+        <!-- Apple App Store Button -->
+        <a :href="appleAppStoreLink" class="btn store-button app-store ms-2">
+          <div class="button-content">
+            <div class="icon-area" v-if="appStoreImg">
+              <img :src="appStoreImg" @error="appStoreImg = null" alt="App Store" class="store-icon" />
+            </div>
+            <div v-else class="icon-area">
+              <i class="fab fa-app-store-ios"></i>
+            </div>
+            <div class="text-area">
+              <div class="superscript-text">Download on the</div>
+              <div class="store-name">App Store</div>
+            </div>
+          </div>
         </a>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -48,6 +71,8 @@ const landingImgBg = ref('');
 const landingTagLine = ref('');
 const googlePlayLink = ref('');
 const appleAppStoreLink = ref('');
+const googlePlayImg = ref('src/assets/images/playstore_logo.png');
+const appStoreImg = ref('src/assets/images/appstore_logo.png');
 
 onMounted(async () => {
   try {
@@ -76,12 +101,6 @@ onMounted(async () => {
   padding: 0 2rem;
 }
 
-.quote,
-.title,
-.subtitle {
-  text-align: start;
-}
-
 .quote {
   font-size: 2.5rem;
   font-family: Sriracha, cursive;
@@ -90,7 +109,8 @@ onMounted(async () => {
 }
 
 .title {
-  font-family: Poppins;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
   font-size: 3.5rem;
   color: #000;
 }
@@ -137,4 +157,44 @@ onMounted(async () => {
   right: 10rem;
   transform: translateY(-50%);
 }
+
+.store-button {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f5f5f5; 
+  padding: 10px 20px; 
+  text-decoration: none;
+  color: inherit;
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+}
+
+.icon-area {
+  margin-right: 10px; 
+}
+
+.store-icon, .fab {
+  height: 40px;
+  width: auto;
+}
+
+.text-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.superscript-text {
+  font-size: smaller;
+  line-height: 1;
+}
+
+.store-name {
+  font-size: larger; /* Adjust store name text size as needed */
+  font-weight: bold;
+}
+
 </style>
