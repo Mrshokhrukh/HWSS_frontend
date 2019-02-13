@@ -48,10 +48,10 @@
 </template>
     
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import { useRouter } from 'vue-router';
-import endpoints from '@/api';
+import { ref } from 'vue';
+// import axios from 'axios';
+// import { useRouter } from 'vue-router';
+// import endpoints from '@/api';
 import GraphCard from '@/components/dashboards/CounsellorDashboardCard/GraphCard.vue';
 import QuickToolCard from '@/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue';
 import Screening2022Card from '@/components/dashboards/CounsellorDashboardCard/Screening2022Card.vue';
@@ -60,10 +60,10 @@ import SeverityCountsCard from '@/components/dashboards/CounsellorDashboardCard/
 import SuicidalBehaviourCard from '@/components/dashboards/CounsellorDashboardCard/SuicidalBehaviourCard.vue';
 import TopNavbarCard from '@/components/dashboards/CounsellorDashboardCard/TopNavbarCard.vue';
 
-const router = useRouter();
+// const router = useRouter();
 
-const userDetails = ref(null);
-const agencyDetails = ref(null);
+// const userDetails = ref(null);
+// const agencyDetails = ref(null);
 
 const userName = ref('');
 
@@ -75,34 +75,34 @@ const getUsername = () => {
   }
 };
 
-onMounted(async () => {
-  try {
-    const authToken = localStorage.getItem('authToken');
+// onMounted(async () => {
+//   try {
+//     const authToken = localStorage.getItem('authToken');
 
-    const response = await axios.get(endpoints.getUserDetails, {
-      headers: {
-        Authorization: `Token ${authToken}`,
-      },
-    });
+//     const response = await axios.get(endpoints.getUserDetails, {
+//       headers: {
+//         Authorization: `Token ${authToken}`,
+//       },
+//     });
 
-    const data = response.data;
+//     const data = response.data;
 
-    // Check if both user and agency details are present in the response
-    if (data.user && data.agency) {
-      sessionStorage.setItem('userDetails', JSON.stringify(data.user));
-      sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
+//     // Check if both user and agency details are present in the response
+//     if (data.user && data.agency) {
+//       sessionStorage.setItem('userDetails', JSON.stringify(data.user));
+//       sessionStorage.setItem('agencyDetails', JSON.stringify(data.agency));
 
-      userDetails.value = data.user;
-      agencyDetails.value = data.agency;
+//       userDetails.value = data.user;
+//       agencyDetails.value = data.agency;
 
-      getUsername();
-    } else {
-      console.error('Error: Incomplete user or agency details in response');
-    }
-  } catch (error) {
-    console.error('Error fetching user details:', error);
-  }
-});
+//       getUsername();
+//     } else {
+//       console.error('Error: Incomplete user or agency details in response');
+//     }
+//   } catch (error) {
+//     console.error('Error fetching user details:', error);
+//   }
+// });
 
 // Function to logout the user
 // const logout = async () => {
@@ -122,6 +122,7 @@ onMounted(async () => {
 //     console.error('Logout failed:', error);
 //   }
 // };
+getUsername()
 </script>
     
 <style scoped>

@@ -58,9 +58,34 @@ onMounted(async () => {
       ];
     }
   } catch (error) {
-    console.error('There was an error fetching the data:', error);
+    console.error('Error fetching carousel images:', error);
   }
+}
+
+
+function startAutoScroll() {
+  intervalId = setInterval(() => {
+    nextSlide();
+  }, 5000);
+}
+
+function nextSlide() {
+  activeIndex.value = (activeIndex.value + 1) % carouselImages.value.length;
+}
+
+function prevSlide() {
+  activeIndex.value = (activeIndex.value - 1 + carouselImages.value.length) % carouselImages.value.length;
+}
+
+const baseUrl = computed(() => {
+  const isLocalhost = window.location.hostname === 'localhost' && window.location.port === '5173';
+  return isLocalhost ? `` : '';
 });
+
+const prefixedCarouselImages = computed(() => {
+  return carouselImages.value.map(image => `${baseUrl.value}${image}`);
+});
+
 </script>
 
 

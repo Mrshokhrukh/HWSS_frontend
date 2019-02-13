@@ -24,29 +24,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { useUserDetailsStore } from '@/stores/userDetails'; // Import the userDetails store
 import test_types from '@/questions.json';
-
 import endpoints from '@/api';
 
 const router = useRouter();
-const userName = ref('');
+const userDetailsStore = useUserDetailsStore(); // Use the store
+
+// Computed properties to reactively access userName and profilePicture
+const userName = computed(() => `${userDetailsStore.userName}`);
 const appName = ref('');
 const showModal = ref(false);
-
-const getUsername = () => {
-  const userData = JSON.parse(sessionStorage.getItem('userDetails'));
-  if (userData) {
-    userName.value = `${userData[0].first_name} ${userData[0].last_name}`;
-  }
-};
-
-onMounted(async () => {
-  getUsername();
-  fetchAppName();
-});
+const loading = ref(true); // Introduce loading state
 
 async function fetchAppName() {
   try {
@@ -54,12 +46,14 @@ async function fetchAppName() {
     if (cachedAppName) {
       appName.value = cachedAppName;
     } else {
-      const response = await axios.get(endpoints.settings); 
+      const response = await axios.get(endpoints.settings);
       appName.value = response.data[0].app_name;
-      sessionStorage.setItem('appName', appName.value); 
+      sessionStorage.setItem('appName', appName.value);
     }
+    loading.value = false; // Set loading to false once app name is fetched
   } catch (error) {
     console.error('Error fetching app name:', error);
+    loading.value = false;
   }
 }
 
@@ -81,7 +75,11 @@ async function navigateToScreening() {
   }
 }
 
+onMounted(async () => {
+  await fetchAppName(); // Only fetchAppName is needed on mounted
+});
 </script>
+
 
 
 
@@ -95,7 +93,7 @@ async function navigateToScreening() {
   cursor: pointer;
 }
 
-span.text-capitalized{
+span.text-capitalized {
   color: #2B656F;
   text-transform: uppercase;
 }
@@ -141,6 +139,7 @@ span.text-capitalized{
   align-items: center;
   border: 2px solid #fff;
 }
+
 .modal-overlay {
   position: fixed;
   top: 0;
