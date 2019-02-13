@@ -54,7 +54,7 @@
                     <!-- Logo and tagline container -->
                     <div class="d-flex flex-column justify-content-center align-items-center h-100">
                         <!-- Bind src to the dynamic logo -->
-                        <img :src="loginLogo" alt="Logo" style="width: 250px;">
+                        <img :src="loginLogo" alt="Logo" style="width: 350px;">
                         <!-- Bind text to the dynamic tagline -->
                         <h2 class="text-white display-7 mt-3 tag-line-login">{{ tagline }}</h2>
                     </div>

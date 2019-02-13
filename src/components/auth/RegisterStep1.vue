@@ -8,9 +8,9 @@
 
                     <!-- Centered and sized logo -->
                     <div id="reg-img">
-                        <img src="@/assets/images/logoxs.png" class="img-fluid rounded reg-img" alt="Logo"
-                            style="width: 250px;">
-                        <h2 class="reg-heading display-7">Mental Health Matters</h2>
+                        <img :src="registrationLogo" class="img-fluid rounded reg-img" alt="Logo" style="width: 350px;">
+                        <!-- Dynamic tagline -->
+                        <h2 class="reg-heading display-7">{{ tagline }}</h2>
                     </div>
                 </div>
 
@@ -55,7 +55,26 @@
 </template>
   
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import endpoints from '@/api';
+import axios from 'axios'
+
+
+const registrationLogo = ref('');
+const tagline = ref('');
+
+// Fetch and update the registration component settings on component mount
+onMounted(async () => {
+    try {
+        const response = await axios.get(endpoints.settings);
+        // Assuming the response data is an object or an array where you fetch the first item
+        const settings = response.data[0];
+        registrationLogo.value = settings.registration_logo; // Update the registration logo
+        tagline.value = settings.tagline; // Update the tagline
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+    }
+});
 
 const selectedOption = ref(null);
 
@@ -94,7 +113,7 @@ const continueToPage = () => {
 .reg-heading {
     position: absolute;
     color: #fff;
-    bottom: 30%;
+    bottom: 23%;
     font-family: "Boogaloo", sans-serif;
     font-weight: 400;
     font-style: normal;
