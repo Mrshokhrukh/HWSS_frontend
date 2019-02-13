@@ -53,8 +53,10 @@
 
                     <!-- Logo and tagline container -->
                     <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img src="../../assets/images/Logo.png" alt="Logo" style="width: 250px;">
-                        <h2 class="text-white display-7 mt-3 tag-line-login">Mental Health Matters</h2>
+                        <!-- Bind src to the dynamic logo -->
+                        <img :src="loginLogo" alt="Logo" style="width: 250px;">
+                        <!-- Bind text to the dynamic tagline -->
+                        <h2 class="text-white display-7 mt-3 tag-line-login">{{ tagline }}</h2>
                     </div>
                 </div>
             </div>
@@ -75,7 +77,7 @@
 
     
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
@@ -86,6 +88,20 @@ const username = ref('');
 const password = ref('');
 const loginStatus = ref(null);
 const loading = ref(false);
+const loginLogo = ref('');
+const tagline = ref('');
+
+onMounted(async () => {
+    try {
+        const response = await axios.get(endpoints.settings);
+        // Assuming the response data is an array and you need the first item
+        const settings = response.data[0];
+        loginLogo.value = settings.login_logo; // Update the login logo
+        tagline.value = settings.tagline; // Update the tagline
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+    }
+});
 
 const loginUser = async () => {
     try {

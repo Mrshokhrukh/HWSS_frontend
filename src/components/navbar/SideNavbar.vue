@@ -180,4 +180,6 @@ const profilePictureUrl = computed(() => {
   width: 50px;
   /* Adjust according to your icon size */
 }
+
+
 </style>
