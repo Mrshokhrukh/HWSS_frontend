@@ -48,6 +48,12 @@ const createAppRouter = () => {
         meta: { title: 'Login' }
       },
       {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('@/views/auth/ForgotPasswordView.vue'),
+        meta: { title: 'Forgot Password' }
+      },
+      {
         path: '/register',
         name: 'register',
         component: () => import('@/views/auth/RegisterView.vue'),

@@ -32,6 +32,8 @@ const endpoints = {
   loginUsers: `${accessBaseUrl}/login/`,
   getUserDetails: `${accessBaseUrl}/get-user-details/`,
   logOutUser: `${accessBaseUrl}/user-logout/`,
+  passwordResetRequest: `${accessBaseUrl}/password-reset-request/`,
+  passwordReset: (token) => `${accessBaseUrl}/password-reset/${token}/`,
 
   settings: `${settingsBaseUrl}/`,
 };

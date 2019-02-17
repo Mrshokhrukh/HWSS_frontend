@@ -1,5 +1,5 @@
 <template>
-    <div class="container mt-5 text-center">
+    <div class="container text-center">
         <div v-if="isLoading" class="spinner-border text-primary" role="status">
             <span class="sr-only">Loading...</span>
         </div>
@@ -37,7 +37,6 @@ const currentStepComponent = computed(() => steps[currentStep.value]);
 let fetchedCitizenDetails = ref({});
 
 const goToNextStep = (targetStep, data) => {
-    // console.log('Fetched Data for Current Step:', fetchedCitizenDetails.value);
     currentStep.value = targetStep;
     if (data) {
         fetchedCitizenDetails.value = data;

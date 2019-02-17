@@ -1,13 +1,12 @@
 <template>
-    <div class="container authbg cust-margin">
-        <div class="card shadow-card my-5  shadow-lg bg-body rounded">
+    <div class="vh-100 d-flex justify-content-center align-items-center authbg cust-margin">
+        <div class="card shadow-card my-5 shadow-lg bg-body rounded w-75">
             <div class="row g-0 loginbg">
-                <div class="col-md-7">
+                <div class="col-md-7 d-flex align-items-center">
                     <div class="card-body">
                         <div class="auth-form text-center">
                             <h1 class="text-center my-3 bold" style="color: #2B656F;">Sign In</h1>
-
-                            <form class="row justify-content-center align-items-center" @submit.prevent="loginUser">
+                            <form class="row justify-content-center" @submit.prevent="loginUser">
                                 <div class="mb-3 col-md-8">
                                     <input v-model="username" type="text" class="form-control" placeholder="Username"
                                         required />

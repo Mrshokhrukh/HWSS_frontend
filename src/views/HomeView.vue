@@ -61,6 +61,8 @@
 </template>
 
 <script setup>
+import googlePlayImg from '@/assets/images/playstore_logo.png';
+import appStoreImg from '@/assets/images/appstore_logo.png';
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
@@ -71,8 +73,6 @@ const landingImgBg = ref('');
 const landingTagLine = ref('');
 const googlePlayLink = ref('');
 const appleAppStoreLink = ref('');
-const googlePlayImg = ref('src/assets/images/playstore_logo.png');
-const appStoreImg = ref('src/assets/images/appstore_logo.png');
 
 onMounted(async () => {
   try {
@@ -90,6 +90,7 @@ onMounted(async () => {
   }
 });
 </script>
+
 
 <style scoped>
 .landing {

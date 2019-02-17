@@ -1,77 +1,79 @@
 <template>
-    <div class="container my-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow p-3 mb-5">
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="container my-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card shadow p-3 mb-5">
 
-                    <div class="text-center mt-3">
-                        <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
-                        <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User </p>
-                    </div>
-
-                    <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0"
-                        aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
-                    </div>
-
-                    <div class="step-container d-flex justify-content-between align-items-center">
-                        <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(1)">1</div>
-                        <hr class="flex-grow-1 mx-2">
-                        <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(2)">2</div>
-                        <hr class="flex-grow-1 mx-2">
-                        <div class="step-circle" @click="handleProgressBarClick(3)">3</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-body text-muted form">
-                            <h5 class="mb-4">1. Detail Fetch</h5>
+                        <div class="text-center mt-3">
+                            <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
+                            <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User </p>
                         </div>
-                    </div>
 
-                    <div class="card my-5">
-                        <div class="card-body text-muted form">
-                            <h5 class="mb-4">2. User Detail</h5>
+                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0"
+                            aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
                         </div>
-                    </div>
+
+                        <div class="step-container d-flex justify-content-between align-items-center">
+                            <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(1)">1</div>
+                            <hr class="flex-grow-1 mx-2">
+                            <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(2)">2</div>
+                            <hr class="flex-grow-1 mx-2">
+                            <div class="step-circle" @click="handleProgressBarClick(3)">3</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body text-muted form">
+                                <h5 class="mb-4">1. Detail Fetch</h5>
+                            </div>
+                        </div>
+
+                        <div class="card my-5">
+                            <div class="card-body text-muted form">
+                                <h5 class="mb-4">2. User Detail</h5>
+                            </div>
+                        </div>
 
 
-                    <div class="container p-5 text-start" style="background-color: #E2E9EB; border-radius: 15px;">
-                        <h5 class="mb-3 text-mutedcust-text"> <span class="rounded-number  p-3">3</span> Login Details
-                        </h5>
-                        <form @submit.prevent="createUser">
-                            <!-- Username and password fields -->
-                            <div class="form-group cust-text  mx-auto">
-                                <label for="username">Username:</label>
-                                <input type="text" id="username" v-model="username"
-                                    class="form-control p-2 bg-transparent border-dark" required>
-                            </div>
-                            <div class="form-group cust-text mt-3 mx-auto">
-                                <label for="password">Password:</label>
-                                <input type="password" id="password" v-model="password"
-                                    class="form-control p-2 bg-transparent border-dark" required>
-                            </div>
-                            <div class="form-group cust-text mt-3 mx-auto">
-                                <label for="confirmPassword">Confirm Password:</label>
-                                <input type="password" id="confirmPassword" v-model="confirmPassword"
-                                    class="form-control p-2 bg-transparent border-dark" required>
-                            </div>
-                            <button type="submit" class="btn  ml-2 custom-btn mt-3 col-md-12">Sign Up</button>
-                        </form>
-                    </div>
-                    <div class="text-center mt-4">
-                        Already Have an Account? <router-link to="login" style="color: #2B656F; font-weight: bold">Sign
-                            In</router-link>
-                    </div>
+                        <div class="container p-5 text-start" style="background-color: #E2E9EB; border-radius: 15px;">
+                            <h5 class="mb-3 text-mutedcust-text"> <span class="rounded-number  p-3">3</span> Login Details
+                            </h5>
+                            <form @submit.prevent="createUser">
+                                <!-- Username and password fields -->
+                                <div class="form-group cust-text  mx-auto">
+                                    <label for="username">Username:</label>
+                                    <input type="text" id="username" v-model="username"
+                                        class="form-control p-2 bg-transparent border-dark" required>
+                                </div>
+                                <div class="form-group cust-text mt-3 mx-auto">
+                                    <label for="password">Password:</label>
+                                    <input type="password" id="password" v-model="password"
+                                        class="form-control p-2 bg-transparent border-dark" required>
+                                </div>
+                                <div class="form-group cust-text mt-3 mx-auto">
+                                    <label for="confirmPassword">Confirm Password:</label>
+                                    <input type="password" id="confirmPassword" v-model="confirmPassword"
+                                        class="form-control p-2 bg-transparent border-dark" required>
+                                </div>
+                                <button type="submit" class="btn  ml-2 custom-btn mt-3 col-md-12">Sign Up</button>
+                            </form>
+                        </div>
+                        <div class="text-center mt-4">
+                            Already Have an Account? <router-link to="login" style="color: #2B656F; font-weight: bold">Sign
+                                In</router-link>
+                        </div>
 
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import endpoints from '@/api'; // Import endpoints from centralized api.js file
+import endpoints from '@/api';
 import axios from 'axios';
 
 
@@ -120,7 +122,7 @@ const createUser = async () => {
         console.log(error)
 
         if (error.response && error.response.data) {
-            console.log('Error response:', error.response.data); // Log the error response
+            console.log('Error response:', error.response.data); 
 
             const errors = error.response.data;
             let errorMessages = [];
