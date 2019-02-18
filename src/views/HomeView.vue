@@ -15,7 +15,7 @@
         <div class="col-md-6">
           <div class="image-background-container">
             <img :src="landingImgBg" alt="Background" class="bg-image">
-            <img :src="logoUrl" alt="PEMA Logo" class="logo-image">
+            <img :src="logoUrl" alt="PEMA Logo" class="logo-image img-fluid">
           </div>
         </div>
       </div>
@@ -154,6 +154,7 @@ onMounted(async () => {
 .logo-image {
   position: absolute;
   max-width: 450px;
+  width:100%;
   top: 50%;
   right: 10rem;
   transform: translateY(-50%);

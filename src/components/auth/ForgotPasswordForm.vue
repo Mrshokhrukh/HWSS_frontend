@@ -81,13 +81,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 
 const email = ref('');
 const resetStatus = ref(null);
 const loading = ref(false);
+const loginLogo = ref('');
+const tagline = ref('');
+
+onMounted(async () => {
+    try {
+        const response = await axios.get(endpoints.settings);
+        const settings = response.data[0];
+        loginLogo.value = settings.login_logo; // Update the login logo
+        tagline.value = settings.tagline; // Update the tagline
+    } catch (error) {
+        console.error('Error fetching settings:', error);
+    }
+});
 
 const requestPasswordReset = async () => {
     try {
@@ -102,7 +115,6 @@ const requestPasswordReset = async () => {
     }
 };
 </script>
-
 
 
 <style scoped>
@@ -145,5 +157,5 @@ const requestPasswordReset = async () => {
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1000;
-}</style>
-    
+}
+</style>

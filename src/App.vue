@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="content-wrapper">
     <header>
       <div class="wrapper">
         <nav>
@@ -10,7 +10,7 @@
 
     <RouterView />
     
-    <footer class="text-center fixed-bottom bg-transparent text-color py-2">
+    <footer class="text-center bg-transparent text-color py-2">
       <p v-html="copyright"/>
     </footer>
   </div>
@@ -38,8 +38,23 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Your custom styles here */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .text-color {
   color: #2B656F;
+}
+
+footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%; /* Or specify a fixed width if you want the footer to have a specific width */
 }
 </style>

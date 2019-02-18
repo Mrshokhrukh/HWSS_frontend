@@ -108,12 +108,14 @@ const profilePictureUrl = computed(() => {
   transition: width 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   padding-bottom: 3rem;
+  position: absolute;
+  z-index: 9999;
 }
 
 .sidebar-open {
-  width: 100%;
+  width: 16%;
+  height: 100vh;
 }
 
 .user-profile {
