@@ -1,7 +1,7 @@
 <template>
     <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
         <div class="container-fluid rounded">
-            <div class="card my-5 shadow-lg bg-body rounded card-reg mx-auto" style="max-width: 900px;">
+            <div class="card my-5 shadow-lg bg-body rounded card-reg mx-auto" style="max-width: 100%;">
                 <div class="row g-0 loginbg rounded">
                     <div class="col-md-5 d-flex flex-column align-items-center justify-content-center position-relative">
                         <!-- Float-start image -->

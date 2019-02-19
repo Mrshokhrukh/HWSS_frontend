@@ -10,7 +10,7 @@
 
     <RouterView />
 
-    <footer class="text-center bg-transparent text-color py-2">
+    <footer class="text-center bg-transparent text-color py-2 d-none">
       <p v-html="copyright" />
     </footer>
   </div>

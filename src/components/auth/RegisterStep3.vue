@@ -430,4 +430,28 @@ const proceed = async () => {
 
 .cust-text {
     color: #2B656F;
-}</style>
+}
+.step-container {
+    position: relative;
+    text-align: center;
+    transform: translateY(-43%);
+}
+
+.step-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #2B656F;
+    border: 2px solid #2B656F;
+    color: white;
+    line-height: 30px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+    /* Added cursor pointer */
+}
+
+</style>
