@@ -2,7 +2,7 @@
   <div :class="{ 'sidebar': true, 'sidebar-open': sidebarStore.isOpen }">
 
     <!-- User Profile Section -->
-    <div class="user-profile text-center">
+    <div class="user-profile text-center my-3">
       <img :src="profilePictureUrl" alt="User" :class="profilePicClass">
       <h5 class="user-name mb-0" v-if="sidebarStore.isOpen">{{ userName }}</h5>
     </div>
