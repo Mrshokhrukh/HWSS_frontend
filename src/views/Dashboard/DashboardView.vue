@@ -25,7 +25,6 @@ import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
-import ScreeningTest from '@/components/screenings/ScreeningTest.vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
@@ -33,12 +32,10 @@ import { useUserDetailsStore } from '@/stores/userDetails';
 
 const router = useRouter();
 const sidebarOpen = ref(false);
-const currentRoute = ref(router.currentRoute.value.path);
 
 const userDetailsStore = useUserDetailsStore();
 
-const dashboardComponent = computed(() => {
-  // Use role from Pinia store
+const currentComponent = computed(() => {
   const role = userDetailsStore.userRole;
 
   switch (role) {
@@ -50,19 +47,14 @@ const dashboardComponent = computed(() => {
     case 'admin':
       return AdminDashboard;
     default:
-      return null;
+      return StudentDashboard;
   }
-});
-
-const currentComponent = computed(() => {
-  return currentRoute.value === '/student-dashboard/screening' ? ScreeningTest : dashboardComponent.value;
 });
 
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
-/// Fetch user, agency, and user agency details and store them directly in Pinia
 const fetchUserAndAgencyDetails = async () => {
   try {
     const authToken = localStorage.getItem('authToken');
@@ -78,16 +70,37 @@ const fetchUserAndAgencyDetails = async () => {
       },
     });
 
-    const { data } = response;
+    const { user, agency, userAgency } = response.data;
 
-    // Directly using the store to set user details including role, profile picture, and agency details
-    userDetailsStore.setUserDetails({
-      fullName: `${data.user.first_name} ${data.user.middle_name || ''} ${data.user.last_name}`,
-      profilePicture: data.user.profile_picture,
-      userRole: data.user.role, // Assuming you have a mechanism to set and get roles in your store
-      agencyDetails: data.agency,
-      userAgencyDetails: data.userAgency
-    });
+    // Prepare user details
+    const userDetails = {
+      id: user.id,
+      username: user.username,
+      isStaff: user.is_staff,
+      isActive: user.is_active,
+      identityNumber: user.identity_number,
+      nationality: user.nationality,
+      firstName: user.first_name,
+      middleName: user.middle_name,
+      lastName: user.last_name,
+      dateOfBirth: user.date_of_birth,
+      gender: user.gender,
+      email: user.email,
+      mobNumber: user.mob_number,
+      fatherName: user.father_name,
+      motherName: user.mother_name,
+      permAddVillage: user.perm_add_village,
+      permAddGewog: user.perm_add_gewog,
+      permAddDzongkhag: user.perm_add_dzongkhag,
+      profilePicture: user.profile_picture,
+      isGyalsung: user.is_gyalsung,
+      academyCode: user.academy_code,
+      dateJoined: user.date_joined,
+      role: user.role,
+      accessLevel: user.access_level,
+    };
+
+    userDetailsStore.setUserDetails(userDetails, agency, userAgency);
 
   } catch (error) {
     console.error('Error fetching user details:', error);
@@ -95,13 +108,7 @@ const fetchUserAndAgencyDetails = async () => {
 };
 
 // Watch for route changes
-const updateCurrentRoute = () => {
-  currentRoute.value = router.currentRoute.value.path;
-};
-
 onMounted(() => {
-  updateCurrentRoute();
-  router.afterEach(updateCurrentRoute);
   fetchUserAndAgencyDetails();
 });
 </script>

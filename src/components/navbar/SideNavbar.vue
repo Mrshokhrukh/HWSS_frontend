@@ -2,9 +2,9 @@
   <div :class="{ 'sidebar': true, 'sidebar-open': sidebarStore.isOpen }">
 
     <!-- User Profile Section -->
-    <div class="user-profile text-center" v-if="sidebarStore.isOpen">
-      <img :src="profilePictureUrl" alt="User" class="profile-pic mb-2">
-      <h5 class="user-name mb-0">{{ userName }}</h5>
+    <div class="user-profile text-center">
+      <img :src="profilePictureUrl" alt="User" :class="profilePicClass">
+      <h5 class="user-name mb-0" v-if="sidebarStore.isOpen">{{ userName }}</h5>
     </div>
 
     <!-- Menu Items -->
@@ -33,38 +33,39 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useSidebarStore } from '@/stores/sidebarStore';
-import { useUserDetailsStore } from '@/stores/userDetails'; // Import the userDetails store
+import { useUserDetailsStore } from '@/stores/userDetails';
+import deFaultProfilePic from '@/assets/images/icon.png';
 
 const router = useRouter();
 const sidebarStore = useSidebarStore();
-const userDetailsStore = useUserDetailsStore(); // Use the userDetails store
+const userDetailsStore = useUserDetailsStore();
 
-// Use computed properties to access user details and role from the store
-const userName = computed(() => userDetailsStore.fullName); // Adjusted based on the updated store
+const userName = computed(() => userDetailsStore.fullName);
 const profilePicture = computed(() => userDetailsStore.profilePicture);
-const userType = computed(() => userDetailsStore.userRole); // Now using computed property
+const userType = computed(() => userDetailsStore.userRole);
 
 sidebarStore.initializeSidebarState();
 
-// Function to toggle the sidebar, now updates the Pinia store
 const toggle = () => {
   sidebarStore.toggle();
 };
 
-// Function to logout the user
+const profilePicClass = computed(() => {
+  return sidebarStore.isOpen ? 'profile-pic' : 'mini-profile-pic';
+});
+
 const logout = async () => {
   try {
     const response = await axios.post(endpoints.logOutUser);
     if (response.data.message === 'Logout successful') {
       localStorage.clear();
-      // Clear user details from the store
       userDetailsStore.clearUserDetails();
-      alert('You have been successfully logged out of the System');
+      alert('You have been successfully logged out of the system');
       router.push('/login');
     } else {
       console.error('Logout failed:', response.data.message);
@@ -74,9 +75,8 @@ const logout = async () => {
   }
 };
 
-// Adjust menu items data to use userType from the store
 const menus = computed(() => {
-  let baseRoute = `/${userType.value}-dashboard`; // Adjusted to use userType.value
+  let baseRoute = `/${userType.value}-dashboard`;
   let menuItems = [
     { text: 'Dashboard', route: baseRoute, iconClass: 'fas fa-chart-bar' },
     { text: 'Profile', route: `${baseRoute}/profile`, iconClass: 'fas fa-user' },
@@ -92,16 +92,57 @@ const menus = computed(() => {
 });
 
 const profilePictureUrl = computed(() => {
-  const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
-  const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
-
-  const defaultImageUrl = '/assets/images/icon.png';
-  return profilePicture.value ? baseUrl + profilePicture.value : defaultImageUrl;
+  const baseUrl = window.location.hostname === 'localhost' && window.location.port === '5173' ? 'http://localhost:8000' : 'http://172.30.3.5';
+  return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
+
+onMounted(() => {
+  const fetchUserAndAgencyDetails = async () => {
+    try {
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        alert('User not Authenticated. Redirecting to login.');
+        router.push('/login');
+        return;
+      }
+
+      const response = await axios.get(endpoints.getUserDetails, {
+        headers: {
+          Authorization: `Token ${authToken}`,
+        },
+      });
+
+      const { data } = response;
+      userDetailsStore.setUserDetails({
+        fullName: `${data.user.first_name} ${data.user.middle_name || ''} ${data.user.last_name}`,
+        profilePicture: data.user.profile_picture,
+        userRole: data.user.role,
+        agencyDetails: data.agency,
+        userAgencyDetails: data.userAgency
+      });
+
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+  };
+
+  fetchUserAndAgencyDetails();
+});
+
 </script>
 
 
 <style scoped>
+.mini-profile-pic {
+  width: 30px;
+  height: 30px;
+  margin: 2rem auto;
+  border-radius: 50%;
+  border: 3px solid white;
+  object-fit: cover;
+  object-position: top;
+}
+
 .sidebar {
   background-color: #2c6975;
   color: white;
@@ -111,6 +152,7 @@ const profilePictureUrl = computed(() => {
   padding-bottom: 3rem;
   position: absolute;
   z-index: 9999;
+  height: 100vh;
 }
 
 .sidebar-open {
@@ -120,7 +162,7 @@ const profilePictureUrl = computed(() => {
 
 .user-profile {
   background-color: #2c6975;
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   transition: all 0.3s ease-in-out;
   overflow: hidden;
   height: auto;
