@@ -34,8 +34,10 @@ const endpoints = {
   logOutUser: `${accessBaseUrl}/user-logout/`,
   passwordResetRequest: `${accessBaseUrl}/password-reset-request/`,
   passwordReset: (token) => `${accessBaseUrl}/password-reset/${token}/`,
+  getCSRFToken: `${accessBaseUrl}/get_csrf_token/`,
 
   settings: `${settingsBaseUrl}/`,
+  
 };
 
 export default endpoints;

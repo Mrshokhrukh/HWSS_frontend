@@ -102,7 +102,13 @@ const createUser = async () => {
 
         console.log(userSubmissionData);
 
-        const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)[1];
+        // Check if document.cookie.match is null before using it
+        const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)?.[1];
+        if (!csrftoken) {
+            alert('CSRF token not found in cookies.');
+            return;
+        }
+
         const response = await axios.post(endpoints.registerUser, userSubmissionData, {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
             withCredentials: true,
@@ -141,6 +147,7 @@ const createUser = async () => {
         alert(message);
     }
 };
+
 </script>
 
 
