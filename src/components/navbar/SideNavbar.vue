@@ -150,7 +150,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   padding-bottom: 3rem;
-  position: absolute;
+  position: fixed;
   z-index: 9999;
   height: 100vh;
 }
