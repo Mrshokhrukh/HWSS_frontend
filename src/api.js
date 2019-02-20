@@ -35,6 +35,7 @@ const endpoints = {
   passwordResetRequest: `${accessBaseUrl}/password-reset-request/`,
   passwordReset: (token) => `${accessBaseUrl}/password-reset/${token}/`,
   getCSRFToken: `${accessBaseUrl}/get_csrf_token/`,
+  updateUserInfo: `${accessBaseUrl}/update-user-info/`,
 
   settings: `${settingsBaseUrl}/appconfig/`,
   menuItems: `${settingsBaseUrl}/menuItem/`,

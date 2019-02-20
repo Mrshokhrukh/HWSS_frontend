@@ -126,35 +126,34 @@ const isEditing = ref(false);
 const originalUserDetails = ref({ ...userDetailsStore.$state });
 
 const enableEdit = () => {
-    isEditing.value = true;
+  isEditing.value = true;
 };
 
 const saveChanges = async () => {
-    try {
-        const response = await axios.post(endpoints.saveProfileChanges, userDetails.value, {
-            headers: { 'Content-Type': 'application/json' },
-            // Include other necessary headers, like an Authorization token
-        });
-        // Handle response, update the store with the new details
-        userDetailsStore.setUserDetails(response.data);
-        originalUserDetails.value = { ...response.data };
-        isEditing.value = false;
-    } catch (error) {
-        console.error('Error saving changes:', error);
-        // Handle error, possibly show an error message to the user
-    }
+  try {
+    const authToken = localStorage.getItem('authToken');
+    const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${authToken}`,
+      },
+    });
+    userDetailsStore.setUserDetails(response.data);
+    originalUserDetails.value = { ...response.data };
+    isEditing.value = false;
+  } catch (error) {
+    console.error('Error saving changes:', error);
+  }
 };
 
 const cancelChanges = () => {
-    userDetails.value = { ...originalUserDetails.value };
-    isEditing.value = false;
+  userDetails.value = { ...originalUserDetails.value };
+  isEditing.value = false;
 };
 
-// Watch for changes in userDetailsStore and keep originalUserDetails in sync
 watch(() => userDetailsStore.$state, (newState) => {
-    originalUserDetails.value = { ...newState };
+  originalUserDetails.value = { ...newState };
 }, { deep: true });
-
 </script>
 
 
