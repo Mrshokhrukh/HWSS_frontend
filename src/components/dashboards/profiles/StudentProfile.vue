@@ -11,6 +11,8 @@
                 <!-- Personal Details Card -->
                 <personal-details-card :user-details="userDetails" />
 
+                <div style="margin-top: 75px;"></div>
+
                 <!-- Change Password Card -->
                 <change-password-card :user-details="userDetails" />
             </div>

@@ -1,34 +1,37 @@
 <template>
     <div class="card">
         <div class="card-header">
-            <h3>Student Details</h3>
+            <h5 style="color: #2B656F; font-weight: bold">Personal Details</h5>
         </div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label>Citizenship Identity Number</label>
-                    <input type="text" class="form-control" readonly disabled v-model="userDetails.identityNumber">
+                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.identityNumber">
                 </div>
                 <div class="col-md-6">
                     <label>Email</label>
-                    <input type="email" class="form-control" readonly disabled v-model="userDetails.email">
+                    <input type="email" class="form-control input-noneditable" readonly disabled v-model="userDetails.email">
                 </div>
                 <div class="col-md-6">
                     <label>Phone</label>
-                    <input type="text" class="form-control" readonly disabled v-model="userDetails.phone">
+                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.phone">
                 </div>
                 <div class="col-md-6">
                     <label>Nationality</label>
-                    <input type="text" class="form-control" readonly disabled v-model="userDetails.nationality">
+                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.nationality">
+                </div>
+                <div class="card-header">
+                    <h5 style="color: #2B656F; font-weight: bold">Parents Details</h5>
                 </div>
                 <div class="col-md-6">
                     <label>Mother's Name</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                    <input type="text" class="form-control input-noneditable" :readonly="!isEditing" :disabled="!isEditing"
                         v-model="userDetails.motherName">
                 </div>
                 <div class="col-md-6">
                     <label>Father's Name</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                    <input type="text" class="form-control input-noneditable" :readonly="!isEditing" :disabled="!isEditing"
                         v-model="userDetails.fatherName">
                 </div>
                 <div class="col-md-6">
@@ -61,17 +64,23 @@
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
                         v-model="userDetails.guardianOccupation">
                 </div>
-                <div class="col-md-6">
-                    <label>Permanent Address: Village</label>
-                    <input type="text" class="form-control" readonly disabled v-model="userDetails.permAddVillage">
+                <div class="card-header">
+                    <h5 style="color: #2B656F; font-weight: bold">Permanent Address</h5>
                 </div>
                 <div class="col-md-6">
-                    <label>Permanent Address: Gewog</label>
-                    <input type="text" class="form-control" readonly disabled v-model="userDetails.permAddGewog">
+                    <label>Village</label>
+                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.permAddVillage">
                 </div>
-                <div class="col-md-12">
-                    <label>Permanent Address: Dzongkhag</label>
-                    <input type="text" class="form-control" readonly disabled v-model="userDetails.permAddDzongkhag">
+                <div class="col-md-6">
+                    <label>Gewog</label>
+                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.permAddGewog">
+                </div>
+                <div class="col-md-6">
+                    <label>Dzongkhag</label>
+                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.permAddDzongkhag">
+                </div>
+                <div class="card-header">
+                    <h5 style="color: #2B656F; font-weight: bold">Present Address</h5>
                 </div>
                 <div class="col-md-6">
                     <label>Currently Living With</label>
@@ -98,9 +107,9 @@
             </div>
         </div>
         <div class="card-footer text-end">
-            <button v-if="isEditing" class="btn btn-success" @click="saveChanges">Save Changes</button>
             <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
-            <button v-else class="btn btn-primary" @click="enableEdit">Edit Profile</button>
+            <button v-if="isEditing" class="btn custom-btn" @click="saveChanges">Save Changes</button>
+            <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
         </div>
     </div>
 </template>
@@ -155,10 +164,14 @@ watch(() => userDetailsStore.$state, (newState) => {
 .input-editable {
     background-color: #fff;
 }
-
+.input-noneditable{
+    background-color:  #68B2A03D;
+}
 
 .if-others {
     display: none;
+   
+    
 }
 
 /* Show the input field when 'others' is selected and in edit mode */
@@ -167,7 +180,13 @@ watch(() => userDetailsStore.$state, (newState) => {
 }
 
 /* Style for buttons */
-.btn-success {
-    margin-right: 0.5rem;
-}</style>
+
+.custom-btn {
+    background-color: #2B656F;
+    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-left: 0.5rem;
+  }
+</style>
   
