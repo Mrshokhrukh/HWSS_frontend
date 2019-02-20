@@ -2,29 +2,65 @@ import { defineStore } from 'pinia';
 
 export const useUserDetailsStore = defineStore('userDetails', {
   state: () => ({
-    fullName: '', // Changed from userName to fullName for clarity
+    // User details
+    id: null,
+    username: '',
+    isStaff: false,
+    isActive: false,
+    identityNumber: '',
+    nationality: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    dateOfBirth: '',
+    gender: '',
+    email: '',
+    mobNumber: '',
+    fatherName: '',
+    motherName: '',
+    permAddVillage: '',
+    permAddGewog: '',
+    permAddDzongkhag: '',
     profilePicture: '',
-    userRole: '', // Added user role to store
+    activeAgency: null,
+    isGyalsung: false,
+    academyCode: '',
+    dateJoined: '',
+    role: '',
+    accessLevel: '',
+    // Agency details
+    agencyId: null,
+    agencyCode: '',
+    agencyName: '',
+    // User agency details
+    userCode: '',
+    psAddVillage: '',
+    psAddGewog: '',
+    psAddDzongkhag: '',
+    parentOccupation: '',
+    guardianName: '',
+    guardianOccupation: '',
+    parentStatus: '',
+    currentLivingWith: '',
+    userRoleAgency: '',
+    userClass: '',
+    userSubClass: '',
+    // Authentication state
     isAuthenticated: false,
-    agencyDetails: {}, // Added to store agency details
-    userAgencyDetails: {}, // Added to store user-specific agency details
   }),
   actions: {
-    setUserDetails({ fullName, profilePicture, userRole, agencyDetails, userAgencyDetails }) {
-      this.fullName = fullName;
-      this.profilePicture = profilePicture;
-      this.userRole = userRole;
-      this.agencyDetails = agencyDetails;
-      this.userAgencyDetails = userAgencyDetails;
-      this.isAuthenticated = true;
+    setUserDetails(userDetails, agencyDetails, userAgencyDetails) {
+      // Destructuring for clarity and to avoid direct mutation warnings
+      Object.assign(this, {
+        ...userDetails,
+        ...agencyDetails,
+        ...userAgencyDetails,
+        isAuthenticated: true,
+      });
     },
     clearUserDetails() {
-      this.fullName = '';
-      this.profilePicture = '';
-      this.userRole = '';
-      this.agencyDetails = {};
-      this.userAgencyDetails = {};
-      this.isAuthenticated = false;
+      // Reset state
+      this.$reset();
     },
   }
 });

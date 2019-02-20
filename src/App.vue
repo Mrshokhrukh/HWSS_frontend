@@ -3,7 +3,6 @@
     <header>
       <div class="wrapper">
         <nav>
-          <!-- Your navigation content here -->
         </nav>
       </div>
     </header>
@@ -20,12 +19,22 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import endpoints from '@/api'
+import Cookies from 'js-cookie'
 
-// Reactive properties
 const copyright = ref('')
-const isMobileDevice = ref(false) // To store if the device is mobile
-
+const isMobileDevice = ref(false) 
+const csrfToken = ref('')
 onMounted(async () => {
+  try {
+    const csrfResponse = await axios.get(endpoints.getCSRFToken)
+    if (csrfResponse.data && csrfResponse.data.csrf_token) {
+      csrfToken.value = csrfResponse.data.csrf_token
+      Cookies.set('csrftoken', csrfToken.value)
+    }
+  } catch (error) {
+    console.error('Error fetching CSRF token:', error)
+  }
+
   try {
     const response = await axios.get(endpoints.settings)
     if (response.data && response.data.length > 0 && response.data[0].copyright_message) {
@@ -36,20 +45,14 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error fetching copyright message:', error)
   }
-
-  // Device detection logic
-  // const userAgent = navigator.userAgent.toLowerCase()
-  // const mobileKeywords = [/android/, /iphone/, /ipad/, /ipod/, /blackberry/, /windows phone/]
   isMobileDevice.value = window.innerWidth <= 768;
 
   if (isMobileDevice.value) {
-    // Display the message for mobile device users
     alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
 
-    // Redirect after displaying the message
     setTimeout(() => {
       window.location.href = "https://www.google.com";
-    }, 5000); // Adjust the timeout as necessary
+    }, 5000);
   }
 })
 </script>
@@ -74,6 +77,5 @@ footer {
   margin-left: auto;
   margin-right: auto;
   width: 100%;
-  /* Or specify a fixed width if you want the footer to have a specific width */
 }
 </style>
