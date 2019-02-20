@@ -1,0 +1,22 @@
+.animated-icon {
+    animation: breathing 2s ease-in-out infinite, glitterShine 1.5s linear infinite;
+  }
+  
+  @keyframes breathing {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+  }
+  
+  @keyframes glitterShine {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  

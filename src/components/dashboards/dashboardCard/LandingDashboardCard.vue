@@ -10,7 +10,7 @@
       </div>
       <div class="col-md-4 d-flex align-items-center justify-content-center">
         <div class="brain-icon-wrapper">
-          <img src="@/assets/images/brainicon.png" class="img-fluid breathing-icon" alt="">
+          <img src="@/assets/images/brainicon.png" class="img-fluid animated-icon" alt="">
         </div>
       </div>
     </div>
@@ -153,19 +153,5 @@ span.text-capitalized {
   padding: 20px;
   border-radius: 5px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Define keyframes for the breathing animation */
-@keyframes breathe {
-  0% { transform: scale(1)  rotate(0deg); }
-  25% { transform: scale(1.1) rotate(5deg); }
-  50% { transform: scale(1)  rotate(0deg); }
-  75% { transform: scale(1.1) rotate(-5deg); }
-  100% { transform: scale(1)  rotate(0deg); }
-}
-
-/* Apply the animation to the brain icon */
-.breathing-icon {
-  animation: breathe 8s infinite; /* Adjust the duration as needed */
 }
 </style>

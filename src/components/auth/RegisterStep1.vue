@@ -98,6 +98,7 @@ const continueToPage = () => {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
     min-height: 500px;
+    height: 500px;
 }
 
 #reg-img {

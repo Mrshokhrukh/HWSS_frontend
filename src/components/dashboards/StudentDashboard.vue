@@ -2,7 +2,6 @@
   <div class="container-fluid d-flex align-items-center justify-content-center min-vh-100">
     <!-- General Dashboard View -->
     <div v-if="currentRoute === '/student-dashboard'" class="row row-cols-1 row-cols-md-2 g-4">
-      <!-- Your existing dashboard cards -->
       <div class="col-md-8">
         <div class="card">
           <div class="card-body">

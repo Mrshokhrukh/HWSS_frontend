@@ -2,13 +2,13 @@ import { createApp, nextTick } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import createAppRouter from './router';
+import '@/assets/animations.css';
 
 const pinia = createPinia();
 const app = createApp(App);
 
 app.use(pinia);
 
-// Create the router after the Pinia instance is created
 const router = createAppRouter(pinia);
 app.use(router);
 

@@ -1,18 +1,19 @@
 <template>
   <div class="row container-fluid p-5">
     <div class="col-md-8">
-      <h1 class="text-center bold">{{ clusterTestTitle }}</h1>
-      <p class="custom-font">{{ clusterTestContent }}</p>
-      <p class="custom-text-color">{{ clusterTestDisclaimer }}</p>
+      <h1 class="text-center bold mb-4">{{ clusterTestTitle }}</h1>
+      <p class="custom-font mb-4">{{ clusterTestContent }}</p>
+      <p class="custom-text-color mb-5">{{ clusterTestDisclaimer }}</p>
       <div class="d-flex justify-content-center">
         <button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">Continue</button>
       </div>
     </div>
-    <div class="col-md-4">
-      <img :src="clusterTestIcon" :alt="app_name" class="img-fluid">
+    <div class="col-md-4 text-center">
+      <img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon">
     </div>
   </div>
 </template>
+
   
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -52,7 +53,6 @@ const continueAction = () => {
   width: 100%;
   height: auto;
   font-size: 18px;
-  /* Example to increase font size */
   background-color: #2C6975;
 }
 
@@ -65,4 +65,5 @@ const continueAction = () => {
   font-weight: 600;
 }
 </style>
+
   
