@@ -127,6 +127,7 @@ const loginUser = async () => {
         const dashboardRoutes = {
             student: 'student-dashboard',
             school_counselor: 'counselor-dashboard',
+            clinical_counselor: 'counselor-dashboard',
             admin: 'admin-dashboard'
             // Add more roles and corresponding dashboard route names as needed
         };
@@ -139,7 +140,7 @@ const loginUser = async () => {
             // Route to a default dashboard or handle the case when user role doesn't match any known roles
             router.push({ name: 'default-dashboard' });
         }
-
+ 
     } catch (error) {
         console.error('Login failed:', error);
 
