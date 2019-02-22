@@ -5,17 +5,26 @@ const isLocalhost5173 = window.location.hostname === 'localhost' && window.locat
 // Define base URL based on the condition
 const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
 
+// Define base URL based on the condition
+const baseScreeningUrl = isLocalhost5173 ? 'http://localhost:8080' : 'http://172.30.3.5';
+
 // Define api middle params
 const accessMiddleParams = '/api/v1/access';
 
 // Define api middle params
 const settingsMiddleParams = '/api/v1/settings';
 
+// Define api middle params
+const screeningMiddleParams = '/api/v1/screening';
+
 // Combine BaseURL and middle params for ease of use
 const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
 
 // Combine BaseURL and middle params for ease of use
 const settingsBaseUrl = `${baseUrl}${settingsMiddleParams}`;
+
+// Combine BaseURL and middle params for ease of use
+const screeningBaseUrl = `${baseScreeningUrl}${screeningMiddleParams}`;
 
 // Define your API endpoints
 const endpoints = {
@@ -38,7 +47,10 @@ const endpoints = {
   updateUserInfo: `${accessBaseUrl}/update-user-info/`,
 
   settings: `${settingsBaseUrl}/appconfig/`,
-  menuItems: `${settingsBaseUrl}/menuItem/`,
+  menuItem: `${settingsBaseUrl}/menuItem/`,
+
+  // screening endpoint 
+  screeningQuestions: `${screeningBaseUrl}/screening-questions/`,
   
 };
 

@@ -4,14 +4,21 @@
             <h5 style="color: #2B656F; font-weight: bold">Personal Details</h5>
         </div>
         <div class="card-body">
+            <div class="row">
+                <div v-if="notification.show" :class="`notification ${notification.type}`">
+                    {{ notification.message }}
+                </div>
+            </div>
             <div class="row g-3">
                 <div class="col-md-6">
                     <label>Citizenship Identity Number</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.identityNumber">
+                    <input type="text" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.identityNumber">
                 </div>
                 <div class="col-md-6">
                     <label>Email</label>
-                    <input type="email" class="form-control input-noneditable" readonly disabled v-model="userDetails.email">
+                    <input type="email" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.email">
                 </div>
                 <div class="col-md-6">
                     <label>Phone</label>
@@ -19,7 +26,8 @@
                 </div>
                 <div class="col-md-6">
                     <label>Nationality</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.nationality">
+                    <input type="text" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.nationality">
                 </div>
                 <div class="card-header">
                     <h5 style="color: #2B656F; font-weight: bold">Parents Details</h5>
@@ -69,15 +77,18 @@
                 </div>
                 <div class="col-md-6">
                     <label>Village</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.permAddVillage">
+                    <input type="text" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.permAddVillage">
                 </div>
                 <div class="col-md-6">
                     <label>Gewog</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.permAddGewog">
+                    <input type="text" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.permAddGewog">
                 </div>
                 <div class="col-md-6">
                     <label>Dzongkhag</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.permAddDzongkhag">
+                    <input type="text" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.permAddDzongkhag">
                 </div>
                 <div class="card-header">
                     <h5 style="color: #2B656F; font-weight: bold">Present Address</h5>
@@ -125,34 +136,57 @@ const userDetails = ref(userDetailsStore.$state);
 const isEditing = ref(false);
 const originalUserDetails = ref({ ...userDetailsStore.$state });
 
+const notification = ref({
+    show: false,
+    message: '',
+    type: '', // 'success' or 'error'
+});
+
+
 const enableEdit = () => {
-  isEditing.value = true;
+    isEditing.value = true;
 };
 
 const saveChanges = async () => {
-  try {
-    const authToken = localStorage.getItem('authToken');
-    const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Token ${authToken}`,
-      },
-    });
-    userDetailsStore.setUserDetails(response.data);
-    originalUserDetails.value = { ...response.data };
-    isEditing.value = false;
-  } catch (error) {
-    console.error('Error saving changes:', error);
-  }
+    try {
+        const authToken = localStorage.getItem('authToken');
+        const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Token ${authToken}`,
+            },
+        });
+        userDetailsStore.setUserDetails(response.data);
+        originalUserDetails.value = { ...response.data };
+        isEditing.value = false;
+        // Set success notification
+        notification.value = {
+            show: true,
+            message: 'Profile updated successfully!',
+            type: 'success',
+        };
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        // Set error notification
+        notification.value = {
+            show: true,
+            message: 'Failed to update profile. Please try again.',
+            type: 'error',
+        };
+    }
+    // Hide notification after 5 seconds
+    setTimeout(() => {
+        notification.value.show = false;
+    }, 5000);
 };
 
 const cancelChanges = () => {
-  userDetails.value = { ...originalUserDetails.value };
-  isEditing.value = false;
+    userDetails.value = { ...originalUserDetails.value };
+    isEditing.value = false;
 };
 
 watch(() => userDetailsStore.$state, (newState) => {
-  originalUserDetails.value = { ...newState };
+    originalUserDetails.value = { ...newState };
 }, { deep: true });
 </script>
 
@@ -163,14 +197,15 @@ watch(() => userDetailsStore.$state, (newState) => {
 .input-editable {
     background-color: #fff;
 }
-.input-noneditable{
-    background-color:  #68B2A03D;
+
+.input-noneditable {
+    background-color: #68B2A03D;
 }
 
 .if-others {
     display: none;
-   
-    
+
+
 }
 
 /* Show the input field when 'others' is selected and in edit mode */
@@ -178,7 +213,26 @@ watch(() => userDetailsStore.$state, (newState) => {
     display: block;
 }
 
-/* Style for buttons */
+.notification {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.notification.success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.notification.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
 
 .custom-btn {
     background-color: #2B656F;
@@ -186,6 +240,6 @@ watch(() => userDetailsStore.$state, (newState) => {
     border-radius: 10px;
     cursor: pointer;
     margin-left: 0.5rem;
-  }
+}
 </style>
   

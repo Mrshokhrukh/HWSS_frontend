@@ -4,17 +4,16 @@
             <div class="col-lg-8 mx-auto">
                 <!-- Student Details Card -->
                 <student-details-card :user-details="userDetails" />
-
             </div>
             <div class="col-lg-4 mx-auto">
-
-                <!-- Personal Details Card -->
-                <personal-details-card :user-details="userDetails" />
-
-                <div style="margin-top: 75px;"></div>
-
-                <!-- Change Password Card -->
-                <change-password-card :user-details="userDetails" />
+                <div class="mx-auto mb-4">
+                    <!-- Personal Details Card -->
+                    <personal-details-card :user-details="userDetails" />
+                </div>
+                <div class="mx-auto mb-4 b-0">
+                    <!-- Change Password Card -->
+                    <change-password-card :user-details="userDetails" />
+                </div>
             </div>
         </div>
     </div>
