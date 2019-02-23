@@ -1,11 +1,11 @@
 <template>
 	<div class="container-fluid screening-test p-0">
 		<div class="card">
-			<!-- <div class="card-header text-center">
+			<div class="card-header text-center">
 				<div class="question-set-name" v-if="currentQuestion">
 					<h4>{{ currentQuestionSetName }}</h4>
 				</div>
-			</div> -->
+			</div>
 
 			<div class="card-body">
 				<div class="progress-container py-3">
@@ -52,6 +52,7 @@
 						<textarea v-model="textAnswer" placeholder="Your answer" class="text-input"></textarea>
 						<button @click="nextQuestion" class="next-button btn my-4">Next</button>
 					</div>
+					<button v-if="isLastQuestion" @click="submitTest" class="btn btn-success mt-2">Submit</button>
 				</div>
 			</div>
 
@@ -75,6 +76,11 @@ const questions = ref([]);
 const assistQuestions = ref([]);
 const selectedAnswer = ref(null);
 const textAnswer = ref("");
+const scores = ref({
+	PHQ2: 0,
+	GAD2: 0,
+	currentSet: ''
+});
 
 const questionSetNames = {
 	1: "Patient Health Questionnaire-2 (PHQ-2)",
@@ -89,9 +95,7 @@ const currentQuestionSetName = computed(() => {
 	const questionSetId = currentQuestion.value.question_set;
 	let setName = "Unknown Question Set"; // Default
 
-	// Example logic assuming you can identify a unique marker in PHQ-2
 	if (questionSetId === 1) {
-		// Pseudo-code: Check if any question contains a unique phrase or marker
 		const isASSIST = questions.value.some((question) =>
 			question.text.includes("alcohol")
 		);
@@ -99,7 +103,6 @@ const currentQuestionSetName = computed(() => {
 			? "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)"
 			: "Patient Health Questionnaire-2 (PHQ-2)";
 	} else {
-		// For other question sets, use the existing mapping
 		setName = questionSetNames[questionSetId];
 	}
 
@@ -118,10 +121,14 @@ const nextQuestion = () => {
 	if (currentQuestionIndex.value < questions.value.length - 1) {
 		currentQuestionIndex.value += 1;
 	}
-	// Reset selected answer and textAnswer for the next question
 	selectedAnswer.value = null;
 	textAnswer.value = "";
 };
+
+const isLastQuestion = computed(() => {
+	return currentQuestionIndex.value === questions.value.length - 1;
+});
+
 
 async function fetchQuestions() {
 	try {
@@ -153,11 +160,9 @@ const currentQuestion = computed(() => {
 
 const processedQuestionText = computed(() => {
 	let text = currentQuestion.value.text || "";
-	// Remove the common phrase from the question text if it exists
 	const commonPhrase =
 		"Over the last 2 weeks, how often have you been bothered by any of the following problems?";
 	text = text.replace(commonPhrase, "").trim();
-	// Break the text at "or" and format it
 	if (text.includes(" or ")) {
 		text = text.split(" or ").join(" OR ");
 	}
@@ -166,13 +171,48 @@ const processedQuestionText = computed(() => {
 
 function selectAnswer(option) {
 	selectedAnswer.value = option;
+	// Update scores
+	if (currentQuestionSetName.value.includes("PHQ-2")) {
+		scores.value.PHQ2 += option.points;
+		scores.value.currentSet = 'PHQ2';
+	} else if (currentQuestionSetName.value.includes("GAD-2")) {
+		scores.value.GAD2 += option.points;
+		scores.value.currentSet = 'GAD2';
+	}
+
 	nextTick(() => {
 		setTimeout(() => {
-			if (currentQuestionIndex.value < questions.value.length - 1) {
-				currentQuestionIndex.value += 1;
+			if (scores.value.currentSet === 'PHQ2' && currentQuestionIndex.value === 1) {
+				if (scores.value.PHQ2 < 3) {
+					// Assuming GAD-2 has a different ID, for example, 2
+					jumpToQuestionSet(2); // Use the correct ID for GAD-2
+				} else {
+					currentQuestionIndex.value += 1;
+				}
+			} else if (scores.value.currentSet === 'GAD2' && currentQuestionIndex.value === 2) { // Assuming GAD-2 is ID 2
+				if (scores.value.GAD2 < 3) {
+					// Assuming School Environment has ID 6
+					jumpToQuestionSet(6); // Jump directly to School Environment
+				} else {
+					currentQuestionIndex.value += 1;
+				}
+			} else {
+				if (currentQuestionIndex.value < questions.value.length - 1) {
+					currentQuestionIndex.value += 1;
+				}
 			}
-		}, 1000);
+		}, 800);
 	});
+}
+
+// Adjusted Example: Using IDs directly
+function jumpToQuestionSet(targetSetId) {
+	const index = questions.value.findIndex(question => question.question_set === targetSetId);
+	if (index !== -1) {
+		currentQuestionIndex.value = index;
+	} else {
+		console.error("Set not found or logic error with ID:", targetSetId);
+	}
 }
 
 const baseURL =
@@ -180,7 +220,7 @@ const baseURL =
 		? "http://127.0.0.1:8080"
 		: "http://172.30.3.16";
 
-// Example to populate questions from localStorage if needed
+
 async function loadQuestionsFromStorage() {
 	const storedQuestions = JSON.parse(localStorage.getItem("clusterQuestions")) || [];
 	const assistQuestions = JSON.parse(localStorage.getItem("assistQuestions")) || [];
@@ -196,6 +236,10 @@ function goBack() {
 	if (currentQuestionIndex.value > 0) {
 		currentQuestionIndex.value -= 1;
 	}
+}
+
+function submitTest() {
+	alert("Congratulations, test completed!");
 }
 
 onMounted(loadQuestionsFromStorage);
