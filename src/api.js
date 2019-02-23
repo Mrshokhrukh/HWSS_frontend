@@ -50,8 +50,8 @@ const endpoints = {
   menuItem: `${settingsBaseUrl}/menuItem/`,
 
   // screening endpoint 
-  screeningQuestions: `${screeningBaseUrl}/screening-questions/`,
-  
+  ScreeningPreTests: `${screeningBaseUrl}/screening-questions/`,
+
 };
 
 export default endpoints;

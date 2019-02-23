@@ -4,8 +4,7 @@
 		<div class="row">
 			<div class="col-md-8">
 				<h1 class="text-center my-3">
-					Hi, <span class="text-capitalized">{{ fullName }}</span
-					>!
+					Hi, <span class="text-capitalized">{{ fullName }}</span>!
 				</h1>
 				<h3 class="my-4">
 					Welcome to <span class="text-capitalized">{{ appName }}</span> Dashboard!
@@ -18,11 +17,7 @@
 			</div>
 			<div class="col-md-4 d-flex align-items-center justify-content-center">
 				<div class="brain-icon-wrapper">
-					<img
-						src="@/assets/images/brainicon.png"
-						class="img-fluid animated-icon"
-						alt=""
-					/>
+					<img src="@/assets/images/brainicon.png" class="img-fluid animated-icon" alt="" />
 				</div>
 			</div>
 		</div>
@@ -45,33 +40,22 @@
 					</p>
 					<ul>
 						<li>
-							<a
-								href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-								target="_blank"
-								>Understanding Depression <i class="fas fa-external-link-alt"></i>
+							<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
+								target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i>
 							</a>
 						</li>
 						<li>
-							<a
-								href="https://www.nimh.nih.gov/health/topics/anxiety-disorders"
-								target="_blank"
-								>Anxiety Disorders <i class="fas fa-external-link-alt"></i
-							></a>
+							<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
+								Disorders <i class="fas fa-external-link-alt"></i></a>
 						</li>
 						<li>
-							<a
-								href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
-								target="_blank"
-								>Coping with Drug Use and Addiction
-								<i class="fas fa-external-link-alt"></i
-							></a>
+							<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
+								target="_blank">Coping with Drug Use and Addiction
+								<i class="fas fa-external-link-alt"></i></a>
 						</li>
 						<li>
-							<a
-								href="https://www.mentalhealth.gov/basics/what-is-mental-health"
-								target="_blank"
-								>Mental Health and Wellness <i class="fas fa-external-link-alt"></i
-							></a>
+							<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
+								Health and Wellness <i class="fas fa-external-link-alt"></i></a>
 						</li>
 					</ul>
 				</div>
@@ -132,7 +116,7 @@ async function navigateToScreening() {
 
 	// Fetch new data if cache is empty or expired
 	try {
-		const response = await axios.get(endpoints.screeningQuestions);
+		const response = await axios.get(endpoints.ScreeningPreTests);
 		const clusterTest = response.data.find((test) => test.name === "Cluster Screening");
 		if (clusterTest) {
 			clusterTestStatus.value = clusterTest.status;
@@ -339,6 +323,7 @@ ul li a:hover {
 	width: 10em;
 	height: 10em;
 }
+
 .loader {
 	margin: 60px auto;
 	font-size: 10px;
@@ -347,14 +332,17 @@ ul li a:hover {
 	border-top: 1.1em solid rgba(255, 255, 255, 0.2);
 	border-right: 1.1em solid rgba(255, 255, 255, 0.2);
 	border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
-	border-left: 1.1em solid #2b656f; /* Primary color */
+	border-left: 1.1em solid #2b656f;
+	/* Primary color */
 	transform: translateZ(0);
 	animation: load8 1.1s infinite linear;
 }
+
 @keyframes load8 {
 	0% {
 		transform: rotate(0deg);
 	}
+
 	100% {
 		transform: rotate(360deg);
 	}

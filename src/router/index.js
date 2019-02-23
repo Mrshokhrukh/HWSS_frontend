@@ -20,6 +20,12 @@ const generateDashboardRoutes = (userType) => {
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Screening Test`, requiresAuth: true }
     },
     {
+      path: `/${userType}-dashboard/screening-start`,
+      name: `${userType}-screening-start`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Screening Start`, requiresAuth: true }
+    },
+    {
       path: `/${userType}-dashboard/profile`,
       name: `${userType}-profile`,
       component: DashboardView,

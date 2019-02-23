@@ -1,0 +1,356 @@
+<template>
+	<div class="container-fluid screening-test p-0">
+		<div class="card">
+			<!-- <div class="card-header text-center">
+				<div class="question-set-name" v-if="currentQuestion">
+					<h4>{{ currentQuestionSetName }}</h4>
+				</div>
+			</div> -->
+
+			<div class="card-body">
+				<div class="progress-container py-3">
+					<div class="progress" style="height: 10px; border-radius: 5px">
+						<div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
+							aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-12">
+						<div v-if="currentQuestionSetName !== 'School Environment (SCHOOL ENV)'"
+							class="card p-3 my-3 text-center bg-green">
+							<h4>
+								Over the last 2 weeks, how often have you been bothered by any of the
+								following problems:
+							</h4>
+						</div>
+					</div>
+				</div>
+
+				<div class="question-area text-center px-5" v-if="currentQuestion">
+					<div class="row my-4 justify-content-center text-center">
+						<div class="col d-flex justify-content-center align-items-center">
+							<div class="icon-container d-inline-flex align-items-center">
+								<img :src="iconURL" alt="Question Icon" style="max-width: 100px" class="mx-4 my-3" />
+								<div class="question-text d-inline-block">
+									<h2 class="text-capitalize" v-html="processedQuestionText"></h2>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="answer-options d-flex flex-wrap justify-content-center"
+						v-if="currentQuestion.answers && currentQuestion.answers.length">
+						<div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
+							<button :class="{ selected: selectedAnswer === option }" @click="selectAnswer(option)"
+								class="btn btn-lg">
+								{{ option.option }}
+							</button>
+						</div>
+					</div>
+					<div class="text-area-container text-center mt-4"
+						v-if="!currentQuestion.answers || currentQuestion.answers.length === 0">
+						<textarea v-model="textAnswer" placeholder="Your answer" class="text-input"></textarea>
+						<button @click="nextQuestion" class="next-button btn my-4">Next</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="card-footer text-center">
+				<div class="back-button-area my-0">
+					<button @click="goBack" class="btn rounded-btn back-button">Back</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, nextTick } from "vue";
+import axios from "axios";
+import endpoints from "@/api";
+import fallbackIcon from "@/assets/images/question.png";
+
+const currentQuestionIndex = ref(0);
+const questions = ref([]);
+const assistQuestions = ref([]);
+const selectedAnswer = ref(null);
+const textAnswer = ref("");
+
+const questionSetNames = {
+	1: "Patient Health Questionnaire-2 (PHQ-2)",
+	2: "General Anxiety Disorder-2 (GAD-2)",
+	3: "Patient Health Questionnaire-9 (PHQ-9)",
+	4: "General Anxiety Disorder-7 (GAD-7)",
+	5: "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)",
+	6: "School Environment (SCHOOL ENV)",
+};
+
+const currentQuestionSetName = computed(() => {
+	const questionSetId = currentQuestion.value.question_set;
+	let setName = "Unknown Question Set"; // Default
+
+	// Example logic assuming you can identify a unique marker in PHQ-2
+	if (questionSetId === 1) {
+		// Pseudo-code: Check if any question contains a unique phrase or marker
+		const isASSIST = questions.value.some((question) =>
+			question.text.includes("alcohol")
+		);
+		setName = isASSIST
+			? "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)"
+			: "Patient Health Questionnaire-2 (PHQ-2)";
+	} else {
+		// For other question sets, use the existing mapping
+		setName = questionSetNames[questionSetId];
+	}
+
+	return setName;
+});
+
+const iconURL = computed(() => {
+	const question = currentQuestion.value;
+	if (question && question.icon) {
+		return `${baseURL}${question.icon}`;
+	}
+	return fallbackIcon;
+});
+
+const nextQuestion = () => {
+	if (currentQuestionIndex.value < questions.value.length - 1) {
+		currentQuestionIndex.value += 1;
+	}
+	// Reset selected answer and textAnswer for the next question
+	selectedAnswer.value = null;
+	textAnswer.value = "";
+};
+
+async function fetchQuestions() {
+	try {
+		const testTypeName = "Cluster Screening";
+		const url = `${endpoints.ScreeningPreTests}?name=${testTypeName}`;
+		const response = await axios.get(url);
+		const questionSetsDetails = response.data[0].question_sets_details;
+		questionSetsDetails.forEach((setDetail) => {
+			if (setDetail.question_set !== null) {
+				questions.value.push(...setDetail.question_set.questions);
+			} else if (setDetail.assist_question_set !== null) {
+				assistQuestions.value.push(...setDetail.assist_question_set.assist_questions);
+			}
+		});
+		localStorage.setItem("clusterQuestions", JSON.stringify(questions.value));
+		localStorage.setItem("assistQuestions", JSON.stringify(assistQuestions.value));
+	} catch (error) {
+		console.error("Error fetching questions:", error);
+	}
+}
+
+const progressPercentage = computed(() => {
+	return (currentQuestionIndex.value / (questions.value.length - 1)) * 100;
+});
+
+const currentQuestion = computed(() => {
+	return questions.value[currentQuestionIndex.value] || {};
+});
+
+const processedQuestionText = computed(() => {
+	let text = currentQuestion.value.text || "";
+	// Remove the common phrase from the question text if it exists
+	const commonPhrase =
+		"Over the last 2 weeks, how often have you been bothered by any of the following problems?";
+	text = text.replace(commonPhrase, "").trim();
+	// Break the text at "or" and format it
+	if (text.includes(" or ")) {
+		text = text.split(" or ").join(" OR ");
+	}
+	return text;
+});
+
+function selectAnswer(option) {
+	selectedAnswer.value = option;
+	nextTick(() => {
+		setTimeout(() => {
+			if (currentQuestionIndex.value < questions.value.length - 1) {
+				currentQuestionIndex.value += 1;
+			}
+		}, 1000);
+	});
+}
+
+const baseURL =
+	window.location.hostname === "localhost" && window.location.port === "5173"
+		? "http://127.0.0.1:8080"
+		: "http://172.30.3.16";
+
+// Example to populate questions from localStorage if needed
+async function loadQuestionsFromStorage() {
+	const storedQuestions = JSON.parse(localStorage.getItem("clusterQuestions")) || [];
+	const assistQuestions = JSON.parse(localStorage.getItem("assistQuestions")) || [];
+	if (storedQuestions) {
+		questions.value = [...storedQuestions, ...assistQuestions];
+		currentQuestion.value = questions.value[currentQuestionIndex.value];
+	} else {
+		await fetchQuestions();
+	}
+}
+
+function goBack() {
+	if (currentQuestionIndex.value > 0) {
+		currentQuestionIndex.value -= 1;
+	}
+}
+
+onMounted(loadQuestionsFromStorage);
+</script>
+
+<style scoped>
+.bg-green {
+	background: #2c6975;
+	color: #fff;
+}
+
+.answer-option button,
+.next-button {
+	appearance: none;
+	background-color: #f0f0f0;
+	border: 2px solid #2c6975;
+	border-radius: 20px;
+	padding: 10px 20px;
+	margin: 1rem;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	width: calc(50% - 10px);
+}
+
+.next-button {
+	appearance: none;
+	background-color: #2c6975;
+	/* Dark greenish-blue */
+	color: white;
+	border: 2px solid transparent;
+	border-radius: 20px;
+	padding: 10px 20px;
+	margin: 5px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.answer-option button.selected {
+	background-color: #2c6975;
+	/* Base color of the app */
+	color: white;
+	border-color: #2c6975;
+}
+
+.answer-options.d-flex>.answer-option {
+	flex: 1 0 45%;
+	/* Adjust based on preference for 2 per line */
+}
+
+textarea {
+	width: 100%;
+	margin-top: 10px;
+}
+
+.screening-test {
+	max-width: 80vw;
+	margin: auto;
+	background-color: #ffffff;
+	border-radius: 8px;
+	padding: 20px;
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.progress-container .progress {
+	height: 10px;
+	/* Make the progress bar thicker */
+	border-radius: 5px;
+	/* Rounded corners for the progress bar */
+}
+
+.progress-bar {
+	background-color: #2c6975;
+	/* Dark greenish-blue */
+	border-radius: 5px;
+	/* Ensure the fill also has rounded corners */
+}
+
+.question-area .row {
+	align-items: center;
+	/* Vertically center content */
+}
+
+.icon-container img {
+	display: block;
+	/* Ensure the image is block-level to center it if needed */
+	margin: 0 auto;
+	/* Center the icon horizontally within its container */
+	max-width: 100px;
+	/* Limit icon size */
+}
+
+.question-text h2 {
+	color: #333;
+	font-size: 24px;
+	font-weight: 600;
+}
+
+.answer-options {
+	margin-bottom: 20px;
+}
+
+.answer-button {
+	width: 100%;
+	padding: 10px;
+	margin: 5px 0;
+	border: 1px solid #ccc;
+	border-radius: 20px;
+	background-color: #f5f5f5;
+	color: #333;
+	font-size: 18px;
+	transition: background-color 0.3s, color 0.3s;
+}
+
+.answer-button.selected {
+	background-color: #2c6975;
+	/* Dark greenish-blue */
+	color: #ffffff;
+}
+
+.back-button-area {
+	margin-top: 20px;
+}
+
+.back-button {
+	background-color: transparent;
+	border: 2px solid #2c6975;
+	color: #2c6975;
+	font-size: 14px;
+	cursor: pointer;
+	border-radius: 5rem;
+	transition: 800ms;
+	box-shadow: none;
+}
+
+.back-button:hover {
+	background-color: #2c6975;
+	color: #fff;
+}
+
+textarea {
+	width: 100%;
+	padding: 10px;
+	margin-top: 10px;
+	border: 2px solid #ccc;
+	/* Make border slightly thicker */
+	border-radius: 20px;
+	/* Rounded corners */
+	box-shadow: none;
+	/* Optional: remove or adjust box-shadow */
+}
+
+.col-auto .icon-container img {
+	max-width: 100px;
+	/* Limit the size of the icon */
+	margin-right: 20px;
+	/* Add some space between the icon and the text */
+}
+</style>
