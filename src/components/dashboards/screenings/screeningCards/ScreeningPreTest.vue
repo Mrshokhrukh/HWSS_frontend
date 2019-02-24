@@ -27,33 +27,22 @@
 					</p>
 					<ul>
 						<li>
-							<a
-								href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-								target="_blank"
-								>Understanding Depression <i class="fas fa-external-link-alt"></i>
+							<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
+								target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i>
 							</a>
 						</li>
 						<li>
-							<a
-								href="https://www.nimh.nih.gov/health/topics/anxiety-disorders"
-								target="_blank"
-								>Anxiety Disorders <i class="fas fa-external-link-alt"></i
-							></a>
+							<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
+								Disorders <i class="fas fa-external-link-alt"></i></a>
 						</li>
 						<li>
-							<a
-								href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
-								target="_blank"
-								>Coping with Drug Use and Addiction
-								<i class="fas fa-external-link-alt"></i
-							></a>
+							<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
+								target="_blank">Coping with Drug Use and Addiction
+								<i class="fas fa-external-link-alt"></i></a>
 						</li>
 						<li>
-							<a
-								href="https://www.mentalhealth.gov/basics/what-is-mental-health"
-								target="_blank"
-								>Mental Health and Wellness <i class="fas fa-external-link-alt"></i
-							></a>
+							<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
+								Health and Wellness <i class="fas fa-external-link-alt"></i></a>
 						</li>
 					</ul>
 				</div>
@@ -87,7 +76,7 @@ const continueAction = () => {
 };
 
 async function checkClusterTestStatus() {
-	const cacheKey = "clusterTestStatusCache";
+	const cacheKey = "clusterTestStatus";
 	const cached = localStorage.getItem(cacheKey);
 	const now = new Date().getTime();
 

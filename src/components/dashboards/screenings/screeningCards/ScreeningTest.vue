@@ -73,7 +73,6 @@ import fallbackIcon from "@/assets/images/question.png";
 
 const currentQuestionIndex = ref(0);
 const questions = ref([]);
-const assistQuestions = ref([]);
 const selectedAnswer = ref(null);
 const textAnswer = ref("");
 const scores = ref({
@@ -136,15 +135,30 @@ async function fetchQuestions() {
 		const url = `${endpoints.ScreeningPreTests}?name=${testTypeName}`;
 		const response = await axios.get(url);
 		const questionSetsDetails = response.data[0].question_sets_details;
+
+		// Combine questions and assist questions
+		const combinedQuestions = [];
 		questionSetsDetails.forEach((setDetail) => {
 			if (setDetail.question_set !== null) {
-				questions.value.push(...setDetail.question_set.questions);
-			} else if (setDetail.assist_question_set !== null) {
-				assistQuestions.value.push(...setDetail.assist_question_set.assist_questions);
+				// Add test name for each question
+				setDetail.question_set.questions.forEach(q => {
+					q.testName = questionSetNames[q.question_set];
+					combinedQuestions.push(q);
+				});
+			}
+			if (setDetail.assist_question_set !== null) {
+				// Change question_set ID to 5 for ASSIST and add test name
+				setDetail.assist_question_set.assist_questions.forEach(q => {
+					q.question_set = 5; // Update ID for ASSIST
+					q.testName = "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)"; // Use direct name assignment
+					combinedQuestions.push(q);
+				});
 			}
 		});
-		localStorage.setItem("clusterQuestions", JSON.stringify(questions.value));
-		localStorage.setItem("assistQuestions", JSON.stringify(assistQuestions.value));
+
+		// Update localStorage with the combined and updated list
+		localStorage.setItem("combinedQuestions", JSON.stringify(combinedQuestions));
+		questions.value = combinedQuestions; // Use the combined list directly
 	} catch (error) {
 		console.error("Error fetching questions:", error);
 	}
@@ -189,7 +203,7 @@ function selectAnswer(option) {
 				} else {
 					currentQuestionIndex.value += 1;
 				}
-			} else if (scores.value.currentSet === 'GAD2' && currentQuestionIndex.value === 2) { // Assuming GAD-2 is ID 2
+			} else if (scores.value.currentSet === 'GAD2' && currentQuestionIndex.value === questions.value.findIndex(q => q.question_set === 2)) { // Assuming GAD-2 is ID 2
 				if (scores.value.GAD2 < 3) {
 					// Assuming School Environment has ID 6
 					jumpToQuestionSet(6); // Jump directly to School Environment
@@ -222,11 +236,9 @@ const baseURL =
 
 
 async function loadQuestionsFromStorage() {
-	const storedQuestions = JSON.parse(localStorage.getItem("clusterQuestions")) || [];
-	const assistQuestions = JSON.parse(localStorage.getItem("assistQuestions")) || [];
-	if (storedQuestions) {
-		questions.value = [...storedQuestions, ...assistQuestions];
-		currentQuestion.value = questions.value[currentQuestionIndex.value];
+	const storedQuestions = JSON.parse(localStorage.getItem("combinedQuestions")) || [];
+	if (storedQuestions.length > 0) {
+		questions.value = storedQuestions;
 	} else {
 		await fetchQuestions();
 	}
