@@ -9,14 +9,8 @@
 		<!-- Menu Items -->
 		<div>
 			<nav class="menu-items">
-				<router-link
-					v-for="(menu, index) in menus"
-					:key="index"
-					:to="menu.route"
-					class="side-btn"
-					:class="{ active: $route.path === menu.route }"
-					v-b-tooltip.hover.bottom="menu.text"
-				>
+				<router-link v-for="(menu, index) in menus" :key="index" :to="menu.route" class="side-btn"
+					:class="{ active: $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
 					<i :class="menu.iconClass"></i>
 					<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
 				</router-link>
@@ -30,9 +24,7 @@
 				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
 			</router-link>
 			<router-link to="#" class="side-btn" @click="toggle">
-				<i
-					:class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"
-				></i>
+				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
 			</router-link>
 		</div>
@@ -72,6 +64,7 @@ const logout = async () => {
 		const response = await axios.post(endpoints.logOutUser);
 		if (response.data.message === "Logout successful") {
 			localStorage.clear();
+			sessionStorage.clear();
 			userDetailsStore.clearUserDetails();
 			alert("You have been successfully logged out of the system");
 			router.push("/login");
@@ -144,9 +137,8 @@ onMounted(() => {
 
 			const { data } = response;
 			userDetailsStore.setUserDetails({
-				fullName: `${data.user.first_name} ${data.user.middle_name || ""} ${
-					data.user.last_name
-				}`,
+				fullName: `${data.user.first_name} ${data.user.middle_name || ""} ${data.user.last_name
+					}`,
 				profilePicture: data.user.profile_picture,
 				userRole: data.user.role,
 				agencyDetails: data.agency,

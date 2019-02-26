@@ -16,11 +16,17 @@
 				</div>
 				<div class="row">
 					<div class="col-12">
-						<div v-if="currentQuestionSetName !== 'School Environment (SCHOOL ENV)'"
+						<div v-if="currentQuestionSetName !== 'School Environment (SCHOOL ENV)' && currentQuestionSetName !== 'Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)'"
 							class="card p-3 my-3 text-center bg-green">
 							<h4>
 								Over the last 2 weeks, how often have you been bothered by any of the
 								following problems:
+							</h4>
+						</div>
+						<div v-if="currentQuestionSetName === 'Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)'"
+							class="card p-3 my-3 text-center bg-green">
+							<h4>
+								In your life, have you ever tried the following? (NON-MEDICAL USE ONLY)
 							</h4>
 						</div>
 					</div>
@@ -190,14 +196,22 @@ const currentQuestion = computed(() => {
 
 const processedQuestionText = computed(() => {
 	let text = currentQuestion.value.text || "";
-	const commonPhrase =
-		"Over the last 2 weeks, how often have you been bothered by any of the following problems?";
-	text = text.replace(commonPhrase, "").trim();
+	const assistCommonPhrase = "In your life, have you ever tried the following? (NON-MEDICAL USE ONLY)";
+	const commonPhrase = "Over the last 2 weeks, how often have you been bothered by any of the following problems?";
+
+	// Remove the common phrase for PHQ/GAD questions
+	if (currentQuestionSetName.value !== 'Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)') {
+		text = text.replace(commonPhrase, "").trim();
+	} else {
+		text = text.replace(assistCommonPhrase, "").trim();
+	}
+
 	if (text.includes(" or ")) {
 		text = text.split(" or ").join(" OR ");
 	}
 	return text;
 });
+
 
 function selectAnswer(option) {
 	selectedAnswer.value = option;

@@ -33,6 +33,9 @@ import { useUserDetailsStore } from '@/stores/userDetails';
 const router = useRouter();
 const sidebarOpen = ref(false);
 
+const age = ref('');
+const ageGroup = ref('')
+
 const userDetailsStore = useUserDetailsStore();
 
 const currentComponent = computed(() => {
@@ -74,6 +77,8 @@ const fetchUserAndAgencyDetails = async () => {
 
     // Prepare user details
     const userDetails = {
+      age: age,
+      ageGroup: ageGroup,
       id: user.id,
       username: user.username,
       isStaff: user.is_staff,
@@ -100,6 +105,10 @@ const fetchUserAndAgencyDetails = async () => {
       accessLevel: user.access_level,
     };
 
+    // Store the age and age group in session storage
+    sessionStorage.setItem('userAge', age.value.toString());
+    sessionStorage.setItem('userAgeGroup', ageGroup);
+
     userDetailsStore.setUserDetails(userDetails, agency, userAgency);
 
   } catch (error) {
@@ -107,9 +116,26 @@ const fetchUserAndAgencyDetails = async () => {
   }
 };
 
+// Function to calculate age
+function calculateAge(dateOfBirth) {
+  const dob = new Date(dateOfBirth);
+  const diff = Date.now() - dob.getTime();
+  const ageDate = new Date(diff);
+  return Math.abs(ageDate.getUTCFullYear() - 1970);
+}
+
+// Function to determine age group according to your specifications
+function determineAgeGroup(age) {
+  if (age <= 14) return '14 and below';
+  if (age >= 15 && age <= 17) return '15 to 17';
+  return '18 and above';
+}
+
 // Watch for route changes
 onMounted(() => {
   fetchUserAndAgencyDetails();
+  calculateAge();
+  determineAgeGroup();
 });
 </script>
 
