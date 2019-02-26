@@ -44,35 +44,42 @@
                                     </div>
 
                                     <div v-if="formData.selectedIdentifier === 'cid'" class="form-group mb-4">
-                                        <!-- Display CID-specific fields -->
-                                        <small for="cid" class="text-muted ">Enter your CID/SRP Number:</small>
+                                        <!-- CID-specific fields -->
+                                        <small for="cid" class="text-muted">Enter your CID/SRP Number:</small>
                                         <input type="text" id="cid" v-model="formData.cid"
                                             class="form-control bg-transparent border-dark" maxlength="11"
                                             @input="validateCID">
                                         <small v-if="state.cidError" class="text-danger">{{ state.cidError }}</small>
-                                        <!-- Date pickers for month, date, and year -->
+
+                                        <!-- Date pickers for month, date, and year wrapped in a row -->
                                         <div class="form-group mt-3">
-                                            <small for="dob" class="text-muted">When is your Date of Birth?</small>
+                                            <small for="dob" class="text-muted">Date of Birth in your CID:</small>
                                             <div class="row">
+                                                <!-- Month -->
                                                 <div class="col">
-                                                    <select class="form-select bg-transparent border-dark"
+                                                    <label for="dobMonth" class="form-label text-muted mb-0">Month:</label>
+                                                    <select id="dobMonth" class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedMonth">
                                                         <option v-for="month in months" :key="month.value"
-                                                            :value="month.value">{{
-                                                                month.label }}</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col">
-                                                    <select class="form-select bg-transparent border-dark"
-                                                        v-model="formData.selectedDate">
-                                                        <option v-for="date in dates" :key="date.value" :value="date.value">
-                                                            {{
-                                                                date.label }}
+                                                            :value="month.value">
+                                                            {{ month.label }}
                                                         </option>
                                                     </select>
                                                 </div>
+                                                <!-- Date -->
                                                 <div class="col">
-                                                    <select class="form-select bg-transparent border-dark"
+                                                    <label for="dobDate" class="form-label text-muted mb-0">Date:</label>
+                                                    <select id="dobDate" class="form-select bg-transparent border-dark"
+                                                        v-model="formData.selectedDate">
+                                                        <option v-for="date in dates" :key="date.value" :value="date.value">
+                                                            {{ date.label }}
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <!-- Year -->
+                                                <div class="col">
+                                                    <label for="dobYear" class="form-label text-muted mb-0">Year:</label>
+                                                    <select id="dobYear" class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedYear">
                                                         <option v-for="year in years" :key="year" :value="year">{{ year }}
                                                         </option>
@@ -82,55 +89,84 @@
                                         </div>
                                     </div>
 
-                                    <div v-if="formData.selectedIdentifier === 'casefile'" class="form-group">
-                                        <!-- Display message or prompt for Case File -->
-                                        <p class="text-danger">Please Contact The PEMA,directly if you are a Case File
-                                            holder for
-                                            proceeding
-                                            with registration.</p>
+
+                                    <div v-if="formData.selectedIdentifier === 'casefile'" class="form-group mt-4">
+                                        <!-- Improved Display message or prompt for Case File -->
+                                        <div class="alert alert-info" role="alert">
+                                            <h4 class="alert-heading">Important Notice for Case File Holders!</h4>
+                                            <p>Please contact The PEMA directly to proceed with your registration. Ensure
+                                                you provide the following details:</p>
+                                            <hr>
+                                            <div class="ms-4">
+                                                <p class="mb-1">Required Details:</p>
+                                                <div class="ps-3">
+                                                    <div><i class="fas fa-check-circle text-success"></i> Case File
+                                                        Number</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Nationality</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> First Name</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Middle Name (if
+                                                        any)</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Last Name</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Date of Birth
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Sex</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Mobile Number
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Permanent Address
+                                                        (Village, Gewog, Dzongkhag)</div>
+                                                </div>
+                                            </div>
+                                            <p class="mt-3">Your cooperation is highly appreciated.</p>
+                                        </div>
                                     </div>
+
 
                                     <div v-if="formData.selectedIdentifier === 'passport'" class="form-group">
                                         <!-- Display input fields for Passport -->
                                         <div class="row">
+                                            <!-- Passport and Nationality -->
                                             <div class="col-md-6">
-                                                <label for="passport" class="text-muted">Foreign Passport Number:</label>
+                                                <label for="passport" class="form-label text-muted">Foreign Passport
+                                                    Number:</label>
                                                 <input type="text" id="passport" v-model="formData.passport"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-6">
-                                                <label for="nationality" class="text-muted">Nationality:</label>
+                                                <label for="nationality" class="form-label text-muted">Nationality:</label>
                                                 <input type="text" id="nationality" v-model="formData.nationality"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                         </div>
 
                                         <div class="row">
+                                            <!-- Personal Details -->
                                             <div class="col-md-4">
-                                                <label for="first_name" class="text-muted">First Name:</label>
+                                                <label for="first_name" class="form-label text-muted">First Name:</label>
                                                 <input type="text" id="first_name" v-model="formData.first_name"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="middle_name" class="text-muted">Middle Name:</label>
+                                                <label for="middle_name" class="form-label text-muted">Middle Name:</label>
                                                 <input type="text" id="middle_name" v-model="formData.middle_name"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="last_name" class="text-muted">Last Name:</label>
+                                                <label for="last_name" class="form-label text-muted">Last Name:</label>
                                                 <input type="text" id="last_name" v-model="formData.last_name"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                         </div>
 
                                         <div class="row">
+                                            <!-- Additional Details -->
                                             <div class="col-md-4">
-                                                <label for="date_of_birth" class="text-muted">Date of Birth:</label>
+                                                <label for="date_of_birth" class="form-label text-muted">Date of
+                                                    Birth:</label>
                                                 <input type="date" id="date_of_birth" v-model="formData.date_of_birth"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="gender" class="text-muted">Sex:</label>
+                                                <label for="gender" class="form-label text-muted">Sex:</label>
                                                 <select id="gender" v-model="formData.gender"
                                                     class="form-select bg-transparent border-dark">
                                                     <option value="male">Male</option>
@@ -138,29 +174,29 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="mob_number" class="text-muted">Mobile Number:</label>
+                                                <label for="mob_number" class="form-label text-muted">Mobile Number:</label>
                                                 <input type="text" id="mob_number" v-model="formData.mob_number"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                         </div>
 
-
                                         <div class="row">
+                                            <!-- Address -->
                                             <div class="col-md-4">
-                                                <label for="perm_add_village" class="text-muted">Permanent Address
-                                                    Village:</label>
+                                                <label for="perm_add_village" class="form-label text-muted">Permanent
+                                                    Address Village:</label>
                                                 <input type="text" id="perm_add_village" v-model="formData.perm_add_village"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="perm_add_gewog" class="text-muted">Permanent Address
+                                                <label for="perm_add_gewog" class="form-label text-muted">Permanent Address
                                                     Gewog:</label>
                                                 <input type="text" id="perm_add_gewog" v-model="formData.perm_add_gewog"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="perm_add_dzongkhag" class="text-muted">Permanent Address
-                                                    Dzongkhag:</label>
+                                                <label for="perm_add_dzongkhag" class="form-label text-muted">Permanent
+                                                    Address Dzongkhag:</label>
                                                 <input type="text" id="perm_add_dzongkhag"
                                                     v-model="formData.perm_add_dzongkhag"
                                                     class="form-control bg-transparent border-dark">
@@ -176,7 +212,6 @@
                             <div class="card mt-3 form">
                                 <div class="card-body text-muted">
                                     <h5 class="mb-4">2. User Details</h5>
-                                    <!-- Content of User Details card -->
                                 </div>
                             </div>
                         </div>
@@ -185,21 +220,30 @@
                             <div class="card mt-3 form">
                                 <div class="card-body text-muted">
                                     <h5 class="mb-4">3. Login Info</h5>
-                                    <!-- Content of Login Info card -->
                                 </div>
                             </div>
                         </div>
 
-                        <div v-if="showLoadingOverlay" class="loading-overlay">
-                            <!-- Your loading content goes here -->
+                        <div v-if="showLoadingOverlay" class="loading-overlay"
+                            style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1050;">
+                            <div class="spinner-border text-light" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
                         </div>
 
-                        <div v-if="showSuccessMessage" class="modal">
-                            <!-- Your success message content goes here -->
+                        <div v-if="showSuccessMessage" class="modal"
+                            style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1050;">
+                            <div class="modal-body">
+                                Registration successful! <button @click="showSuccessMessage = false">Close</button>
+                            </div>
                         </div>
 
-                        <div v-if="showFailedMessage" class="modal">
-                            <!-- Your failed message content goes here -->
+                        <div v-if="showFailedMessage" class="modal"
+                            style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1050;">
+                            <div class="modal-body">
+                                Registration failed. Please try again. <button
+                                    @click="showFailedMessage = false">Close</button>
+                            </div>
                         </div>
 
 
@@ -283,32 +327,22 @@ const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
 const emit = defineEmits(['go-to-next-step']);
 
 const fetchCitizenDetails = async () => {
-    if (!formData.value.selectedMonth || !formData.value.selectedDate || !formData.value.selectedYear) {
-        alert('Please Select Date Month and Year');
-        return;
-    }
-
-    if (formData.value.selectedIdentifier === 'cid' && state.cidError === '') {
+    if (formData.value.selectedIdentifier === 'cid') {
+        if (!formData.value.selectedMonth || !formData.value.selectedDate || !formData.value.selectedYear || state.cidError !== '') {
+            return;
+        }
         try {
             showLoadingOverlay.value = true;
             const csrfToken = getCSRFToken();
             const headers = { 'X-CSRFToken': csrfToken };
-
             const response = await axios.get(`${endpoints.getCitizenDetails}${formData.value.cid}/`, { headers });
-
             if (response.data) {
                 const citizenDetails = response.data;
-                console.log(citizenDetails)
                 localStorage.setItem('userCID', citizenDetails.cid);
-
                 const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
                 const formattedDate = formData.value.selectedDate.padStart(2, '0');
-
                 const enteredDOB = `${formattedDate}/${formattedMonth}/${formData.value.selectedYear}`;
                 const apiDOB = citizenDetails.dob;
-
-                console.log(enteredDOB, apiDOB);
-
                 if (enteredDOB === apiDOB) {
                     const usernameSuffix = citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate;
                     const mappedData = {
@@ -329,15 +363,8 @@ const fetchCitizenDetails = async () => {
                         ps_add_village: citizenDetails.villageName,
                         ps_add_gewog: citizenDetails.gewogName,
                         ps_add_dzongkhag: citizenDetails.dzongkhagName,
-                        user_role_agency: '',
-                        user_class: '',
-                        user_sub_class: '',
-                        academy_code: '',
                         username: usernameSuffix,
-                        password: '',
-                        email: '',
                     };
-
                     sessionStorage.setItem('user_data', JSON.stringify(mappedData));
                     showSuccessMessage.value = true;
                     moveToStep3(mappedData);
@@ -358,7 +385,23 @@ const fetchCitizenDetails = async () => {
     } else if (formData.value.selectedIdentifier === 'passport') {
         const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to the next step?');
         if (proceed) {
-            // Handle Passport registration logic here
+            const formattedDateOfBirth = formData.value.date_of_birth.split('-').reverse().join('/');
+            const mappedData = {
+                identity_number: formData.value.passport,
+                first_name: formData.value.first_name,
+                middle_name: formData.value.middle_name || '',
+                last_name: formData.value.last_name,
+                date_of_birth: formattedDateOfBirth,
+                gender: formData.value.gender,
+                mob_number: formData.value.mob_number,
+                perm_add_village: formData.value.perm_add_village,
+                perm_add_gewog: formData.value.perm_add_gewog,
+                perm_add_dzongkhag: formData.value.perm_add_dzongkhag,
+                nationality: formData.value.nationality,
+            };
+            sessionStorage.setItem('user_data', JSON.stringify(mappedData));
+            showSuccessMessage.value = true;
+            moveToStep3(mappedData);
         }
     }
 };
@@ -468,4 +511,38 @@ const moveToStep3 = (citizenDetails) => {
     border-radius: 20px;
     cursor: pointer;
 }
-</style>
+
+.form-group .row {
+    margin-bottom: 20px;
+    /* Increased spacing between rows */
+}
+
+.form-control,
+.form-select {
+    border-radius: 0.375rem;
+    /* Rounded corners for inputs and selects */
+    border: 1px solid #ced4da;
+    /* Consistent border styling */
+    padding: 0.5rem 0.75rem;
+    /* Adjusted padding for better text visibility */
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+    /* Reduced space between label and input */
+    font-weight: 600;
+    /* Slightly bolder labels for better readability */
+}
+
+/* Optional: Add a subtle shadow to input fields for depth */
+.form-control,
+.form-select {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* Enhanced focus state */
+}</style>

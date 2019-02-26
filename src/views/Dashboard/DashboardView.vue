@@ -77,8 +77,6 @@ const fetchUserAndAgencyDetails = async () => {
 
     // Prepare user details
     const userDetails = {
-      age: age,
-      ageGroup: ageGroup,
       id: user.id,
       username: user.username,
       isStaff: user.is_staff,

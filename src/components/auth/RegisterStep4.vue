@@ -46,9 +46,11 @@
                                 </div>
                                 <div class="form-group cust-text mt-3 mx-auto">
                                     <label for="password">Password:</label>
-                                    <input type="password" id="password" v-model="password"
+                                    <input type="password" id="password" v-model="password" @input="validatePassword"
                                         class="form-control p-2 bg-transparent border-dark" required>
+                                    <small class="text-danger">{{ passwordValidationMessage }}</small>
                                 </div>
+
                                 <div class="form-group cust-text mt-3 mx-auto">
                                     <label for="confirmPassword">Confirm Password:</label>
                                     <input type="password" id="confirmPassword" v-model="confirmPassword"
@@ -67,11 +69,18 @@
             </div>
 
         </div>
+
+        <div v-if="errorMessage" class="error-modal" @click="errorMessage = ''">
+            <div class="modal-content">
+                <p>{{ errorMessage }}</p>
+                <button class="close-btn" @click="errorMessage = ''">Close</button>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
 import axios from 'axios';
@@ -82,6 +91,36 @@ const router = useRouter();
 const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
+const errorMessage = ref('');
+
+const passwordValidationMessage = computed(() => {
+    const messages = [];
+    let requirementsMet = true;
+
+    if (password.value.length < 8) {
+        messages.push("be at least 8 characters long,");
+        requirementsMet = false;
+    }
+    if (!/\d/.test(password.value)) {
+        messages.push("include at least one number,");
+        requirementsMet = false;
+    }
+    if (!/[A-Z]/.test(password.value)) {
+        messages.push("include at least one uppercase letter,");
+        requirementsMet = false;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password.value)) {
+        messages.push("include at least one special character (!@#$%^&*(),.?\":{}|<>).");
+        requirementsMet = false;
+    }
+
+    if (!requirementsMet) {
+        messages.unshift("Your password must:");
+    }
+
+    return messages.join(' ');
+});
+
 
 const createUser = async () => {
     if (password.value !== confirmPassword.value) {
@@ -124,27 +163,20 @@ const createUser = async () => {
             alert(`Error: ${response.data.error}`);
         }
     } catch (error) {
-        let message = 'Error creating user. Please try again.';
-        console.log(error)
+        console.log(error);
 
-        if (error.response && error.response.data) {
-            console.log('Error response:', error.response.data); 
-
-            const errors = error.response.data;
-            let errorMessages = [];
-
-            if (errors['identity_number']) {
-                errorMessages.push(errors['identity_number'][0].string);
+        if (error.response && error.response.data && error.response.data.error) {
+            const errorDetail = error.response.data.error;
+            if (errorDetail.includes('access_customuser.username')) {
+                errorMessage.value = 'Oops! That username is already taken. Try something unique.';
+            } else if (errorDetail.includes('access_customuser.identity_number')) {
+                errorMessage.value = 'It seems this CID/Identity number already exists. Are you sure you don’t have an account already?';
+            } else {
+                errorMessage.value = 'Error creating user. Please try again.';
             }
-
-            if (errors['email']) {
-                errorMessages.push(errors['email'][0].string);
-            }
-
-            message = errorMessages.length > 0 ? errorMessages.join(' ') : message;
+        } else {
+            errorMessage.value = 'An unexpected error occurred. Please try again later.';
         }
-
-        alert(message);
     }
 };
 
@@ -154,8 +186,45 @@ const createUser = async () => {
 
 
 <style scoped>
-cust-radi {
-    border-radius: 15%;
+.error-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+    cursor: pointer;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    cursor: auto;
+    position: relative;
+}
+
+.close-btn {
+    display: inline-block;
+    background-color: #2B656F;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    /* float: right; */
+}
+
+.close-btn:hover {
+    background-color: #1f4d55;
 }
 
 .form {
