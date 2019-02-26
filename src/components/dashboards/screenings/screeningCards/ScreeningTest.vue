@@ -70,6 +70,10 @@ import { ref, computed, onMounted, nextTick } from "vue";
 import axios from "axios";
 import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
+import { useUserDetailsStore } from '@/stores/userDetails';
+
+const userDetailsStore = useUserDetailsStore();
+const userDetails = ref(userDetailsStore.$state);
 
 const currentQuestionIndex = ref(0);
 const questions = ref([]);
@@ -81,6 +85,34 @@ const scores = ref({
 	currentSet: ''
 });
 
+// Adapted function for calculating age based on the reactive userDetails
+function calculateAge(dob) {
+	const birthDate = new Date(dob);
+	const today = new Date();
+	let age = today.getFullYear() - birthDate.getFullYear();
+	const m = today.getMonth() - birthDate.getMonth();
+	if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+		age--;
+	}
+	return age;
+}
+
+
+// Reactive properties for user's age and age group
+const userAge = computed(() => calculateAge(userDetails.value.dateOfBirth));
+const userAgeGroup = computed(() => {
+	const age = userAge.value;
+	if (age < 14) return "Below 14";
+	else if (age <= 18) return "14-18";
+	else if (age <= 24) return "19-24";
+	else return "25+";
+});
+
+console.log(userAge, userAgeGroup)
+
+// Watch for changes in userDetails to update age calculation
+// watch(() => userDetailsStore.userDetails, updateUserDetails, { immediate: true });
+
 const questionSetNames = {
 	1: "Patient Health Questionnaire-2 (PHQ-2)",
 	2: "General Anxiety Disorder-2 (GAD-2)",
@@ -91,29 +123,13 @@ const questionSetNames = {
 };
 
 const currentQuestionSetName = computed(() => {
-	const questionSetId = currentQuestion.value.question_set;
-	let setName = "Unknown Question Set"; // Default
-
-	if (questionSetId === 1) {
-		const isASSIST = questions.value.some((question) =>
-			question.text.includes("alcohol")
-		);
-		setName = isASSIST
-			? "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)"
-			: "Patient Health Questionnaire-2 (PHQ-2)";
-	} else {
-		setName = questionSetNames[questionSetId];
-	}
-
-	return setName;
+	const questionSetId = questions.value[currentQuestionIndex.value]?.question_set || 1;
+	return questionSetNames[questionSetId] || "Patient Health Questionnaire-2 (PHQ-2)";
 });
 
 const iconURL = computed(() => {
-	const question = currentQuestion.value;
-	if (question && question.icon) {
-		return `${baseURL}${question.icon}`;
-	}
-	return fallbackIcon;
+	const question = questions.value[currentQuestionIndex.value];
+	return question && question.icon ? `${baseURL}${question.icon}` : fallbackIcon;
 });
 
 const nextQuestion = () => {
@@ -150,7 +166,7 @@ async function fetchQuestions() {
 				// Change question_set ID to 5 for ASSIST and add test name
 				setDetail.assist_question_set.assist_questions.forEach(q => {
 					q.question_set = 5; // Update ID for ASSIST
-					q.testName = "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)"; // Use direct name assignment
+					q.testName = "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)";
 					combinedQuestions.push(q);
 				});
 			}
@@ -254,7 +270,9 @@ function submitTest() {
 	alert("Congratulations, test completed!");
 }
 
-onMounted(loadQuestionsFromStorage);
+onMounted(() => {
+	loadQuestionsFromStorage();
+});
 </script>
 
 <style scoped>

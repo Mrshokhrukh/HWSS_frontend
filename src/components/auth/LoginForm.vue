@@ -93,10 +93,9 @@ const tagline = ref('');
 onMounted(async () => {
     try {
         const response = await axios.get(endpoints.settings);
-        // Assuming the response data is an array and you need the first item
         const settings = response.data[0];
-        loginLogo.value = settings.login_logo; // Update the login logo
-        tagline.value = settings.tagline; // Update the tagline
+        loginLogo.value = settings.login_logo;
+        tagline.value = settings.tagline;
     } catch (error) {
         console.error('Error fetching settings:', error);
     }
@@ -123,7 +122,6 @@ const loginUser = async () => {
 
         sessionStorage.setItem('user_id', userId)
 
-        // Define a mapping of user roles to dashboard route names
         const dashboardRoutes = {
             student: 'student-dashboard',
             school_counselor: 'counselor-dashboard',
@@ -132,15 +130,12 @@ const loginUser = async () => {
             // Add more roles and corresponding dashboard route names as needed
         };
 
-        // Check if the user role exists in the mapping
         if (userRole in dashboardRoutes) {
-            // Route to the corresponding dashboard based on user role
             router.push({ name: dashboardRoutes[userRole] });
         } else {
-            // Route to a default dashboard or handle the case when user role doesn't match any known roles
             router.push({ name: 'default-dashboard' });
         }
- 
+
     } catch (error) {
         console.error('Login failed:', error);
 
