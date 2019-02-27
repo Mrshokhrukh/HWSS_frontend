@@ -385,13 +385,13 @@ const fetchCitizenDetails = async () => {
     } else if (formData.value.selectedIdentifier === 'passport') {
         const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to the next step?');
         if (proceed) {
-            const formattedDateOfBirth = formData.value.date_of_birth.split('-').reverse().join('/');
+            // const formattedDateOfBirth = formData.value.date_of_birth.split('-').reverse().join('/');
             const mappedData = {
                 identity_number: formData.value.passport,
                 first_name: formData.value.first_name,
                 middle_name: formData.value.middle_name || '',
                 last_name: formData.value.last_name,
-                date_of_birth: formattedDateOfBirth,
+                date_of_birth: formData.value.date_of_birth,
                 gender: formData.value.gender,
                 mob_number: formData.value.mob_number,
                 perm_add_village: formData.value.perm_add_village,
@@ -545,4 +545,5 @@ const moveToStep3 = (citizenDetails) => {
 .form-select:focus {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     /* Enhanced focus state */
-}</style>
+}
+</style>
