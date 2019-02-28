@@ -4,7 +4,7 @@
         Personal Details
       </div> -->
     <div class="user-profile text-center my-3">
-      <img :src="userDetails.profilePicture" alt="User" class="profile-pic" />
+      <img :src="userDetailsStore.user.profilePicture" alt="User" class="profile-pic" />
 
     </div>
 
@@ -12,28 +12,33 @@
 
       <!-- Example content -->
       <div class="col-md-12">
-        <label>Full Name</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.username">
+        <label>User Name</label>
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.username">
       </div>
       <div class="col-md-12">
         <label>Student Number</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.userCode">
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.userAgency.userCode">
       </div>
       <div class="col-md-12">
         <label>Is Gyalsung</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.isGyalsung">
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.isGyalsung">
       </div>
       <div class="col-md-12">
         <label>Gender</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.gender">
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.gender">
       </div>
       <div class="col-md-12">
         <label>Date of Birth</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.dateOfBirth">
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.dateOfBirth">
       </div>
       <div class="col-md-12">
         <label>Role</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.role">
+        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetailsStore.user.role">
       </div>
       <div class="col-md-12">
         <label>Class/Section</label>
@@ -41,23 +46,24 @@
       </div>
       <div class="col-md-12">
         <label>School</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.agencyName">
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.agency.agencyName">
       </div>
     </div>
   </div>
 </template>
   
 <script setup>
-import { ref } from 'vue';
+import { computed } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
 
 const userDetailsStore = useUserDetailsStore();
-const userDetails = ref(userDetailsStore.$state);
 
-const userClassExt = userDetails.value;
-const userSubClassExt = userDetails.value;
 
-const userClassSection = `${userClassExt.userClass} Section ${userSubClassExt.userSubClass}`
+const userClassSection = computed(() => {
+  const { userClass, userStream, userSubClass } = userDetailsStore.userAgency;
+  return `${userClass} ${userStream ? userStream + ' ' : ''}${userSubClass}`.trim();
+});
 
 
 </script>

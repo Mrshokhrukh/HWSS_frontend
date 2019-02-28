@@ -3,7 +3,7 @@
 		<!-- User Profile Section -->
 		<div class="user-profile text-center my-3">
 			<img :src="profilePictureUrl" alt="User" :class="profilePicClass" />
-			<h5 class="user-name mb-0" v-if="sidebarStore.isOpen">{{ userName }}</h5>
+			<h5 class="user-name mb-0" v-if="sidebarStore.isOpen">{{ fullName }}</h5>
 		</div>
 
 		<!-- Menu Items -->
@@ -44,9 +44,12 @@ const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
 
-const userName = computed(() => userDetailsStore.fullName);
+const fullName = computed(() => {
+	const { firstName, middleName, lastName } = userDetailsStore.user;
+	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
+});
 const profilePicture = computed(() => userDetailsStore.profilePicture);
-const userType = computed(() => userDetailsStore.userRole);
+const userType = computed(() => userDetailsStore.user.role.toLowerCase());
 const fetchedMenus = ref([]);
 
 sidebarStore.initializeSidebarState();
@@ -77,7 +80,6 @@ const logout = async () => {
 };
 
 const menus = computed(() => {
-	// Static menu items that are consistent for every role
 	let baseRoute = `/${userType.value}-dashboard`;
 	let staticMenuItems = [
 		{ text: "Dashboard", route: baseRoute, iconClass: "fas fa-chart-bar" },

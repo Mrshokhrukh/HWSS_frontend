@@ -13,21 +13,22 @@
                 <div class="col-md-6">
                     <label>Citizenship Identity Number</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.identityNumber">
+                        v-model="userDetails.user.identityNumber">
                 </div>
                 <div class="col-md-6">
                     <label>Email</label>
                     <input type="email" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.email">
+                        v-model="userDetails.user.email">
                 </div>
                 <div class="col-md-6">
                     <label>Phone</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetails.phone">
+                    <input type="text" class="form-control input-noneditable" readonly disabled
+                        v-model="userDetails.user.phone">
                 </div>
                 <div class="col-md-6">
                     <label>Nationality</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.nationality">
+                        v-model="userDetails.user.nationality">
                 </div>
                 <div class="card-header">
                     <h5 style="color: #2B656F; font-weight: bold">Parents Details</h5>
@@ -35,27 +36,27 @@
                 <div class="col-md-6">
                     <label>Mother's Name</label>
                     <input type="text" class="form-control input-noneditable" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.motherName">
+                        v-model="userDetails.user.motherName">
                 </div>
                 <div class="col-md-6">
                     <label>Father's Name</label>
                     <input type="text" class="form-control input-noneditable" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.fatherName">
+                        v-model="userDetails.user.fatherName">
                 </div>
                 <div class="col-md-6">
                     <label>Mother's Occupation</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.motherOccupation">
+                        v-model="userDetails.user.motherOccupation">
                 </div>
                 <div class="col-md-6">
                     <label>Father's Occupation</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.fatherOccupation">
+                        v-model="userDetails.user.fatherOccupation">
                 </div>
                 <div class="col-md-6">
                     <label>Parent's Status</label>
                     <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.parentalStatus">
+                        v-model="userDetails.user.parentalStatus">
                         <option value="single">Single Parent</option>
                         <option value="married">Married/Together</option>
                         <option value="divorced">Divorced</option>
@@ -65,12 +66,12 @@
                 <div class="col-md-6">
                     <label>Guardian Name (Optional)</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.guardianName">
+                        v-model="userDetails.user.guardianName">
                 </div>
                 <div class="col-md-6">
                     <label>Guardian Occupation (Optional)</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.guardianOccupation">
+                        v-model="userDetails.user.guardianOccupation">
                 </div>
                 <div class="card-header">
                     <h5 style="color: #2B656F; font-weight: bold">Permanent Address</h5>
@@ -78,17 +79,17 @@
                 <div class="col-md-6">
                     <label>Village</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.permAddVillage">
+                        v-model="userDetails.user.permAddVillage">
                 </div>
                 <div class="col-md-6">
                     <label>Gewog</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.permAddGewog">
+                        v-model="userDetails.user.permAddGewog">
                 </div>
                 <div class="col-md-6">
                     <label>Dzongkhag</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.permAddDzongkhag">
+                        v-model="userDetails.user.permAddDzongkhag">
                 </div>
                 <div class="card-header">
                     <h5 style="color: #2B656F; font-weight: bold">Present Address</h5>
@@ -96,7 +97,7 @@
                 <div class="col-md-6">
                     <label>Currently Living With</label>
                     <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.currentLivingWith">
+                        v-model="userDetails.user.currentLivingWith">
                         <option value="parents">Parents</option>
                         <option value="guardian">Guardian</option>
                         <option value="sibling">Elder Sibling(s)</option>
@@ -104,16 +105,16 @@
                     </select>
                 </div>
                 <!-- Conditional field that should appear if 'others' is selected -->
-                <div v-if="userDetails.currentLivingWith === 'others'" class="col-md-6">
+                <div v-if="userDetails.user.currentLivingWith === 'others'" class="col-md-6">
                     <label>Please Specify with whom you live with</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.otherLivingWith">
+                        v-model="userDetails.user.otherLivingWith">
                 </div>
                 <!-- Class for Present Address is conditional -->
-                <div :class="userDetails.currentLivingWith === 'others' ? 'col-md-12' : 'col-md-6'">
+                <div :class="userDetails.user.currentLivingWith === 'others' ? 'col-md-12' : 'col-md-6'">
                     <label>Present Address</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.psAddDzongkhag">
+                        v-model="userDetails.user.psAddDzongkhag">
                 </div>
             </div>
         </div>

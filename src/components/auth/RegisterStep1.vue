@@ -3,7 +3,8 @@
         <div class="container-fluid rounded">
             <div class="card my-5 shadow-lg bg-body rounded card-reg mx-auto" style="max-width: 100%;">
                 <div class="row g-0 loginbg rounded">
-                    <div class="col-md-5 d-flex flex-column align-items-center justify-content-center position-relative">
+                    <div
+                        class="col-md-5 d-flex flex-column align-items-center justify-content-center position-relative left-card-side">
                         <!-- Float-start image -->
                         <img class="position-absolute start-0 bottom-0" src="@/assets/images/shape.png" alt="Shape Image"
                             style="z-index: 999;">
@@ -15,7 +16,7 @@
                             <h2 class="reg-heading display-7">{{ tagline }}</h2>
                         </div>
                     </div>
-                    <div class="col-md-7 d-flex flex-column justify-content-center">
+                    <div class="col-md-7 d-flex flex-column justify-content-center right-card-side">
                         <div class="auth-form text-center">
                             <h2 class="text-center mt-5 mb-4" style="color: #2B656F; font-weight: bold">Sign Up</h2>
                             <p class="text-center" style="color: #2B656F; font-weight: bold">Select type of user</p>
@@ -98,7 +99,6 @@ const continueToPage = () => {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
     min-height: 500px;
-    height: 500px;
 }
 
 #reg-img {
@@ -158,6 +158,24 @@ const continueToPage = () => {
 
 .reg-card.active {
     border: 4px solid #2b656f;
+}
+
+.row.g-0.loginbg.rounded {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+
+@media (max-width: 768px) {
+    .loginbg {
+        min-height: 600px;
+    }
+
+    .left-card-side,
+    .right-card-side {
+        flex: 1 0 100%;
+    }
 }
 </style>
   

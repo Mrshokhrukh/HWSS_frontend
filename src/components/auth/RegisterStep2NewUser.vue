@@ -383,9 +383,8 @@ const fetchCitizenDetails = async () => {
     } else if (formData.value.selectedIdentifier === 'casefile') {
         window.alert('Contact PEMA directly for Case File registration.');
     } else if (formData.value.selectedIdentifier === 'passport') {
-        const proceed = window.confirm('Enter relevant fields for Passport registration. Proceed to the next step?');
+        const proceed = window.confirm('Confirm that all relevant fields for Passport registration have been filled out. Would you like to continue to the next step?');
         if (proceed) {
-            // const formattedDateOfBirth = formData.value.date_of_birth.split('-').reverse().join('/');
             const mappedData = {
                 identity_number: formData.value.passport,
                 first_name: formData.value.first_name,

@@ -76,13 +76,18 @@ import endpoints from "@/api";
 
 const router = useRouter();
 const userDetailsStore = useUserDetailsStore();
-const fullName = computed(() => userDetailsStore.fullName);
 const appName = ref("");
 const showModal = ref(false);
 const loading = ref(true);
 const clusterTestStatus = ref("");
 
 const cacheDuration = 5 * 60 * 1000;
+
+const fullName = computed(() => {
+	const { firstName, middleName, lastName } = userDetailsStore.user;
+	// Construct the full name by checking if middle name exists
+	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
+});
 
 // Fetch the app name either from a global store or directly from the API
 async function fetchAppName() {

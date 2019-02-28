@@ -80,6 +80,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
+import { useUserDetailsStore } from '@/stores/userDetails';
 
 const router = useRouter();
 
@@ -102,54 +103,69 @@ onMounted(async () => {
 });
 
 const loginUser = async () => {
+    loading.value = true;
     try {
-        loading.value = true;
-
         const response = await axios.post(endpoints.loginUsers, {
             username: username.value,
-            password: password.value.toString(),
+            password: password.value,
         });
 
-        const token = response.data.token;
-
-        localStorage.setItem('authToken', token);
-
-        const userRole = response.data.user_role;
-
-        sessionStorage.setItem('userRole', userRole);
-
-        const userId = response.data.user_id;
-
-        sessionStorage.setItem('user_id', userId)
-
-        const dashboardRoutes = {
-            student: 'student-dashboard',
-            school_counselor: 'counselor-dashboard',
-            clinical_counselor: 'counselor-dashboard',
-            admin: 'admin-dashboard'
-            // Add more roles and corresponding dashboard route names as needed
-        };
-
-        if (userRole in dashboardRoutes) {
-            router.push({ name: dashboardRoutes[userRole] });
-        } else {
-            router.push({ name: 'default-dashboard' });
-        }
-
+        localStorage.setItem('authToken', response.data.token);
+        // Fetch user details and then redirect based on user role
+        await fetchUserAndAgencyDetails(response.data.user_role);
     } catch (error) {
-        console.error('Login failed:', error);
-
-        if (error.response) {
-            loginStatus.value = `Login failed: ${error.response.data.detail}`;
-        } else if (error.request) {
-            console.error('No response received:', error.request);
-            loginStatus.value = 'Login failed: No response received';
-        } else {
-            console.error('Error message:', error.message);
-            loginStatus.value = 'Login failed: An error occurred';
-        }
+        handleLoginError(error);
     } finally {
         loading.value = false;
+    }
+};
+
+// Inside your component's method
+const fetchUserAndAgencyDetails = async (userRole) => {
+    try {
+        const authToken = localStorage.getItem('authToken');
+        const response = await axios.get(endpoints.getUserDetails, {
+            headers: { Authorization: `Token ${authToken}` },
+        });
+
+        const { user, agency, userAgency } = response.data;
+        const userAgencyDetails = userAgency.length ? userAgency[0] : {};
+        const userDetailsStore = useUserDetailsStore();
+
+        // Wait for the store to process the details and check the response
+        const storeResponse = await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails });
+
+        if (storeResponse.status === 'success') {
+            redirectToDashboard(userRole);
+        } else {
+            alert(storeResponse.message);
+        }
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        alert('Failed to fetch user details.'); // Adjust based on your error handling policy
+    }
+};
+
+
+
+const redirectToDashboard = (userRole) => {
+    const dashboardRoutes = {
+        student: 'student-dashboard',
+        school_counselor: 'counselor-dashboard',
+        clinical_counselor: 'counselor-dashboard',
+        admin: 'admin-dashboard',
+        // Add more roles and corresponding dashboard routes as needed
+    };
+
+    const routeName = dashboardRoutes[userRole] || 'default-dashboard';
+    router.push({ name: routeName });
+};
+
+const handleLoginError = (error) => {
+    if (error.response && error.response.data && error.response.data.detail) {
+        loginStatus.value = `Login failed: ${error.response.data.detail}`;
+    } else {
+        loginStatus.value = 'Login failed: An unexpected error occurred.';
     }
 };
 </script>
