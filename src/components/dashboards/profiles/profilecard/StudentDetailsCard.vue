@@ -44,19 +44,19 @@
                         v-model="userDetails.user.fatherName">
                 </div>
                 <div class="col-md-6">
-                    <label>Mother's Occupation</label>
+                    <label>Parent's Occupation</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.motherOccupation">
+                        v-model="userDetails.userAgency.parentOccupation">
                 </div>
-                <div class="col-md-6">
+                <!-- <div class="col-md-6 d-none">
                     <label>Father's Occupation</label>
                     <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.fatherOccupation">
-                </div>
+                        v-model="userDetails.user.fatherOccupation"> dszsz
+                </div> -->
                 <div class="col-md-6">
                     <label>Parent's Status</label>
                     <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.parentalStatus">
+                        v-model="userDetails.userAgency.parentStatus">
                         <option value="single">Single Parent</option>
                         <option value="married">Married/Together</option>
                         <option value="divorced">Divorced</option>
