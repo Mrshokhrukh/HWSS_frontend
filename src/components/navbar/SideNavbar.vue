@@ -48,7 +48,7 @@ const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
 	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
 });
-const profilePicture = computed(() => userDetailsStore.profilePicture);
+const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 const userType = computed(() => userDetailsStore.user.role.toLowerCase());
 const fetchedMenus = ref([]);
 

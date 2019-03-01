@@ -1,11 +1,10 @@
 <template>
   <div class="card">
-    <!-- <div class="card-header">
-        Personal Details
-      </div> -->
-    <div class="user-profile text-center my-3">
-      <img :src="userDetailsStore.user.profilePicture" alt="User" class="profile-pic" />
-
+    <div class="card-header">
+      <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
+    </div>
+    <div class="user-profile text-center my-1">
+      <img :src="profilePictureUrl" alt="User" class="profile-pic" />
     </div>
 
     <div class="card-body">
@@ -56,8 +55,11 @@
 <script setup>
 import { computed } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
+import deFaultProfilePic from "@/assets/images/icon.png";
 
 const userDetailsStore = useUserDetailsStore();
+
+const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 
 const userClassSection = computed(() => {
@@ -65,6 +67,13 @@ const userClassSection = computed(() => {
   return `${userClass} ${userStream ? userStream + ' ' : ''}${userSubClass}`.trim();
 });
 
+const profilePictureUrl = computed(() => {
+  const baseUrl =
+    window.location.hostname === "localhost" && window.location.port === "5173"
+      ? "http://localhost:8000"
+      : "http://172.30.3.5";
+  return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
+});
 
 </script>
 <style scoped>
