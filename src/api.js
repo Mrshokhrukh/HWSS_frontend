@@ -6,7 +6,7 @@ const isLocalhost5173 = window.location.hostname === 'localhost' && window.locat
 const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
 
 // Define base URL based on the condition
-const baseScreeningUrl = isLocalhost5173 ? 'http://localhost:8080' : 'http://172.30.3.5';
+const baseScreeningUrl = isLocalhost5173 ? 'http://localhost:8080' : 'http://172.30.3.16';
 
 // Define api middle params
 const accessMiddleParams = '/api/v1/access';

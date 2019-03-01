@@ -227,6 +227,7 @@ import { ref, defineProps, computed, onMounted, defineEmits } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 
@@ -278,28 +279,42 @@ const isValidEmail = computed(() => {
 
 const confirmDetails = async (isTrue) => {
     if (isTrue) {
-        const userConfirmed = window.confirm("Are you sure the information is true? The details cannot be edited after confirmation.");
+        Swal.fire({
+            title: 'Are you sure the information is true?',
+            text: "The details cannot be edited after confirmation.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#2B656F',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, confirm'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                detailsConfirmed.value = true;
 
-        if (userConfirmed) {
-            // Proceed with the logic for confirming details
-            detailsConfirmed.value = true;
-
-            // Update the user_data object in session storage with the email field
-            const userData = JSON.parse(sessionStorage.getItem('user_data')) || {};
-            userData.email = regEmail.value;
-            sessionStorage.setItem('user_data', JSON.stringify(userData));
-        } else {
-            // User didn't confirm, allow them to edit
-            detailsConfirmed.value = false;
-        }
+                const userData = JSON.parse(sessionStorage.getItem('user_data')) || {};
+                userData.email = regEmail.value;
+                sessionStorage.setItem('user_data', JSON.stringify(userData));
+            } else {
+                detailsConfirmed.value = false;
+            }
+        });
     } else {
-        const userVerified = window.confirm("Please verify your details again.");
-
-        if (userVerified) {
-            emit('go-to-prev-step', 'step-two');
-        }
+        Swal.fire({
+            title: 'Please verify your details again.',
+            text: "",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#2B656F',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Verify'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                emit('go-to-prev-step', 'step-two');
+            }
+        });
     }
 };
+
 
 const loading = ref(false);
 
@@ -362,9 +377,7 @@ const proceed = async () => {
         const response = await axios.get(apiURL);
         console.log('Response:', response.data);
 
-        // Assuming response structure has { studentDetails, agency_data, user_agency_data, error }
         if (response.data && response.data.agency_data && response.data.user_agency_data) {
-            // Handle successful response
             sessionStorage.setItem('agencyData', JSON.stringify(response.data.agency_data));
             sessionStorage.setItem('userAgencyData', JSON.stringify(response.data.user_agency_data));
 
@@ -374,14 +387,15 @@ const proceed = async () => {
 
             emit('go-to-next-step', 'step-four');
         } else if (response.data.error) {
-            alert(response.data.error);
+            Swal.fire('Error', response.data.error, 'error');
         } else {
-            alert('No data found for the provided information.');
+            Swal.fire('Warning', 'No data found for the provided information.', 'warning');
         }
     } catch (error) {
         console.error('Error fetching data:', error);
-        alert('An error occurred while fetching data. Please try again.');
-        router.push('/register')
+        Swal.fire('Error', 'An error occurred while fetching data. Please try again.', 'error').then(() => {
+            router.push('/register');
+        });
     } finally {
         loading.value = false;
     }
@@ -431,6 +445,7 @@ const proceed = async () => {
 .cust-text {
     color: #2B656F;
 }
+
 .step-container {
     position: relative;
     text-align: center;
@@ -453,5 +468,4 @@ const proceed = async () => {
     cursor: pointer;
     /* Added cursor pointer */
 }
-
 </style>

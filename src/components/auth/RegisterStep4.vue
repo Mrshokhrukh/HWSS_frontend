@@ -70,7 +70,7 @@
 
         </div>
 
-        <div v-if="errorMessage" class="error-modal" @click="errorMessage = ''">
+        <div v-if="errorMessage" class="error-modal d-none" @click="errorMessage = ''">
             <div class="modal-content">
                 <p>{{ errorMessage }}</p>
                 <button class="close-btn" @click="errorMessage = ''">Close</button>
@@ -84,7 +84,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
 import axios from 'axios';
-
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 
@@ -121,10 +121,9 @@ const passwordValidationMessage = computed(() => {
     return messages.join(' ');
 });
 
-
 const createUser = async () => {
     if (password.value !== confirmPassword.value) {
-        alert('Passwords do not match.');
+        Swal.fire('Error', 'Passwords do not match.', 'error');
         return;
     }
 
@@ -141,10 +140,9 @@ const createUser = async () => {
 
         console.log(userSubmissionData);
 
-        // Check if document.cookie.match is null before using it
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)?.[1];
         if (!csrftoken) {
-            alert('CSRF token not found in cookies.');
+            Swal.fire('Error', 'CSRF token not found in cookies.', 'error');
             return;
         }
 
@@ -154,13 +152,14 @@ const createUser = async () => {
         });
 
         if (response.status === 201) {
-            alert('Registration successful!');
-            router.push({ name: 'login' });
-            sessionStorage.removeItem('user_data');
-            sessionStorage.removeItem('agencyData');
-            sessionStorage.removeItem('userAgencyData');
+            Swal.fire('Success', 'Registration successful!', 'success').then(() => {
+                router.push({ name: 'login' });
+                sessionStorage.removeItem('user_data');
+                sessionStorage.removeItem('agencyData');
+                sessionStorage.removeItem('userAgencyData');
+            });
         } else {
-            alert(`Error: ${response.data.error}`);
+            Swal.fire('Error', `Error: ${response.data.error}`, 'error');
         }
     } catch (error) {
         console.log(error);
@@ -171,18 +170,18 @@ const createUser = async () => {
                 errorMessage.value = 'Oops! That username is already taken. Try something unique.';
             } else if (errorDetail.includes('access_customuser.identity_number')) {
                 errorMessage.value = 'It seems this CID/Identity number already exists. Are you sure you don’t have an account already?';
+            } else if (errorDetail.includes('access_customuser.email')) {
+                errorMessage.value = 'This email has already been registered. Please consider using a new email or try logging in instead.';
             } else {
                 errorMessage.value = 'Error creating user. Please try again.';
             }
         } else {
             errorMessage.value = 'An unexpected error occurred. Please try again later.';
         }
+        Swal.fire('Error', errorMessage.value, 'error');
     }
 };
-
 </script>
-
-
 
 
 <style scoped>

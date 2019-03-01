@@ -262,7 +262,8 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
-import endpoints from '@/api'; // Import endpoints from centralized api.js file
+import endpoints from '@/api';
+import Swal from 'sweetalert2';
 
 const formData = ref({
     selectedIdentifier: '',
@@ -369,10 +370,10 @@ const fetchCitizenDetails = async () => {
                     showSuccessMessage.value = true;
                     moveToStep3(mappedData);
                 } else {
-                    alert('Entered date of birth does not match with the records under your CID. Please re-enter your details correctly.');
+                    Swal.fire('Error', 'Entered date of birth does not match with the records under your CID. Please re-enter your details correctly.', 'error');
                 }
             } else {
-                alert('Citizen details not found');
+                Swal.fire('Error', 'Citizen details not found', 'error');
             }
         } catch (error) {
             showFailedMessage.value = true;
@@ -381,29 +382,39 @@ const fetchCitizenDetails = async () => {
             showLoadingOverlay.value = false;
         }
     } else if (formData.value.selectedIdentifier === 'casefile') {
-        window.alert('Contact PEMA directly for Case File registration.');
+        Swal.fire('Information', 'Contact PEMA directly for Case File registration.', 'info');
     } else if (formData.value.selectedIdentifier === 'passport') {
-        const proceed = window.confirm('Confirm that all relevant fields for Passport registration have been filled out. Would you like to continue to the next step?');
-        if (proceed) {
-            const mappedData = {
-                identity_number: formData.value.passport,
-                first_name: formData.value.first_name,
-                middle_name: formData.value.middle_name || '',
-                last_name: formData.value.last_name,
-                date_of_birth: formData.value.date_of_birth,
-                gender: formData.value.gender,
-                mob_number: formData.value.mob_number,
-                perm_add_village: formData.value.perm_add_village,
-                perm_add_gewog: formData.value.perm_add_gewog,
-                perm_add_dzongkhag: formData.value.perm_add_dzongkhag,
-                nationality: formData.value.nationality,
-            };
-            sessionStorage.setItem('user_data', JSON.stringify(mappedData));
-            showSuccessMessage.value = true;
-            moveToStep3(mappedData);
-        }
+        Swal.fire({
+            title: 'Confirmation',
+            text: 'Confirm that all relevant fields for Passport registration have been filled out. Would you like to continue to the next step?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#2B656F',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, continue'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const mappedData = {
+                    identity_number: formData.value.passport,
+                    first_name: formData.value.first_name,
+                    middle_name: formData.value.middle_name || '',
+                    last_name: formData.value.last_name,
+                    date_of_birth: formData.value.date_of_birth,
+                    gender: formData.value.gender,
+                    mob_number: formData.value.mob_number,
+                    perm_add_village: formData.value.perm_add_village,
+                    perm_add_gewog: formData.value.perm_add_gewog,
+                    perm_add_dzongkhag: formData.value.perm_add_dzongkhag,
+                    nationality: formData.value.nationality,
+                };
+                sessionStorage.setItem('user_data', JSON.stringify(mappedData));
+                showSuccessMessage.value = true;
+                moveToStep3(mappedData);
+            }
+        });
     }
 };
+
 
 function getCSRFToken() {
     const name = 'csrftoken';

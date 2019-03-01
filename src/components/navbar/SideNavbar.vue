@@ -39,6 +39,7 @@ import endpoints from "@/api";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { useUserDetailsStore } from "@/stores/userDetails";
 import deFaultProfilePic from "@/assets/images/icon.png";
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 const sidebarStore = useSidebarStore();
@@ -69,13 +70,28 @@ const logout = async () => {
 			localStorage.clear();
 			sessionStorage.clear();
 			userDetailsStore.clearUserDetails();
-			alert("You have been successfully logged out of the system");
+
+			// Use SweetAlert2 for a better user experience
+			await Swal.fire({
+				title: 'Logged Out',
+				text: 'You have been successfully logged out of the system.',
+				icon: 'success',
+				confirmButtonText: 'OK'
+			});
+
 			router.push("/login");
 		} else {
 			console.error("Logout failed:", response.data.message);
 		}
 	} catch (error) {
 		console.error("Logout failed:", error);
+		// Optionally, you can also use Swal here to show an error message
+		await Swal.fire({
+			title: 'Error',
+			text: 'Logout failed. Please try again.',
+			icon: 'error',
+			confirmButtonText: 'OK'
+		});
 	}
 };
 

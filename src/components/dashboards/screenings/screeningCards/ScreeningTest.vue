@@ -77,6 +77,7 @@ import axios from "axios";
 import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
 import { useUserDetailsStore } from '@/stores/userDetails';
+import Swal from 'sweetalert2';
 
 const userDetailsStore = useUserDetailsStore();
 const userDetails = ref(userDetailsStore.$state);
@@ -281,7 +282,7 @@ function goBack() {
 }
 
 function submitTest() {
-	alert("Congratulations, test completed!");
+	Swal.fire('Congratulations!', 'Test completed!', 'success');
 }
 
 onMounted(() => {

@@ -1920,6 +1920,7 @@ __metadata:
     pinia: "npm:^2.1.7"
     prettier: "npm:^3.0.3"
     start-server-and-test: "npm:^2.0.3"
+    sweetalert2: "npm:^11.10.5"
     vite: "npm:^5.0.10"
     vitest: "npm:^1.0.4"
     vue: "npm:^3.3.11"
@@ -3321,6 +3322,13 @@ __metadata:
   dependencies:
     has-flag: "npm:^4.0.0"
   checksum: 10c0/afb4c88521b8b136b5f5f95160c98dee7243dc79d5432db7efc27efb219385bbc7d9427398e43dd6cc730a0f87d5085ce1652af7efbe391327bc0a7d0f7fc124
+  languageName: node
+  linkType: hard
+
+"sweetalert2@npm:^11.10.5":
+  version: 11.10.5
+  resolution: "sweetalert2@npm:11.10.5"
+  checksum: 10c0/7aaf13a2973b4a86243947eef4482ca9e3dbadaa0f09d22ea32c330d36b667057b04a528cca2ee62e5b0c24f4413c46e3dcaeb028a53b40578bf53c857cdc661
   languageName: node
   linkType: hard
 

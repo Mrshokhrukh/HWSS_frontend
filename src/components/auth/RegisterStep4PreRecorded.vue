@@ -50,6 +50,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
+import Swal from 'sweetalert2';
 
 const username = ref('');
 const password = ref('');
@@ -58,24 +59,20 @@ const router = useRouter();
 
 const createUser = async () => {
   if (password.value !== confirmPassword.value) {
-    alert('Passwords do not match.');
+    Swal.fire('Error', 'Passwords do not match.', 'error');
     return;
   }
 
   try {
-    // Get user and agency data from sessionStorage
     let userData = JSON.parse(sessionStorage.getItem('user_data'));
     const agencyData = JSON.parse(sessionStorage.getItem('agency_data'));
     const userAgencyData = JSON.parse(sessionStorage.getItem('user_agency_data'));
 
-    // Update username and password in the userData object
     userData.username = username.value;
     userData.password = password.value;
 
-    // Set the updated userData back to sessionStorage
     sessionStorage.setItem('user_data', JSON.stringify(userData));
 
-    // Prepare userSubmissionData
     const userSubmissionData = {
       userData,
       agencyData,
@@ -84,26 +81,23 @@ const createUser = async () => {
 
     console.log(userSubmissionData);
 
-    // API call to register the user and agency together
     const response = await axios.post(endpoints.registerPreRecordedUser, userSubmissionData);
 
     if (response.status === 201) {
-      // Registration successful
-      alert('Registration successful!');
-      router.push({ name: 'login' });
-
-      // Clear user and agency data from sessionStorage
-      sessionStorage.removeItem('user_data');
-      sessionStorage.removeItem('agency_data');
-      sessionStorage.removeItem('user_agency_data');
+      Swal.fire('Success', 'Registration successful!', 'success').then(() => {
+        router.push({ name: 'login' });
+        sessionStorage.removeItem('user_data');
+        sessionStorage.removeItem('agency_data');
+        sessionStorage.removeItem('user_agency_data');
+      });
     } else {
-      // Registration failed
-      alert(`Error: ${response.data.error}`);
+      Swal.fire('Error', `Error: ${response.data.error}`, 'error');
     }
   } catch (error) {
-    alert('Error creating user:', error);
+    Swal.fire('Error', 'Error creating user: ' + error, 'error');
   }
 };
+
 </script>
   
 <style scoped>

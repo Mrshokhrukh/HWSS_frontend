@@ -55,6 +55,7 @@ import { ref, defineEmits } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import endpoints from '@/api';
+import Swal from 'sweetalert2';
 
 const cid = ref('');
 const day = ref('');
@@ -78,8 +79,6 @@ const verifyUser = async () => {
     console.log('Response received:', response.data);
 
     const dataArray = response.data;
-
-    // Check if dataArray is an array and retrieve the first element
     const dataObject = Array.isArray(dataArray) ? dataArray[0] : dataArray;
 
     if (dataObject.success) {
@@ -88,43 +87,32 @@ const verifyUser = async () => {
       const userDOB = dataObject.user.date_of_birth;
 
       if (userDOB !== `${year.value}-${month.value.toString().padStart(2, '0')}-${day.value.toString().padStart(2, '0')}`) {
-        // Display alert for mismatched DOB
-        alert(`Dear ${dataObject.user.first_name}, the entered DOB does not match with the records. Please re-enter the correct DOB.`);
+        Swal.fire(`Dear ${dataObject.user.first_name}`, 'The entered DOB does not match with the records. Please re-enter the correct DOB.', 'error');
       } else {
-        // Save user_data and agency_data to session/local storage
         saveUserData(dataObject.user);
         saveAgencyData(dataObject.agency);
         saveUserAgencyData(dataObject.userAgency);
 
-        // Display success message
-        alert(`Dear ${dataObject.user.first_name}, records successfully found. Please proceed to the next step and create a username and a strong password to log into the system and start using.`);
+        Swal.fire(`Dear ${dataObject.user.first_name}`, 'Records successfully found. Please proceed to the next step and create a username and a strong password to log into the system and start using.', 'success');
 
-        // Move to the next step
         emit('go-to-next-step', 'step-two-prerecorded');
       }
     } else {
       console.log('User verification failed:', dataObject.message);
 
-      // Check if the user is already registered
       if (response.status === 400 && dataObject.message === 'Pre-recorded user is already registered.') {
-        // Display alert to inform the user that they are already registered
-        alert('User with this ID card is already registered. Please log in to continue.');
+        Swal.fire('Notice', 'User with this ID card is already registered. Please log in to continue.', 'info');
       } else {
-        // Display error message to the user
         errorMessage.value = dataObject.message || 'Verification failed';
 
-        // Check if the error is due to user not found
         if (dataObject.message && dataObject.message.toLowerCase().includes('not found')) {
-          // Alert the user to register as a new user
-          alert('User not found. Please register as a new user and continue your registration.');
-
-          // Redirect to the registration page
-          router.push('/register');
+          Swal.fire('User not found', 'Please register as a new user and continue your registration.', 'warning').then(() => {
+            router.push('/register');
+          });
         }
       }
     }
   } catch (error) {
-    // Display error message to the user
     console.error('An error occurred during verification:', error);
     console.error('Error response data:', error.response.data);
     console.error('Error response status:', error.response.status);

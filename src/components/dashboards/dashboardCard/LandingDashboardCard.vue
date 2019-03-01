@@ -73,6 +73,7 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { useUserDetailsStore } from "@/stores/userDetails";
 import endpoints from "@/api";
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 const userDetailsStore = useUserDetailsStore();
@@ -142,12 +143,14 @@ async function navigateToScreening() {
 
 function showModalBasedOnStatus(status) {
 	if (status === "active") {
-		alert("Congratulations, the questions are now available to screen.");
-		router.push("/student-dashboard/screening");
+		Swal.fire('Congratulations!', 'The questions are now available to screen.', 'success').then(() => {
+			router.push("/student-dashboard/screening");
+		});
 	} else {
 		showModal.value = true; // Show modal for 'inactive' or 'disabled'
 	}
 }
+
 
 onMounted(async () => {
 	await fetchAppName(); // Only fetchAppName is needed on mounted

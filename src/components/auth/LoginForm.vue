@@ -81,6 +81,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useUserDetailsStore } from '@/stores/userDetails';
+import Swal from 'sweetalert2'; // Import SweetAlert2
 
 const router = useRouter();
 
@@ -111,7 +112,6 @@ const loginUser = async () => {
         });
 
         localStorage.setItem('authToken', response.data.token);
-        // Fetch user details and then redirect based on user role
         await fetchUserAndAgencyDetails(response.data.user_role);
     } catch (error) {
         handleLoginError(error);
@@ -120,7 +120,6 @@ const loginUser = async () => {
     }
 };
 
-// Inside your component's method
 const fetchUserAndAgencyDetails = async (userRole) => {
     try {
         const authToken = localStorage.getItem('authToken');
@@ -132,20 +131,26 @@ const fetchUserAndAgencyDetails = async (userRole) => {
         const userAgencyDetails = userAgency.length ? userAgency[0] : {};
         const userDetailsStore = useUserDetailsStore();
 
-        // Wait for the store to process the details and check the response
         const storeResponse = await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails });
 
         if (storeResponse.status === 'success') {
+            // Show success message before redirecting
+            await Swal.fire({
+                title: 'Login Successful!',
+                text: 'Your data has been successfully retrieved.',
+                icon: 'success',
+                confirmButtonText: 'Continue'
+            });
+
             redirectToDashboard(userRole);
         } else {
-            alert(storeResponse.message);
+            Swal.fire('Error', storeResponse.message, 'error');
         }
     } catch (error) {
         console.error('Error fetching user details:', error);
-        alert('Failed to fetch user details.'); // Adjust based on your error handling policy
+        Swal.fire('Error', 'Failed to fetch user details.', 'error');
     }
 };
-
 
 
 const redirectToDashboard = (userRole) => {
@@ -154,21 +159,22 @@ const redirectToDashboard = (userRole) => {
         school_counselor: 'counselor-dashboard',
         clinical_counselor: 'counselor-dashboard',
         admin: 'admin-dashboard',
-        // Add more roles and corresponding dashboard routes as needed
     };
 
-    const routeName = dashboardRoutes[userRole] || 'default-dashboard';
+    const routeName = dashboardRoutes[userRole] || 'student-dashboard';
     router.push({ name: routeName });
 };
 
 const handleLoginError = (error) => {
+    let errorMessage = 'Login failed: An unexpected error occurred.';
     if (error.response && error.response.data && error.response.data.detail) {
-        loginStatus.value = `Login failed: ${error.response.data.detail}`;
-    } else {
-        loginStatus.value = 'Login failed: An unexpected error occurred.';
+        errorMessage = `Login failed: ${error.response.data.detail}`;
     }
+    loginStatus.value = errorMessage;
+    Swal.fire('Login Failed', errorMessage, 'error');
 };
 </script>
+
 
 
 <style scoped>
