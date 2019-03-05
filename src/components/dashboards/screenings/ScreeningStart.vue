@@ -4,8 +4,8 @@
             <div class="mx-auto">
                 <HelplineServices />
             </div>
-            <div class="bg-white rounded mx-auto">
-                <ScreeningTest class="mx-auto" style="min-width: 80vw; margin-top: 6rem" />
+            <div class="rounded mx-auto my-5" style="position:absolute; top:15%">
+                <ScreeningTest class="mx-auto mb-5" style="min-width: 80vw;" />
             </div>
         </div>
     </div>

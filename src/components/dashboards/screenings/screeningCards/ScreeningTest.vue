@@ -1,9 +1,6 @@
 <template>
     <div class="container-fluid screening-test p-0">
         <div class="card">
-            <!-- <div class="card-header text-center">
-                <h4>{{ currentQuestionSetName }}</h4>
-            </div> -->
             <div class="card-body">
                 <div class="progress-container py-3">
                     <div class="progress" style="height: 10px; border-radius: 5px">
@@ -11,58 +8,139 @@
                             aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
-                <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
-                    <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:</h4>
+
+                <!-- Conditional rendering based on the question set type -->
+                <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
+                    <!-- 'ASSIST' question set layout -->
+                    <h4 class="my-5 text-center">{{ currentQuestion.text }}</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Substances</th>
+                                <!-- Dynamically create a column for each answer option -->
+                                <th v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
+                                    {{ answer.option }}
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamically create a row for each substance -->
+                            <tr v-for="substance in filteredSubstances" :key="substance">
+                                <td>{{ substance }}</td>
+                                <!-- Render radio buttons for each answer option per substance -->
+                                <td v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
+                                    <input type="radio" :name="`substance-${substance}`" :value="answer.id"
+                                        @change="handleAnswerSelection(answer, substance)" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="question-area text-center px-5" v-if="currentQuestion">
-                    <div class="row my-4 justify-content-center text-center">
-                        <div class="col d-flex justify-content-center align-items-center">
-                            <div class="icon-container d-inline-flex align-items-center">
-                                <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
-                                    class="mx-4 my-3 animated-icon" />
-                                <div class="question-text d-inline-block">
-                                    <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+
+                <!-- Layout for "SCHOOL ENV" question set -->
+                <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Question</th>
+                                <th>Strongly Agree</th>
+                                <th>Agree</th>
+                                <th>Neutral/Indifferent</th>
+                                <th>Disagree</th>
+                                <th>Strongly Disagree</th>
+                                <th v-if="requiresTextInput">Specify</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
+                                <td>{{ question.text }}</td>
+                                <template v-if="index < 8"> <!-- For questions 1-8 -->
+                                    <td v-for="answer in question.answers.slice().reverse()" :key="answer.id"
+                                        class="text-center">
+                                        <input type="radio" :id="`question-${question.id}-answer-${answer.id}`"
+                                            :name="`question-${question.id}`" :value="answer.id"
+                                            v-model="answers[question.id]">
+                                        <label :for="`question-${question.id}-answer-${answer.id}`"></label>
+                                    </td>
+                                    <td v-if="requiresTextInput(question.id)">
+                                        <input type="text" class="form-control" v-model="textResponses[question.id]" />
+                                    </td>
+                                </template>
+
+                                <template v-else> <!-- For questions 9-10 -->
+                                    <td colspan="6">
+                                        <input type="text" class="form-control" placeholder="Answer 1"
+                                            v-model="answers[question.id][0]">
+                                        <input type="text" class="form-control mt-2" placeholder="Answer 2"
+                                            v-model="answers[question.id][1]">
+                                    </td>
+                                </template>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
+                    <!-- Existing layout for other question sets -->
+                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
+                        <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
+                        </h4>
+                    </div>
+                    <div class="question-area text-center px-5" v-if="currentQuestion">
+                        <div class="row my-4 justify-content-center text-center">
+                            <div class="col d-flex justify-content-center align-items-center">
+                                <div class="icon-container d-inline-flex align-items-center">
+                                    <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
+                                        class="mx-4 my-3 animated-icon" />
+                                    <div class="question-text d-inline-block">
+                                        <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="answer-options d-flex flex-wrap justify-content-center">
-                        <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
-                            <button :class="{ 'selected': isSelectedAnswer(option) }"
-                                @click="handleAnswerSelection(option)" class="btn btn-lg">
-                                {{ option.option }}
-                            </button>
+                        <div class="answer-options d-flex flex-wrap justify-content-center">
+                            <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
+                                <button :class="{ 'selected': isSelectedAnswer(option) }"
+                                    @click="handleAnswerSelection(option)" class="btn btn-lg">
+                                    {{ option.option }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button v-if="isLastQuestion" @click="submitTest" class="btn btn-success mt-2">Submit</button>
             </div>
-            <div class="card-footer text-center">
-                <button @click="goBack" class="btn rounded-btn back-button">Back</button>
+            <div class="card-footer text-end">
+                <div class="button-group">
+                    <button @click="goBack" class="btn rounded-btn back-button">Back</button>
+                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitTest"
+                        class="btn rounded-btn submit-button">Submit</button>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, reactive, toRaw } from 'vue';
 import { useProgressStore } from '@/stores/progressStore';
 import Swal from 'sweetalert2';
 import axios from 'axios';
 import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
 
-const progressStore = useProgressStore();
-
 // Initial setup for reactive variables
+const progressStore = useProgressStore();
 const currentQuestionIndex = ref(0);
 const questions = ref([]);
+const answers = reactive({});
+const textResponses = reactive({});
+const substanceAnswered = reactive({});
 
 // Fetch questions from API or session storage
 onMounted(async () => {
     progressStore.loadProgress();
     currentQuestionIndex.value = progressStore.currentQuestionIndex;
-
 
     let storedQuestions = JSON.parse(sessionStorage.getItem('questions'));
     if (!storedQuestions) {
@@ -78,9 +156,19 @@ onMounted(async () => {
             }))
         )
     );
+    questions.value.forEach(question => {
+        // Initialize with null for radio button groups or an empty string for text inputs
+        answers[question.id] = question.answer_type === 5 ? '' : null;
+    });
+
+    if (currentQuestionSetName.value === 'ASSIST') {
+        currentQuestion.value.substances.forEach(substance => {
+            substanceAnswered[substance] = false; // Initialize all substances as not answered
+        });
+    }
 });
 
-// Save progress whenever the current question index changes
+// Watch for changes in current question index and save progress
 watch(currentQuestionIndex, (newIndex) => {
     progressStore.setQuestionIndex(newIndex);
     progressStore.saveProgress();
@@ -89,70 +177,111 @@ watch(currentQuestionIndex, (newIndex) => {
 // Computed properties for current question details
 const currentQuestion = computed(() => questions.value[currentQuestionIndex.value]);
 const currentQuestionSetName = computed(() => currentQuestion.value?.setName || '');
+const currentSetQuestions = computed(() => {
+    return questions.value.filter(
+        question => question.setName === currentQuestionSetName.value
+    );
+});
 
-
-// Determine if the bg-green area should be shown
+// Computed properties for UI elements
+const isAssistOrSchoolEnv = computed(() => ['ASSIST', 'SCHOOL ENV'].includes(currentQuestionSetName.value));
 const showBgGreen = computed(() => ['PHQ2', 'PHQ9', 'GAD2', 'GAD7'].includes(currentQuestionSetName.value));
-
-// Compute the icon URL, adjusting for local development or production environment
 const iconURL = computed(() => {
     const iconPath = currentQuestion.value?.icon || '';
     if (iconPath) {
         return location.hostname === 'localhost' ? `http://localhost:8080${iconPath}` : `http://172.30.3.16${iconPath}`;
     } else {
-        return fallbackIcon
+        return fallbackIcon;
     }
 });
-
-// Remove the common phrase from the question text
 const processedQuestionText = computed(() => {
-    // This regex is case-insensitive (`i` flag) and allows for a colon or a question mark at the end
     const regex = /over the last 2 weeks, how often have you been bothered by any of the following problems[:?]\s*/i;
     return currentQuestion.value?.text.replace(regex, '');
 });
-
-// Calculate progress percentage
 const progressPercentage = computed(() => (currentQuestionIndex.value / (questions.value.length - 1)) * 100);
 
-// Determine if the current question is the last one
-const isLastQuestion = computed(() => currentQuestionIndex.value === (questions.value.length - 1));
+// Functions for handling answer selection and navigation
+function handleAnswerSelection(option, substance) {
+    console.log(`Handling selection for ${substance}: ${option.option}`);
+    if (currentQuestionSetName.value === 'ASSIST') {
+        substanceAnswered[substance] = option.option === 'Yes'; // Adjust based on your actual value for 'Yes'
 
-// Handle answer selection and automatically move to the next question
-function handleAnswerSelection(option) {
-    progressStore.setAnswer(currentQuestion.value.id, option);
+        console.log(`Updated ${substance} to ${substanceAnswered[substance]}. Current state:`, substanceAnswered);
 
-    // Use setTimeout to delay the transition
-    setTimeout(() => {
-        if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
+        // Check if all substances have been answered. This part remains unchanged.
+        const allAnswered = Object.keys(substanceAnswered).filter(key => filteredSubstances.value.includes(key)).length === filteredSubstances.value.length &&
+            Object.values(substanceAnswered).filter((_, index) => filteredSubstances.value.includes(Object.keys(substanceAnswered)[index])).every(answer => answer === true);
+        // Check for not undefined to ensure an answer was provided
+
+        console.log(`All answered? ${allAnswered}`);
+
+        if (allAnswered) {
+            console.table(toRaw(substanceAnswered));
+            let answersSummary = Object.entries(substanceAnswered)
+                .map(([substance, answer]) => `${substance}: ${answer}`)
+                .join("\n");
+
             Swal.fire({
-                title: 'Please specify',
-                input: 'text',
-                inputLabel: 'What were you diagnosed with?',
-                showCancelButton: true,
-                confirmButtonText: 'Submit',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to write something!';
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed && result.value) {
-                    progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
+                title: 'Your Answers',
+                text: `Here are your responses:\n${answersSummary}`,
+                confirmButtonText: 'OK',
+                preConfirm: () => {
+                    resetSubstanceAnswered();
                     jumpToNextRelevantSet();
                 }
             });
-        } else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
-            jumpToNextRelevantSet('PHQ9');
-        } else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
-            jumpToNextRelevantSet('GAD7');
-        } else {
-            // Move to next question after a 500ms delay
-            currentQuestionIndex.value++;
         }
-    }, 500); // 500ms delay
+    } else {
+        progressStore.setAnswer(currentQuestion.value.id, option);
+        setTimeout(() => {
+            if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
+                Swal.fire({
+                    title: 'Please specify',
+                    input: 'text',
+                    inputLabel: 'What were you diagnosed with?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Submit',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to write something!';
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed && result.value) {
+                        progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
+                        jumpToNextRelevantSet();
+                    }
+                });
+            } else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
+                jumpToNextRelevantSet('PHQ9');
+            } else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
+                jumpToNextRelevantSet('GAD7');
+            } else {
+                currentQuestionIndex.value++;
+            }
+        }, 500);
+    }
 }
 
-// A method to jump to the next relevant set based on conditions
+
+const filteredSubstances = computed(() => {
+    // Assuming the first question is always 'ASSIST' and subsequent questions require filtering
+    if (currentQuestionSetName.value === 'ASSIST' && currentQuestionIndex.value >= 24) { // Adjust index based on your question numbering
+        // Return only substances marked as true
+        return currentQuestion.value.substances.filter(substance => substanceAnswered[substance]);
+    } else {
+        // Return all substances for the first question
+        return currentQuestion.value.substances;
+    }
+});
+
+
+function resetSubstanceAnswered() {
+    Object.keys(substanceAnswered).forEach(substance => {
+        substanceAnswered[substance] = false;
+    });
+}
+
 function jumpToNextRelevantSet(setToSkip) {
     const nextIndex = questions.value.findIndex(
         (question, index) => question.setName !== setToSkip && index > currentQuestionIndex.value
@@ -160,19 +289,16 @@ function jumpToNextRelevantSet(setToSkip) {
     if (nextIndex !== -1) {
         currentQuestionIndex.value = nextIndex;
     } else {
-        // No more questions, or logic needs adjustment
         console.error(`No question set found after skipping ${setToSkip}`);
     }
 }
 
-// Navigate back to the previous question
 function goBack() {
     if (currentQuestionIndex.value > 0) {
         currentQuestionIndex.value--;
     }
 }
 
-// Submit the test and show a success message
 function submitTest() {
     progressStore.setQuestionIndex(0);
     progressStore.answers = [];
@@ -188,6 +314,10 @@ function isSelectedAnswer(option) {
 
 
 <style scoped>
+input {
+    border-radius: 10px;
+}
+
 .bg-green {
     background: #2c6975;
     color: #fff;
@@ -319,6 +449,30 @@ textarea {
 .back-button:hover {
     background-color: #2c6975;
     color: #fff;
+}
+
+.submit-button {
+    background-color: #2c6975;
+    /* border: 2px solid #2c6975; */
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5rem;
+    transition: 800ms;
+    box-shadow: none;
+}
+
+.submit-button:hover {
+    background-color: transparent;
+    color: #2c6975;
+    border: 2px solid #2c6975;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    /* Adjust the gap as needed */
 }
 
 textarea {
