@@ -38,12 +38,14 @@ import axios from "axios";
 import endpoints from "@/api";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { useUserDetailsStore } from "@/stores/userDetails";
+import { useProgressStore } from "@/stores/progressStore";
 import deFaultProfilePic from "@/assets/images/icon.png";
 import Swal from 'sweetalert2';
 
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
+
 
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
@@ -64,6 +66,8 @@ const profilePicClass = computed(() => {
 });
 
 const logout = async () => {
+	const progressStore = useProgressStore();
+	progressStore.resetStore();
 	try {
 		const response = await axios.post(endpoints.logOutUser);
 		if (response.data.message === "Logout successful") {
@@ -138,36 +142,6 @@ const profilePictureUrl = computed(() => {
 
 onMounted(() => {
 	fetchMenuItems();
-	const fetchUserAndAgencyDetails = async () => {
-		try {
-			const authToken = localStorage.getItem("authToken");
-			if (!authToken) {
-				alert("User not Authenticated. Redirecting to login.");
-				router.push("/login");
-				return;
-			}
-
-			const response = await axios.get(endpoints.getUserDetails, {
-				headers: {
-					Authorization: `Token ${authToken}`,
-				},
-			});
-
-			const { data } = response;
-			userDetailsStore.setUserDetails({
-				fullName: `${data.user.first_name} ${data.user.middle_name || ""} ${data.user.last_name
-					}`,
-				profilePicture: data.user.profile_picture,
-				userRole: data.user.role,
-				agencyDetails: data.agency,
-				userAgencyDetails: data.userAgency,
-			});
-		} catch (error) {
-			console.error("Error fetching user details:", error);
-		}
-	};
-
-	fetchUserAndAgencyDetails();
 });
 </script>
 

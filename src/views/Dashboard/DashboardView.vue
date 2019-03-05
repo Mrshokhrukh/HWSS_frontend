@@ -35,8 +35,6 @@ const userDetailsStore = useUserDetailsStore();
 const currentComponent = computed(() => {
   const role = userDetailsStore.user.role;
 
-  console.log(role);
-
   switch (role) {
     case 'student':
       return StudentDashboard;

@@ -1,5 +1,5 @@
 <template>
-    <div class="container text-center">
+    <div class="container text-center py-3">
         <div class="row">
             <div class="col-md-12 d-flex align-items-center justify-content-center mt-3">
                 <!-- Bind logo src dynamically -->
@@ -16,7 +16,7 @@
                 <h5 class="text-center">{{ section.title }}</h5>
                 <hr />
                 <ul>
-                    <li v-for="(service, index) in section.services" :key="index">
+                    <li v-for="(service, index) in section.services" :key="index" class="my-2">
                         <a href="">{{ service }}</a>
                     </li>
                 </ul>
@@ -111,5 +111,4 @@ a:hover {
     color: #1D4851;
     /* Darkens the link color on hover */
 }
-
 </style>

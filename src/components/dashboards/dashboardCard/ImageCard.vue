@@ -97,7 +97,6 @@ onUnmounted(() => {
 
 .image-card {
   width: 100%;
-
 }
 
 .carousel-item img {
@@ -105,8 +104,7 @@ onUnmounted(() => {
   object-position: center;
   margin: 0;
   border: none;
-  aspect-ratio: 16/9;
-  max-height: 500px;
+  height: 550px;
   border-radius: 5px;
 }
 
@@ -115,13 +113,11 @@ onUnmounted(() => {
   height: 10px;
   border-radius: 50%;
   background-color: #ccc;
-  /* Default color */
   margin: 0 5px;
   border: none;
 }
 
 .carousel-indicators button.active {
   background-color: rgba(7, 114, 77, 0.671);
-  /* Active color */
 }
 </style>

@@ -81,7 +81,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
 import { useUserDetailsStore } from '@/stores/userDetails';
-import Swal from 'sweetalert2'; // Import SweetAlert2
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 
@@ -189,11 +189,6 @@ const handleLoginError = (error) => {
     height: 500px;
     border-radius: 10px;
 }
-
-/* Add darker shadow to the card */
-/* .shadow-card {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-} */
 
 .custombg {
     background-color: #2C6975;

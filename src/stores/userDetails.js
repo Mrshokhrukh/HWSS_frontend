@@ -59,7 +59,6 @@ export const useUserDetailsStore = defineStore('userDetails', {
   actions: {
     setUserDetails({ user, agency, userAgency }) {
       try {
-        console.log('Received data for setUserDetails:', { user, agency, userAgency });
 
         // Transforming data keys from snake_case to camelCase for each object
         const camelCaseUser = Object.keys(user).reduce((acc, key) => {
