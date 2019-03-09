@@ -51,6 +51,7 @@ const endpoints = {
 
   // screening endpoint 
   ScreeningPreTests: `${screeningBaseUrl}/screening-questions/`,
+  assistTest: `${screeningBaseUrl}/assist-screening/`,
 
 };
 

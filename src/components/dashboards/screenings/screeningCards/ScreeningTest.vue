@@ -1,6 +1,17 @@
 <template>
     <div class="container-fluid screening-test p-0">
         <div class="card">
+            <div class="card-header mx-auto p-3" v-if="isDevelopmentMode">
+                <div class="test-info d-flex justify-content-between align-items-center">
+                    <h5>Current Section: {{ currentQuestionSetName }}</h5>
+                    <p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
+                    <p class="mx-3">PHQ9 Score: {{ progressStore.scores.PHQ9 }}</p>
+                    <p class="mx-3">GAD2 Score: {{ progressStore.scores.GAD2 }}</p>
+                    <p class="mx-3">GAD7 Score: {{ progressStore.scores.GAD7 }}</p>
+                </div>
+            </div>
+
+            <!-- Progress bar -->
             <div class="card-body">
                 <div class="progress-container py-3">
                     <div class="progress" style="height: 10px; border-radius: 5px">
@@ -21,13 +32,12 @@
                                 <th v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
                                     {{ answer.option }}
                                 </th>
-
                             </tr>
                         </thead>
                         <tbody>
                             <!-- Dynamically create a row for each substance -->
-                            <tr v-for="substance in filteredSubstances" :key="substance">
-                                <td>{{ substance }}</td>
+                            <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
+                                <td>{{ renderSubstanceOptions(substance) }}</td>
                                 <!-- Render radio buttons for each answer option per substance -->
                                 <td v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
                                     <input type="radio" :name="`substance-${substance}`" :value="answer.id"
@@ -37,6 +47,7 @@
                         </tbody>
                     </table>
                 </div>
+
 
                 <!-- Layout for "SCHOOL ENV" question set -->
                 <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
@@ -49,7 +60,8 @@
                                 <th>Neutral/Indifferent</th>
                                 <th>Disagree</th>
                                 <th>Strongly Disagree</th>
-                                <th v-if="requiresTextInput">Specify</th>
+                                <!-- Removed the v-if condition for "Specify" column -->
+                                <th>Specify</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -60,9 +72,11 @@
                                         class="text-center">
                                         <input type="radio" :id="`question-${question.id}-answer-${answer.id}`"
                                             :name="`question-${question.id}`" :value="answer.id"
-                                            v-model="answers[question.id]">
+                                            v-model="answers[question.id]"
+                                            @click="handleRadioClick(question.id, answer.option)">
                                         <label :for="`question-${question.id}-answer-${answer.id}`"></label>
                                     </td>
+                                    <!-- Render the input field next to the "Strongly Disagree" radio button -->
                                     <td v-if="requiresTextInput(question.id)">
                                         <input type="text" class="form-control" v-model="textResponses[question.id]" />
                                     </td>
@@ -110,11 +124,23 @@
                     </div>
                 </div>
             </div>
+            <!-- Footer buttons -->
             <div class="card-footer text-end">
                 <div class="button-group">
-                    <button @click="goBack" class="btn rounded-btn back-button">Back</button>
+                    <button @click="goBack" class="btn rounded-btn back-button">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
                     <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitTest"
-                        class="btn rounded-btn submit-button">Submit</button>
+                        class="btn rounded-btn submit-button">
+                        <i class="fas fa-check"></i> Submit
+                    </button>
+                    <button v-if="currentQuestionSetName === 'ASSIST'" @click="jumpToNextQuestion"
+                        class="btn rounded-btn submit-button">
+                        Next <i class="fas fa-chevron-right ms-2"></i>
+                    </button>
+                    <button @click="flushStore" class="btn rounded-btn back-button">
+                        <i class="fas fa-undo"></i> Reset Progress
+                    </button>
                 </div>
             </div>
         </div>
@@ -122,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive, toRaw } from 'vue';
+import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue';
 import { useProgressStore } from '@/stores/progressStore';
 import Swal from 'sweetalert2';
 import axios from 'axios';
@@ -136,6 +162,34 @@ const questions = ref([]);
 const answers = reactive({});
 const textResponses = reactive({});
 const substanceAnswered = reactive({});
+// Retrieve user's age data from session storage
+const userAgeData = JSON.parse(sessionStorage.getItem('userAgeData'));
+
+const stronglyDisagreeSelected = reactive({});
+
+// Determine user's age group
+const userAgeGroup = userAgeData ? userAgeData.ageGroup : null;
+
+// Function to check if user's age group matches any of the age group tags in the question
+function isUserAgeGroupIncluded(ageGroupTags) {
+    return ageGroupTags.includes(userAgeGroup);
+}
+
+// Watch for changes in current question index and handle ending ASSIST questions
+watch(currentQuestionIndex, (newIndex) => {
+    if (currentQuestionSetName.value === 'ASSIST') {
+        const currentQuestion = questions.value[newIndex];
+        if (currentQuestion) {
+            if (currentQuestion.id === 29 || currentQuestion.id === 30) {
+                const ageGroupTags = currentQuestion.age_group_tags;
+                const includeUserAgeGroup = isUserAgeGroupIncluded(ageGroupTags);
+                if (!includeUserAgeGroup) {
+                    jumpToNextRelevantSet();
+                }
+            }
+        }
+    }
+});
 
 // Fetch questions from API or session storage
 onMounted(async () => {
@@ -148,6 +202,7 @@ onMounted(async () => {
         storedQuestions = response.data;
         sessionStorage.setItem('questions', JSON.stringify(storedQuestions));
     }
+
     questions.value = storedQuestions.flatMap(data =>
         data.question_sets.flatMap(set =>
             set.questions.map(question => ({
@@ -157,16 +212,16 @@ onMounted(async () => {
         )
     );
     questions.value.forEach(question => {
-        // Initialize with null for radio button groups or an empty string for text inputs
         answers[question.id] = question.answer_type === 5 ? '' : null;
     });
 
     if (currentQuestionSetName.value === 'ASSIST') {
         currentQuestion.value.substances.forEach(substance => {
-            substanceAnswered[substance] = false; // Initialize all substances as not answered
+            substanceAnswered[substance] = false;
         });
     }
 });
+
 
 // Watch for changes in current question index and save progress
 watch(currentQuestionIndex, (newIndex) => {
@@ -174,9 +229,25 @@ watch(currentQuestionIndex, (newIndex) => {
     progressStore.saveProgress();
 });
 
+
 // Computed properties for current question details
-const currentQuestion = computed(() => questions.value[currentQuestionIndex.value]);
-const currentQuestionSetName = computed(() => currentQuestion.value?.setName || '');
+const currentQuestion = computed(() => {
+    if (questions.value.length > 0) {
+        const question = questions.value[currentQuestionIndex.value];
+        if (!question) {
+            console.error('Current question is undefined:', currentQuestionIndex.value);
+        }
+        return question;
+    } else {
+        return null;
+    }
+});
+
+
+const currentQuestionSetName = computed(() => {
+    return currentQuestion.value ? currentQuestion.value.setName : '';
+});
+
 const currentSetQuestions = computed(() => {
     return questions.value.filter(
         question => question.setName === currentQuestionSetName.value
@@ -194,93 +265,168 @@ const iconURL = computed(() => {
         return fallbackIcon;
     }
 });
+
 const processedQuestionText = computed(() => {
     const regex = /over the last 2 weeks, how often have you been bothered by any of the following problems[:?]\s*/i;
     return currentQuestion.value?.text.replace(regex, '');
 });
+
 const progressPercentage = computed(() => (currentQuestionIndex.value / (questions.value.length - 1)) * 100);
 
 // Functions for handling answer selection and navigation
 function handleAnswerSelection(option, substance) {
-    console.log(`Handling selection for ${substance}: ${option.option}`);
     if (currentQuestionSetName.value === 'ASSIST') {
-        substanceAnswered[substance] = option.option === 'Yes'; // Adjust based on your actual value for 'Yes'
+        updateSubstanceAnswered(option, substance);
+    } else {
+        handleOtherQuestionSets(option);
+    }
+}
 
-        console.log(`Updated ${substance} to ${substanceAnswered[substance]}. Current state:`, substanceAnswered);
+function updateSubstanceAnswered(option, substance) {
+    substanceAnswered[substance] = option.option === 'Yes';
+    saveSubstanceAnswersToLocalStorage();
 
-        // Check if all substances have been answered. This part remains unchanged.
-        const allAnswered = Object.keys(substanceAnswered).filter(key => filteredSubstances.value.includes(key)).length === filteredSubstances.value.length &&
-            Object.values(substanceAnswered).filter((_, index) => filteredSubstances.value.includes(Object.keys(substanceAnswered)[index])).every(answer => answer === true);
-        // Check for not undefined to ensure an answer was provided
+    // Prompt the user to answer all substances before proceeding
+    if (!allSubstancesAnswered()) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Answer',
+            text: 'Please answer all substances before proceeding.',
+        });
+    }
 
-        console.log(`All answered? ${allAnswered}`);
+    // Immediately update the substance name if "Others - specify" is selected
+    if (option.option === 'Yes' && substance === 'Other - specify') {
+        Swal.fire({
+            title: 'Specify Substance',
+            input: 'text',
+            inputLabel: 'Enter the substance name:',
+            showCancelButton: true,
+            confirmButtonText: 'Submit',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'You need to provide a substance name!';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                localStorage.setItem('otherSubstanceName', result.value);
+                updateSubstanceCount(); // Update the substance count after entering the name
+            }
+        });
+    }
+}
 
-        if (allAnswered) {
-            console.table(toRaw(substanceAnswered));
-            let answersSummary = Object.entries(substanceAnswered)
-                .map(([substance, answer]) => `${substance}: ${answer}`)
-                .join("\n");
+function allSubstancesAnswered() {
+    const answeredSubstances = Object.values(substanceAnswered);
+    return answeredSubstances.every(answer => answer);
+}
 
+function updateSubstanceCount() {
+    // Count the number of answered substances
+    const countYes = Object.values(substanceAnswered).filter(answer => answer).length;
+    console.log(`Number of substances answered "Yes": ${countYes}`);
+
+    // Proceed to check if all "Yes" substances are answered
+    checkAllSubstancesAnswered(countYes);
+}
+
+function checkAllSubstancesAnswered(countYes) {
+    const totalSubstances = Object.keys(substanceAnswered).length;
+    console.log(`Total number of substances: ${totalSubstances}`);
+
+    if (countYes === totalSubstances) {
+        // All "Yes" substances are answered, no automatic next
+    } else {
+        // Prompt the user to answer all "Yes" substances before proceeding
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Answer',
+            text: 'Please answer all "Yes" substances before proceeding.',
+        });
+    }
+}
+
+
+function saveSubstanceAnswersToLocalStorage() {
+    localStorage.setItem('answeredSubstances', JSON.stringify(substanceAnswered));
+}
+
+// Function to check if input text is required based on the selected answer
+function requiresTextInput(questionId) {
+    // Return true if "Strongly Disagree" is selected for the given question
+    return stronglyDisagreeSelected[questionId];
+}
+
+// Function to handle the click event of radio buttons
+function handleRadioClick(questionId, answerOption) {
+    // Update stronglyDisagreeSelected when "Strongly Disagree" is selected
+    if (answerOption === "Strongly Disagree") {
+        stronglyDisagreeSelected[questionId] = true;
+    } else {
+        // Reset the value if the option changes
+        stronglyDisagreeSelected[questionId] = false;
+    }
+}
+
+
+function handleOtherQuestionSets(option) {
+    progressStore.setAnswer(currentQuestion.value.id, option);
+    setTimeout(() => {
+        if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
             Swal.fire({
-                title: 'Your Answers',
-                text: `Here are your responses:\n${answersSummary}`,
-                confirmButtonText: 'OK',
-                preConfirm: () => {
-                    resetSubstanceAnswered();
-                    jumpToNextRelevantSet();
+                title: 'Please specify',
+                input: 'text',
+                inputLabel: 'What were you diagnosed with?',
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write something!';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
+                    nextTick(() => {
+                        jumpToNextRelevantSet();
+                    });
                 }
             });
-        }
-    } else {
-        progressStore.setAnswer(currentQuestion.value.id, option);
-        setTimeout(() => {
-            if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
-                Swal.fire({
-                    title: 'Please specify',
-                    input: 'text',
-                    inputLabel: 'What were you diagnosed with?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Submit',
-                    inputValidator: (value) => {
-                        if (!value) {
-                            return 'You need to write something!';
-                        }
-                    }
-                }).then((result) => {
-                    if (result.isConfirmed && result.value) {
-                        progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
-                        jumpToNextRelevantSet();
-                    }
-                });
-            } else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
+        } else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
+            nextTick(() => {
                 jumpToNextRelevantSet('PHQ9');
-            } else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
+            });
+        } else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
+            nextTick(() => {
                 jumpToNextRelevantSet('GAD7');
-            } else {
-                currentQuestionIndex.value++;
-            }
-        }, 500);
+            });
+        } else {
+            currentQuestionIndex.value++;
+        }
+    }, 500);
+}
+
+// Function to filter substances based on those answered "No" in local storage
+function filterSubstances(substances) {
+    const answeredSubstances = JSON.parse(localStorage.getItem('answeredSubstances')) || {};
+    // If there are no answered substances, all substances should be rendered
+    if (Object.keys(answeredSubstances).length === 0) {
+        return substances;
     }
+    // Filter substances based on user's answers
+    return substances.filter(substance => answeredSubstances[substance]);
 }
 
 
-const filteredSubstances = computed(() => {
-    // Assuming the first question is always 'ASSIST' and subsequent questions require filtering
-    if (currentQuestionSetName.value === 'ASSIST' && currentQuestionIndex.value >= 24) { // Adjust index based on your question numbering
-        // Return only substances marked as true
-        return currentQuestion.value.substances.filter(substance => substanceAnswered[substance]);
+function jumpToNextQuestion() {
+    if (currentQuestionSetName.value === 'ASSIST') {
+        currentQuestionIndex.value++;
     } else {
-        // Return all substances for the first question
-        return currentQuestion.value.substances;
+        currentQuestionIndex.value++;
     }
-});
-
-
-function resetSubstanceAnswered() {
-    Object.keys(substanceAnswered).forEach(substance => {
-        substanceAnswered[substance] = false;
-    });
 }
+
 
 function jumpToNextRelevantSet(setToSkip) {
     const nextIndex = questions.value.findIndex(
@@ -296,8 +442,15 @@ function jumpToNextRelevantSet(setToSkip) {
 function goBack() {
     if (currentQuestionIndex.value > 0) {
         currentQuestionIndex.value--;
+    } else {
+        Swal.fire({
+            icon: 'info',
+            title: 'Start of Screening',
+            text: 'This is the beginning of the screening, no more previous questions exist.',
+        });
     }
 }
+
 
 function submitTest() {
     progressStore.setQuestionIndex(0);
@@ -309,6 +462,30 @@ function submitTest() {
 function isSelectedAnswer(option) {
     const existingAnswer = progressStore.answers.find(a => a.questionId === currentQuestion.value.id);
     return existingAnswer && existingAnswer.answer.id === option.id;
+}
+
+function flushStore() {
+    progressStore.resetStore();
+    localStorage.removeItem('answeredSubstances');
+    Swal.fire('Progress Reset', 'All progress has been reset.', 'info').then(() => {
+        location.reload();
+    });
+}
+
+
+
+// Function to get the substance name
+function getSubstanceName() {
+    return localStorage.getItem('otherSubstanceName') || 'Others - specify';
+}
+
+// Function to render substance options
+function renderSubstanceOptions(substance) {
+    if (substance === 'Others - specify') {
+        return getSubstanceName();
+    } else {
+        return substance;
+    }
 }
 </script>
 

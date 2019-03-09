@@ -80,7 +80,8 @@ const logout = async () => {
 				title: 'Logged Out',
 				text: 'You have been successfully logged out of the system.',
 				icon: 'success',
-				confirmButtonText: 'OK'
+				showConfirmButton: false,
+                timer: 1200
 			});
 
 			router.push("/login");
@@ -125,7 +126,7 @@ const menus = computed(() => {
 // Function to fetch menu items from the API
 const fetchMenuItems = async () => {
 	try {
-		const response = await axios.get(endpoints.menuItem); // Adjust the endpoint as needed
+		const response = await axios.get(endpoints.menuItem);
 		fetchedMenus.value = response.data;
 	} catch (error) {
 		console.error("Error fetching menu items:", error);

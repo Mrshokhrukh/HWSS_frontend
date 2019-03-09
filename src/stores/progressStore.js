@@ -39,9 +39,53 @@ export const useProgressStore = defineStore('progress', {
         },
 
         calculateScores() {
-            this.scores.PHQ2 = this.answers.filter(a => a.questionSet === 'PHQ2').reduce((acc, curr) => acc + curr.answer.points, 0);
-            this.scores.GAD2 = this.answers.filter(a => a.questionSet === 'GAD2').reduce((acc, curr) => acc + curr.answer.points, 0);
+            // Reset scores before calculation
+            this.scores.PHQ2 = 0;
+            this.scores.GAD2 = 0;
+            this.scores.PHQ9 = 0;
+            this.scores.GAD7 = 0;
+
+            // Calculate PHQ2 score
+            const phq2Questions = [4, 5];
+            phq2Questions.forEach(qId => {
+                const answer = this.answers.find(a => a.questionId === qId)?.answer;
+                if (answer) {
+                    this.scores.PHQ2 += answer.points;
+                }
+            });
+
+            // Calculate GAD2 score
+            const gad2Questions = [15, 16];
+            gad2Questions.forEach(qId => {
+                const answer = this.answers.find(a => a.questionId === qId)?.answer;
+                if (answer) {
+                    this.scores.GAD2 += answer.points;
+                }
+            });
+
+            // Calculate PHQ9 score
+            const phq9Questions = [8, 9, 10, 11, 12, 13, 14];
+            phq9Questions.forEach(qId => {
+                const answer = this.answers.find(a => a.questionId === qId)?.answer;
+                if (answer) {
+                    this.scores.PHQ9 += answer.points;
+                }
+            });
+            // Add PHQ2 score to PHQ9
+            this.scores.PHQ9 += this.scores.PHQ2;
+
+            // Calculate GAD7 score
+            const gad7Questions = [19, 20, 21, 22, 23];
+            gad7Questions.forEach(qId => {
+                const answer = this.answers.find(a => a.questionId === qId)?.answer;
+                if (answer) {
+                    this.scores.GAD7 += answer.points;
+                }
+            });
+            // Add GAD2 score to GAD7
+            this.scores.GAD7 += this.scores.GAD2;
         },
+
         skipSet(setName) {
             if (!this.skippedSets.includes(setName)) {
                 this.skippedSets.push(setName);
@@ -85,8 +129,15 @@ export const useProgressStore = defineStore('progress', {
             sessionStorage.setItem('progress', JSON.stringify(this.$state));
         },
         resetStore() {
-            this.$reset();
-            sessionStorage.clear();
-        },
+            this.currentQuestionIndex = 0;
+            this.answers = [];
+            this.scores = {
+                PHQ2: 0,
+                GAD2: 0
+            };
+            this.skippedSets = [];
+            this.saveProgress();
+        }
+
     }
 });

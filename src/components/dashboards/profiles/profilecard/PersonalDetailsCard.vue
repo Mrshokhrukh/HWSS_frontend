@@ -36,8 +36,13 @@
           v-model="userDetailsStore.user.dateOfBirth">
       </div>
       <div class="col-md-12">
+        <label>Age</label>
+        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userAge">
+      </div>
+      <div class="col-md-12">
         <label>Role</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userDetailsStore.user.role">
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.role">
       </div>
       <div class="col-md-12">
         <label>Class/Section</label>
@@ -51,9 +56,9 @@
     </div>
   </div>
 </template>
-  
+
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted  } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
 import deFaultProfilePic from "@/assets/images/icon.png";
 
@@ -75,7 +80,37 @@ const profilePictureUrl = computed(() => {
   return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 
+const userAge = computed(() => {
+  const dob = userDetailsStore.user.dateOfBirth;
+  if (!dob) return ''; // Handle case where date of birth is not available
+  const dobDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - dobDate.getFullYear();
+  const monthDiff = today.getMonth() - dobDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+    age--;
+  }
+  return age;
+});
+
+const userAgeGroup = computed(() => {
+  const age = parseInt(userAge.value);
+  if (age < 14) {
+    return 'Below 14';
+  } else if (age >= 15 && age <= 17) {
+    return '15 to 17';
+  } else {
+    return '18 and above';
+  }
+});
+
+onMounted(() => {
+  localStorage.setItem('userAge', userAge.value.toString());
+  localStorage.setItem('userAgeGroup', userAgeGroup.value);
+});
+
 </script>
+
 <style scoped>
 .input-noneditable {
   background-color: #68B2A03D;
@@ -99,4 +134,3 @@ const profilePictureUrl = computed(() => {
   height: auto;
 }
 </style>
-  

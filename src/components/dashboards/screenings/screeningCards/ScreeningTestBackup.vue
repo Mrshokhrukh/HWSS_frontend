@@ -1,12 +1,17 @@
 <template>
 	<div class="container-fluid screening-test p-0">
 		<div class="card">
-			<div class="card-header text-center">
-				<div class="question-set-name" v-if="currentQuestion">
-					<h4>{{ currentQuestionSetName }}</h4>
+			<!-- for development purpose only -->
+			<div class="card-header mx-auto p-3">
+				<div class="test-info d-flex justify-content-between align-items-center">
+					<h5>Current Section: {{ currentQuestionSetName }}</h5>
+					<p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
+					<p class="mx-3">PHQ9 Score: {{ progressStore.scores.PHQ9 }}</p>
+					<p class="mx-3">GAD2 Score: {{ progressStore.scores.GAD2 }}</p>
+					<p class="mx-3">GAD7 Score: {{ progressStore.scores.GAD7 }}</p>
 				</div>
 			</div>
-
+			<!-- end of development purpose -->
 			<div class="card-body">
 				<div class="progress-container py-3">
 					<div class="progress" style="height: 10px; border-radius: 5px">
@@ -14,277 +19,392 @@
 							aria-valuemin="0" aria-valuemax="100"></div>
 					</div>
 				</div>
-				<div class="row">
-					<div class="col-12">
-						<div v-if="currentQuestionSetName !== 'School Environment (SCHOOL ENV)' && currentQuestionSetName !== 'Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)'"
-							class="card p-3 my-3 text-center bg-green">
-							<h4>
-								Over the last 2 weeks, how often have you been bothered by any of the
-								following problems:
-							</h4>
-						</div>
-					</div>
+
+				<!-- Conditional rendering based on the question set type -->
+				<div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
+					<!-- 'ASSIST' question set layout -->
+					<h4 class="my-5 text-center">{{ currentQuestion.text }}</h4>
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Substances</th>
+								<!-- Dynamically create a column for each answer option -->
+								<th v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
+									{{ answer.option }}
+								</th>
+							</tr>
+						</thead>
+						<tbody>
+							<!-- Dynamically create a row for each substance -->
+							<tr v-for="substance in currentQuestion.substances" :key="substance">
+								<td>{{ substance }}</td>
+								<!-- Render radio buttons for each answer option per substance -->
+								<td v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
+									<input type="radio" :name="`substance-${substance}`" :value="answer.id"
+										@change="handleAnswerSelection(answer, substance)" />
+								</td>
+							</tr>
+							<tr v-if="substanceStatus['Other - specify'].answered">
+								<td>{{ substanceStatus['Other - specify'].name || 'Other - specify' }}</td>
+							</tr>
+
+						</tbody>
+					</table>
 				</div>
 
-				<div class="question-area text-center px-5" v-if="currentQuestion">
-					<div class="row my-4 justify-content-center text-center">
-						<div class="col d-flex justify-content-center align-items-center">
-							<div class="icon-container d-inline-flex align-items-center">
-								<img :src="iconURL" alt="Question Icon" style="max-width: 100px" class="mx-4 my-3" />
-								<div class="question-text d-inline-block">
-									<h2 class="text-capitalize" v-html="processedQuestionText"></h2>
+				<!-- Layout for "SCHOOL ENV" question set -->
+				<div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>Question</th>
+								<th>Strongly Agree</th>
+								<th>Agree</th>
+								<th>Neutral/Indifferent</th>
+								<th>Disagree</th>
+								<th>Strongly Disagree</th>
+								<th v-if="requiresTextInput">Specify</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="(question, index) in currentSetQuestions" :key="question.id">
+								<td>{{ question.text }}</td>
+								<template v-if="index < 8"> <!-- For questions 1-8 -->
+									<td v-for="answer in question.answers.slice().reverse()" :key="answer.id"
+										class="text-center">
+										<input type="radio" :id="`question-${question.id}-answer-${answer.id}`"
+											:name="`question-${question.id}`" :value="answer.id"
+											v-model="answers[question.id]">
+										<label :for="`question-${question.id}-answer-${answer.id}`"></label>
+									</td>
+									<td v-if="requiresTextInput(question.id)">
+										<input type="text" class="form-control" v-model="textResponses[question.id]" />
+									</td>
+								</template>
+
+								<template v-else> <!-- For questions 9-10 -->
+									<td colspan="6">
+										<input type="text" class="form-control" placeholder="Answer 1"
+											v-model="answers[question.id][0]">
+										<input type="text" class="form-control mt-2" placeholder="Answer 2"
+											v-model="answers[question.id][1]">
+									</td>
+								</template>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
+					<!-- Existing layout for other question sets -->
+					<div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
+						<h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
+						</h4>
+					</div>
+					<div class="question-area text-center px-5" v-if="currentQuestion">
+						<div class="row my-4 justify-content-center text-center">
+							<div class="col d-flex justify-content-center align-items-center">
+								<div class="icon-container d-inline-flex align-items-center">
+									<img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
+										class="mx-4 my-3 animated-icon" />
+									<div class="question-text d-inline-block">
+										<h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-
-					<div class="answer-options d-flex flex-wrap justify-content-center"
-						v-if="currentQuestion.answers && currentQuestion.answers.length">
-						<div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
-							<button :class="{ selected: selectedAnswer === option }" @click="selectAnswer(option)"
-								class="btn btn-lg">
-								{{ option.option }}
-							</button>
+						<div class="answer-options d-flex flex-wrap justify-content-center">
+							<div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
+								<button :class="{ 'selected': isSelectedAnswer(option) }"
+									@click="handleAnswerSelection(option)" class="btn btn-lg">
+									{{ option.option }}
+								</button>
+							</div>
 						</div>
 					</div>
-					<div class="text-area-container text-center mt-4"
-						v-if="!currentQuestion.answers || currentQuestion.answers.length === 0">
-						<textarea v-model="textAnswer" placeholder="Your answer" class="text-input"></textarea>
-						<button @click="nextQuestion" class="next-button btn my-4">Next</button>
-					</div>
-					<button v-if="isLastQuestion" @click="submitTest" class="btn btn-success mt-2">Submit</button>
+				</div>
+			</div>
+			<div class="card-footer text-end">
+				<div class="button-group">
+					<button @click="goBack" class="btn rounded-btn back-button">
+						<i class="fas fa-arrow-left"></i> Back
+					</button>
+					<button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitTest"
+						class="btn rounded-btn submit-button">
+						<i class="fas fa-check"></i> Submit
+					</button>
+					<button @click="flushStore" class="btn rounded-btn back-button">
+						<i class="fas fa-undo"></i> Reset Progress
+					</button>
 				</div>
 			</div>
 
-			<div class="card-footer text-center">
-				<div class="back-button-area my-0">
-					<button @click="goBack" class="btn rounded-btn back-button">Back</button>
-				</div>
-			</div>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
-import axios from "axios";
+import { ref, computed, onMounted, watch, reactive, toRaw, nextTick } from 'vue';
+import { useProgressStore } from '@/stores/progressStore';
+import Swal from 'sweetalert2';
+import axios from 'axios';
 import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
-import { useUserDetailsStore } from '@/stores/userDetails';
-import Swal from 'sweetalert2';
-import { useQuestionsStore } from '@/stores/useQuestionsStore';
 
-const questionsStore = useQuestionsStore();
-const userDetailsStore = useUserDetailsStore();
-const userDetails = ref(userDetailsStore.$state);
-
+// Initial setup for reactive variables
+const progressStore = useProgressStore();
 const currentQuestionIndex = ref(0);
 const questions = ref([]);
-const selectedAnswer = ref(null);
-const textAnswer = ref("");
-const scores = ref({
-	PHQ2: 0,
-	GAD2: 0,
-	currentSet: ''
+const answers = reactive({});
+const textResponses = reactive({});
+const substanceAnswered = reactive({});
+
+const substanceStatus = reactive({
+	"Tobacco products (cigarettes, chewing tobacco etc)": false,
+	"Alcoholic beverages (beer, wine, spirits, ara etc.)": false,
+	"Cannabis (marijuana, pot, grass, hash, black etc.)": false,
+	"Cocaine (Cocaine, Coke, Blow, Snow)": false,
+	"Amphetamine-type stimulants (speed, meth, ecstasy, ice, diet pills etc.)": false,
+	"Inhalants (dendrite, glue, petrol, paint thinner, etc.)": false,
+	"Sedatives or Sleeping Pills (Valium,Temazepam, Amitriptyline, N-10, diazepam etc.)": false,
+	"Hallucinogens (LSD, acid,, trips, Ketamine, etc.)": false,
+	"Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc.)": false,
+	"Other - specify": { answered: false, name: "" }
 });
 
-// Adapted function for calculating age based on the reactive userDetails
-function calculateAge(dob) {
-	const birthDate = new Date(dob);
-	const today = new Date();
-	let age = today.getFullYear() - birthDate.getFullYear();
-	const m = today.getMonth() - birthDate.getMonth();
-	if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-		age--;
+
+// Fetch questions from API or session storage
+onMounted(async () => {
+	progressStore.loadProgress();
+	currentQuestionIndex.value = progressStore.currentQuestionIndex;
+
+	let storedQuestions = JSON.parse(sessionStorage.getItem('questions'));
+	if (!storedQuestions) {
+		const response = await axios.get(`${endpoints.ScreeningPreTests}?name=Cluster Screening`);
+		storedQuestions = response.data;
+		sessionStorage.setItem('questions', JSON.stringify(storedQuestions));
 	}
-	return age;
-}
+	questions.value = storedQuestions.flatMap(data =>
+		data.question_sets.flatMap(set =>
+			set.questions.map(question => ({
+				...question,
+				setName: set.name,
+			}))
+		)
+	);
+	questions.value.forEach(question => {
+		// Initialize with null for radio button groups or an empty string for text inputs
+		answers[question.id] = question.answer_type === 5 ? '' : null;
+	});
 
-
-// Reactive properties for user's age and age group
-const userAge = computed(() => calculateAge(userDetails.value.dateOfBirth));
-const userAgeGroup = computed(() => {
-	const age = userAge.value;
-	if (age < 14) return "Below 14";
-	else if (age <= 18) return "14-18";
-	else if (age <= 24) return "19-24";
-	else return "25+";
-});
-
-console.log(userAge, userAgeGroup)
-
-const questionSetNames = {
-	1: "Patient Health Questionnaire-2 (PHQ-2)",
-	2: "General Anxiety Disorder-2 (GAD-2)",
-	3: "Patient Health Questionnaire-9 (PHQ-9)",
-	4: "General Anxiety Disorder-7 (GAD-7)",
-	5: "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)",
-	6: "School Environment (SCHOOL ENV)",
-};
-
-const currentQuestionSetName = computed(() => {
-	const questionSetId = questions.value[currentQuestionIndex.value]?.question_set || 1;
-	return questionSetNames[questionSetId] || "Patient Health Questionnaire-2 (PHQ-2)";
-});
-
-const iconURL = computed(() => {
-	const question = questions.value[currentQuestionIndex.value];
-	return question && question.icon ? `${baseURL}${question.icon}` : fallbackIcon;
-});
-
-const nextQuestion = () => {
-	if (currentQuestionIndex.value < questions.value.length - 1) {
-		currentQuestionIndex.value += 1;
-	}
-	selectedAnswer.value = null;
-	textAnswer.value = "";
-};
-
-const isLastQuestion = computed(() => {
-	return currentQuestionIndex.value === questions.value.length - 1;
-});
-
-
-async function fetchQuestions() {
-	try {
-		const testTypeName = "Cluster Screening";
-		const url = `${endpoints.ScreeningPreTests}?name=${testTypeName}`;
-		const response = await axios.get(url);
-		questionsStore.setQuestions(response.data[0].question_sets.flatMap(set => set.questions));
-		const questionSetsDetails = response.data[0].question_sets_details;
-
-		// Combine questions and assist questions
-		const combinedQuestions = [];
-		questionSetsDetails.forEach((setDetail) => {
-			if (setDetail.question_set !== null) {
-				// Add test name for each question
-				setDetail.question_set.questions.forEach(q => {
-					q.testName = questionSetNames[q.question_set];
-					combinedQuestions.push(q);
-				});
-			}
-			if (setDetail.assist_question_set !== null) {
-				// Change question_set ID to 5 for ASSIST and add test name
-				setDetail.assist_question_set.assist_questions.forEach(q => {
-					q.question_set = 5; // Update ID for ASSIST
-					q.testName = "Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)";
-					combinedQuestions.push(q);
-				});
-			}
+	if (currentQuestionSetName.value === 'ASSIST') {
+		currentQuestion.value.substances.forEach(substance => {
+			substanceAnswered[substance] = false; // Initialize all substances as not answered
 		});
-
-		// Update localStorage with the combined and updated list
-		localStorage.setItem("combinedQuestions", JSON.stringify(combinedQuestions));
-		questions.value = combinedQuestions; // Use the combined list directly
-	} catch (error) {
-		console.error("Error fetching questions:", error);
 	}
-}
-
-const progressPercentage = computed(() => {
-	return (currentQuestionIndex.value / (questions.value.length - 1)) * 100;
 });
 
-const currentQuestion = computed(() => {
-	return questions.value[currentQuestionIndex.value] || {};
+// Watch for changes in current question index and save progress
+watch(currentQuestionIndex, (newIndex) => {
+	progressStore.setQuestionIndex(newIndex);
+	progressStore.saveProgress();
+});
+
+// Computed properties for current question details
+const currentQuestion = computed(() => questions.value[currentQuestionIndex.value]);
+const currentQuestionSetName = computed(() => currentQuestion.value?.setName || '');
+const currentSetQuestions = computed(() => {
+	return questions.value.filter(
+		question => question.setName === currentQuestionSetName.value
+	);
+});
+
+// Computed properties for UI elements
+const isAssistOrSchoolEnv = computed(() => ['ASSIST', 'SCHOOL ENV'].includes(currentQuestionSetName.value));
+const showBgGreen = computed(() => ['PHQ2', 'PHQ9', 'GAD2', 'GAD7'].includes(currentQuestionSetName.value));
+const iconURL = computed(() => {
+	const iconPath = currentQuestion.value?.icon || '';
+	if (iconPath) {
+		return location.hostname === 'localhost' ? `http://localhost:8080${iconPath}` : `http://172.30.3.16${iconPath}`;
+	} else {
+		return fallbackIcon;
+	}
 });
 
 const processedQuestionText = computed(() => {
-	let text = currentQuestion.value.text || "";
-	const assistCommonPhrase = "In your life, have you ever tried the following? (NON-MEDICAL USE ONLY)";
-	const commonPhrase = "Over the last 2 weeks, how often have you been bothered by any of the following problems?";
-
-	// Remove the common phrase for PHQ/GAD questions
-	if (currentQuestionSetName.value !== 'Alcohol, Smoking and Substance Involvement Screening Test (ASSIST)') {
-		text = text.replace(commonPhrase, "").trim();
-	} else {
-		text = text.replace(assistCommonPhrase, "").trim();
-	}
-
-	if (text.includes(" or ")) {
-		text = text.split(" or ").join(" OR ");
-	}
-	return text;
+	const regex = /over the last 2 weeks, how often have you been bothered by any of the following problems[:?]\s*/i;
+	return currentQuestion.value?.text.replace(regex, '');
 });
 
+const progressPercentage = computed(() => (currentQuestionIndex.value / (questions.value.length - 1)) * 100);
 
-function selectAnswer(option) {
-	selectedAnswer.value = option;
-	// Update scores
-	if (currentQuestionSetName.value.includes("PHQ-2")) {
-		scores.value.PHQ2 += option.points;
-		scores.value.currentSet = 'PHQ2';
-	} else if (currentQuestionSetName.value.includes("GAD-2")) {
-		scores.value.GAD2 += option.points;
-		scores.value.currentSet = 'GAD2';
-	}
+// Functions for handling answer selection and navigation
 
-	nextTick(() => {
-		setTimeout(() => {
-			if (scores.value.currentSet === 'PHQ2' && currentQuestionIndex.value === 1) {
-				if (scores.value.PHQ2 < 3) {
-					// Assuming GAD-2 has a different ID, for example, 2
-					jumpToQuestionSet(2); // Use the correct ID for GAD-2
-				} else {
-					currentQuestionIndex.value += 1;
+
+async function handleAnswerSelection(option, substance) {
+	try {
+		if (substance === "Other - specify" && option.option === "Yes") { // Ensure this matches your actual option string and key
+			const { value: specifiedName } = await Swal.fire({
+				title: 'Specify the substance',
+				input: 'text',
+				inputLabel: 'Substance name',
+				showCancelButton: true,
+				inputValidator: (value) => {
+					if (!value) {
+						return 'You need to enter a name!';
+					}
 				}
-			} else if (scores.value.currentSet === 'GAD2' && currentQuestionIndex.value === questions.value.findIndex(q => q.question_set === 2)) { // Assuming GAD-2 is ID 2
-				if (scores.value.GAD2 < 3) {
-					// Assuming School Environment has ID 6
-					jumpToQuestionSet(6); // Jump directly to School Environment
-				} else {
-					currentQuestionIndex.value += 1;
-				}
-			} else {
-				if (currentQuestionIndex.value < questions.value.length - 1) {
-					currentQuestionIndex.value += 1;
-				}
+			});
+
+			if (specifiedName) {
+				// Accessing the correct key based on its declaration
+				substanceStatus["Other - specify"].answered = true;
+				substanceStatus["Other - specify"].name = specifiedName;
+				// This will correctly update the reactive state with the user-specified name
 			}
-		}, 800);
+		} else {
+			// For standard cases, just toggle the boolean value based on the answer
+			substanceStatus[substance] = option === "Yes";
+		}
+		// console.log(`Handling selection for ${substance}: ${option}`);
+		if (currentQuestionSetName.value === 'ASSIST') {
+			substanceAnswered[substance] = option === 'Yes'; // Adjust based on your actual value for 'Yes'
+
+			// console.log(`Updated ${substance} to ${substanceAnswered[substance]}. Current state:`, substanceAnswered);
+
+			// Check if all substances have been answered. This part remains unchanged.
+			const allAnswered = Object.keys(substanceAnswered).length === currentQuestion.value.substances.length &&
+				Object.values(substanceAnswered).every(answer => answer !== undefined); // Check for not undefined to ensure an answer was provided
+
+			console.log(`All answered? ${allAnswered}`);
+
+			if (allAnswered) {
+				console.table(toRaw(substanceAnswered));
+				let answersSummary = Object.entries(substanceAnswered)
+					.map(([substance, answer]) => `${substance}: ${answer}`)
+					.join("\n");
+
+				Swal.fire({
+					title: 'Your Answers',
+					text: `Here are your responses:\n${answersSummary}`,
+					confirmButtonText: 'OK',
+					preConfirm: () => {
+						resetSubstanceAnswered();
+						nextTick(() => {
+							jumpToNextRelevantSet();
+						});
+					}
+				});
+			} else {
+				resetSubstanceAnswered();
+				nextTick(() => {
+					jumpToNextRelevantSet();
+				});
+			}
+		} else {
+			progressStore.setAnswer(currentQuestion.value.id, option);
+			setTimeout(() => {
+				if (currentQuestion.value.question_set === 8 && option === "Yes") {
+					Swal.fire({
+						title: 'Please specify',
+						input: 'text',
+						inputLabel: 'What were you diagnosed with?',
+						showCancelButton: true,
+						confirmButtonText: 'Submit',
+						inputValidator: (value) => {
+							if (!value) {
+								return 'You need to write something!';
+							}
+						}
+					}).then((result) => {
+						if (result.isConfirmed && result.value) {
+							progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
+							nextTick(() => {
+								jumpToNextRelevantSet();
+							});
+						}
+					});
+				} else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
+					nextTick(() => {
+						jumpToNextRelevantSet('PHQ9');
+					});
+				} else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
+					nextTick(() => {
+						jumpToNextRelevantSet('GAD7');
+					});
+				} else {
+					currentQuestionIndex.value++;
+				}
+			}, 500);
+		}
+	} catch (error) {
+		console.error('An error occurred:', error);
+	}
+}
+
+function requiresTextInput(questionId) {
+	// Example condition: check if a question has a specific answer_type that requires text input
+	const question = questions.value.find(q => q.id === questionId);
+	return question && question.answer_type === 5; // Assuming '5' indicates a text input is required
+}
+
+
+function resetSubstanceAnswered() {
+	Object.keys(substanceAnswered).forEach(substance => {
+		substanceAnswered[substance] = false;
 	});
 }
 
-// Adjusted Example: Using IDs directly
-function jumpToQuestionSet(targetSetId) {
-	const index = questions.value.findIndex(question => question.question_set === targetSetId);
-	if (index !== -1) {
-		currentQuestionIndex.value = index;
+function jumpToNextRelevantSet(setToSkip) {
+	const nextIndex = questions.value.findIndex(
+		(question, index) => question.setName !== setToSkip && index > currentQuestionIndex.value
+	);
+	if (nextIndex !== -1) {
+		currentQuestionIndex.value = nextIndex;
 	} else {
-		console.error("Set not found or logic error with ID:", targetSetId);
-	}
-}
-
-const baseURL =
-	window.location.hostname === "localhost" && window.location.port === "5173"
-		? "http://127.0.0.1:8080"
-		: "http://172.30.3.16";
-
-
-async function loadQuestionsFromStorage() {
-	const storedQuestions = JSON.parse(localStorage.getItem("combinedQuestions")) || [];
-	if (storedQuestions.length > 0) {
-		questions.value = storedQuestions;
-	} else {
-		await fetchQuestions();
+		console.error(`No question set found after skipping ${setToSkip}`);
 	}
 }
 
 function goBack() {
 	if (currentQuestionIndex.value > 0) {
-		currentQuestionIndex.value -= 1;
+		currentQuestionIndex.value--;
+	} else {
+		Swal.fire({
+			icon: 'info',
+			title: 'Start of Screening',
+			text: 'This is the beginning of the screening, no more previous questions exist.',
+		});
 	}
 }
 
+
 function submitTest() {
-	Swal.fire('Congratulations!', 'Test completed!', 'success');
+	progressStore.setQuestionIndex(0);
+	progressStore.answers = [];
+	progressStore.saveProgress();
+	Swal.fire('Congratulations!', 'You have completed the test.', 'success');
 }
 
-onMounted(() => {
-	loadQuestionsFromStorage();
-});
+function isSelectedAnswer(option) {
+	const existingAnswer = progressStore.answers.find(a => a.questionId === currentQuestion.value.id);
+	return existingAnswer && existingAnswer.answer.id === option.id;
+}
+
+function flushStore() {
+	progressStore.resetStore();
+	Swal.fire('Progress Reset', 'All progress has been reset.', 'info').then(() => {
+		location.reload();
+	});
+}
 </script>
 
+
 <style scoped>
+input {
+	border-radius: 10px;
+}
+
 .bg-green {
 	background: #2c6975;
 	color: #fff;
@@ -416,6 +536,30 @@ textarea {
 .back-button:hover {
 	background-color: #2c6975;
 	color: #fff;
+}
+
+.submit-button {
+	background-color: #2c6975;
+	/* border: 2px solid #2c6975; */
+	color: #fff;
+	font-size: 14px;
+	cursor: pointer;
+	border-radius: 5rem;
+	transition: 800ms;
+	box-shadow: none;
+}
+
+.submit-button:hover {
+	background-color: transparent;
+	color: #2c6975;
+	border: 2px solid #2c6975;
+}
+
+.button-group {
+	display: flex;
+	justify-content: center;
+	gap: 20px;
+	/* Adjust the gap as needed */
 }
 
 textarea {

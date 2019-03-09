@@ -12,8 +12,8 @@
                                         required />
                                 </div>
                                 <div class="mb-5 col-md-8">
-                                    <input v-model="password" type="password" class="form-control" placeholder="Password"
-                                        required />
+                                    <input v-model="password" type="password" class="form-control"
+                                        placeholder="Password" required />
                                 </div>
                                 <div class="text-center col-md-8">
                                     <button type="submit" class="btn col-md-12 singin-button btnbg">Sign In</button>
@@ -48,7 +48,8 @@
                 </div>
                 <div class="col-md-5 custombg position-relative">
                     <!-- Float-start image -->
-                    <img class="position-absolute bottom-0 start-0" src="../../assets/images/shape.png" alt="Shape Image">
+                    <img class="position-absolute bottom-0 start-0" src="../../assets/images/shape.png"
+                        alt="Shape Image">
 
                     <!-- Logo and tagline container -->
                     <div class="d-flex flex-column justify-content-center align-items-center h-100">
@@ -74,7 +75,7 @@
     </div>
 </template>
 
-    
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -122,28 +123,36 @@ const loginUser = async () => {
 
 const fetchUserAndAgencyDetails = async (userRole) => {
     try {
-        const authToken = localStorage.getItem('authToken');
+        // Fetch user details from the API
         const response = await axios.get(endpoints.getUserDetails, {
-            headers: { Authorization: `Token ${authToken}` },
+            headers: { Authorization: `Token ${localStorage.getItem('authToken')}` },
         });
 
+        // Destructure the response data
         const { user, agency, userAgency } = response.data;
         const userAgencyDetails = userAgency.length ? userAgency[0] : {};
+
+        // Access the userDetails store instance
         const userDetailsStore = useUserDetailsStore();
 
+        // Call the setUserDetails action with the retrieved data
         const storeResponse = await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails });
 
+        // Handle the response from the store
         if (storeResponse.status === 'success') {
             // Show success message before redirecting
             await Swal.fire({
                 title: 'Login Successful!',
                 text: 'Your data has been successfully retrieved.',
                 icon: 'success',
-                confirmButtonText: 'Continue'
+                showConfirmButton: false,
+                timer: 1200
             });
 
+            // Redirect to the appropriate dashboard
             redirectToDashboard(userRole);
         } else {
+            // Show error message
             Swal.fire('Error', storeResponse.message, 'error');
         }
     } catch (error) {
@@ -219,4 +228,3 @@ const handleLoginError = (error) => {
     z-index: 1000;
 }
 </style>
-    
