@@ -37,7 +37,7 @@
                         <tbody>
                             <!-- Dynamically create a row for each substance -->
                             <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
-                                <td>{{ renderSubstanceOptions(substance) }}</td>
+                                <td class="text-capitalize">{{ renderSubstanceOptions(substance) }}</td>
                                 <!-- Render radio buttons for each answer option per substance -->
                                 <td v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
                                     <input type="radio" :name="`substance-${substance}`" :value="answer.id"
@@ -162,11 +162,11 @@ const questions = ref([]);
 const answers = reactive({});
 const textResponses = reactive({});
 const substanceAnswered = reactive({});
-// Retrieve user's age data from session storage
-const userAgeData = JSON.parse(sessionStorage.getItem('userAgeData'));
-
+const showAnswerAllPrompt = ref(false);
 const stronglyDisagreeSelected = reactive({});
 
+// Retrieve user's age data from session storage
+const userAgeData = JSON.parse(sessionStorage.getItem('userAgeData'));
 // Determine user's age group
 const userAgeGroup = userAgeData ? userAgeData.ageGroup : null;
 
@@ -174,22 +174,6 @@ const userAgeGroup = userAgeData ? userAgeData.ageGroup : null;
 function isUserAgeGroupIncluded(ageGroupTags) {
     return ageGroupTags.includes(userAgeGroup);
 }
-
-// Watch for changes in current question index and handle ending ASSIST questions
-watch(currentQuestionIndex, (newIndex) => {
-    if (currentQuestionSetName.value === 'ASSIST') {
-        const currentQuestion = questions.value[newIndex];
-        if (currentQuestion) {
-            if (currentQuestion.id === 29 || currentQuestion.id === 30) {
-                const ageGroupTags = currentQuestion.age_group_tags;
-                const includeUserAgeGroup = isUserAgeGroupIncluded(ageGroupTags);
-                if (!includeUserAgeGroup) {
-                    jumpToNextRelevantSet();
-                }
-            }
-        }
-    }
-});
 
 // Fetch questions from API or session storage
 onMounted(async () => {
@@ -222,13 +206,25 @@ onMounted(async () => {
     }
 });
 
+// Watch for changes in current question index and handle ending ASSIST questions
+watch(currentQuestionIndex, (newIndex) => {
+    if (currentQuestionSetName.value === 'ASSIST') {
+        const currentQuestion = questions.value[newIndex];
+        if (currentQuestion && (currentQuestion.id === 29 || currentQuestion.id === 30)) {
+            const ageGroupTags = currentQuestion.age_group_tags;
+            const includeUserAgeGroup = isUserAgeGroupIncluded(ageGroupTags);
+            if (!includeUserAgeGroup) {
+                jumpToNextRelevantSet();
+            }
+        }
+    }
+});
 
 // Watch for changes in current question index and save progress
 watch(currentQuestionIndex, (newIndex) => {
     progressStore.setQuestionIndex(newIndex);
     progressStore.saveProgress();
 });
-
 
 // Computed properties for current question details
 const currentQuestion = computed(() => {
@@ -243,16 +239,8 @@ const currentQuestion = computed(() => {
     }
 });
 
-
-const currentQuestionSetName = computed(() => {
-    return currentQuestion.value ? currentQuestion.value.setName : '';
-});
-
-const currentSetQuestions = computed(() => {
-    return questions.value.filter(
-        question => question.setName === currentQuestionSetName.value
-    );
-});
+const currentQuestionSetName = computed(() => currentQuestion.value ? currentQuestion.value.setName : '');
+const currentSetQuestions = computed(() => questions.value.filter(question => question.setName === currentQuestionSetName.value));
 
 // Computed properties for UI elements
 const isAssistOrSchoolEnv = computed(() => ['ASSIST', 'SCHOOL ENV'].includes(currentQuestionSetName.value));
@@ -277,76 +265,65 @@ const progressPercentage = computed(() => (currentQuestionIndex.value / (questio
 function handleAnswerSelection(option, substance) {
     if (currentQuestionSetName.value === 'ASSIST') {
         updateSubstanceAnswered(option, substance);
+        if (option.option === 'No') {
+            showAnswerAllPrompt.value = true;
+        }
     } else {
         handleOtherQuestionSets(option);
     }
 }
 
 function updateSubstanceAnswered(option, substance) {
-    substanceAnswered[substance] = option.option === 'Yes';
-    saveSubstanceAnswersToLocalStorage();
-
-    // Prompt the user to answer all substances before proceeding
-    if (!allSubstancesAnswered()) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Incomplete Answer',
-            text: 'Please answer all substances before proceeding.',
-        });
-    }
-
-    // Immediately update the substance name if "Others - specify" is selected
-    if (option.option === 'Yes' && substance === 'Other - specify') {
-        Swal.fire({
-            title: 'Specify Substance',
-            input: 'text',
-            inputLabel: 'Enter the substance name:',
-            showCancelButton: true,
-            confirmButtonText: 'Submit',
-            inputValidator: (value) => {
-                if (!value) {
-                    return 'You need to provide a substance name!';
+    const answer = option.option.trim(); 
+    if (answer === 'Yes' || answer === 'No') { 
+        substanceAnswered[substance] = answer === 'Yes'; 
+        saveSubstanceAnswersToLocalStorage();
+        if (answer === 'Yes' && substance === 'Other - specify') {
+            Swal.fire({
+                title: 'Specify Substance',
+                input: 'text',
+                inputLabel: 'Enter the substance name:',
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to provide a substance name!';
+                    }
                 }
-            }
-        }).then((result) => {
-            if (result.isConfirmed && result.value) {
-                localStorage.setItem('otherSubstanceName', result.value);
-                updateSubstanceCount(); // Update the substance count after entering the name
-            }
-        });
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    localStorage.setItem('otherSubstanceName', result.value);
+                    updateSubstanceCount();
+                }
+            });
+        }
+    } else {
+        console.warn('Invalid answer value:', option.option);
     }
 }
+
 
 function allSubstancesAnswered() {
     const answeredSubstances = Object.values(substanceAnswered);
-    return answeredSubstances.every(answer => answer);
+    return answeredSubstances.every(answer => answer !== null);
 }
 
 function updateSubstanceCount() {
-    // Count the number of answered substances
     const countYes = Object.values(substanceAnswered).filter(answer => answer).length;
-    console.log(`Number of substances answered "Yes": ${countYes}`);
-
-    // Proceed to check if all "Yes" substances are answered
     checkAllSubstancesAnswered(countYes);
 }
 
 function checkAllSubstancesAnswered(countYes) {
     const totalSubstances = Object.keys(substanceAnswered).length;
-    console.log(`Total number of substances: ${totalSubstances}`);
-
-    if (countYes === totalSubstances) {
-        // All "Yes" substances are answered, no automatic next
-    } else {
-        // Prompt the user to answer all "Yes" substances before proceeding
+    if (countYes < totalSubstances) {
         Swal.fire({
             icon: 'warning',
             title: 'Incomplete Answer',
             text: 'Please answer all "Yes" substances before proceeding.',
         });
+        showAnswerAllPrompt.value = false;
     }
 }
-
 
 function saveSubstanceAnswersToLocalStorage() {
     localStorage.setItem('answeredSubstances', JSON.stringify(substanceAnswered));
@@ -354,24 +331,26 @@ function saveSubstanceAnswersToLocalStorage() {
 
 // Function to check if input text is required based on the selected answer
 function requiresTextInput(questionId) {
-    // Return true if "Strongly Disagree" is selected for the given question
     return stronglyDisagreeSelected[questionId];
 }
 
 // Function to handle the click event of radio buttons
 function handleRadioClick(questionId, answerOption) {
-    // Update stronglyDisagreeSelected when "Strongly Disagree" is selected
     if (answerOption === "Strongly Disagree") {
         stronglyDisagreeSelected[questionId] = true;
     } else {
-        // Reset the value if the option changes
         stronglyDisagreeSelected[questionId] = false;
     }
 }
 
-
+/**
+ * Handles the question set that requires additional input
+ * from the user.
+ * @param {Object} option The selected answer object
+ */
 function handleOtherQuestionSets(option) {
     progressStore.setAnswer(currentQuestion.value.id, option);
+
     setTimeout(() => {
         if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
             Swal.fire({
@@ -393,15 +372,18 @@ function handleOtherQuestionSets(option) {
                     });
                 }
             });
-        } else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
-            nextTick(() => {
-                jumpToNextRelevantSet('PHQ9');
-            });
-        } else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
+        }
+        else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
             nextTick(() => {
                 jumpToNextRelevantSet('GAD7');
             });
-        } else {
+        }
+        else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
+            nextTick(() => {
+                jumpToNextRelevantSet('PHQ9');
+            });
+        }
+        else {
             currentQuestionIndex.value++;
         }
     }, 500);
@@ -410,23 +392,34 @@ function handleOtherQuestionSets(option) {
 // Function to filter substances based on those answered "No" in local storage
 function filterSubstances(substances) {
     const answeredSubstances = JSON.parse(localStorage.getItem('answeredSubstances')) || {};
-    // If there are no answered substances, all substances should be rendered
     if (Object.keys(answeredSubstances).length === 0) {
         return substances;
     }
-    // Filter substances based on user's answers
-    return substances.filter(substance => answeredSubstances[substance]);
+    const filteredSubstances = substances.filter(substance => {
+        if (substance === 'Any Drug') {
+            return true;
+        }
+        return answeredSubstances[substance];
+    });
+    return filteredSubstances;
 }
 
 
 function jumpToNextQuestion() {
     if (currentQuestionSetName.value === 'ASSIST') {
+        if (!allSubstancesAnswered()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Answer',
+                text: 'Please answer all substances before proceeding.',
+            });
+            return;
+        }
         currentQuestionIndex.value++;
     } else {
         currentQuestionIndex.value++;
     }
 }
-
 
 function jumpToNextRelevantSet(setToSkip) {
     const nextIndex = questions.value.findIndex(
@@ -451,7 +444,6 @@ function goBack() {
     }
 }
 
-
 function submitTest() {
     progressStore.setQuestionIndex(0);
     progressStore.answers = [];
@@ -467,27 +459,19 @@ function isSelectedAnswer(option) {
 function flushStore() {
     progressStore.resetStore();
     localStorage.removeItem('answeredSubstances');
+    localStorage.removeItem('otherSubstanceName');
     Swal.fire('Progress Reset', 'All progress has been reset.', 'info').then(() => {
         location.reload();
     });
 }
 
-
-
-// Function to get the substance name
-function getSubstanceName() {
-    return localStorage.getItem('otherSubstanceName') || 'Others - specify';
-}
-
 // Function to render substance options
 function renderSubstanceOptions(substance) {
-    if (substance === 'Others - specify') {
-        return getSubstanceName();
-    } else {
-        return substance;
-    }
+    const otherSubstanceName = localStorage.getItem('otherSubstanceName');
+    return substance === 'Other - specify' ? (otherSubstanceName ? otherSubstanceName : 'Other - specify') : substance;
 }
 </script>
+
 
 
 <style scoped>
