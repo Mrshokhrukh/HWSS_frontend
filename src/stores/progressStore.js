@@ -6,9 +6,46 @@ export const useProgressStore = defineStore('progress', {
         answers: [],
         scores: {
             PHQ2: 0,
-            GAD2: 0
+            GAD2: 0,
+            PHQ9: 0,
+            GAD7: 0
         },
         skippedSets: [],
+        preCluster: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        },
+        assist: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        },
+        schoolEnv: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        },
+        gad2: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        },
+        gad7: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        },
+        phq2: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        },
+        phq9: {
+            currentQuestionIndex: 0,
+            answers: [],
+            questions: []
+        }
     }),
     getters: {
         shouldSkipPHQ9: (state) => state.scores.PHQ2 < 3,
@@ -120,24 +157,69 @@ export const useProgressStore = defineStore('progress', {
             this.specificDiagnosis = diagnosis;
         },
         loadProgress() {
-            const progress = JSON.parse(sessionStorage.getItem('progress'));
+            const progress = JSON.parse(localStorage.getItem('progress'));
             if (progress) {
-                this.$state = progress;
+                Object.assign(this, progress);
             }
         },
         saveProgress() {
-            sessionStorage.setItem('progress', JSON.stringify(this.$state));
+            localStorage.setItem('progress', JSON.stringify({
+                currentQuestionIndex: this.currentQuestionIndex,
+                questions: this.questions,
+                answers: this.answers,
+                scores: this.scores,
+                skippedSets: this.skippedSets,
+                preCluster: this.preCluster,
+                assist: this.assist,
+                schoolEnv: this.schoolEnv,
+                gad2: this.gad2,
+                gad7: this.gad7,
+                phq2: this.phq2,
+                phq9: this.phq9
+            }));
         },
         resetStore() {
             this.currentQuestionIndex = 0;
             this.answers = [];
             this.scores = {
                 PHQ2: 0,
-                GAD2: 0
+                GAD2: 0,
+                PHQ9: 0,
+                GAD7: 0
             };
             this.skippedSets = [];
+            // Resetting other question sets
+            this.preCluster.currentQuestionIndex = 0;
+            this.preCluster.answers = [];
+            this.preCluster.questions = [];
+
+            this.assist.currentQuestionIndex = 0;
+            this.assist.answers = [];
+            this.assist.questions = [];
+
+            this.schoolEnv.currentQuestionIndex = 0;
+            this.schoolEnv.answers = [];
+            this.schoolEnv.questions = [];
+
+            this.gad2.currentQuestionIndex = 0;
+            this.gad2.answers = [];
+            this.gad2.questions = [];
+
+            this.gad7.currentQuestionIndex = 0;
+            this.gad7.answers = [];
+            this.gad7.questions = [];
+
+            this.phq2.currentQuestionIndex = 0;
+            this.phq2.answers = [];
+            this.phq2.questions = [];
+
+            this.phq9.currentQuestionIndex = 0;
+            this.phq9.answers = [];
+            this.phq9.questions = [];
+
             this.saveProgress();
         }
+
 
     }
 });

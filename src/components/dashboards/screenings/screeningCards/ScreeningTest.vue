@@ -1,7 +1,7 @@
 <template>
     <div class="container-fluid screening-test p-0">
         <div class="card">
-            <div class="card-header mx-auto p-3" v-if="isDevelopmentMode">
+            <div class="card-header mx-auto p-3" v-if="currentQuestionText">
                 <div class="test-info d-flex justify-content-between align-items-center">
                     <h5>Current Section: {{ currentQuestionSetName }}</h5>
                     <p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
@@ -20,34 +20,30 @@
                     </div>
                 </div>
 
-                <!-- Conditional rendering based on the question set type -->
+                <!-- Layout for "ASSIST" question set -->
                 <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
-                    <!-- 'ASSIST' question set layout -->
                     <h4 class="my-5 text-center">{{ currentQuestion.text }}</h4>
                     <table class="table">
                         <thead>
                             <tr>
                                 <th>Substances</th>
-                                <!-- Dynamically create a column for each answer option -->
-                                <th v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
-                                    {{ answer.option }}
+                                <th v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+                                    {{ option.option }}
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Dynamically create a row for each substance -->
                             <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
                                 <td class="text-capitalize">{{ renderSubstanceOptions(substance) }}</td>
-                                <!-- Render radio buttons for each answer option per substance -->
-                                <td v-for="answer in currentQuestion.answers" :key="answer.id" class="text-center">
-                                    <input type="radio" :name="`substance-${substance}`" :value="answer.id"
-                                        @change="handleAnswerSelection(answer, substance)" />
+                                <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+                                    <input type="radio" :name="`substance-${substance}`" :value="option.id"
+                                        @change="handleAnswerSelection(option, substance)" required />
+                                    <span class="d-none">{{ option.points }}</span>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-
 
                 <!-- Layout for "SCHOOL ENV" question set -->
                 <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
@@ -60,7 +56,6 @@
                                 <th>Neutral/Indifferent</th>
                                 <th>Disagree</th>
                                 <th>Strongly Disagree</th>
-                                <!-- Removed the v-if condition for "Specify" column -->
                                 <th>Specify</th>
                             </tr>
                         </thead>
@@ -68,26 +63,26 @@
                             <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
                                 <td>{{ question.text }}</td>
                                 <template v-if="index < 8"> <!-- For questions 1-8 -->
-                                    <td v-for="answer in question.answers.slice().reverse()" :key="answer.id"
+                                    <td v-for="option in question.answers.slice().reverse()" :key="option.id"
                                         class="text-center">
-                                        <input type="radio" :id="`question-${question.id}-answer-${answer.id}`"
-                                            :name="`question-${question.id}`" :value="answer.id"
+                                        <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
+                                            :name="`question-${question.id}`" :value="option.id"
                                             v-model="answers[question.id]"
-                                            @click="handleRadioClick(question.id, answer.option)">
-                                        <label :for="`question-${question.id}-answer-${answer.id}`"></label>
+                                            @click="handleRadioClick(question.id, option.option)" required>
+                                        <label :for="`question-${question.id}-answer-${option.id}`"></label>
                                     </td>
-                                    <!-- Render the input field next to the "Strongly Disagree" radio button -->
                                     <td v-if="requiresTextInput(question.id)">
-                                        <input type="text" class="form-control" v-model="textResponses[question.id]" />
+                                        <input type="text" class="form-control" v-model="textResponses[question.id]"
+                                            :required="requiresTextInput(question.id)" />
                                     </td>
                                 </template>
 
-                                <template v-else> <!-- For questions 9-10 -->
+                                <template v-else>
                                     <td colspan="6">
                                         <input type="text" class="form-control" placeholder="Answer 1"
-                                            v-model="answers[question.id][0]">
+                                            v-model="answers[question.id][0]" required>
                                         <input type="text" class="form-control mt-2" placeholder="Answer 2"
-                                            v-model="answers[question.id][1]">
+                                            v-model="answers[question.id][1]" required>
                                     </td>
                                 </template>
                             </tr>
@@ -117,7 +112,7 @@
                             <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
                                 <button :class="{ 'selected': isSelectedAnswer(option) }"
                                     @click="handleAnswerSelection(option)" class="btn btn-lg">
-                                    {{ option.option }}
+                                    {{ option.option }} <span class="d-none">{{ option.points }}</span>
                                 </button>
                             </div>
                         </div>
@@ -147,6 +142,7 @@
     </div>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue';
 import { useProgressStore } from '@/stores/progressStore';
@@ -164,6 +160,10 @@ const textResponses = reactive({});
 const substanceAnswered = reactive({});
 const showAnswerAllPrompt = ref(false);
 const stronglyDisagreeSelected = reactive({});
+// const isDevelopmentMode = computed(() => {
+//     const envValue = import.meta.env.VITE_APP_DEVELOPMENT_MODE;
+//     return envValue === 'true';
+// });
 
 // Retrieve user's age data from session storage
 const userAgeData = JSON.parse(sessionStorage.getItem('userAgeData'));
@@ -233,14 +233,33 @@ const currentQuestion = computed(() => {
         if (!question) {
             console.error('Current question is undefined:', currentQuestionIndex.value);
         }
+        // console.log('Current question set:', question); // Log currentQuestion
+        // console.dir(question); // Log the object in a more expanded form
         return question;
     } else {
         return null;
     }
 });
 
-const currentQuestionSetName = computed(() => currentQuestion.value ? currentQuestion.value.setName : '');
-const currentSetQuestions = computed(() => questions.value.filter(question => question.setName === currentQuestionSetName.value));
+const currentQuestionText = computed(() => {
+    const questionText = currentQuestion.value ? currentQuestion.value.text : '';
+    console.log('Current question text:', questionText); // Log currentQuestionText
+    return questionText;
+});
+
+
+const currentQuestionSetName = computed(() => {
+    const setName = currentQuestion.value ? currentQuestion.value.setName : '';
+    console.log('Current question set name:', setName); // Log currentQuestionSetName
+    return setName;
+});
+
+const currentSetQuestions = computed(() => {
+    const currentSetName = currentQuestionSetName.value;
+    const setQuestions = questions.value.filter(question => question.setName === currentSetName);
+    console.log('Current setName questions:', setQuestions); // Log currentSetQuestions
+    return setQuestions;
+});
 
 // Computed properties for UI elements
 const isAssistOrSchoolEnv = computed(() => ['ASSIST', 'SCHOOL ENV'].includes(currentQuestionSetName.value));
@@ -265,19 +284,25 @@ const progressPercentage = computed(() => (currentQuestionIndex.value / (questio
 function handleAnswerSelection(option, substance) {
     if (currentQuestionSetName.value === 'ASSIST') {
         updateSubstanceAnswered(option, substance);
-        if (option.option === 'No') {
-            showAnswerAllPrompt.value = true;
-        }
     } else {
+        // Access selectedAnswer and score from currentQuestion
+        const selectedAnswer = option.option;
+        const score = option.points;
+        console.log('Selected Answer:', selectedAnswer);
+        console.log('Score:', score);
+        progressStore.setAnswer(currentQuestion.value.id, option);
         handleOtherQuestionSets(option);
     }
 }
 
+
 function updateSubstanceAnswered(option, substance) {
-    const answer = option.option.trim(); 
-    if (answer === 'Yes' || answer === 'No') { 
-        substanceAnswered[substance] = answer === 'Yes'; 
+    const answer = option.option.trim();
+    if (answer === 'Yes' || answer === 'No') {
+        substanceAnswered[substance] = answer === 'Yes';
         saveSubstanceAnswersToLocalStorage();
+        console.log('Selected Answer:', answer);
+        console.log('Substance:', substance);
         if (answer === 'Yes' && substance === 'Other - specify') {
             Swal.fire({
                 title: 'Specify Substance',
@@ -303,9 +328,8 @@ function updateSubstanceAnswered(option, substance) {
 }
 
 
-function allSubstancesAnswered() {
-    const answeredSubstances = Object.values(substanceAnswered);
-    return answeredSubstances.every(answer => answer !== null);
+function saveSubstanceAnswersToLocalStorage() {
+    localStorage.setItem('answeredSubstances', JSON.stringify(substanceAnswered));
 }
 
 function updateSubstanceCount() {
@@ -313,20 +337,24 @@ function updateSubstanceCount() {
     checkAllSubstancesAnswered(countYes);
 }
 
+const checkInvalidInputs = () => {
+    const invalidInputs = document.querySelectorAll('input:required:invalid');
+    if (invalidInputs.length > 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete Form',
+            text: 'Please fill in all required fields before proceeding.',
+        });
+        return true;
+    }
+    return false;
+};
+
 function checkAllSubstancesAnswered(countYes) {
     const totalSubstances = Object.keys(substanceAnswered).length;
     if (countYes < totalSubstances) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Incomplete Answer',
-            text: 'Please answer all "Yes" substances before proceeding.',
-        });
         showAnswerAllPrompt.value = false;
     }
-}
-
-function saveSubstanceAnswersToLocalStorage() {
-    localStorage.setItem('answeredSubstances', JSON.stringify(substanceAnswered));
 }
 
 // Function to check if input text is required based on the selected answer
@@ -343,11 +371,6 @@ function handleRadioClick(questionId, answerOption) {
     }
 }
 
-/**
- * Handles the question set that requires additional input
- * from the user.
- * @param {Object} option The selected answer object
- */
 function handleOtherQuestionSets(option) {
     progressStore.setAnswer(currentQuestion.value.id, option);
 
@@ -368,6 +391,7 @@ function handleOtherQuestionSets(option) {
                 if (result.isConfirmed && result.value) {
                     progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
                     nextTick(() => {
+                        progressStore.setAnswer(currentQuestion.value.id, option);
                         jumpToNextRelevantSet();
                     });
                 }
@@ -375,11 +399,13 @@ function handleOtherQuestionSets(option) {
         }
         else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
             nextTick(() => {
+                progressStore.setAnswer(currentQuestion.value.id, option);
                 jumpToNextRelevantSet('GAD7');
             });
         }
         else if (currentQuestionSetName.value === 'PHQ2' && progressStore.shouldSkipPHQ9) {
             nextTick(() => {
+                progressStore.setAnswer(currentQuestion.value.id, option);
                 jumpToNextRelevantSet('PHQ9');
             });
         }
@@ -405,21 +431,14 @@ function filterSubstances(substances) {
 }
 
 
-function jumpToNextQuestion() {
+const jumpToNextQuestion = () => {
     if (currentQuestionSetName.value === 'ASSIST') {
-        if (!allSubstancesAnswered()) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Incomplete Answer',
-                text: 'Please answer all substances before proceeding.',
-            });
-            return;
+        if (checkInvalidInputs()) {
+            return; // Invalid inputs found, stop execution
         }
-        currentQuestionIndex.value++;
-    } else {
-        currentQuestionIndex.value++;
     }
-}
+    currentQuestionIndex.value++;
+};
 
 function jumpToNextRelevantSet(setToSkip) {
     const nextIndex = questions.value.findIndex(
@@ -460,6 +479,8 @@ function flushStore() {
     progressStore.resetStore();
     localStorage.removeItem('answeredSubstances');
     localStorage.removeItem('otherSubstanceName');
+    localStorage.removeItem('submissionData');
+    localStorage.removeItem('progress');
     Swal.fire('Progress Reset', 'All progress has been reset.', 'info').then(() => {
         location.reload();
     });
@@ -471,8 +492,6 @@ function renderSubstanceOptions(substance) {
     return substance === 'Other - specify' ? (otherSubstanceName ? otherSubstanceName : 'Other - specify') : substance;
 }
 </script>
-
-
 
 <style scoped>
 input {
@@ -653,5 +672,13 @@ textarea {
     /* Limit the size of the icon */
     margin-right: 20px;
     /* Add some space between the icon and the text */
+}
+
+input[type="radio"] {
+    background: #2c6975;
+}
+
+input[type="radio"] {
+    transform: scale(1.5);
 }
 </style>
