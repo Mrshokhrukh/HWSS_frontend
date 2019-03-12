@@ -17,6 +17,9 @@ const settingsMiddleParams = '/api/v1/settings';
 // Define api middle params
 const screeningMiddleParams = '/api/v1/screening';
 
+// Define api middle params
+const measurementMiddleParams = '/api/v1/measurement';
+
 // Combine BaseURL and middle params for ease of use
 const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
 
@@ -25,6 +28,9 @@ const settingsBaseUrl = `${baseUrl}${settingsMiddleParams}`;
 
 // Combine BaseURL and middle params for ease of use
 const screeningBaseUrl = `${baseScreeningUrl}${screeningMiddleParams}`;
+
+// Combine BaseURL and middle params for ease of use
+const measurementBaseUrl = `${baseUrl}${measurementMiddleParams}`;
 
 // Define your API endpoints
 const endpoints = {
@@ -52,6 +58,9 @@ const endpoints = {
   // screening endpoint 
   ScreeningPreTests: `${screeningBaseUrl}/screening-questions/`,
   assistTest: `${screeningBaseUrl}/assist-screening/`,
+
+  // submission endpoint
+  submitCluster: `${measurementBaseUrl}/submit-screening/`,
 
 };
 

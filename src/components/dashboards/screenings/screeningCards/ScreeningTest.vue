@@ -56,7 +56,7 @@
                                 <th>Neutral/Indifferent</th>
                                 <th>Disagree</th>
                                 <th>Strongly Disagree</th>
-                                <th>Specify</th>
+                                <th v-if="requiresTextInput()">Specify</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -66,25 +66,27 @@
                                     <td v-for="option in question.answers.slice().reverse()" :key="option.id"
                                         class="text-center">
                                         <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
-                                            :name="`question-${question.id}`" :value="option.id"
+                                            :name="`question-${question.id}`" :value="option.option"
                                             v-model="answers[question.id]"
-                                            @click="handleRadioClick(question.id, option.option)" required>
+                                            @change="handleRadioClick(question.id, option.option)" required>
+
                                         <label :for="`question-${question.id}-answer-${option.id}`"></label>
                                     </td>
                                     <td v-if="requiresTextInput(question.id)">
                                         <input type="text" class="form-control" v-model="textResponses[question.id]"
-                                            :required="requiresTextInput(question.id)" />
+                                            :required="requiresTextInput(question.id)" placeholder="Specify" />
                                     </td>
                                 </template>
 
                                 <template v-else>
                                     <td colspan="6">
-                                        <input type="text" class="form-control" placeholder="Answer 1"
-                                            v-model="answers[question.id][0]" required>
-                                        <input type="text" class="form-control mt-2" placeholder="Answer 2"
-                                            v-model="answers[question.id][1]" required>
+                                        <input type="text" class="form-control mb-3" placeholder="Answer 1"
+                                            v-model="textResponses[question.id + '_1']" required>
+                                        <input type="text" class="form-control" placeholder="Answer 2"
+                                            v-model="textResponses[question.id + '_2']" required>
                                     </td>
                                 </template>
+
                             </tr>
                         </tbody>
                     </table>
@@ -119,13 +121,18 @@
                     </div>
                 </div>
             </div>
+            <!-- VueConfetti component -->
+            <div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
+                <ConfettiExplosion :particleCount="400" :particleSize="10" :duration="5000" :force="0.8" />
+            </div>
+
             <!-- Footer buttons -->
             <div class="card-footer text-end">
                 <div class="button-group">
                     <button @click="goBack" class="btn rounded-btn back-button">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
-                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitTest"
+                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitFormData"
                         class="btn rounded-btn submit-button">
                         <i class="fas fa-check"></i> Submit
                     </button>
@@ -150,6 +157,8 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
+import { useRoute } from 'vue-router';
+import ConfettiExplosion from "vue-confetti-explosion";
 
 // Initial setup for reactive variables
 const progressStore = useProgressStore();
@@ -160,10 +169,63 @@ const textResponses = reactive({});
 const substanceAnswered = reactive({});
 const showAnswerAllPrompt = ref(false);
 const stronglyDisagreeSelected = reactive({});
-// const isDevelopmentMode = computed(() => {
-//     const envValue = import.meta.env.VITE_APP_DEVELOPMENT_MODE;
-//     return envValue === 'true';
-// });
+const router = useRoute();
+const storedResponses = ref({});
+// const answerAtIndexZero = ref('');
+
+const testResponses = reactive({
+    responses: [],
+    logs: []
+});
+
+
+const schoolEnvFormData = ref({
+    question1: {
+        answer: '',
+        specify: '',
+    },
+    question2: {
+        answer: '',
+        specify: '',
+    },
+    question3: {
+        answer: '',
+        specify: '',
+    },
+    question4: {
+        answer: '',
+        specify: '',
+    },
+    question5: {
+        answer: '',
+        specify: '',
+    },
+    question6: {
+        answer: '',
+        specify: '',
+    },
+    question7: {
+        answer: '',
+        specify: '',
+    },
+    question8: {
+        answer: '',
+        specify: '',
+    },
+    question9: {
+        answer1: '',
+        answer2: '',
+    },
+    question10: {
+        answer1: '',
+        answer2: '',
+    },
+});
+
+const showConfetti = ref(false);
+const showMessage = ref(false);
+const answeredSubstances = ref({});
+
 
 // Retrieve user's age data from session storage
 const userAgeData = JSON.parse(sessionStorage.getItem('userAgeData'));
@@ -174,6 +236,7 @@ const userAgeGroup = userAgeData ? userAgeData.ageGroup : null;
 function isUserAgeGroupIncluded(ageGroupTags) {
     return ageGroupTags.includes(userAgeGroup);
 }
+
 
 // Fetch questions from API or session storage
 onMounted(async () => {
@@ -206,6 +269,24 @@ onMounted(async () => {
     }
 });
 
+// Computed property to check if all substances are answered with "NO"
+const allSubstancesNo = computed(() => {
+    if (!answeredSubstances.value) return false;
+
+    const falseCount = Object.values(answeredSubstances.value).filter(answer => !answer).length;
+    return falseCount === 10;
+});
+// Watch for changes in allSubstancesNo
+watch(allSubstancesNo, (allNo) => {
+    if (allNo) {
+        showConfetti.value = true;
+        showMessage.value = true;
+        setTimeout(() => {
+            jumpToNextRelevantSet();
+        }, 3000);
+    }
+});
+
 // Watch for changes in current question index and handle ending ASSIST questions
 watch(currentQuestionIndex, (newIndex) => {
     if (currentQuestionSetName.value === 'ASSIST') {
@@ -220,6 +301,136 @@ watch(currentQuestionIndex, (newIndex) => {
     }
 });
 
+const handleStorageChange = () => {
+    const updatedAnsweredSubstances = JSON.parse(localStorage.getItem('answeredSubstances'));
+
+    // Wait until 10 objects are added to the key
+    const answeredSubstancesArray = Object.values(updatedAnsweredSubstances);
+    if (answeredSubstancesArray.length === 10) {
+        const allFalse = answeredSubstancesArray.every(state => state === false);
+        if (allFalse) {
+            Swal.fire({
+                icon: null, // Remove the icon
+                title: '<div style="display: flex; justify-content: center; align-items: center;"><span style="font-size: 48px;">🎉</span> <span style="font-size: 24px;">Tashi Delek for not using any substances</span> <span style="font-size: 48px;">🎉</span></div>',
+                html: "<div style='font-size: 18px; text-align: center; margin-top: 20px;'>We're proud of you!</div><div style='font-size: 48px; margin-top: 20px;'>👏🏼</div>",
+                confirmButtonText: 'Next',
+                confirmButtonClass: 'swal-button',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showCloseButton: false,
+                willClose: () => {
+                    showConfetti.value = true;
+                    setTimeout(() => {
+                        jumpToNextRelevantSet('ASSIST');
+                    }, 200);
+                },
+                didClose: () => {
+                    showConfetti.value = false;
+                },
+                onOpen: () => {
+                    const modal = Swal.getPopup();
+                    modal.style.width = '80%'; // Adjust modal width
+                    modal.style.maxWidth = '800px'; // Set maximum modal width
+                    modal.style.padding = '30px'; // Add padding for better appearance
+                }
+            });
+        }
+    }
+
+    answeredSubstances.value = updatedAnsweredSubstances;
+};
+
+function logQuestionAndResponse(option, substance) {
+    const questionText = currentQuestionText.value;
+    const questionSetName = currentQuestionSetName.value;
+    const response = option.option;
+    const point = option.points;
+
+    if (questionSetName === 'ASSIST') {
+        const selectedSubstance = substance;
+
+        if (selectedSubstance) {
+            const substanceName = selectedSubstance.name;
+
+            const logEntry = {
+                question: questionText,
+                setName: questionSetName,
+                response: response,
+                point: point,
+                substance: substanceName
+            };
+
+            testResponses.logs.push(logEntry);
+        } else {
+            console.error('Selected substance not found.');
+        }
+    } else if (questionSetName === 'SCHOOL ENV') {
+        const formRows = document.querySelectorAll('.table tbody tr');
+        const formResponses = [];
+
+        formRows.forEach(row => {
+            const question = row.querySelector('td:first-child').textContent.trim();
+            const inputs = row.querySelectorAll('input[type="text"]');
+            const answers = [];
+
+            inputs.forEach(input => {
+                answers.push(input.value.trim());
+            });
+
+            formResponses.push({ question, answers });
+        });
+
+        // Log the form responses
+        const logEntry = {
+            question: questionText,
+            setName: questionSetName,
+            responses: formResponses
+        };
+
+        testResponses.logs.push(logEntry);
+    } else {
+        const logEntry = {
+            question: questionText,
+            setName: questionSetName,
+            response: response,
+            point: point
+        };
+
+        testResponses.logs.push(logEntry);
+    }
+}
+
+function logQuestionAndResponseWithDiagnosis(option) {
+    logQuestionAndResponse(option);
+
+    Swal.fire({
+        title: 'Please specify',
+        input: 'text',
+        inputLabel: 'What were you diagnosed with?',
+        showCancelButton: true,
+        confirmButtonText: 'Submit',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'You need to write something!';
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed && result.value) {
+            const diagnosis = result.value;
+            // Save the diagnosis to the log entry
+            const logEntry = testResponses.logs[testResponses.logs.length - 1];
+            logEntry.diagnosis = diagnosis;
+            // Save the diagnosis to your answers object
+            answers.diagnosis = diagnosis;
+            progressStore.setDiagnosisDetail(currentQuestion.value.id, diagnosis);
+            nextTick(() => {
+                progressStore.setAnswer(currentQuestion.value.id, option);
+                jumpToNextRelevantSet();
+            });
+        }
+    });
+}
+
 // Watch for changes in current question index and save progress
 watch(currentQuestionIndex, (newIndex) => {
     progressStore.setQuestionIndex(newIndex);
@@ -233,8 +444,6 @@ const currentQuestion = computed(() => {
         if (!question) {
             console.error('Current question is undefined:', currentQuestionIndex.value);
         }
-        // console.log('Current question set:', question); // Log currentQuestion
-        // console.dir(question); // Log the object in a more expanded form
         return question;
     } else {
         return null;
@@ -283,19 +492,35 @@ const progressPercentage = computed(() => (currentQuestionIndex.value / (questio
 // Functions for handling answer selection and navigation
 function handleAnswerSelection(option, substance) {
     if (currentQuestionSetName.value === 'ASSIST') {
+        // Log the selected substance and its answer
+        console.log('Selected Substance:', substance);
+        console.log('Selected Answer:', option.option);
+        logQuestionAndResponse(option, substance);
+        // Update the reactive variable to reflect the answer selection
         updateSubstanceAnswered(option, substance);
+        storedResponses[currentQuestion.value.id] = { option, substance };
     } else {
-        // Access selectedAnswer and score from currentQuestion
+        // Handle answer selection for other question sets
         const selectedAnswer = option.option;
         const score = option.points;
         console.log('Selected Answer:', selectedAnswer);
         console.log('Score:', score);
+        logQuestionAndResponse(option);
+        if (currentQuestionSetName.value === 'SCHOOL ENV') {
+            const questionId = currentQuestion.value.id;
+            const answer = option.option;
+            schoolEnvFormData.value[`question${questionId}`].answer = answer;
+            // You may need additional logic here to handle specifying answers if required
+        }
         progressStore.setAnswer(currentQuestion.value.id, option);
         handleOtherQuestionSets(option);
     }
 }
 
 
+answers.substanceName = '';
+
+// Update the updateSubstanceAnswered function to handle capturing the substance name
 function updateSubstanceAnswered(option, substance) {
     const answer = option.option.trim();
     if (answer === 'Yes' || answer === 'No') {
@@ -317,19 +542,34 @@ function updateSubstanceAnswered(option, substance) {
                 }
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
+                    // Log the substance name along with the answer
+                    console.log('Selected Answer:', answer);
+                    console.log('Substance:', result.value);
+
+                    // Push the information into the testResponses.logs array
+                    const logEntry = {
+                        question: currentQuestionText.value,
+                        setName: currentQuestionSetName.value,
+                        response: answer,
+                        substance: result.value
+                    };
+
+                    testResponses.logs.push(logEntry);
+
                     localStorage.setItem('otherSubstanceName', result.value);
+                    // Save the substance name to your answers object
+                    answers.substanceName = result.value;
                     updateSubstanceCount();
                 }
             });
         }
-    } else {
-        console.warn('Invalid answer value:', option.option);
     }
 }
 
 
 function saveSubstanceAnswersToLocalStorage() {
     localStorage.setItem('answeredSubstances', JSON.stringify(substanceAnswered));
+    handleStorageChange();
 }
 
 function updateSubstanceCount() {
@@ -369,33 +609,33 @@ function handleRadioClick(questionId, answerOption) {
     } else {
         stronglyDisagreeSelected[questionId] = false;
     }
+
+    // Call the logQuestionAndResponse function to log the response
+    logQuestionAndResponseSchoolEnv(answerOption);
 }
+
+function logQuestionAndResponseSchoolEnv(answerOption) {
+    const questionText = currentQuestionText.value;
+    const questionSetName = currentQuestionSetName.value;
+
+    const logEntry = {
+        question: questionText,
+        setName: questionSetName,
+        response: answerOption,
+    };
+
+    testResponses.logs.push(logEntry);
+}
+
+
 
 function handleOtherQuestionSets(option) {
     progressStore.setAnswer(currentQuestion.value.id, option);
 
     setTimeout(() => {
         if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
-            Swal.fire({
-                title: 'Please specify',
-                input: 'text',
-                inputLabel: 'What were you diagnosed with?',
-                showCancelButton: true,
-                confirmButtonText: 'Submit',
-                inputValidator: (value) => {
-                    if (!value) {
-                        return 'You need to write something!';
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed && result.value) {
-                    progressStore.setDiagnosisDetail(currentQuestion.value.id, result.value);
-                    nextTick(() => {
-                        progressStore.setAnswer(currentQuestion.value.id, option);
-                        jumpToNextRelevantSet();
-                    });
-                }
-            });
+            // No need for Swal.fire here
+            logQuestionAndResponseWithDiagnosis(option);
         }
         else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
             nextTick(() => {
@@ -431,25 +671,37 @@ function filterSubstances(substances) {
 }
 
 
+// Function to jump to the next question
 const jumpToNextQuestion = () => {
     if (currentQuestionSetName.value === 'ASSIST') {
-        if (checkInvalidInputs()) {
-            return; // Invalid inputs found, stop execution
+        if (!checkInvalidInputs()) {
+            const allSubstancesNo = Object.values(substanceAnswered).every(answer => answer === false);
+            if (allSubstancesNo) {
+                jumpToNextRelevantSet('ASSIST');
+            }
         }
     }
     currentQuestionIndex.value++;
 };
 
+
+// Function to jump to the next relevant set
 function jumpToNextRelevantSet(setToSkip) {
-    const nextIndex = questions.value.findIndex(
-        (question, index) => question.setName !== setToSkip && index > currentQuestionIndex.value
-    );
+    const nextIndex = findNextSetIndex(setToSkip);
     if (nextIndex !== -1) {
         currentQuestionIndex.value = nextIndex;
     } else {
         console.error(`No question set found after skipping ${setToSkip}`);
     }
 }
+
+// Helper function to find the index of the next question set
+function findNextSetIndex(setToSkip) {
+    return questions.value.findIndex(
+        (question, index) => question.setName !== setToSkip && index > currentQuestionIndex.value
+    );
+}
+
 
 function goBack() {
     if (currentQuestionIndex.value > 0) {
@@ -463,12 +715,65 @@ function goBack() {
     }
 }
 
-function submitTest() {
-    progressStore.setQuestionIndex(0);
-    progressStore.answers = [];
-    progressStore.saveProgress();
-    Swal.fire('Congratulations!', 'You have completed the test.', 'success');
-}
+const submitFormData = async () => {
+    try {
+        if (checkInvalidInputs()) {
+            return;
+        }
+
+        // Call the logging function with the appropriate parameters
+        logQuestionAndResponse(schoolEnvFormData.value);
+
+        // Log the test responses in a human-readable form
+        console.log('Test Responses:');
+
+        testResponses.logs.forEach(entry => {
+            console.log('---------------------------------');
+            console.log('Question:', entry.question);
+            console.log('Set Name:', entry.setName);
+
+            if (entry.substance) {
+                console.log('Substance:', entry.substance);
+            }
+
+            if (entry.responses) {
+                console.log('Responses:');
+
+                entry.responses.forEach(response => {
+                    console.log('  - Question:', response.question);
+                    console.log('    Answers:', response.answers.join(', '));
+                });
+            } else {
+                console.log('Response:', entry.response);
+                console.log('Point:', entry.point);
+            }
+
+            if (entry.diagnosis) {
+                console.log('Diagnosis:', entry.diagnosis);
+            }
+
+            console.log('---------------------------------');
+        });
+
+        // Submit form data
+        const response = await axios.post(endpoints.submitCluster, schoolEnvFormData.value);
+
+        // Check response status
+        if (response.status === 200) {
+            Swal.fire('Congratulations!', 'You have completed the test.', 'success');
+            router.push('/student-dashboard');
+        } else {
+            Swal.fire('Error!', 'Failed to submit data', 'error');
+        }
+
+        // Clear stored responses after submission
+        storedResponses.value = {};
+    } catch (error) {
+        Swal.fire('Error!', 'Failed to submit data', 'error');
+    }
+};
+
+
 
 function isSelectedAnswer(option) {
     const existingAnswer = progressStore.answers.find(a => a.questionId === currentQuestion.value.id);
@@ -494,6 +799,26 @@ function renderSubstanceOptions(substance) {
 </script>
 
 <style scoped>
+.message {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #5d5d5d;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.emoji {
+    font-size: 40px;
+}
+
+.pride-message {
+    font-size: 28px;
+    margin-top: 10px;
+}
+
 input {
     border-radius: 10px;
 }

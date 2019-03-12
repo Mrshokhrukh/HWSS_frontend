@@ -1,11 +1,15 @@
 .animated-icon {
   animation: breathing 2s ease-in-out infinite, glitterShine 1.5s linear infinite;
+  cursor: pointer; /* Change cursor to pointer by default */
+}
+
+.animated-icon:hover {
+  animation-duration: 4s; /* Slow down the animation on hover */
+  cursor: not-allowed; /* Change cursor to not allowed icon on hover */
 }
 
 @keyframes breathing {
-
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
   }
 
@@ -15,9 +19,7 @@
 }
 
 @keyframes glitterShine {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 1;
   }
 
@@ -25,8 +27,6 @@
     opacity: 0.5;
   }
 }
-
-
 
 .swal2-confirm {
   background-color: #2c6975 !important;
