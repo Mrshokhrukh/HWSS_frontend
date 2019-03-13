@@ -58,7 +58,9 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import endpoints from "@/api";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const clusterTestTitle = ref("");
 const clusterTestContent = ref("");
 const clusterTestDisclaimer = ref("");
@@ -69,10 +71,13 @@ const clusterTestStatus = ref("");
 const loading = ref(true);
 const cacheDuration = 5 * 60 * 1000;
 
-const emit = defineEmits(["continue"]);
+// const emit = defineEmits(["continue"]);
 
 const continueAction = () => {
-	emit("continue");
+	// emit("continue");
+	if (clusterTestStatus.value === 'active') {
+        router.push('/student-dashboard/screening-start')
+    }
 };
 
 async function checkClusterTestStatus() {

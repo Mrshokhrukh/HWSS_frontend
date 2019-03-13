@@ -2,7 +2,7 @@
     <div class="container-fluid screening-test p-0">
         <div class="card">
             <div class="card-header mx-auto p-3" v-if="currentQuestionText">
-                <div class="test-info d-flex justify-content-between align-items-center">
+                <div class="test-info d-flex justify-content-between align-items-center d-none">
                     <h5>Current Section: {{ currentQuestionSetName }}</h5>
                     <p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
                     <p class="mx-3">PHQ9 Score: {{ progressStore.scores.PHQ9 }}</p>
@@ -17,6 +17,35 @@
                     <div class="progress" style="height: 10px; border-radius: 5px">
                         <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+
+                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
+                    <!-- Existing layout for other question sets -->
+                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
+                        <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
+                        </h4>
+                    </div>
+                    <div class="question-area text-center px-5" v-if="currentQuestion">
+                        <div class="row my-4 justify-content-center text-center">
+                            <div class="col d-flex justify-content-center align-items-center">
+                                <div class="icon-container d-inline-flex align-items-center">
+                                    <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
+                                        class="mx-4 my-3 animated-icon" />
+                                    <div class="question-text d-inline-block">
+                                        <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="answer-options d-flex flex-wrap justify-content-center">
+                            <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
+                                <button :class="{ 'selected': isSelectedAnswer(option) }"
+                                    @click="handleAnswerSelection(option)" class="btn btn-lg">
+                                    {{ option.option }} <span class="d-none">{{ option.points }}</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -68,58 +97,33 @@
                                         <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
                                             :name="`question-${question.id}`" :value="option.option"
                                             v-model="answers[question.id]"
-                                            @change="handleRadioClick(question.id, option.option)" required>
+                                            @change="handleRadioClick(question.text, question.id, option.option)" required>
+
 
                                         <label :for="`question-${question.id}-answer-${option.id}`"></label>
                                     </td>
                                     <td v-if="requiresTextInput(question.id)">
                                         <input type="text" class="form-control" v-model="textResponses[question.id]"
-                                            :required="requiresTextInput(question.id)" placeholder="Specify" />
+                                            :required="requiresTextInput(question.id)" placeholder="Please Specify"
+                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id)">
                                     </td>
                                 </template>
 
                                 <template v-else>
                                     <td colspan="6">
                                         <input type="text" class="form-control mb-3" placeholder="Answer 1"
-                                            v-model="textResponses[question.id + '_1']" required>
+                                            v-model="textResponses[question.id + '_1']" required
+                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_1')">
                                         <input type="text" class="form-control" placeholder="Answer 2"
-                                            v-model="textResponses[question.id + '_2']" required>
+                                            v-model="textResponses[question.id + '_2']" required
+                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_2')">
                                     </td>
                                 </template>
-
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
-                    <!-- Existing layout for other question sets -->
-                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
-                        <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
-                        </h4>
-                    </div>
-                    <div class="question-area text-center px-5" v-if="currentQuestion">
-                        <div class="row my-4 justify-content-center text-center">
-                            <div class="col d-flex justify-content-center align-items-center">
-                                <div class="icon-container d-inline-flex align-items-center">
-                                    <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
-                                        class="mx-4 my-3 animated-icon" />
-                                    <div class="question-text d-inline-block">
-                                        <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="answer-options d-flex flex-wrap justify-content-center">
-                            <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
-                                <button :class="{ 'selected': isSelectedAnswer(option) }"
-                                    @click="handleAnswerSelection(option)" class="btn btn-lg">
-                                    {{ option.option }} <span class="d-none">{{ option.points }}</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <!-- VueConfetti component -->
             <div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
@@ -132,7 +136,7 @@
                     <button @click="goBack" class="btn rounded-btn back-button">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
-                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitFormData"
+                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitFormData(answerOption, question)"
                         class="btn rounded-btn submit-button">
                         <i class="fas fa-check"></i> Submit
                     </button>
@@ -157,7 +161,7 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
-import { useRoute } from 'vue-router';
+import { useRouter } from "vue-router";
 import ConfettiExplosion from "vue-confetti-explosion";
 
 // Initial setup for reactive variables
@@ -169,7 +173,7 @@ const textResponses = reactive({});
 const substanceAnswered = reactive({});
 const showAnswerAllPrompt = ref(false);
 const stronglyDisagreeSelected = reactive({});
-const router = useRoute();
+const router = useRouter();
 const storedResponses = ref({});
 // const answerAtIndexZero = ref('');
 
@@ -178,67 +182,81 @@ const testResponses = reactive({
     logs: []
 });
 
-
 const schoolEnvFormData = ref({
     question1: {
         answer: '',
+        question: '',
         specify: '',
     },
     question2: {
         answer: '',
+        question: '',
         specify: '',
     },
     question3: {
         answer: '',
+        question: '',
         specify: '',
     },
     question4: {
         answer: '',
+        question: '',
         specify: '',
     },
     question5: {
         answer: '',
+        question: '',
         specify: '',
     },
     question6: {
         answer: '',
+        question: '',
         specify: '',
     },
     question7: {
         answer: '',
+        question: '',
         specify: '',
     },
     question8: {
         answer: '',
+        question: '',
         specify: '',
     },
     question9: {
+        question: '',
         answer1: '',
         answer2: '',
     },
     question10: {
+        question: '',
         answer1: '',
         answer2: '',
     },
 });
 
+let logEntry = {
+    question: null,
+    setName: null,
+    response: null,
+    point: null,
+    substance: null,
+    diagnosis: null,
+    questionId: null,
+    specify: ''
+};
+
 const showConfetti = ref(false);
 const showMessage = ref(false);
 const answeredSubstances = ref({});
 
-
-// Retrieve user's age data from session storage
 const userAgeData = JSON.parse(sessionStorage.getItem('userAgeData'));
-// Determine user's age group
 const userAgeGroup = userAgeData ? userAgeData.ageGroup : null;
 
-// Function to check if user's age group matches any of the age group tags in the question
 function isUserAgeGroupIncluded(ageGroupTags) {
     return ageGroupTags.includes(userAgeGroup);
 }
 
-
-// Fetch questions from API or session storage
 onMounted(async () => {
     progressStore.loadProgress();
     currentQuestionIndex.value = progressStore.currentQuestionIndex;
@@ -258,6 +276,7 @@ onMounted(async () => {
             }))
         )
     );
+
     questions.value.forEach(question => {
         answers[question.id] = question.answer_type === 5 ? '' : null;
     });
@@ -269,14 +288,13 @@ onMounted(async () => {
     }
 });
 
-// Computed property to check if all substances are answered with "NO"
 const allSubstancesNo = computed(() => {
     if (!answeredSubstances.value) return false;
 
     const falseCount = Object.values(answeredSubstances.value).filter(answer => !answer).length;
     return falseCount === 10;
 });
-// Watch for changes in allSubstancesNo
+
 watch(allSubstancesNo, (allNo) => {
     if (allNo) {
         showConfetti.value = true;
@@ -287,7 +305,6 @@ watch(allSubstancesNo, (allNo) => {
     }
 });
 
-// Watch for changes in current question index and handle ending ASSIST questions
 watch(currentQuestionIndex, (newIndex) => {
     if (currentQuestionSetName.value === 'ASSIST') {
         const currentQuestion = questions.value[newIndex];
@@ -304,41 +321,41 @@ watch(currentQuestionIndex, (newIndex) => {
 const handleStorageChange = () => {
     const updatedAnsweredSubstances = JSON.parse(localStorage.getItem('answeredSubstances'));
 
-    // Wait until 10 objects are added to the key
     const answeredSubstancesArray = Object.values(updatedAnsweredSubstances);
-    if (answeredSubstancesArray.length === 10) {
-        const allFalse = answeredSubstancesArray.every(state => state === false);
-        if (allFalse) {
-            Swal.fire({
-                icon: null, // Remove the icon
-                title: '<div style="display: flex; justify-content: center; align-items: center;"><span style="font-size: 48px;">🎉</span> <span style="font-size: 24px;">Tashi Delek for not using any substances</span> <span style="font-size: 48px;">🎉</span></div>',
-                html: "<div style='font-size: 18px; text-align: center; margin-top: 20px;'>We're proud of you!</div><div style='font-size: 48px; margin-top: 20px;'>👏🏼</div>",
-                confirmButtonText: 'Next',
-                confirmButtonClass: 'swal-button',
-                allowOutsideClick: false,
-                allowEscapeKey: false,
-                showCloseButton: false,
-                willClose: () => {
-                    showConfetti.value = true;
-                    setTimeout(() => {
-                        jumpToNextRelevantSet('ASSIST');
-                    }, 200);
-                },
-                didClose: () => {
-                    showConfetti.value = false;
-                },
-                onOpen: () => {
-                    const modal = Swal.getPopup();
-                    modal.style.width = '80%'; // Adjust modal width
-                    modal.style.maxWidth = '800px'; // Set maximum modal width
-                    modal.style.padding = '30px'; // Add padding for better appearance
-                }
-            });
-        }
+    if (answeredSubstancesArray.length === 10 && answeredSubstancesArray.every(state => state === false)) {
+        Swal.fire({
+            icon: null,
+            title: '<div style="display: flex; justify-content: center; align-items: center;"><span style="font-size: 48px;">🎉</span> <span style="font-size: 24px;">Tashi Delek for not using any substances</span> <span style="font-size: 48px;">🎉</span></div>',
+            html: "<div style='font-size: 18px; text-align: center; margin-top: 20px;'>We're proud of you!</div><div style='font-size: 48px; margin-top: 20px;'>👏🏼</div>",
+            confirmButtonText: 'Next',
+            confirmButtonClass: 'swal-button',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showCloseButton: false,
+            willClose: () => {
+                showConfetti.value = true;
+                setTimeout(() => {
+                    jumpToNextRelevantSet('ASSIST');
+                }, 200);
+            },
+            didClose: () => {
+                showConfetti.value = false;
+            },
+            onOpen: () => {
+                const modal = Swal.getPopup();
+                modal.style.width = '80%';
+                modal.style.maxWidth = '800px';
+                modal.style.padding = '30px';
+            }
+        });
     }
 
     answeredSubstances.value = updatedAnsweredSubstances;
 };
+
+function findLoggedQuestionIndex(question) {
+    return testResponses.responses.findIndex(entry => entry.question === question);
+}
 
 function logQuestionAndResponse(option, substance) {
     const questionText = currentQuestionText.value;
@@ -346,62 +363,58 @@ function logQuestionAndResponse(option, substance) {
     const response = option.option;
     const point = option.points;
 
-    if (questionSetName === 'ASSIST') {
-        const selectedSubstance = substance;
+    const index = findLoggedQuestionIndex(questionText);
 
-        if (selectedSubstance) {
-            const substanceName = selectedSubstance.name;
+    logEntry.question = questionText;
+    logEntry.setName = questionSetName;
+    logEntry.response = response;
+    logEntry.point = point;
+    logEntry.substance = null;
+    logEntry.diagnosis = null;
 
-            const logEntry = {
-                question: questionText,
-                setName: questionSetName,
-                response: response,
-                point: point,
-                substance: substanceName
-            };
+    const answer = response.trim();
 
-            testResponses.logs.push(logEntry);
-        } else {
-            console.error('Selected substance not found.');
+    // Check if the question set is ASSIST
+    if (questionSetName === 'ASSIST' && answer) {
+        logEntry.substance = substance;
+        answers.substanceName = substance;
+
+        // Check if the substance is already answered
+        if (!Object.prototype.hasOwnProperty.call(substanceAnswered, substance)) {
+            substanceAnswered[substance] = {};  // Initialize if not already present
         }
-    } else if (questionSetName === 'SCHOOL ENV') {
-        const formRows = document.querySelectorAll('.table tbody tr');
-        const formResponses = [];
 
-        formRows.forEach(row => {
-            const question = row.querySelector('td:first-child').textContent.trim();
-            const inputs = row.querySelectorAll('input[type="text"]');
-            const answers = [];
+        substanceAnswered[substance] = answer === 'Yes';
 
-            inputs.forEach(input => {
-                answers.push(input.value.trim());
-            });
-
-            formResponses.push({ question, answers });
-        });
-
-        // Log the form responses
-        const logEntry = {
-            question: questionText,
-            setName: questionSetName,
-            responses: formResponses
-        };
-
-        testResponses.logs.push(logEntry);
-    } else {
-        const logEntry = {
-            question: questionText,
-            setName: questionSetName,
-            response: response,
-            point: point
-        };
-
-        testResponses.logs.push(logEntry);
+        // Check if the index is found
+        if (index !== -1) {
+            // Check if the substance is the same as the existing entry
+            if (testResponses.responses[index].substance === substance) {
+                // Replace the old entry with the new one
+                testResponses.responses[index] = { ...logEntry };
+                console.log('Log Entry Replaced:', logEntry);
+            }
+        } else {
+            // Add the new entry if the index is not found
+            testResponses.responses.push({ ...logEntry });
+            console.log('New Log Entry Added:', logEntry);
+        }
     }
 }
 
+
 function logQuestionAndResponseWithDiagnosis(option) {
-    logQuestionAndResponse(option);
+    const questionText = currentQuestionText.value;
+    const questionSetName = currentQuestionSetName.value;
+
+    const index = findLoggedQuestionIndex(questionText);
+
+    logEntry.question = questionText;
+    logEntry.setName = questionSetName;
+    logEntry.response = option.option;
+    logEntry.point = option.points;
+    logEntry.substance = null;
+    logEntry.diagnosis = null;
 
     Swal.fire({
         title: 'Please specify',
@@ -417,9 +430,8 @@ function logQuestionAndResponseWithDiagnosis(option) {
     }).then((result) => {
         if (result.isConfirmed && result.value) {
             const diagnosis = result.value;
-            // Save the diagnosis to the log entry
-            const logEntry = testResponses.logs[testResponses.logs.length - 1];
             logEntry.diagnosis = diagnosis;
+
             // Save the diagnosis to your answers object
             answers.diagnosis = diagnosis;
             progressStore.setDiagnosisDetail(currentQuestion.value.id, diagnosis);
@@ -427,9 +439,75 @@ function logQuestionAndResponseWithDiagnosis(option) {
                 progressStore.setAnswer(currentQuestion.value.id, option);
                 jumpToNextRelevantSet();
             });
+
+            // Move the logEntry push here to ensure it's done after diagnosis is captured
+            if (index !== -1) {
+                // Replace the existing entry with the new one
+                // console.log('Log Entry Replaced:', logEntry);
+                testResponses.responses[index] = { ...logEntry };
+            } else {
+                // Log the entry if it's not already logged
+                // console.log('Log Entry:', logEntry);
+                testResponses.responses.push({ ...logEntry });
+            }
+        } else {
+            // If the user cancels or doesn't enter anything
+            Swal.fire({
+                icon: 'info',
+                title: 'No Diagnosis Entered',
+                text: 'You have not entered a diagnosis. If you want to proceed without specifying a diagnosis, click OK.',
+                showCancelButton: true,
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Proceed without a diagnosis
+                    nextTick(() => {
+                        progressStore.setAnswer(currentQuestion.value.id, option);
+                        jumpToNextRelevantSet();
+                    });
+                }
+            });
         }
     });
 }
+
+
+function logQuestionAndResponseSchoolEnv(question, answerOption, questionId, value) {
+    const questionSetName = currentQuestionSetName.value;
+
+    const index = findLoggedQuestionIndex(question);
+
+    let logEntry = {
+        question: question,
+        setName: questionSetName,
+        response: answerOption,
+        questionId: questionId,
+        specify: ''
+    };
+
+    if (value) {
+        logEntry.specify = value;
+    } else {
+        if (answerOption === 'Strongly Disagree' && textResponses[questionId + '_specify']) {
+            logEntry.specify = textResponses[questionId + '_specify'];
+        }
+    }
+
+    const containsMentionTwoThings = question.toLowerCase().includes('(mention two things)');
+
+    if (index !== -1 && !containsMentionTwoThings) {
+        // Replace the existing entry with the new one
+        // console.log('Log Entry Replaced:', logEntry);
+        testResponses.responses[index] = { ...logEntry };
+    } else {
+        // Log the entry if it's not already logged
+        // console.log('Log Entry:', logEntry);
+        testResponses.responses.push({ ...logEntry });
+    }
+}
+
+
 
 // Watch for changes in current question index and save progress
 watch(currentQuestionIndex, (newIndex) => {
@@ -451,23 +529,16 @@ const currentQuestion = computed(() => {
 });
 
 const currentQuestionText = computed(() => {
-    const questionText = currentQuestion.value ? currentQuestion.value.text : '';
-    console.log('Current question text:', questionText); // Log currentQuestionText
-    return questionText;
+    return currentQuestion.value ? currentQuestion.value.text : '';
 });
 
-
 const currentQuestionSetName = computed(() => {
-    const setName = currentQuestion.value ? currentQuestion.value.setName : '';
-    console.log('Current question set name:', setName); // Log currentQuestionSetName
-    return setName;
+    return currentQuestion.value ? currentQuestion.value.setName : '';
 });
 
 const currentSetQuestions = computed(() => {
     const currentSetName = currentQuestionSetName.value;
-    const setQuestions = questions.value.filter(question => question.setName === currentSetName);
-    console.log('Current setName questions:', setQuestions); // Log currentSetQuestions
-    return setQuestions;
+    return questions.value.filter(question => question.setName === currentSetName);
 });
 
 // Computed properties for UI elements
@@ -487,47 +558,42 @@ const processedQuestionText = computed(() => {
     return currentQuestion.value?.text.replace(regex, '');
 });
 
-const progressPercentage = computed(() => (currentQuestionIndex.value / (questions.value.length - 1)) * 100);
+const progressPercentage = computed(() => {
+    return (currentQuestionIndex.value / (questions.value.length - 1)) * 100;
+});
+
 
 // Functions for handling answer selection and navigation
 function handleAnswerSelection(option, substance) {
     if (currentQuestionSetName.value === 'ASSIST') {
-        // Log the selected substance and its answer
-        console.log('Selected Substance:', substance);
-        console.log('Selected Answer:', option.option);
         logQuestionAndResponse(option, substance);
-        // Update the reactive variable to reflect the answer selection
+
         updateSubstanceAnswered(option, substance);
         storedResponses[currentQuestion.value.id] = { option, substance };
+    } else if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
+        logQuestionAndResponseWithDiagnosis(option);
     } else {
-        // Handle answer selection for other question sets
-        const selectedAnswer = option.option;
-        const score = option.points;
-        console.log('Selected Answer:', selectedAnswer);
-        console.log('Score:', score);
         logQuestionAndResponse(option);
         if (currentQuestionSetName.value === 'SCHOOL ENV') {
             const questionId = currentQuestion.value.id;
             const answer = option.option;
+            const question = option.text;
+            const specify = option.specify ? option.specify : '';
             schoolEnvFormData.value[`question${questionId}`].answer = answer;
-            // You may need additional logic here to handle specifying answers if required
+            schoolEnvFormData.value[`question${questionId}`].question = question;
+            schoolEnvFormData.value[`question${questionId}`].specify = specify;
         }
         progressStore.setAnswer(currentQuestion.value.id, option);
         handleOtherQuestionSets(option);
     }
 }
 
-
 answers.substanceName = '';
-
-// Update the updateSubstanceAnswered function to handle capturing the substance name
 function updateSubstanceAnswered(option, substance) {
     const answer = option.option.trim();
     if (answer === 'Yes' || answer === 'No') {
         substanceAnswered[substance] = answer === 'Yes';
         saveSubstanceAnswersToLocalStorage();
-        console.log('Selected Answer:', answer);
-        console.log('Substance:', substance);
         if (answer === 'Yes' && substance === 'Other - specify') {
             Swal.fire({
                 title: 'Specify Substance',
@@ -542,19 +608,15 @@ function updateSubstanceAnswered(option, substance) {
                 }
             }).then((result) => {
                 if (result.isConfirmed && result.value) {
-                    // Log the substance name along with the answer
-                    console.log('Selected Answer:', answer);
-                    console.log('Substance:', result.value);
 
-                    // Push the information into the testResponses.logs array
                     const logEntry = {
                         question: currentQuestionText.value,
                         setName: currentQuestionSetName.value,
                         response: answer,
-                        substance: result.value
+                        substance: result.value // Update substance name here
                     };
 
-                    testResponses.logs.push(logEntry);
+                    testResponses.responses.push(logEntry);
 
                     localStorage.setItem('otherSubstanceName', result.value);
                     // Save the substance name to your answers object
@@ -597,44 +659,25 @@ function checkAllSubstancesAnswered(countYes) {
     }
 }
 
-// Function to check if input text is required based on the selected answer
 function requiresTextInput(questionId) {
     return stronglyDisagreeSelected[questionId];
 }
 
-// Function to handle the click event of radio buttons
-function handleRadioClick(questionId, answerOption) {
+function handleRadioClick(questionText, questionId, answerOption) {
+    const value = '';
     if (answerOption === "Strongly Disagree") {
         stronglyDisagreeSelected[questionId] = true;
     } else {
         stronglyDisagreeSelected[questionId] = false;
     }
-
-    // Call the logQuestionAndResponse function to log the response
-    logQuestionAndResponseSchoolEnv(answerOption);
+    logQuestionAndResponseSchoolEnv(questionText, answerOption, questionId, value);
 }
-
-function logQuestionAndResponseSchoolEnv(answerOption) {
-    const questionText = currentQuestionText.value;
-    const questionSetName = currentQuestionSetName.value;
-
-    const logEntry = {
-        question: questionText,
-        setName: questionSetName,
-        response: answerOption,
-    };
-
-    testResponses.logs.push(logEntry);
-}
-
-
 
 function handleOtherQuestionSets(option) {
     progressStore.setAnswer(currentQuestion.value.id, option);
 
     setTimeout(() => {
         if (currentQuestion.value.question_set === 8 && option.option === "Yes") {
-            // No need for Swal.fire here
             logQuestionAndResponseWithDiagnosis(option);
         }
         else if (currentQuestionSetName.value === 'GAD2' && progressStore.shouldSkipGAD7) {
@@ -655,7 +698,6 @@ function handleOtherQuestionSets(option) {
     }, 500);
 }
 
-// Function to filter substances based on those answered "No" in local storage
 function filterSubstances(substances) {
     const answeredSubstances = JSON.parse(localStorage.getItem('answeredSubstances')) || {};
     if (Object.keys(answeredSubstances).length === 0) {
@@ -670,14 +712,14 @@ function filterSubstances(substances) {
     return filteredSubstances;
 }
 
-
 // Function to jump to the next question
 const jumpToNextQuestion = () => {
     if (currentQuestionSetName.value === 'ASSIST') {
         if (!checkInvalidInputs()) {
-            const allSubstancesNo = Object.values(substanceAnswered).every(answer => answer === false);
+            const allSubstancesNo = Object.values(substanceAnswered).every(answer => answer === 'No' || answer === 'Yes');
             if (allSubstancesNo) {
                 jumpToNextRelevantSet('ASSIST');
+                return;
             }
         }
     }
@@ -685,7 +727,6 @@ const jumpToNextQuestion = () => {
 };
 
 
-// Function to jump to the next relevant set
 function jumpToNextRelevantSet(setToSkip) {
     const nextIndex = findNextSetIndex(setToSkip);
     if (nextIndex !== -1) {
@@ -695,7 +736,6 @@ function jumpToNextRelevantSet(setToSkip) {
     }
 }
 
-// Helper function to find the index of the next question set
 function findNextSetIndex(setToSkip) {
     return questions.value.findIndex(
         (question, index) => question.setName !== setToSkip && index > currentQuestionIndex.value
@@ -717,62 +757,65 @@ function goBack() {
 
 const submitFormData = async () => {
     try {
-        if (checkInvalidInputs()) {
-            return;
-        }
+        // Retrieve user ID from local storage
+        const userData = JSON.parse(localStorage.getItem('userDetailsStore'));
 
-        // Call the logging function with the appropriate parameters
-        logQuestionAndResponse(schoolEnvFormData.value);
+        // Extract user ID from user data
+        const userId = userData?.user?.id;
 
-        // Log the test responses in a human-readable form
-        console.log('Test Responses:');
+        // Log the retrieved user ID
+        // console.log('User ID:', userId);
 
-        testResponses.logs.forEach(entry => {
-            console.log('---------------------------------');
-            console.log('Question:', entry.question);
-            console.log('Set Name:', entry.setName);
-
-            if (entry.substance) {
-                console.log('Substance:', entry.substance);
-            }
-
-            if (entry.responses) {
-                console.log('Responses:');
-
-                entry.responses.forEach(response => {
-                    console.log('  - Question:', response.question);
-                    console.log('    Answers:', response.answers.join(', '));
-                });
-            } else {
-                console.log('Response:', entry.response);
-                console.log('Point:', entry.point);
-            }
-
-            if (entry.diagnosis) {
-                console.log('Diagnosis:', entry.diagnosis);
-            }
-
-            console.log('---------------------------------');
+        // Transform the testResponses data into the structure expected by the backend
+        const submissionData = testResponses.responses.map(response => {
+            return {
+                // Include user ID in each submission object
+                user: userId,
+                test_type_name: 'Cluster Screening',
+                question_set_name: response.setName ?? '',
+                question: response.question ?? '',
+                answer: response.response ?? '',
+                diagnosis: response.diagnosis ?? '',
+                substance: response.substance ?? '',
+                specify: response.specify ?? '',
+                score: response.point ?? null,
+            };
         });
 
-        // Submit form data
-        const response = await axios.post(endpoints.submitCluster, schoolEnvFormData.value);
+        const response = await axios.post(endpoints.submitCluster, submissionData);
+        console.error('Server response:', response.data);
 
-        // Check response status
-        if (response.status === 200) {
-            Swal.fire('Congratulations!', 'You have completed the test.', 'success');
-            router.push('/student-dashboard');
-        } else {
-            Swal.fire('Error!', 'Failed to submit data', 'error');
-        }
+        // Show confetti explosion  
+        showConfetti.value = true;
 
-        // Clear stored responses after submission
-        storedResponses.value = {};
+        // Show success message
+        await Swal.fire({
+            icon: 'success',
+            title: 'Form Submitted Successfully!',
+            text: 'Thank you for your submission.',
+            confirmButtonText: 'OK'
+        });
+
+        // Reset testResponses
+        testResponses.responses = [];
+        flushStore()
+
+        // Redirect to student dashboard
+        router.push('/student-dashboard');
     } catch (error) {
-        Swal.fire('Error!', 'Failed to submit data', 'error');
+        console.error('Error submitting form data:', error);
+
+        // Show error message
+        await Swal.fire({
+            icon: 'error',
+            title: 'Submission Failed',
+            text: 'An error occurred while submitting the form. Please try again later.',
+            confirmButtonText: 'OK'
+        });
+
+        router.push('/student-dashboard');
     }
 };
-
 
 
 function isSelectedAnswer(option) {
@@ -786,6 +829,8 @@ function flushStore() {
     localStorage.removeItem('otherSubstanceName');
     localStorage.removeItem('submissionData');
     localStorage.removeItem('progress');
+    testResponses.responses = [];
+    testResponses.responses = [];
     Swal.fire('Progress Reset', 'All progress has been reset.', 'info').then(() => {
         location.reload();
     });

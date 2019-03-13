@@ -4,7 +4,6 @@
 }
 
 .animated-icon:hover {
-  animation-duration: 4s; /* Slow down the animation on hover */
   cursor: not-allowed; /* Change cursor to not allowed icon on hover */
 }
 
