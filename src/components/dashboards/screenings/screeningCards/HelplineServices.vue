@@ -17,9 +17,11 @@
       </div>
 
       <div class="row mt-3">
-        <div class="col-md-12 text-center">
-          <div class="card bg-light top-component-card rounded p-3">
-            <h2 class="fw-bold mb-0">Screening for Health & Well Being</h2>
+        <div class="card col-md-12 text-center p-3 top-component-card">
+          <div class="border-div-screening p-3">
+            <div class="rounded p-3">
+              <h2 class="fw-bold mb-0">Screening for Health & Well Being</h2>
+            </div>
           </div>
         </div>
       </div>
@@ -29,6 +31,11 @@
 
 
 <style scoped>
+.border-div-screening {
+  border: 1px solid #c9c9c9;
+  border-radius: 10px;
+}
+
 .helpline-link,
 .helpline-link i {
   color: #2c6975;

@@ -1,152 +1,155 @@
 <template>
-    <div class="container-fluid screening-test p-0">
-        <div class="card">
-            <div class="card-header mx-auto p-3" v-if="currentQuestionText">
-                <div class="test-info d-flex justify-content-between align-items-center d-none">
-                    <h5>Current Section: {{ currentQuestionSetName }}</h5>
-                    <p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
-                    <p class="mx-3">PHQ9 Score: {{ progressStore.scores.PHQ9 }}</p>
-                    <p class="mx-3">GAD2 Score: {{ progressStore.scores.GAD2 }}</p>
-                    <p class="mx-3">GAD7 Score: {{ progressStore.scores.GAD7 }}</p>
-                </div>
-            </div>
-
-            <!-- Progress bar -->
-            <div class="card-body">
-                <div class="progress-container py-3">
-                    <div class="progress" style="height: 10px; border-radius: 5px">
-                        <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
-                            aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="container-fluid screening-test p-5 card">
+        <!-- VueConfetti component -->
+        <div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
+            <ConfettiExplosion :particleCount="200" :particleSize="10" :duration="5000" :force="0.8" />
+        </div>
+        <div class="border-div-test p-3">
+            <div class="card-inner">
+                <div class="card-header mx-auto p-3" v-if="currentQuestionText">
+                    <div class="test-info d-flex justify-content-between align-items-center d-none">
+                        <h5>Current Section: {{ currentQuestionSetName }}</h5>
+                        <p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
+                        <p class="mx-3">PHQ9 Score: {{ progressStore.scores.PHQ9 }}</p>
+                        <p class="mx-3">GAD2 Score: {{ progressStore.scores.GAD2 }}</p>
+                        <p class="mx-3">GAD7 Score: {{ progressStore.scores.GAD7 }}</p>
                     </div>
                 </div>
 
-                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
-                    <!-- Existing layout for other question sets -->
-                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
-                        <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
-                        </h4>
+                <!-- Progress bar -->
+                <div class="card-body">
+                    <div class="progress-container py-3">
+                        <div class="progress" style="height: 10px; border-radius: 5px">
+                            <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
+                                aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
                     </div>
-                    <div class="question-area text-center px-5" v-if="currentQuestion">
-                        <div class="row my-4 justify-content-center text-center">
-                            <div class="col d-flex justify-content-center align-items-center">
-                                <div class="icon-container d-inline-flex align-items-center">
-                                    <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
-                                        class="mx-4 my-3 animated-icon" />
-                                    <div class="question-text d-inline-block">
-                                        <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+
+                    <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
+                        <!-- Existing layout for other question sets -->
+                        <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
+                            <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
+                            </h4>
+                        </div>
+                        <div class="question-area text-center px-5" v-if="currentQuestion">
+                            <div class="row my-4 justify-content-center text-center">
+                                <div class="col d-flex justify-content-center align-items-center">
+                                    <div class="icon-container d-inline-flex align-items-center">
+                                        <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
+                                            class="mx-4 my-3 animated-icon" />
+                                        <div class="question-text d-inline-block">
+                                            <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="answer-options d-flex flex-wrap justify-content-center">
-                            <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
-                                <button :class="{ 'selected': isSelectedAnswer(option) }"
-                                    @click="handleAnswerSelection(option)" class="btn btn-lg">
-                                    {{ option.option }} <span class="d-none">{{ option.points }}</span>
-                                </button>
+                            <div class="answer-options d-flex flex-wrap justify-content-center">
+                                <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
+                                    <button :class="{ 'selected': isSelectedAnswer(option) }"
+                                        @click="handleAnswerSelection(option)" class="btn btn-lg">
+                                        {{ option.option }} <span class="d-none">{{ option.points }}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Layout for "ASSIST" question set -->
+                    <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
+                        <h4 class="my-5 text-center">{{ currentQuestion.text }}</h4>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Substances</th>
+                                    <th v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+                                        {{ option.option }}
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
+                                    <td class="text-capitalize">{{ renderSubstanceOptions(substance) }}</td>
+                                    <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+                                        <input type="radio" :name="`substance-${substance}`" :value="option.id"
+                                            @change="handleAnswerSelection(option, substance)" required />
+                                        <span class="d-none">{{ option.points }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Layout for "SCHOOL ENV" question set -->
+                    <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Strongly Agree</th>
+                                    <th>Agree</th>
+                                    <th>Neutral/Indifferent</th>
+                                    <th>Disagree</th>
+                                    <th>Strongly Disagree</th>
+                                    <th v-if="requiresTextInput()">Specify</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
+                                    <td>{{ question.text }}</td>
+                                    <template v-if="index < 8"> <!-- For questions 1-8 -->
+                                        <td v-for="option in question.answers.slice().reverse()" :key="option.id"
+                                            class="text-center">
+                                            <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
+                                                :name="`question-${question.id}`" :value="option.option"
+                                                v-model="answers[question.id]"
+                                                @change="handleRadioClick(question.text, question.id, option.option)"
+                                                >
+
+
+                                            <label :for="`question-${question.id}-answer-${option.id}`"></label>
+                                        </td>
+                                        <td v-if="requiresTextInput(question.id)">
+                                            <input type="text" class="form-control" v-model="textResponses[question.id]"
+                                                :required="requiresTextInput(question.id)" placeholder="Please Specify"
+                                                @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id)">
+                                        </td>
+                                    </template>
+
+                                    <template v-else>
+                                        <td colspan="6">
+                                            <input type="text" class="form-control mb-3" placeholder="Answer 1"
+                                                v-model="textResponses[question.id + '_1']" required
+                                                @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_1')">
+                                            <input type="text" class="form-control" placeholder="Answer 2"
+                                                v-model="textResponses[question.id + '_2']" required
+                                                @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_2')">
+                                        </td>
+                                    </template>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
-                <!-- Layout for "ASSIST" question set -->
-                <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
-                    <h4 class="my-5 text-center">{{ currentQuestion.text }}</h4>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Substances</th>
-                                <th v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
-                                    {{ option.option }}
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
-                                <td class="text-capitalize">{{ renderSubstanceOptions(substance) }}</td>
-                                <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
-                                    <input type="radio" :name="`substance-${substance}`" :value="option.id"
-                                        @change="handleAnswerSelection(option, substance)" required />
-                                    <span class="d-none">{{ option.points }}</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Layout for "SCHOOL ENV" question set -->
-                <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Question</th>
-                                <th>Strongly Agree</th>
-                                <th>Agree</th>
-                                <th>Neutral/Indifferent</th>
-                                <th>Disagree</th>
-                                <th>Strongly Disagree</th>
-                                <th v-if="requiresTextInput()">Specify</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
-                                <td>{{ question.text }}</td>
-                                <template v-if="index < 8"> <!-- For questions 1-8 -->
-                                    <td v-for="option in question.answers.slice().reverse()" :key="option.id"
-                                        class="text-center">
-                                        <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
-                                            :name="`question-${question.id}`" :value="option.option"
-                                            v-model="answers[question.id]"
-                                            @change="handleRadioClick(question.text, question.id, option.option)" required>
-
-
-                                        <label :for="`question-${question.id}-answer-${option.id}`"></label>
-                                    </td>
-                                    <td v-if="requiresTextInput(question.id)">
-                                        <input type="text" class="form-control" v-model="textResponses[question.id]"
-                                            :required="requiresTextInput(question.id)" placeholder="Please Specify"
-                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id)">
-                                    </td>
-                                </template>
-
-                                <template v-else>
-                                    <td colspan="6">
-                                        <input type="text" class="form-control mb-3" placeholder="Answer 1"
-                                            v-model="textResponses[question.id + '_1']" required
-                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_1')">
-                                        <input type="text" class="form-control" placeholder="Answer 2"
-                                            v-model="textResponses[question.id + '_2']" required
-                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_2')">
-                                    </td>
-                                </template>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
-            <!-- VueConfetti component -->
-            <div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
-                <ConfettiExplosion :particleCount="400" :particleSize="10" :duration="5000" :force="0.8" />
-            </div>
-
-            <!-- Footer buttons -->
-            <div class="card-footer text-end">
-                <div class="button-group">
-                    <button @click="goBack" class="btn rounded-btn back-button">
-                        <i class="fas fa-arrow-left"></i> Back
-                    </button>
-                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'" @click="submitFormData(answerOption, question)"
-                        class="btn rounded-btn submit-button">
-                        <i class="fas fa-check"></i> Submit
-                    </button>
-                    <button v-if="currentQuestionSetName === 'ASSIST'" @click="jumpToNextQuestion"
-                        class="btn rounded-btn submit-button">
-                        Next <i class="fas fa-chevron-right ms-2"></i>
-                    </button>
-                    <button @click="flushStore" class="btn rounded-btn back-button">
-                        <i class="fas fa-undo"></i> Reset Progress
-                    </button>
+                <!-- Footer buttons -->
+                <div class="card-footer text-end">
+                    <div class="button-group">
+                        <button @click="goBack" class="btn rounded-btn back-button">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button v-if="currentQuestionSetName === 'SCHOOL ENV'"
+                            @click="submitFormData(answerOption, question)" class="btn rounded-btn submit-button">
+                            <i class="fas fa-check"></i> Submit
+                        </button>
+                        <button v-if="currentQuestionSetName === 'ASSIST'" @click="jumpToNextQuestion"
+                            class="btn rounded-btn submit-button">
+                            Next <i class="fas fa-chevron-right ms-2"></i>
+                        </button>
+                        <button @click="flushStore" class="btn rounded-btn back-button">
+                            <i class="fas fa-undo"></i> Reset Progress
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -353,8 +356,23 @@ const handleStorageChange = () => {
     answeredSubstances.value = updatedAnsweredSubstances;
 };
 
-function findLoggedQuestionIndex(question) {
-    return testResponses.responses.findIndex(entry => entry.question === question);
+// function findLoggedQuestionIndex(question) {
+//     return testResponses.responses.findIndex(entry => entry.question === question);
+// }
+
+function findLoggedQuestionIndex(question, substance) {
+    return testResponses.responses.findIndex(entry =>
+        entry.question === question &&
+        (entry.substance === undefined || entry.substance === substance)
+    );
+}
+
+function findLoggedQuestionSchoolEnvIndex(question) {
+    return testResponses.responses.findIndex(entry =>
+        entry.question === question &&
+        entry.setName === 'SCHOOL ENV' && // Check for "SCHOOL ENV" question set
+        entry.response === 'Strongly Disagree' // Check for previous "Strongly Disagree"
+    );
 }
 
 function logQuestionAndResponse(option, substance) {
@@ -363,45 +381,37 @@ function logQuestionAndResponse(option, substance) {
     const response = option.option;
     const point = option.points;
 
-    const index = findLoggedQuestionIndex(questionText);
+    const index = findLoggedQuestionIndex(questionText, substance);
 
-    logEntry.question = questionText;
-    logEntry.setName = questionSetName;
-    logEntry.response = response;
-    logEntry.point = point;
-    logEntry.substance = null;
-    logEntry.diagnosis = null;
+    const logEntry = {
+        question: questionText,
+        setName: questionSetName,
+        response: response,
+        point: point,
+        substance: substance || null, // Set substance to null if not provided
+        diagnosis: null,
+    };
 
     const answer = response.trim();
 
-    // Check if the question set is ASSIST
-    if (questionSetName === 'ASSIST' && answer) {
-        logEntry.substance = substance;
-        answers.substanceName = substance;
-
-        // Check if the substance is already answered
-        if (!Object.prototype.hasOwnProperty.call(substanceAnswered, substance)) {
-            substanceAnswered[substance] = {};  // Initialize if not already present
-        }
-
-        substanceAnswered[substance] = answer === 'Yes';
-
-        // Check if the index is found
-        if (index !== -1) {
-            // Check if the substance is the same as the existing entry
-            if (testResponses.responses[index].substance === substance) {
-                // Replace the old entry with the new one
-                testResponses.responses[index] = { ...logEntry };
-                console.log('Log Entry Replaced:', logEntry);
-            }
-        } else {
-            // Add the new entry if the index is not found
-            testResponses.responses.push({ ...logEntry });
-            console.log('New Log Entry Added:', logEntry);
+    if (questionSetName === 'ASSIST') {
+        if (answer) {
+            logEntry.substance = substance;
+            answers.substanceName = substance;
+            substanceAnswered[substance] = answer === 'Yes';
         }
     }
-}
 
+    if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
+        console.log('Log Entry Replacing (same substance):', logEntry);
+        testResponses.responses[index] = logEntry;
+    } else {
+        console.log('Log Entry:', logEntry);
+        // Log even if substance is different
+        console.log('(Substance different from existing entry)');
+        testResponses.responses.push(logEntry);
+    }
+}
 
 function logQuestionAndResponseWithDiagnosis(option) {
     const questionText = currentQuestionText.value;
@@ -443,11 +453,11 @@ function logQuestionAndResponseWithDiagnosis(option) {
             // Move the logEntry push here to ensure it's done after diagnosis is captured
             if (index !== -1) {
                 // Replace the existing entry with the new one
-                // console.log('Log Entry Replaced:', logEntry);
+                console.log('Log Entry Replaced:', logEntry);
                 testResponses.responses[index] = { ...logEntry };
             } else {
                 // Log the entry if it's not already logged
-                // console.log('Log Entry:', logEntry);
+                console.log('Log Entry:', logEntry);
                 testResponses.responses.push({ ...logEntry });
             }
         } else {
@@ -476,38 +486,74 @@ function logQuestionAndResponseWithDiagnosis(option) {
 function logQuestionAndResponseSchoolEnv(question, answerOption, questionId, value) {
     const questionSetName = currentQuestionSetName.value;
 
-    const index = findLoggedQuestionIndex(question);
+    // Update answers with explicit "Strongly Disagree" (forceful)
+    answers[questionId] = answerOption === 'Strongly Disagree' ? 'Strongly Disagree' : answerOption;
 
-    let logEntry = {
-        question: question,
-        setName: questionSetName,
-        response: answerOption,
-        questionId: questionId,
-        specify: ''
-    };
+    const existingIndex = findLoggedQuestionSchoolEnvIndex(question);
 
-    if (value) {
-        logEntry.specify = value;
+    const specifyValue = value || ''; // Set specify to empty string if value is not provided
+
+    // Update based on existing "Strongly Disagree" selection and answer change
+    if (existingIndex !== -1 && answerOption !== 'Strongly Disagree') {
+        const isStandardOption = ['Strongly Agree', 'Agree', 'Neutral/Indifferent', 'Disagree'].includes(answerOption);
+        if (!isStandardOption) {
+            testResponses.responses[existingIndex].specify = answerOption;
+            console.log('Log Entry (Updated Specify):', testResponses.responses[existingIndex]);
+        } else {
+            testResponses.responses[existingIndex] = {
+                question: question,
+                setName: questionSetName,
+                response: answerOption,
+                questionId: questionId,
+                specify: specifyValue,
+            };
+            console.log('Log Entry (Replaced Object):', testResponses.responses[existingIndex]);
+        }
     } else {
-        if (answerOption === 'Strongly Disagree' && textResponses[questionId + '_specify']) {
-            logEntry.specify = textResponses[questionId + '_specify'];
+        // Check for "(mention two things)" and handle open-ended responses
+        const containsMentionTwoThings = question.toLowerCase().includes('(mention two things)');
+        if (containsMentionTwoThings) {
+            // Update logEntry for open-ended responses
+            const logEntry = {
+                question: question,
+                setName: questionSetName,
+                response: answerOption, // Store answer for open-ended question
+                questionId: questionId,
+                specify: specifyValue,
+            };
+
+            if (existingIndex === -1) {
+                console.log('Log Entry (Open-Ended):', logEntry);
+                testResponses.responses.push({ ...logEntry });
+            } else {
+                console.log('Log Entry (Updated Open-Ended):', logEntry);
+                testResponses.responses[existingIndex] = { ...logEntry };
+            }
+        } else {
+            // Standard logic for non-open-ended questions
+            if (answerOption !== 'Strongly Disagree') {
+                textResponses[questionId + '_specify'] = '';
+            } else {
+                textResponses[questionId + '_specify'] = specifyValue;
+            }
+
+            const logEntry = {
+                question: question,
+                setName: questionSetName,
+                response: answerOption === 'Strongly Disagree' ? 'Strongly Disagree' : answerOption,
+                questionId: questionId,
+                specify: specifyValue,
+            };
+
+            if (existingIndex === -1) {
+                console.log('Final logEntry before update:', logEntry);
+                testResponses.responses.push({ ...logEntry });
+            } else {
+                console.log('Log Entry:', logEntry);
+            }
         }
     }
-
-    const containsMentionTwoThings = question.toLowerCase().includes('(mention two things)');
-
-    if (index !== -1 && !containsMentionTwoThings) {
-        // Replace the existing entry with the new one
-        // console.log('Log Entry Replaced:', logEntry);
-        testResponses.responses[index] = { ...logEntry };
-    } else {
-        // Log the entry if it's not already logged
-        // console.log('Log Entry:', logEntry);
-        testResponses.responses.push({ ...logEntry });
-    }
 }
-
-
 
 // Watch for changes in current question index and save progress
 watch(currentQuestionIndex, (newIndex) => {
@@ -722,6 +768,8 @@ const jumpToNextQuestion = () => {
                 return;
             }
         }
+    } else {
+        currentQuestionIndex.value++;
     }
     currentQuestionIndex.value++;
 };
@@ -757,19 +805,13 @@ function goBack() {
 
 const submitFormData = async () => {
     try {
-        // Retrieve user ID from local storage
+        if (checkInvalidInputs()) {
+            return;
+        }
         const userData = JSON.parse(localStorage.getItem('userDetailsStore'));
-
-        // Extract user ID from user data
         const userId = userData?.user?.id;
-
-        // Log the retrieved user ID
-        // console.log('User ID:', userId);
-
-        // Transform the testResponses data into the structure expected by the backend
         const submissionData = testResponses.responses.map(response => {
             return {
-                // Include user ID in each submission object
                 user: userId,
                 test_type_name: 'Cluster Screening',
                 question_set_name: response.setName ?? '',
@@ -788,7 +830,6 @@ const submitFormData = async () => {
         // Show confetti explosion  
         showConfetti.value = true;
 
-        // Show success message
         await Swal.fire({
             icon: 'success',
             title: 'Form Submitted Successfully!',
@@ -797,8 +838,12 @@ const submitFormData = async () => {
         });
 
         // Reset testResponses
+        progressStore.resetStore();
+        localStorage.removeItem('answeredSubstances');
+        localStorage.removeItem('otherSubstanceName');
+        localStorage.removeItem('submissionData');
+        localStorage.removeItem('progress');
         testResponses.responses = [];
-        flushStore()
 
         // Redirect to student dashboard
         router.push('/student-dashboard');
@@ -813,7 +858,7 @@ const submitFormData = async () => {
             confirmButtonText: 'OK'
         });
 
-        router.push('/student-dashboard');
+        router.push('/student-dashboard/screening-start');
     }
 };
 
@@ -824,15 +869,31 @@ function isSelectedAnswer(option) {
 }
 
 function flushStore() {
-    progressStore.resetStore();
-    localStorage.removeItem('answeredSubstances');
-    localStorage.removeItem('otherSubstanceName');
-    localStorage.removeItem('submissionData');
-    localStorage.removeItem('progress');
-    testResponses.responses = [];
-    testResponses.responses = [];
-    Swal.fire('Progress Reset', 'All progress has been reset.', 'info').then(() => {
-        location.reload();
+    Swal.fire({
+        title: 'Confirm Reset',
+        text: 'Are you sure you want to reset your progress?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, reset it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            progressStore.resetStore();
+            localStorage.removeItem('answeredSubstances');
+            localStorage.removeItem('otherSubstanceName');
+            localStorage.removeItem('submissionData');
+            localStorage.removeItem('progress');
+            testResponses.responses = [];
+            testResponses.responses = [];
+            Swal.fire({
+                title: 'Cleaned Successfully',
+                text: 'The store has been flushed successfully.',
+                icon: 'success',
+                timer: 800,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        }
     });
 }
 
@@ -844,6 +905,11 @@ function renderSubstanceOptions(substance) {
 </script>
 
 <style scoped>
+.border-div-test {
+    border: 1px solid #c9c9c9;
+    border-radius: 10px;
+}
+
 .message {
     text-align: center;
     font-size: 24px;

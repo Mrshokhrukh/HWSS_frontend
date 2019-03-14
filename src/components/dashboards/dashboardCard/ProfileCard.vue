@@ -1,11 +1,12 @@
 <template>
     <div class="card">
-        <div class="card-body">
+        <div class="card-header">
             <h5 class="card-title">Profile</h5>
-
+        </div>
+        <div class="card-body">
             <!-- User Details -->
-            <div>
-                <h6 class="card-subtitle mb-2 text-muted">Profile Details</h6>
+            <div class="border p-3 mb-3">
+                <h6 class="card-subtitle mb-2 text-muted">User Details</h6>
                 <form>
                     <div v-for="(field, label) in userFields" :key="label" class="mb-3">
                         <label :for="label" class="form-label">{{ label }}</label>
@@ -15,12 +16,9 @@
                 </form>
             </div>
 
-            <!-- Separator -->
-            <hr>
-
             <!-- Agency Details -->
-            <div>
-                <h6 class="card-subtitle mb-2 text-muted">Your Agency Details</h6>
+            <div class="border p-3">
+                <h6 class="card-subtitle mb-2 text-muted">Agency Details</h6>
                 <form>
                     <div v-for="(field, label) in agencyFields" :key="label" class="mb-3">
                         <label :for="label" class="form-label">{{ label }}</label>
@@ -39,7 +37,7 @@
         </div>
     </div>
 </template>
-
+  
 <script setup>
 import { ref, onMounted } from 'vue';
 
@@ -74,3 +72,16 @@ const editDetails = () => {
     console.log('Edit button clicked');
 };
 </script>
+  
+<style scoped>
+/* Add any scoped styles here if needed */
+.card-body {
+    padding: 0;
+    /* Remove default padding to align with card-header and card-footer */
+}
+
+.card-footer {
+    padding: 1rem;
+    /* Add padding to the card footer for better spacing */
+}</style>
+  

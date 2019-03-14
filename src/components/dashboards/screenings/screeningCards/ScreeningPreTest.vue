@@ -1,55 +1,57 @@
 <template>
-	<div class="row container-fluid p-5">
-		<div class="col-md-8">
-			<div v-if="loading">
-				<!-- Placeholder for loading animation -->
-				<p>Loading...</p>
-			</div>
-			<div v-else>
-				<h1 class="text-center bold mb-4" v-if="clusterTestStatus === 'active'">
-					{{ clusterTestTitle }}
-				</h1>
-				<p class="custom-font mb-4" v-if="clusterTestStatus === 'active'">
-					{{ clusterTestContent }}
-				</p>
-				<p class="custom-text-color mb-5" v-if="clusterTestStatus === 'active'">
-					{{ clusterTestDisclaimer }}
-				</p>
-				<div class="d-flex justify-content-center" v-if="clusterTestStatus === 'active'">
-					<button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">
-						Continue
-					</button>
+	<div class="card p-5">
+		<div class="row border-div container-fluid p-5">
+			<div class="col-md-8">
+				<div v-if="loading" class="loading-container">
+					<div class="loading-spinner"></div>
+					<p>Loading...</p>
 				</div>
-				<div v-if="clusterTestStatus !== 'active'">
-					<p>
-						Currently, there are no tests available. In the meantime, consider reading
-						these articles for mental health awareness:
+				<div v-else>
+					<h1 class="text-center bold mb-4" v-if="clusterTestStatus === 'active'">
+						{{ clusterTestTitle }}
+					</h1>
+					<p class="custom-font mb-4" v-if="clusterTestStatus === 'active'">
+						{{ clusterTestContent }}
 					</p>
-					<ul>
-						<li>
-							<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-								target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i>
-							</a>
-						</li>
-						<li>
-							<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
-								Disorders <i class="fas fa-external-link-alt"></i></a>
-						</li>
-						<li>
-							<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
-								target="_blank">Coping with Drug Use and Addiction
-								<i class="fas fa-external-link-alt"></i></a>
-						</li>
-						<li>
-							<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
-								Health and Wellness <i class="fas fa-external-link-alt"></i></a>
-						</li>
-					</ul>
+					<p class="custom-text-color mb-5" v-if="clusterTestStatus === 'active'">
+						{{ clusterTestDisclaimer }}
+					</p>
+					<div class="d-flex justify-content-center" v-if="clusterTestStatus === 'active'">
+						<button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">
+							Continue
+						</button>
+					</div>
+					<div v-if="clusterTestStatus !== 'active'">
+						<p>
+							Currently, there are no tests available. In the meantime, consider reading
+							these articles for mental health awareness:
+						</p>
+						<ul>
+							<li>
+								<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
+									target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i>
+								</a>
+							</li>
+							<li>
+								<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
+									Disorders <i class="fas fa-external-link-alt"></i></a>
+							</li>
+							<li>
+								<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
+									target="_blank">Coping with Drug Use and Addiction
+									<i class="fas fa-external-link-alt"></i></a>
+							</li>
+							<li>
+								<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
+									Health and Wellness <i class="fas fa-external-link-alt"></i></a>
+							</li>
+						</ul>
+					</div>
 				</div>
 			</div>
-		</div>
-		<div class="col-md-4 text-center">
-			<img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon" />
+			<div class="col-md-4 text-center">
+				<img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon" />
+			</div>
 		</div>
 	</div>
 </template>
@@ -76,8 +78,8 @@ const cacheDuration = 5 * 60 * 1000;
 const continueAction = () => {
 	// emit("continue");
 	if (clusterTestStatus.value === 'active') {
-        router.push('/student-dashboard/screening-start')
-    }
+		router.push('/student-dashboard/screening-start')
+	}
 };
 
 async function checkClusterTestStatus() {
@@ -107,7 +109,10 @@ async function checkClusterTestStatus() {
 	} catch (error) {
 		console.error("Error fetching cluster test status:", error);
 	} finally {
-		loading.value = false;
+		// Simulate loading delay for demonstration
+		setTimeout(() => {
+			loading.value = false;
+		}, 2000); // 2 seconds delay
 	}
 }
 
@@ -131,6 +136,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.border-div {
+	border: 1px solid #c9c9c9;
+	border-radius: 10px;
+}
+
 .custom-size-btn {
 	width: 100%;
 	height: auto;
@@ -170,5 +180,35 @@ ul li a:hover {
 /* Add this to give links a slight underline on hover, making it clear t-ey are clickable */
 ul li a:hover {
 	text-decoration: underline;
+}
+
+/* Loading animation styles */
+.loading-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.loading-spinner {
+	border: 5px solid #f3f3f3;
+	/* Light grey */
+	border-top: 5px solid #2c6975;
+	/* Blue */
+	border-radius: 50%;
+	width: 50px;
+	height: 50px;
+	animation: spin 1s linear infinite;
+	margin-bottom: 10px;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
 }
 </style>

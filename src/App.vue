@@ -22,7 +22,7 @@ import endpoints from '@/api'
 import Cookies from 'js-cookie'
 
 const copyright = ref('')
-const isMobileDevice = ref(false) 
+const isMobileDevice = ref(false)
 const csrfToken = ref('')
 onMounted(async () => {
   try {

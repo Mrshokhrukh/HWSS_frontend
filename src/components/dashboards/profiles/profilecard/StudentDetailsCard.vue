@@ -1,127 +1,151 @@
 <template>
-    <div class="card">
-        <div class="card-header">
-            <h5 style="color: #2B656F; font-weight: bold">Personal Details</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div v-if="notification.show" :class="`notification ${notification.type}`">
+    <div class="card custom-card p-5">
+        <div class="border p-3">
+            <div class="card-header">
+                <h5 class="header-title">Personal Details</h5>
+            </div>
+            <div class="card-body">
+                <!-- Notification -->
+                <div class="notification" :class="notification.type" v-if="notification.show">
                     {{ notification.message }}
                 </div>
+
+                <!-- Personal Details Form -->
+                <form @submit.prevent="saveChanges">
+                    <div class="row g-3">
+                        <!-- Citizenship Identity Number -->
+                        <div class="col-md-6">
+                            <label>Citizenship Identity Number</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.identityNumber">
+                        </div>
+                        <!-- Email -->
+                        <div class="col-md-6">
+                            <label>Email</label>
+                            <input type="email" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.email">
+                        </div>
+                        <!-- Phone -->
+                        <div class="col-md-6">
+                            <label>Phone</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.phone">
+                        </div>
+                        <!-- Nationality -->
+                        <div class="col-md-6">
+                            <label>Nationality</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.nationality">
+                        </div>
+                        <!-- Parents Details -->
+                        <div class="col-md-12">
+                            <div class="card-header">
+                                <h5 class="header-title">Parents Details</h5>
+                            </div>
+                        </div>
+                        <!-- Mother's Name -->
+                        <div class="col-md-6">
+                            <label>Mother's Name</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.motherName">
+                        </div>
+                        <!-- Father's Name -->
+                        <div class="col-md-6">
+                            <label>Father's Name</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.fatherName">
+                        </div>
+                        <!-- Parent's Occupation -->
+                        <div class="col-md-6">
+                            <label>Parent's Occupation</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.userAgency.parentOccupation">
+                        </div>
+                        <!-- Parent's Status -->
+                        <div class="col-md-6">
+                            <label>Parent's Status</label>
+                            <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.userAgency.parentStatus">
+                                <option value="single">Single Parent</option>
+                                <option value="married">Married/Together</option>
+                                <option value="divorced">Divorced</option>
+                                <option value="dead">One of the Parent Dead</option>
+                            </select>
+                        </div>
+                        <!-- Guardian Name (Optional) -->
+                        <div class="col-md-6">
+                            <label>Guardian Name (Optional)</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.guardianName">
+                        </div>
+                        <!-- Guardian Occupation (Optional) -->
+                        <div class="col-md-6">
+                            <label>Guardian Occupation (Optional)</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.guardianOccupation">
+                        </div>
+                        <!-- Permanent Address -->
+                        <div class="col-md-12">
+                            <div class="card-header">
+                                <h5 class="header-title">Permanent Address</h5>
+                            </div>
+                        </div>
+                        <!-- Village -->
+                        <div class="col-md-4">
+                            <label>Village</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddVillage">
+                        </div>
+                        <!-- Gewog -->
+                        <div class="col-md-4">
+                            <label>Gewog</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddGewog">
+                        </div>
+                        <!-- Dzongkhag -->
+                        <div class="col-md-4">
+                            <label>Dzongkhag</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddDzongkhag">
+                        </div>
+                        <!-- Present Address -->
+                        <div class="col-md-12">
+                            <div class="card-header">
+                                <h5 class="header-title">Present Address</h5>
+                            </div>
+                        </div>
+                        <!-- Currently Living With -->
+                        <div class="col-md-6">
+                            <label>Currently Living With</label>
+                            <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.currentLivingWith">
+                                <option value="parents">Parents</option>
+                                <option value="guardian">Guardian</option>
+                                <option value="sibling">Elder Sibling(s)</option>
+                                <option value="others">Others(s)</option>
+                            </select>
+                        </div>
+                        <!-- Specify with whom you live with (Conditional) -->
+                        <div v-if="userDetails.user.currentLivingWith === 'others'" class="col-md-6">
+                            <label>Specify with whom you live with</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.otherLivingWith">
+                        </div>
+                        <!-- Present Address -->
+                        <div
+                            :class="{ 'col-md-6': userDetails.user.currentLivingWith !== 'others', 'col-md-12': userDetails.user.currentLivingWith === 'others' }">
+                            <label>Present Address</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.psAddDzongkhag">
+                        </div>
+                    </div>
+                </form>
             </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label>Citizenship Identity Number</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.identityNumber">
-                </div>
-                <div class="col-md-6">
-                    <label>Email</label>
-                    <input type="email" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.email">
-                </div>
-                <div class="col-md-6">
-                    <label>Phone</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.phone">
-                </div>
-                <div class="col-md-6">
-                    <label>Nationality</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.nationality">
-                </div>
-                <div class="card-header">
-                    <h5 style="color: #2B656F; font-weight: bold">Parents Details</h5>
-                </div>
-                <div class="col-md-6">
-                    <label>Mother's Name</label>
-                    <input type="text" class="form-control input-noneditable" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.motherName">
-                </div>
-                <div class="col-md-6">
-                    <label>Father's Name</label>
-                    <input type="text" class="form-control input-noneditable" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.fatherName">
-                </div>
-                <div class="col-md-6">
-                    <label>Parent's Occupation</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.userAgency.parentOccupation">
-                </div>
-                <!-- <div class="col-md-6 d-none">
-                    <label>Father's Occupation</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.fatherOccupation"> dszsz
-                </div> -->
-                <div class="col-md-6">
-                    <label>Parent's Status</label>
-                    <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.userAgency.parentStatus">
-                        <option value="single">Single Parent</option>
-                        <option value="married">Married/Together</option>
-                        <option value="divorced">Divorced</option>
-                        <option value="dead">One of the Parent Dead</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label>Guardian Name (Optional)</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.guardianName">
-                </div>
-                <div class="col-md-6">
-                    <label>Guardian Occupation (Optional)</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.guardianOccupation">
-                </div>
-                <div class="card-header">
-                    <h5 style="color: #2B656F; font-weight: bold">Permanent Address</h5>
-                </div>
-                <div class="col-md-6">
-                    <label>Village</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.permAddVillage">
-                </div>
-                <div class="col-md-6">
-                    <label>Gewog</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.permAddGewog">
-                </div>
-                <div class="col-md-6">
-                    <label>Dzongkhag</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetails.user.permAddDzongkhag">
-                </div>
-                <div class="card-header">
-                    <h5 style="color: #2B656F; font-weight: bold">Present Address</h5>
-                </div>
-                <div class="col-md-6">
-                    <label>Currently Living With</label>
-                    <select class="form-select" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.currentLivingWith">
-                        <option value="parents">Parents</option>
-                        <option value="guardian">Guardian</option>
-                        <option value="sibling">Elder Sibling(s)</option>
-                        <option value="others">Others(s)</option>
-                    </select>
-                </div>
-                <!-- Conditional field that should appear if 'others' is selected -->
-                <div v-if="userDetails.user.currentLivingWith === 'others'" class="col-md-6">
-                    <label>Please Specify with whom you live with</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.otherLivingWith">
-                </div>
-                <!-- Class for Present Address is conditional -->
-                <div :class="userDetails.user.currentLivingWith === 'others' ? 'col-md-12' : 'col-md-6'">
-                    <label>Present Address</label>
-                    <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                        v-model="userDetails.user.psAddDzongkhag">
-                </div>
+            <div class="card-footer text-end">
+                <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
+                <button v-if="isEditing" class="btn custom-btn" type="submit">Save Changes</button>
+                <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
             </div>
-        </div>
-        <div class="card-footer text-end">
-            <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
-            <button v-if="isEditing" class="btn custom-btn" @click="saveChanges">Save Changes</button>
-            <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
         </div>
     </div>
 </template>
@@ -191,9 +215,6 @@ watch(() => userDetailsStore.$state, (newState) => {
 }, { deep: true });
 </script>
 
-
-
-
 <style scoped>
 .input-editable {
     background-color: #fff;
@@ -205,13 +226,28 @@ watch(() => userDetailsStore.$state, (newState) => {
 
 .if-others {
     display: none;
-
-
 }
 
-/* Show the input field when 'others' is selected and in edit mode */
 .if-others[editing]:not([readonly]) {
     display: block;
+}
+
+
+/* Add border and adjust spacing */
+.custom-card {
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.border {
+    border: 1px solid #939393;
+    border-radius: 10px;
+}
+
+.header-title {
+    color: #2B656F;
+    font-weight: bold;
 }
 
 .notification {
@@ -243,4 +279,3 @@ watch(() => userDetailsStore.$state, (newState) => {
     margin-left: 0.5rem;
 }
 </style>
-  

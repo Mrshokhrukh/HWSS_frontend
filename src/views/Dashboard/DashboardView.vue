@@ -6,10 +6,17 @@
         <SideNavbar :sidebarActive="sidebarOpen" @toggleSidebar="toggleSidebar" />
       </aside>
 
-      <!-- Main Content -->
+      <!-- Main Content with Top Navbar -->
       <main class="col-lg-10 col-md-10 col-sm-12">
+        <!-- Top Navbar -->
         <div class="row">
-          <!-- Dashboard Component -->
+          <div class="col-md-12 mb-5" v-if="currentComponent === CounsellorDashboard">
+            <TopNavbarCard />
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
           <div class="col-12">
             <component :is="currentComponent"></component>
           </div>
@@ -19,6 +26,7 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed } from 'vue';
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
@@ -26,6 +34,7 @@ import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
+import TopNavbarCard from '@/components/dashboards/CounsellorDashboardCard/TopNavbarCard.vue';
 
 const sidebarOpen = ref(false);
 
@@ -33,20 +42,24 @@ const sidebarOpen = ref(false);
 const userDetailsStore = useUserDetailsStore();
 
 const currentComponent = computed(() => {
-  const role = userDetailsStore.user.role;
+  const role = userDetailsStore.user.role.toLowerCase().replace(/\s+/g, '-');
 
   switch (role) {
     case 'student':
       return StudentDashboard;
-    case 'school_counselor':
-    case 'clinical_counselor':
+    case 'school-counselor':
+      return CounsellorDashboard;
+    case 'clinical-counselor':
       return CounsellorDashboard;
     case 'admin':
+      return AdminDashboard;
+    case 'administrator':
       return AdminDashboard;
     default:
       return StudentDashboard;
   }
 });
+
 
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
@@ -56,5 +69,5 @@ const toggleSidebar = () => {
 
 
 <style scoped>
-/* Add any additional styles if needed */
+/* exampe css */
 </style>

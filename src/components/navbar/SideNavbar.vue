@@ -52,7 +52,24 @@ const fullName = computed(() => {
 	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
 });
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
-const userType = computed(() => userDetailsStore.user.role.toLowerCase());
+const userType = computed(() => {
+  const role = userDetailsStore.user.role.toLowerCase();
+
+  const removeSchoolClinicalCounselor = (str) => {
+    return str.replace(/^(school|clinical)?\s*counselor$/i, 'counselor').trim();
+  };
+
+  const toSlug = (str) => {
+    return str.replace(/\s+/g, '-').toLowerCase();
+  };
+
+  const sanitizedRole = removeSchoolClinicalCounselor(role);
+
+  return toSlug(sanitizedRole);
+});
+
+
+
 const fetchedMenus = ref([]);
 
 sidebarStore.initializeSidebarState();
@@ -81,7 +98,7 @@ const logout = async () => {
 				text: 'You have been successfully logged out of the system.',
 				icon: 'success',
 				showConfirmButton: false,
-                timer: 1200
+				timer: 1200
 			});
 
 			router.push("/login");
@@ -103,7 +120,7 @@ const logout = async () => {
 const menus = computed(() => {
 	let baseRoute = `/${userType.value}-dashboard`;
 	let staticMenuItems = [
-		{ text: "Dashboard", route: baseRoute, iconClass: "fas fa-chart-bar" },
+		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
 		{ text: "Profile", route: `${baseRoute}/profile`, iconClass: "fas fa-user" },
 	];
 

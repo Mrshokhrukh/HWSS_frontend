@@ -1,18 +1,24 @@
 <template>
     <div class="help-line-card">
-        <ul>
-            <li v-for="(helpline, index) in helplines" :key="index">
-                <img src="@/assets/images/callicon.png" alt="Call Icon">
-                <a :href="`tel:${helpline.number}`">Call {{ helpline.number }} {{ helpline.description }}</a>
-            </li>
-        </ul>
+        <div v-for="(helpline, index) in helplines" :key="index" class="helpline-item">
+            <div class="icon-container">
+                <img :src="helpline.icon" :alt="helpline.description">
+            </div>
+            <div class="helpline-info">
+                <a :href="`tel:${helpline.number}`">
+                    <h5>{{ helpline.name }}: {{ helpline.number }}</h5>
+                </a>
+                <p>{{ helpline.description }}</p>
+            </div>
+        </div>
     </div>
 </template>
-
+  
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import imgIcon from '@/assets/images/callicon.png';
 
 const helplines = ref([]);
 
@@ -22,8 +28,18 @@ onMounted(async () => {
         if (response.data && response.data.length > 0) {
             const data = response.data[0];
             helplines.value = [
-                { number: data.helpline_number_1, description: "For The PEMA Helpline Services" },
-                { number: data.helpline_number_2, description: "For The Protection Services" }
+                {
+                    number: data.helpline_number_1,
+                    name: "PEMA Helpline",
+                    description: "Call for PEMA Helpline Services",
+                    icon: imgIcon
+                },
+                {
+                    number: data.helpline_number_2,
+                    name: "Protection Services",
+                    description: "Call for Protection Services",
+                    icon: imgIcon
+                }
             ];
         }
     } catch (error) {
@@ -31,49 +47,43 @@ onMounted(async () => {
     }
 });
 </script>
-
+  
 <style scoped>
-ul {
-    list-style-type: none;
-    /* Removes bullets */
-    padding: 0;
-    /* Removes default padding */
-    margin: 0;
-    /* Removes default margin */
-}
-
-li {
-    margin-bottom: 10px;
-    /* Adds space between list items */
+.help-line-card {
     display: flex;
-    /* Aligns the icon and text side by side */
+    flex-direction: column;
+}
+
+.helpline-item {
+    display: flex;
     align-items: center;
-    /* Centers items vertically */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
 }
 
-li:last-child {
-    margin-bottom: 0;
-    /* Removes margin from the last item */
+.icon-container {
+    margin-right: 1.5rem;
 }
 
-li img {
-    margin-right: 10px;
-    /* Adds space between the icon and the text */
+.icon-container img {
+    width: 40px;
+    height: 40px;
+}
+
+.helpline-info {
+    flex: 1;
 }
 
 a {
     color: #2B656F;
-    /* Changes link color */
     text-decoration: none;
-    /* Removes underline from links */
-    line-height: 1.5;
-    /* Improves line spacing for better readability */
     transition: color 0.3s ease;
-    /* Smooth transition for link color on hover */
 }
 
 a:hover {
     color: #1D4851;
-    /* Darkens link color on hover for visual feedback */
 }
 </style>
+  

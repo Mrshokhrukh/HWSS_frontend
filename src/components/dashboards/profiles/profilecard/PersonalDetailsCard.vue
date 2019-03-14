@@ -1,64 +1,66 @@
 <template>
-  <div class="card">
-    <div class="card-header">
-      <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
-    </div>
-    <div class="user-profile text-center my-1">
-      <img :src="profilePictureUrl" alt="User" class="profile-pic" />
-    </div>
+  <div class="card p-4">
+    <div class="border-div-personal p-3">
+      <div class="card-header">
+        <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
+      </div>
+      <div class="user-profile text-center">
+        <img :src="profilePictureUrl" alt="User" class="profile-pic" />
+      </div>
 
-    <div class="card-body">
+      <div class="card-body p-1">
 
-      <!-- Example content -->
-      <div class="col-md-12">
-        <label>User Name</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.username">
-      </div>
-      <div class="col-md-12">
-        <label>Student Number</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.userAgency.userCode">
-      </div>
-      <div class="col-md-12">
-        <label>Is Gyalsung</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.isGyalsung">
-      </div>
-      <div class="col-md-12">
-        <label>Gender</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.gender">
-      </div>
-      <div class="col-md-12">
-        <label>Date of Birth</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.dateOfBirth">
-      </div>
-      <div class="col-md-12">
-        <label>Age</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userAge">
-      </div>
-      <div class="col-md-12">
-        <label>Role</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.role">
-      </div>
-      <div class="col-md-12">
-        <label>Class/Section</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled v-model="userClassSection">
-      </div>
-      <div class="col-md-12">
-        <label>School</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.agency.agencyName">
+        <!-- Example content -->
+        <div class="col-md-12">
+          <label>User Name</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.user.username">
+        </div>
+        <div class="col-md-12">
+          <label>Student Number</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.userAgency.userCode">
+        </div>
+        <div class="col-md-12">
+          <label>Is Gyalsung</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.user.isGyalsung">
+        </div>
+        <div class="col-md-12">
+          <label>Gender</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.user.gender">
+        </div>
+        <div class="col-md-12">
+          <label>Date of Birth</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.user.dateOfBirth">
+        </div>
+        <div class="col-md-12">
+          <label>Age</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled v-model="userAge">
+        </div>
+        <div class="col-md-12">
+          <label>Role</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.user.role">
+        </div>
+        <div class="col-md-12">
+          <label>Class/Section</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled v-model="userClassSection">
+        </div>
+        <div class="col-md-12">
+          <label>School</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.agency.agencyName">
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted  } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
 import deFaultProfilePic from "@/assets/images/icon.png";
 
@@ -112,6 +114,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.border-div-personal {
+  border: 1px solid #c9c9c9;
+  border-radius: 10px;
+}
+
 .input-noneditable {
   background-color: #68B2A03D;
 }

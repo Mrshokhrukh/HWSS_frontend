@@ -1,30 +1,26 @@
 <template>
     <div class="container text-center py-3">
-        <div class="row">
-            <div class="col-md-12 d-flex align-items-center justify-content-center mt-3">
-                <!-- Bind logo src dynamically -->
-                <img class="img-fluid logo" :src="logoUrl" alt="Company Logo">
-                <!-- Company name from JavaScript -->
-                <h3 class="company-name">{{ companyName }}</h3>
-            </div>
-
+        <div class="row align-items-center justify-content-center">
+            <img class="img-fluid logo" :src="logoUrl" alt="Company Logo">
+            <h3 class="company-name">{{ companyName }}</h3>
         </div>
 
         <div class="row text-content-center">
-            <!-- Sections and services populated dynamically -->
-            <div v-for="(section, index) in serviceSections" :key="index">
-                <h5 class="text-center">{{ section.title }}</h5>
-                <hr />
-                <ul>
-                    <li v-for="(service, index) in section.services" :key="index" class="my-2">
-                        <a href="">{{ service }}</a>
-                    </li>
-                </ul>
+            <div v-for="(section, index) in serviceSections" :key="index" class="col-md-12">
+                <div class="section-container mb-4">
+                    <h5>{{ section.title }}</h5>
+                    <hr class="my-3">
+                    <ul class="list-unstyled">
+                        <li v-for="(service, index) in section.services" :key="index" class="my-2">
+                            <a href="">{{ service }}</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </template>
-
+  
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
@@ -58,7 +54,6 @@ onMounted(async () => {
         const response = await axios.get(endpoints.settings);
         if (response.data && response.data.length > 0) {
             const data = response.data[0];
-            // Set the logo URL dynamically
             logoUrl.value = data.response_service_logo;
         }
     } catch (error) {
@@ -66,49 +61,42 @@ onMounted(async () => {
     }
 });
 </script>
-
+  
 <style scoped>
-ul {
-    list-style-type: none;
-    padding: 0;
-}
-
 .logo {
     max-width: 100px;
+    margin-right: 10px;
 }
 
 .company-name {
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 10px;
-    /* Adjust the left margin as needed */
-    margin-top: 20px;
-    /* Adds spacing above the company name */
+    color: #2B656F;
+    font-size: 1.5rem;
+}
+
+.section-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
 }
 
 .text-content-center h5 {
-    margin-top: 30px;
-    /* Adds spacing above section titles */
+    margin-top: 20px;
+    font-weight: bold;
 }
 
 hr {
-    margin: 20px auto;
-    /* Adjusts horizontal rule styling */
+    margin: 15px auto;
+    border-top: 1px solid #ccc;
     width: 80%;
-    /* Adjusts the width of the horizontal rule */
 }
 
 a {
     color: #2B656F;
-    /* Customize link color */
     text-decoration: none;
-    /* Removes underline */
     transition: color 0.3s;
-    /* Smooth transition for color change */
 }
 
 a:hover {
     color: #1D4851;
-    /* Darkens the link color on hover */
 }
 </style>
+  
