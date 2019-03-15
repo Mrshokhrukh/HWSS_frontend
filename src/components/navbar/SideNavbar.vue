@@ -11,7 +11,7 @@
 			<nav class="menu-items">
 				<router-link v-for="(menu, index) in menus" :key="index" :to="menu.route" class="side-btn"
 					:class="{ active: $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
-					<i :class="menu.iconClass"></i>
+					<i :class="menu.iconClass" class="link-icon"></i>
 					<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
 				</router-link>
 			</nav>
@@ -53,19 +53,19 @@ const fullName = computed(() => {
 });
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 const userType = computed(() => {
-  const role = userDetailsStore.user.role.toLowerCase();
+	const role = userDetailsStore.user.role.toLowerCase();
 
-  const removeSchoolClinicalCounselor = (str) => {
-    return str.replace(/^(school|clinical)?\s*counselor$/i, 'counselor').trim();
-  };
+	const removeSchoolClinicalCounselor = (str) => {
+		return str.replace(/^(school|clinical)?\s*counselor$/i, 'counselor').trim();
+	};
 
-  const toSlug = (str) => {
-    return str.replace(/\s+/g, '-').toLowerCase();
-  };
+	const toSlug = (str) => {
+		return str.replace(/\s+/g, '-').toLowerCase();
+	};
 
-  const sanitizedRole = removeSchoolClinicalCounselor(role);
+	const sanitizedRole = removeSchoolClinicalCounselor(role);
 
-  return toSlug(sanitizedRole);
+	return toSlug(sanitizedRole);
 });
 
 
@@ -164,9 +164,15 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.link-icon {
+	font-size: 1.5rem;
+	margin-right: 0.5rem;
+	margin-left: 0.5rem;
+}
+
 .mini-profile-pic {
-	width: 30px;
-	height: 30px;
+	width: 35px;
+	height: 35px;
 	margin: 2rem auto;
 	border-radius: 50%;
 	border: 3px solid white;
@@ -180,7 +186,7 @@ onMounted(() => {
 	transition: width 0.3s ease-in-out;
 	display: flex;
 	flex-direction: column;
-	padding-bottom: 3rem;
+	padding-bottom: 1rem;
 	position: fixed;
 	z-index: 9999;
 	height: 100vh;
@@ -242,6 +248,7 @@ onMounted(() => {
 
 .link-text {
 	padding-left: 1rem;
+	font-size: 1.1rem;
 }
 
 .logout {
@@ -250,7 +257,7 @@ onMounted(() => {
 
 /* Adjust sidebar width when collapsed */
 .sidebar:not(.sidebar-open) {
-	width: 50px;
+	width: 4.5rem;
 	/* Adjust according to your icon size */
 }
 </style>

@@ -56,7 +56,6 @@ import ImageCard from "@/components/dashboards/dashboardCard/ImageCard.vue";
 import PemaResponseServicesCard from "@/components/dashboards/dashboardCard/PemaResponseServicesCard.vue";
 import ScreeningTest from "@/components/dashboards/screenings/ScreeningTest.vue";
 import StudentProfile from "@/components/dashboards/profiles/StudentProfile.vue";
-// import AssistTest from "@/components/dashboards/screenings/screeningCards/AssistTest.vue"
 import ScreeningStart from "./screenings/ScreeningStart.vue";
 
 const userName = ref("");

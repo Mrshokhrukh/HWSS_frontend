@@ -13,6 +13,7 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Dashboard`, requiresAuth: true }
     },
+    // -------------------------- Student specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/screening`,
       name: `${userType}-screening`,
@@ -26,16 +27,18 @@ const generateDashboardRoutes = (userType) => {
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Screening Start`, requiresAuth: true }
     },
     {
-      path: `/${userType}-dashboard/assist-start`,
-      name: `${userType}-assist-start`,
-      component: DashboardView,
-      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Assist Start`, requiresAuth: true }
-    },
-    {
       path: `/${userType}-dashboard/profile`,
       name: `${userType}-profile`,
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Profile`, requiresAuth: true }
+    },
+
+    // -------------------------- Counselor specific routes ---------------------------------------------------
+    {
+      path: `/${userType}-dashboard/counselor-screening`,
+      name: `${userType}-counselor-screening`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Screening Test`, requiresAuth: true }
     },
   ];
 

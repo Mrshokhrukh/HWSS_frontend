@@ -102,8 +102,7 @@
                                             <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
                                                 :name="`question-${question.id}`" :value="option.option"
                                                 v-model="answers[question.id]"
-                                                @change="handleRadioClick(question.text, question.id, option.option)"
-                                                >
+                                                @change="handleRadioClick(question.text, question.id, option.option)">
 
 
                                             <label :for="`question-${question.id}-answer-${option.id}`"></label>

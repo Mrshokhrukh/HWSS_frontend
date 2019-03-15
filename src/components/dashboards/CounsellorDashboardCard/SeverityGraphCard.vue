@@ -1,5 +1,5 @@
 <template>
-    <div class="card w-100">
+    <div class="card w-100 card-bg h-100">
         <div class="card-header">
             <h4 class="graph-title text-center">Screening Frequency by Gender</h4>
         </div>
