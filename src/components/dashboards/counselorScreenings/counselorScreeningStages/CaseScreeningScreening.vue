@@ -19,8 +19,7 @@
             <div class="col-9">
                 <component :is="currentScreeningComponent" @goToGAD="changeComponent(CaseScreeningGAD)"
                     @goToASSIST="changeComponent(CaseScreeningASSIST)" @goToPHQ="changeComponent(CaseScreeningPHQ)"
-                    @goToACE="changeComponent(CaseScreeningACE)"
-                    @goBack="goBack">
+                    @goToACE="changeComponent(CaseScreeningACE)" @goBack="goBack">
                 </component>
             </div>
         </div>
@@ -28,12 +27,11 @@
 </template>
   
 <script setup>
-import { ref } from 'vue';
+import { ref} from 'vue';
 import CaseScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningGAD.vue';
 import CaseScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningPHQ.vue';
 import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningASSIST.vue';
 import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
-// Import other components here
 
 const menus = ref([
     {
@@ -48,7 +46,7 @@ const menus = ref([
     {
         name: 'ASSIST',
     },
-    
+
 ]);
 
 const componentMap = {

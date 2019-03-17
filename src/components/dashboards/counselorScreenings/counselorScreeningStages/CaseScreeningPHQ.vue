@@ -13,7 +13,7 @@
                 <tr v-for="text in currentQuestion" :key="text">
                     <td class="text-capitalize">{{ text.text }}</td>
                     <td v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
-                        <input type="radio" :value="option.id" @change="handleAnswerSelection(option)"
+                        <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
                             :name="'question_' + text.id" required />
                         <span class="d-none">{{ option.points }}</span>
                     </td>
@@ -27,7 +27,7 @@
                 </tr>
                 <tr>
                     <td class="text-capitalize"><strong>Interpretation</strong></td>
-                    <td class="text-center text-white" :class="interpretationClass" colspan="5">
+                    <td class="text-center" :class="interpretationClass" colspan="5">
                         <!-- Adjust the colspan according to the number of <td> elements in the row -->
                         <strong>{{ interpretation }}</strong>
                     </td>
@@ -43,32 +43,41 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api'
+import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['proceed', 'goBack']);
 
-const totalScore = ref(0);
+const totalScore = computed(() => {
+    let score = 0;
+    for (const text of currentQuestion.value) {
+        const selectedOption = text.selectedOption;
+        if (selectedOption !== undefined) {
+            score += selectedOption.points;
+        }
+    }
+    return score;
+});
 
-const handleAnswerSelection = (option) => {
-    totalScore.value += option.points;
+const handleAnswerSelection = (option, text) => {
+    text.selectedOption = option;
 }
 
-const counselorScreeningQuestions = JSON.parse(sessionStorage.getItem('counselorScreeningQuestions'));
+const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
+
+const currentQuestion = ref(counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'PHQ9').questions);
 
 const GADQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ')
-
-const currentQuestion = ref(counselorScreeningQuestions.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'PHQ9').questions);
 
 
 const interpretation = computed(() => {
     if (totalScore.value >= 0 && totalScore.value <= 4) {
-        return 'Minimal';
+        return 'Non or Minimal';
     } else if (totalScore.value >= 5 && totalScore.value <= 9) {
         return 'Mild';
     } else if (totalScore.value >= 10 && totalScore.value <= 14) {
         return 'Moderate';
+    } else if (totalScore.value >= 15 && totalScore.value <= 19) {
+        return 'Moderately Severe';
     } else {
         return 'Severe';
     }
@@ -76,28 +85,18 @@ const interpretation = computed(() => {
 
 const interpretationClass = computed(() => {
     if (totalScore.value >= 0 && totalScore.value <= 4) {
-        return 'bg-primary';
+        return 'bg-primary bg-opacity-50 text-primary';
     } else if (totalScore.value >= 5 && totalScore.value <= 9) {
-        return 'bg-success';
+        return 'bg-success bg-opacity-50 text-success';
     } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'bg-warning';
+        return 'bg-warning bg-opacity-50 text-warning';
+    } else if (totalScore.value >= 15 && totalScore.value <= 19) {
+        return 'bg-m-severe text-m-severe';
     } else {
-        return 'bg-danger';
+        return 'bg-danger bg-opacity-50 text-danger';
     }
 });
 
-// eslint-disable-next-line no-unused-vars
-const questions = onMounted(async () => {
-    if (counselorScreeningQuestions.length === 0) {
-        try {
-            const response = await axios.get(`${endpoints.ScreeningPreTests}?name=Case Screening`);
-            counselorScreeningQuestions.value = response.data;
-            sessionStorage.setItem('counselorScreeningQuestions', JSON.stringify(counselorScreeningQuestions.value));
-        } catch (error) {
-            console.error('Error fetching questions:', error);
-        }
-    }
-});
 
 const proceed = () => {
     emit('goToACE');
@@ -106,7 +105,11 @@ const proceed = () => {
 </script>
 
 <style scoped>
-.bg-warning {
-    background: tomato !important;
+.bg-m-severe {
+    background: rgba(255, 99, 71, 0.5) !important;
+}
+
+.text-m-severe {
+    color: tomato !important;
 }
 </style>
