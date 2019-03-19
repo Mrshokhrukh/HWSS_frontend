@@ -1,4 +1,7 @@
 <template>
+	<div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
+		<ConfettiExplosion :particleCount="200" :particleSize="10" :duration="5000" :force="0.8" />
+	</div>
 	<div :class="{ sidebar: true, 'sidebar-open': sidebarStore.isOpen }">
 		<!-- User Profile Section -->
 		<div class="user-profile text-center my-3">
@@ -23,6 +26,7 @@
 				<i class="fas fa-sign-out-alt"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
 			</router-link>
+			<!-- <router-link to="#" class="side-btn" @click="submitSampleTest">Send Sample Submission</router-link> -->
 			<router-link to="#" class="side-btn" @click="toggle">
 				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
@@ -41,10 +45,13 @@ import { useUserDetailsStore } from "@/stores/userDetails";
 import { useProgressStore } from "@/stores/progressStore";
 import deFaultProfilePic from "@/assets/images/icon.png";
 import Swal from 'sweetalert2';
+import ConfettiExplosion from "vue-confetti-explosion";
 
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
+
+const showConfetti = ref(false);
 
 
 const fullName = computed(() => {
@@ -161,6 +168,104 @@ const profilePictureUrl = computed(() => {
 onMounted(() => {
 	fetchMenuItems();
 });
+
+
+// sample test submission:
+// const submitSampleTest = async () => {
+// 	let submissionData; // Define submissionData outside the try block
+// 	try {
+// 		// Retrieve or initialize submissionData
+// 		submissionData = JSON.parse(localStorage.getItem('submissionDataSaved'));
+// 		const submissionTimestamp = submissionData?.timestamp;
+
+// 		// If submissionData exists and is recent, use it; otherwise, initialize new submissionData
+// 		if (submissionData && submissionTimestamp && (new Date().getTime() - submissionTimestamp < 60000000)) {
+// 			submissionData = submissionData.data;
+// 		}
+// 		console.log('Submitting form data:', submissionData); // Log the submission data
+
+// 		const response = await axios.post(endpoints.submitCluster, submissionData);
+// 		console.error('Server response:', response.data);
+
+// 		// Handle response from server
+// 		if (response.data.error && response.data.error.includes('has already submitted')) {
+// 			const confirmSubmit = await Swal.fire({
+// 				icon: 'warning',
+// 				title: 'You have already submitted for Cluster Screening',
+// 				text: 'Are you sure you want to submit again?',
+// 				showCancelButton: true,
+// 				confirmButtonText: 'Yes, submit again',
+// 				cancelButtonText: 'Cancel'
+// 			});
+
+// 			if (confirmSubmit.isConfirmed) {
+// 				// Add confirmation flag to submissionData
+// 				submissionData.confirmation = true;
+// 				// Retry submission with confirmation
+// 				const retryResponse = await axios.post(endpoints.submitCluster, submissionData);
+// 				console.error('Retry Server response:', retryResponse.data);
+// 				// Show success message if retry is successful
+// 				showConfetti.value = true;
+// 				await Swal.fire({
+// 					icon: 'success',
+// 					title: 'Form Submitted Successfully!',
+// 					text: 'Thank you for your submission.',
+// 					confirmButtonText: 'OK'
+// 				});
+// 			}
+// 		} else {
+// 			// Show success message if no error
+// 			showConfetti.value = true;
+// 			await Swal.fire({
+// 				icon: 'success',
+// 				title: 'Form Submitted Successfully!',
+// 				text: 'Thank you for your submission.',
+// 				confirmButtonText: 'OK'
+// 			});
+// 		}
+// 		router.push('/student-dashboard');
+// 	} catch (error) {
+// 		// Handle submission error
+// 		console.error('Error submitting form data:', error);
+// 		if (error.response && error.response.data && error.response.data.error && error.response.data.error.includes('has already submitted')) {
+// 			const confirmSubmit = await Swal.fire({
+// 				icon: 'warning',
+// 				title: 'You have already submitted for Cluster Screening',
+// 				text: 'Are you sure you want to submit again?',
+// 				showCancelButton: true,
+// 				confirmButtonText: 'Yes, submit again',
+// 				cancelButtonText: 'Cancel'
+// 			});
+
+// 			if (confirmSubmit.isConfirmed) {
+// 				// Add confirmation flag to submissionData
+// 				submissionData.confirmation = true;
+// 				// Retry submission with confirmation
+// 				const retryResponse = await axios.post(endpoints.submitCluster, submissionData);
+// 				console.error('Retry Server response:', retryResponse.data);
+// 				// Show success message if retry is successful
+// 				showConfetti.value = true;
+// 				await Swal.fire({
+// 					icon: 'success',
+// 					title: 'Form Submitted Successfully!',
+// 					text: 'Thank you for your submission.',
+// 					confirmButtonText: 'OK'
+// 				});
+// 				router.push('/student-dashboard');
+// 			}
+// 		} else {
+// 			// Show error message if other errors occur
+// 			await Swal.fire({
+// 				icon: 'error',
+// 				title: 'Submission Failed',
+// 				text: 'An error occurred while submitting the form. Please try again later.',
+// 				confirmButtonText: 'OK'
+// 			});
+// 			router.push('/student-dashboard/screening-start');
+// 		}
+// 	}
+// };
+
 </script>
 
 <style scoped>

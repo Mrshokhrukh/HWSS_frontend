@@ -50,7 +50,7 @@
           <input type="text" class="form-control input-noneditable" readonly disabled v-model="userClassSection">
         </div>
         <div class="col-md-12">
-          <label>School</label>
+          <label>School/Agency</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
             v-model="userDetailsStore.agency.agencyName">
         </div>

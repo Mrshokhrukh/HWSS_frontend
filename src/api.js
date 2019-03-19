@@ -61,6 +61,8 @@ const endpoints = {
 
   // submission endpoint
   submitCluster: `${measurementBaseUrl}/submit-screening/`,
+  getMeasurement: `${measurementBaseUrl}/get-measurement/`,
+  getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
 
 };
 

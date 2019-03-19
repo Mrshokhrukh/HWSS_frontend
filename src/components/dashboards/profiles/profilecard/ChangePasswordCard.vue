@@ -1,5 +1,5 @@
 <template>
-  <div class="card p-4">
+  <div class="card p-4 h-100">
     <div class="border-div-password p-3">
       <div class="card-header text-center">
         <h4 style="color: #2B656F; font-weight: bold">Change Password</h4>

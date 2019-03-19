@@ -112,7 +112,7 @@ async function checkClusterTestStatus() {
 		// Simulate loading delay for demonstration
 		setTimeout(() => {
 			loading.value = false;
-		}, 2000); // 2 seconds delay
+		}, 1200); // 2 seconds delay
 	}
 }
 

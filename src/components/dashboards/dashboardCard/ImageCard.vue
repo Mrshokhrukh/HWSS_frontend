@@ -93,6 +93,7 @@ onUnmounted(() => {
 <style scoped>
 .carousel-item {
   transition: opacity 0.5s ease-in-out;
+  height: 100%;
 }
 
 .image-card {
@@ -104,7 +105,8 @@ onUnmounted(() => {
   object-position: center;
   margin: 0;
   border: none;
-  height: 550px;
+  height: 100%;
+  max-height: 570px;
   border-radius: 5px;
 }
 

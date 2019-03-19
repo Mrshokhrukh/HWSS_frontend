@@ -402,12 +402,12 @@ function logQuestionAndResponse(option, substance) {
     }
 
     if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
-        console.log('Log Entry Replacing (same substance):', logEntry);
+        // console.log('Log Entry Replacing (same substance):', logEntry);
         testResponses.responses[index] = logEntry;
     } else {
-        console.log('Log Entry:', logEntry);
+        // console.log('Log Entry:', logEntry);
         // Log even if substance is different
-        console.log('(Substance different from existing entry)');
+        // console.log('(Substance different from existing entry)');
         testResponses.responses.push(logEntry);
     }
 }
@@ -452,11 +452,11 @@ function logQuestionAndResponseWithDiagnosis(option) {
             // Move the logEntry push here to ensure it's done after diagnosis is captured
             if (index !== -1) {
                 // Replace the existing entry with the new one
-                console.log('Log Entry Replaced:', logEntry);
+                // console.log('Log Entry Replaced:', logEntry);
                 testResponses.responses[index] = { ...logEntry };
             } else {
                 // Log the entry if it's not already logged
-                console.log('Log Entry:', logEntry);
+                // console.log('Log Entry:', logEntry);
                 testResponses.responses.push({ ...logEntry });
             }
         } else {
@@ -497,7 +497,7 @@ function logQuestionAndResponseSchoolEnv(question, answerOption, questionId, val
         const isStandardOption = ['Strongly Agree', 'Agree', 'Neutral/Indifferent', 'Disagree'].includes(answerOption);
         if (!isStandardOption) {
             testResponses.responses[existingIndex].specify = answerOption;
-            console.log('Log Entry (Updated Specify):', testResponses.responses[existingIndex]);
+            // console.log('Log Entry (Updated Specify):', testResponses.responses[existingIndex]);
         } else {
             testResponses.responses[existingIndex] = {
                 question: question,
@@ -506,7 +506,7 @@ function logQuestionAndResponseSchoolEnv(question, answerOption, questionId, val
                 questionId: questionId,
                 specify: specifyValue,
             };
-            console.log('Log Entry (Replaced Object):', testResponses.responses[existingIndex]);
+            // console.log('Log Entry (Replaced Object):', testResponses.responses[existingIndex]);
         }
     } else {
         // Check for "(mention two things)" and handle open-ended responses
@@ -522,10 +522,10 @@ function logQuestionAndResponseSchoolEnv(question, answerOption, questionId, val
             };
 
             if (existingIndex === -1) {
-                console.log('Log Entry (Open-Ended):', logEntry);
+                // console.log('Log Entry (Open-Ended):', logEntry);
                 testResponses.responses.push({ ...logEntry });
             } else {
-                console.log('Log Entry (Updated Open-Ended):', logEntry);
+                // console.log('Log Entry (Updated Open-Ended):', logEntry);
                 testResponses.responses[existingIndex] = { ...logEntry };
             }
         } else {
@@ -545,10 +545,10 @@ function logQuestionAndResponseSchoolEnv(question, answerOption, questionId, val
             };
 
             if (existingIndex === -1) {
-                console.log('Final logEntry before update:', logEntry);
+                // console.log('Final logEntry before update:', logEntry);
                 testResponses.responses.push({ ...logEntry });
             } else {
-                console.log('Log Entry:', logEntry);
+                console.error('Log Entry:', logEntry);
             }
         }
     }
@@ -803,61 +803,159 @@ function goBack() {
 }
 
 const submitFormData = async () => {
+    let submissionData; // Define submissionData outside the try block
     try {
         if (checkInvalidInputs()) {
             return;
         }
+
+        // Retrieve user details
         const userData = JSON.parse(localStorage.getItem('userDetailsStore'));
         const userId = userData?.user?.id;
-        const submissionData = testResponses.responses.map(response => {
-            return {
+
+        // Retrieve or initialize submissionData
+        submissionData = JSON.parse(localStorage.getItem('submissionData'));
+        const submissionTimestamp = submissionData?.timestamp;
+
+        // If submissionData exists and is recent, use it; otherwise, initialize new submissionData
+        if (submissionData && submissionTimestamp && (new Date().getTime() - submissionTimestamp < 600000)) {
+            submissionData = submissionData.data;
+        } else {
+            submissionData = {
                 user: userId,
-                test_type_name: 'Cluster Screening',
-                question_set_name: response.setName ?? '',
-                question: response.question ?? '',
-                answer: response.response ?? '',
-                diagnosis: response.diagnosis ?? '',
-                substance: response.substance ?? '',
-                specify: response.specify ?? '',
-                score: response.point ?? null,
+                test_type_name: 'Cluster Screening'
             };
-        });
+
+            const questionSetMap = new Map();
+
+            // Iterate over testResponses.responses to organize data into question sets
+            for (const response of testResponses.responses) {
+                const questionSetName = response.setName;
+                if (!questionSetMap.has(questionSetName)) {
+                    questionSetMap.set(questionSetName, []);
+                }
+                questionSetMap.get(questionSetName).push(response);
+            }
+
+            // Iterate over questionSetMap to structure submissionData
+            for (const [questionSetName, responses] of questionSetMap.entries()) {
+                let questionIndex = 1;
+                for (const response of responses) {
+                    const questionKey = `${questionSetName}_question_${questionIndex++}`;
+                    submissionData[questionKey] = {
+                        question_set_name: questionSetName,
+                        question: response.question ?? '',
+                        answer: response.response ?? '',
+                        score: response.point ?? null,
+                        substance: response.substance ?? '',
+                        specify: response.specify ?? '',
+                        diagnosis: response.diagnosis ?? ''
+                    };
+                }
+            }
+
+            // Store submissionData in localStorage with timestamp
+            localStorage.setItem('submissionData', JSON.stringify({ data: submissionData, timestamp: new Date().getTime() }));
+        }
+
+        console.log('Submitting form data:', submissionData); // Log the submission data
 
         const response = await axios.post(endpoints.submitCluster, submissionData);
         console.error('Server response:', response.data);
 
-        // Show confetti explosion  
-        showConfetti.value = true;
+        // Handle response from server
+        if (response.data.error && response.data.error.includes('has already submitted')) {
+            const confirmSubmit = await Swal.fire({
+                icon: 'warning',
+                title: 'You have already submitted for Cluster Screening',
+                text: 'Are you sure you want to submit again?',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, submit again',
+                cancelButtonText: 'Cancel'
+            });
 
-        await Swal.fire({
-            icon: 'success',
-            title: 'Form Submitted Successfully!',
-            text: 'Thank you for your submission.',
-            confirmButtonText: 'OK'
-        });
+            if (confirmSubmit.isConfirmed) {
+                // Add confirmation flag to submissionData
+                submissionData.confirmation = true;
+                // Retry submission with confirmation
+                const retryResponse = await axios.post(endpoints.submitCluster, submissionData);
+                console.error('Retry Server response:', retryResponse.data);
+                // Show success message if retry is successful
+                showConfetti.value = true;
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Form Submitted Successfully!',
+                    text: 'Thank you for your submission.',
+                    confirmButtonText: 'OK'
+                });
+            }
+        } else {
+            // Show success message if no error
+            showConfetti.value = true;
+            await Swal.fire({
+                icon: 'success',
+                title: 'Form Submitted Successfully!',
+                text: 'Thank you for your submission.',
+                confirmButtonText: 'OK'
+            });
+        }
 
-        // Reset testResponses
+        // Reset data and redirect
         progressStore.resetStore();
         localStorage.removeItem('answeredSubstances');
         localStorage.removeItem('otherSubstanceName');
         localStorage.removeItem('submissionData');
         localStorage.removeItem('progress');
+        localStorage.removeItem('submissionData');
         testResponses.responses = [];
-
-        // Redirect to student dashboard
         router.push('/student-dashboard');
     } catch (error) {
+        // Handle submission error
         console.error('Error submitting form data:', error);
+        if (error.response && error.response.data && error.response.data.error && error.response.data.error.includes('has already submitted')) {
+            const confirmSubmit = await Swal.fire({
+                icon: 'warning',
+                title: 'You have already submitted for Cluster Screening',
+                text: 'Are you sure you want to submit again?',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, submit again',
+                cancelButtonText: 'Cancel'
+            });
 
-        // Show error message
-        await Swal.fire({
-            icon: 'error',
-            title: 'Submission Failed',
-            text: 'An error occurred while submitting the form. Please try again later.',
-            confirmButtonText: 'OK'
-        });
-
-        router.push('/student-dashboard/screening-start');
+            if (confirmSubmit.isConfirmed) {
+                // Add confirmation flag to submissionData
+                submissionData.confirmation = true;
+                // Retry submission with confirmation
+                const retryResponse = await axios.post(endpoints.submitCluster, submissionData);
+                console.error('Retry Server response:', retryResponse.data);
+                // Show success message if retry is successful
+                showConfetti.value = true;
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Form Submitted Successfully!',
+                    text: 'Thank you for your submission.',
+                    confirmButtonText: 'OK'
+                });
+                // Reset data and redirect
+                progressStore.resetStore();
+                localStorage.removeItem('answeredSubstances');
+                localStorage.removeItem('otherSubstanceName');
+                localStorage.removeItem('submissionData');
+                localStorage.removeItem('progress');
+                localStorage.removeItem('submissionData');
+                testResponses.responses = [];
+                router.push('/student-dashboard');
+            }
+        } else {
+            // Show error message if other errors occur
+            await Swal.fire({
+                icon: 'error',
+                title: 'Submission Failed',
+                text: 'An error occurred while submitting the form. Please try again later.',
+                confirmButtonText: 'OK'
+            });
+            router.push('/student-dashboard/screening-start');
+        }
     }
 };
 
@@ -881,13 +979,14 @@ function flushStore() {
             localStorage.removeItem('otherSubstanceName');
             localStorage.removeItem('submissionData');
             localStorage.removeItem('progress');
+            localStorage.removeItem('submissionData');
             testResponses.responses = [];
             testResponses.responses = [];
             Swal.fire({
                 title: 'Cleaned Successfully',
                 text: 'The store has been flushed successfully.',
                 icon: 'success',
-                timer: 800,
+                timer: 500,
                 showConfirmButton: false
             }).then(() => {
                 location.reload();
