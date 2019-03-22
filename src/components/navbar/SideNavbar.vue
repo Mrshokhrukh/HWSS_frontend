@@ -128,7 +128,7 @@ const menus = computed(() => {
 	let baseRoute = `/${userType.value}-dashboard`;
 	let staticMenuItems = [
 		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
-		{ text: "Profile", route: `${baseRoute}/profile`, iconClass: "fas fa-user" },
+		// { text: "Profile", route: `${baseRoute}/profile`, iconClass: "fas fa-user" },
 	];
 
 	// Assuming userType.value contains the current user's role

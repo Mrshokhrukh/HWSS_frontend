@@ -4,7 +4,13 @@
             <h4 class="text-center">Total screened for the year: {{ getPreviousYear() }}</h4>
         </div>
         <div class="card-body">
-            <pie-chart :donut="true" :data="chartData" :colors="chartColors" legend="bottom" />
+            <template v-if="!isDataEmpty()">
+                <pie-chart :donut="true" :data="chartData" :colors="chartColors" legend="bottom" loading="Loading..." />
+            </template>
+            <template v-else>
+                <pie-chart :donut="true" :data="chartPseudoData" :colors="chartPseudoColors" legend="bottom"
+                    loading="Loading..." />
+            </template>
         </div>
         <div class="card-footer">
             <span class="legend-item">
@@ -19,24 +25,76 @@
 </template>
   
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+
+const chartPseudoData = ref({
+    'Male': 1,
+    'Female': 1
+});
 
 const chartData = ref({
-    'Male': 268,
-    'Female': 288
+    'Male': 0,
+    'Female': 0
 });
 
 const chartColors = ref(['#2c6975', '#64ac99']);
+
+const chartPseudoColors = ref(['#dedede', '#efefef']);
 
 const getPreviousYear = () => {
     const currentYear = new Date().getFullYear();
     return currentYear - 1;
 };
 
-
 const getTotalCount = computed(() => {
     return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
 });
+
+const isDataEmpty = () => {
+    return chartData.value.Male === 0 && chartData.value.Female === 0;
+};
+
+onMounted(async () => {
+    try {
+        const response = await axios.get(endpoints.getSubmissionData);
+        if (response && response.data) {
+            const previousYear = () => {
+                const currentYear = new Date().getFullYear();
+                return currentYear - 1;
+            };
+
+            // Filter user submissions for the current year
+            const userSubmissions = response.data.user_submissions.filter(submission => {
+                return new Date(submission.created_at).getFullYear() === previousYear;
+            });
+
+            let maleCount = 0;
+            let femaleCount = 0;
+
+            // Loop through filtered user submissions to count male and female
+            userSubmissions.forEach(submission => {
+                const userId = submission.user;
+                const userDetails = response.data.user_details.find(user => user.id === userId);
+                if (userDetails && userDetails.gender === 'Male') {
+                    maleCount++;
+                } else if (userDetails && userDetails.gender === 'Female') {
+                    femaleCount++;
+                }
+            });
+
+            // Update chartData with the counts
+            chartData.value = {
+                'Male': maleCount,
+                'Female': femaleCount
+            };
+        }
+    } catch (error) {
+        console.error('Error fetching details:', error);
+    }
+});
+
 
 </script>
   
@@ -78,6 +136,13 @@ const getTotalCount = computed(() => {
     height: 20px;
     margin-right: 5px;
     display: inline-block;
+}
+
+.pseudo-chart {
+    text-align: center;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
 }
 </style>
   
