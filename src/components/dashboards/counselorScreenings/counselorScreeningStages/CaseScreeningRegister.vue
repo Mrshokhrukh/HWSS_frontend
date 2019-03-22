@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="bg-white p-4">
         <div class="mb-3 text-center">
             <h4 class="mb-3">Description</h4>
             <h6 class="hwss-primary">*** This tool is for Case Screening Only ***</h6>
@@ -29,13 +29,15 @@
                             <label for="dzongkhag" class="form-label">Dzongkhag</label>
                             <select class="form-select hwss-primary" id="dzongkhag" v-model="dzongkhag" required>
                                 <option value="" disabled selected>Select Dzongkhag</option>
-                                <!-- Add options for all 20 dzongkhags of Bhutan -->
+                                <!-- Dynamically generate options for all 20 dzongkhags of Bhutan -->
+                                <option v-for="dzongkhag in dzongkhags" :key="dzongkhag" :value="dzongkhag">{{ dzongkhag }}
+                                </option>
                             </select>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-2 col-md-offset-2 mb-3">
                             <label for="userScreenedToday" class="form-label">User Screened Today</label>
-                            <input type="number" class="form-control hwss-primary" id="userScreenedToday"
-                                v-model="userScreenedToday" readonly>
+                            <input type="text" class="form-control hwss-primary w-50" id="userScreenedToday"
+                                v-model="userScreenedTodayDisplay" readonly disabled>
                         </div>
                     </div>
                 </div>
@@ -94,25 +96,26 @@
                 </div>
             </div>
         </form>
-        <div class="card-footer">
-            <!-- Button Section -->
-            <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-primary hwss-btn" @click="proceedToSelectTools">
-                    Proceed to Select Tools <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
+        <!-- Button Section -->
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn hwss-btn" :disabled="!isProceedButtonActive" @click="proceedToSelectTools">
+                Proceed to Select Tools <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
     </div>
+    <div ref="swalDialog"></div>
 </template>
-  
+
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watchEffect, watch, onMounted } from 'vue';
+import Swal from 'sweetalert2';
 const emit = defineEmits(['proceedToSelectTools']);
+
+const maxUsersPerDay = 10;
 
 const caseName = ref('');
 const purpose = ref('');
 const dzongkhag = ref('');
-const userScreenedToday = ref(0);
 
 const CID = ref('');
 const clientFullName = ref('');
@@ -122,6 +125,126 @@ const parentalStatus = ref('');
 const currentAddress = ref('');
 const phoneNumber = ref('');
 const email = ref('');
+
+const dzongkhags = [
+    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
+];
+
+// Define a function to reset the userScreenedToday counter
+const resetUserScreenedToday = () => {
+    localStorage.setItem('userScreenedToday', JSON.stringify({
+        count: 0,
+        lastUpdated: Date.now() // Store the current timestamp
+    }));
+};
+
+// Check if the userScreenedToday data is stored in local storage, if not, initialize it
+if (!localStorage.getItem('userScreenedToday')) {
+    resetUserScreenedToday();
+}
+
+// Define reactive variable for userScreenedToday
+const userScreenedToday = ref(0);
+
+// Watch for changes in userScreenedToday and update local storage accordingly
+watch(userScreenedToday, (newValue) => {
+    localStorage.setItem('userScreenedToday', JSON.stringify({
+        count: newValue,
+        lastUpdated: Date.now() // Update the lastUpdated timestamp whenever the count changes
+    }));
+});
+
+// Define a computed property to check if all fields are filled
+const isAllFieldsFilled = computed(() => {
+    return (
+        caseName.value !== '' &&
+        purpose.value !== '' &&
+        dzongkhag.value !== '' &&
+        CID.value !== '' &&
+        clientFullName.value !== '' &&
+        DOB.value !== '' &&
+        gender.value !== '' &&
+        parentalStatus.value !== '' &&
+        currentAddress.value !== '' &&
+        phoneNumber.value !== '' &&
+        email.value !== ''
+    );
+});
+
+// Define a computed property to check if userScreenedToday is 10 or less
+const isUserScreenedTodayValid = computed(() => {
+    return userScreenedToday.value <= 10;
+});
+
+// Define a computed property to check if the form should be deactivated
+const isFormDeactivated = computed(() => {
+    return userScreenedToday.value === 10;
+});
+
+// Combine conditions to determine if the "Proceed to Select Tools" button should be active
+const isProceedButtonActive = computed(() => {
+    return isAllFieldsFilled.value && isUserScreenedTodayValid.value && !isFormDeactivated.value;
+});
+
+// Define a function to display Swal alert when the limit is reached
+const showAlert = () => {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Day\'s Limit Reached',
+        text: 'You have reached the maximum limit for screening today.',
+        showConfirmButton: false
+    });
+};
+
+// Increment the userScreenedToday counter on "Proceed to Select Tools" button click
+const incrementOnButtonClicked = () => {
+    if (!isFormDeactivated.value) {
+        incrementUserScreenedToday();
+    } else {
+        showAlert();
+    }
+};
+
+// Define a function to increment the userScreenedToday counter
+const incrementUserScreenedToday = () => {
+    const userData = JSON.parse(localStorage.getItem('userScreenedToday'));
+    const currentTime = Date.now();
+
+    // Check if 24 hours have passed since the last update
+    if (currentTime - userData.lastUpdated >= 24 * 60 * 60 * 1000) {
+        // Reset the counter if 24 hours have passed
+        resetUserScreenedToday();
+        userScreenedToday.value = 1; // Start counting from 1 for the new day
+    } else {
+        // Increment the counter if within 24 hours and limit it to maxUsersPerDay
+        if (userData.count < maxUsersPerDay) {
+            userScreenedToday.value = userData.count + 1;
+        } else {
+            // Handle max limit reached scenario
+            console.log('Maximum limit of users screened today reached.');
+        }
+    }
+};
+
+// Watch for changes in reactive variables
+watchEffect(() => {
+    // Log the current state for debugging purposes
+    console.log('Current State:', {
+        caseName: caseName.value,
+        purpose: purpose.value,
+        dzongkhag: dzongkhag.value,
+        userScreenedToday: userScreenedToday.value,
+        CID: CID.value,
+        clientFullName: clientFullName.value,
+        DOB: DOB.value,
+        gender: gender.value,
+        parentalStatus: parentalStatus.value,
+        currentAddress: currentAddress.value,
+        phoneNumber: phoneNumber.value,
+        email: email.value
+    });
+});
 
 const submitForm = () => {
     // Handle form submission logic here
@@ -142,9 +265,14 @@ const submitForm = () => {
 };
 
 const proceedToSelectTools = () => {
-    // console.log('Proceed to Select Tools button clicked');
     emit('proceedToSelectTools');
+    incrementOnButtonClicked(); // Increment the userScreenedToday counter on button click
 };
+
+// Increment the userScreenedToday counter on component mount
+onMounted(() => {
+    incrementUserScreenedToday(); // Increment the userScreenedToday counter on component mount
+});
 
 </script>
   
@@ -155,6 +283,11 @@ textarea {
     border-radius: 10px;
     border: 1px solid #c9c9c9;
     padding: 0.5rem;
+}
+
+
+.hwss-btn {
+    border-radius: 50px;
 }
 </style>
   

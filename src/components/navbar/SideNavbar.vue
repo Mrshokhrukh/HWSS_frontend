@@ -347,6 +347,25 @@ onMounted(() => {
 	border-radius: 50px 0 0 50px;
 }
 
+.side-btn.active::before,
+.side-btn.active::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 10px; /* Adjust height as needed */
+  background-color: white;
+}
+
+.side-btn.active::before {
+  top: -10px; /* Adjust based on element height */
+  border-radius: 0 0 30px 0;
+}
+
+.side-btn.active::after {
+  bottom: -10px; /* Adjust based on element height */
+  border-radius: 0 30px 0 0;
+}
+
 .side-btn i {
 	min-width: 20px;
 }

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="row p-5 pt-2">
+        <div class="row p-5 pt-2 bg-secondary">
             <div class="col-3 left-selectors">
                 <h5 class="hwss-primary mb-5">Screening Tools</h5>
                 <div>
