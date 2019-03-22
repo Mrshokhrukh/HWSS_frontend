@@ -47,6 +47,11 @@
       <CounselorScreening />
     </div>
 
+    <!-- Screening Dashboard View -->
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-monitor'" class="screening-dashboard">
+      <CounselorMonitor />
+    </div>
+
 
   </div>
 </template>
@@ -60,6 +65,7 @@ import ScreeningPrevYearCard from '@/components/dashboards/CounsellorDashboardCa
 import ScreeningCurrentYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningCurrentYearCard.vue';
 import SeverityCountsCard from '@/components/dashboards/CounsellorDashboardCard/SeverityCountsCard.vue';
 import CounselorScreening from '@/components/dashboards/counselorScreenings/CounselorScreening.vue';
+import CounselorMonitor from '@/components/dashboards/counselorMonitor/CounselorMonitor.vue';
 
 
 const route = useRoute();

@@ -38,7 +38,13 @@ const generateDashboardRoutes = (userType) => {
       path: `/${userType}-dashboard/counselor-screening`,
       name: `${userType}-counselor-screening`,
       component: DashboardView,
-      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Screening Test`, requiresAuth: true }
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Screening Test`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/counselor-monitor`,
+      name: `${userType}-counselor-monitor`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Monitor`, requiresAuth: true }
     },
   ];
 
