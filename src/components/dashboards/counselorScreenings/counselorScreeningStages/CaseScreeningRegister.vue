@@ -37,7 +37,7 @@
                         <div class="col-md-2 col-md-offset-2 mb-3">
                             <label for="userScreenedToday" class="form-label">User Screened Today</label>
                             <input type="text" class="form-control hwss-primary w-50" id="userScreenedToday"
-                                v-model="userScreenedTodayDisplay" readonly disabled>
+                                v-model="userScreenedToday" readonly disabled>
                         </div>
                     </div>
                 </div>
@@ -191,7 +191,7 @@ const isProceedButtonActive = computed(() => {
 const showAlert = () => {
     Swal.fire({
         icon: 'warning',
-        title: 'Day\'s Limit Reached',
+        title: 'Daily Limit Reached',
         text: 'You have reached the maximum limit for screening today.',
         showConfirmButton: false
     });
@@ -215,14 +215,14 @@ const incrementUserScreenedToday = () => {
     if (currentTime - userData.lastUpdated >= 24 * 60 * 60 * 1000) {
         // Reset the counter if 24 hours have passed
         resetUserScreenedToday();
-        userScreenedToday.value = 1; // Start counting from 1 for the new day
+        userScreenedToday.value = 0; // Start counting from 1 for the new day
     } else {
         // Increment the counter if within 24 hours and limit it to maxUsersPerDay
         if (userData.count < maxUsersPerDay) {
             userScreenedToday.value = userData.count + 1;
         } else {
             // Handle max limit reached scenario
-            console.log('Maximum limit of users screened today reached.');
+            showAlert();
         }
     }
 };
