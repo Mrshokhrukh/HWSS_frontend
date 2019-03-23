@@ -20,7 +20,9 @@
                         <div v-if="activeTab === 'case-screening'">
                             <component :is="currentComponent"
                                 @proceedToSelectTools="switchComponent(CaseScreeningSelectTools)"
-                                @proceedToScreening="switchComponent(CaseScreeningScreening)" />
+                                @proceedToScreening="switchComponent(CaseScreeningScreening)"
+                                @goBakcToRegister="switchComponent(CaseScreeningRegister)"
+                                @goBackToSelectTools="switchComponent(CaseScreeningSelectTools)" />
                         </div>
                         <!-- Event Based Screening tab -->
                         <div v-if="activeTab === 'event-based-screening'">

@@ -45,7 +45,7 @@
 <script setup>
 import { ref, computed, inject } from 'vue';
 
-const emit = defineEmits(['proceed', 'goBack']);
+const emit = defineEmits(['goToNext', 'goBack']);
 
 const totalScore = computed(() => {
     let score = 0;
@@ -94,7 +94,26 @@ const interpretationClass = computed(() => {
 });
 
 const proceed = () => {
-    emit('goToPHQ');
+    const responses = [];
+    for (const text of currentQuestion.value) {
+        const response = {
+            question: text.text,
+            selectedOption: text.selectedOption ? text.selectedOption.option : null,
+            score: text.selectedOption ? text.selectedOption.points : 0
+        };
+        responses.push(response);
+    }
+
+    // Get total score and interpretation from computed properties
+    const totalScoreValue = totalScore.value;
+    const interpretationValue = interpretation.value;
+
+    // Save responses, total score, and interpretation to local storage
+    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
+    localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
+
+    // Emit the goToNext event
+    emit('goToNext', 'GAD');
 };
 
 </script>

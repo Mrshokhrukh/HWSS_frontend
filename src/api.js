@@ -37,6 +37,7 @@ const endpoints = {
   getCitizenDetails: `${accessBaseUrl}/get-citizen-details/`,
   getRcscDetails: `${accessBaseUrl}/get-rcsc-details/`,
   registerUser: `${accessBaseUrl}/register-user/`,
+  registerCounselorUser: `${accessBaseUrl}/register-counselor-user/`,
   registerAgency: `${accessBaseUrl}/register-agency/`,
   getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
   getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,

@@ -53,16 +53,20 @@ const userDetailsStore = useUserDetailsStore();
 
 const showConfetti = ref(false);
 
-
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
 	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
 });
+
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
+
 const userType = computed(() => {
 	const role = userDetailsStore.user.role.toLowerCase();
 
 	const removeSchoolClinicalCounselor = (str) => {
+		if (str === null || str === undefined) {
+			throw new Error("The parameter str is null or undefined.");
+		}
 		return str.replace(/^(school|clinical)?\s*counselor$/i, 'counselor').trim();
 	};
 
@@ -70,12 +74,14 @@ const userType = computed(() => {
 		return str.replace(/\s+/g, '-').toLowerCase();
 	};
 
-	const sanitizedRole = removeSchoolClinicalCounselor(role);
+	let sanitizedRole = removeSchoolClinicalCounselor(role);
+
+	if (sanitizedRole === 'administrator') {
+        sanitizedRole = 'admin';
+    }
 
 	return toSlug(sanitizedRole);
 });
-
-
 
 const fetchedMenus = ref([]);
 
@@ -89,52 +95,14 @@ const profilePicClass = computed(() => {
 	return sidebarStore.isOpen ? "profile-pic" : "mini-profile-pic";
 });
 
-const logout = async () => {
-	const progressStore = useProgressStore();
-	progressStore.resetStore();
-	try {
-		const response = await axios.post(endpoints.logOutUser);
-		if (response.data.message === "Logout successful") {
-			localStorage.clear();
-			sessionStorage.clear();
-			userDetailsStore.clearUserDetails();
-
-			// Use SweetAlert2 for a better user experience
-			await Swal.fire({
-				title: 'Logged Out',
-				text: 'You have been successfully logged out of the system.',
-				icon: 'success',
-				showConfirmButton: false,
-				timer: 1200
-			});
-
-			router.push("/login");
-		} else {
-			console.error("Logout failed:", response.data.message);
-		}
-	} catch (error) {
-		console.error("Logout failed:", error);
-		// Optionally, you can also use Swal here to show an error message
-		await Swal.fire({
-			title: 'Error',
-			text: 'Logout failed. Please try again.',
-			icon: 'error',
-			confirmButtonText: 'OK'
-		});
-	}
-};
-
 const menus = computed(() => {
 	let baseRoute = `/${userType.value}-dashboard`;
 	let staticMenuItems = [
 		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
-		// { text: "Profile", route: `${baseRoute}/profile`, iconClass: "fas fa-user" },
 	];
 
-	// Assuming userType.value contains the current user's role
 	const role = userType.value;
 
-	// Filter fetchedMenus for the current role and map to the required structure
 	let dynamicMenuItems = fetchedMenus.value
 		.filter((menu) => menu.roles.some((r) => r.name === role))
 		.map((menu) => ({
@@ -142,8 +110,7 @@ const menus = computed(() => {
 			route: menu.route,
 			iconClass: menu.icon_class,
 		}));
-
-	// Combine static and dynamic menu items
+		
 	return [...staticMenuItems, ...dynamicMenuItems];
 });
 
@@ -165,107 +132,67 @@ const profilePictureUrl = computed(() => {
 	return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 
+
+
+const logout = async () => {
+    const progressStore = useProgressStore();
+    if (progressStore) {
+        progressStore.resetStore();
+    }
+
+    try {
+        if (endpoints.logOutUser) {
+            const response = await axios.post(endpoints.logOutUser);
+            if (response && response.data) {
+                if (response.data.message === "Logout successful") {
+                    if (localStorage) {
+                        // Clear all items from localStorage except 'userScreenedToday'
+                        for (let key in localStorage) {
+                            if (key !== 'userScreenedToday') {
+                                localStorage.removeItem(key);
+                            }
+                        }
+                    }
+                    if (sessionStorage) {
+                        sessionStorage.clear();
+                    }
+                    if (userDetailsStore) {
+                        userDetailsStore.clearUserDetails();
+                    }
+
+                    await Swal.fire({
+                        title: 'Logged Out',
+                        text: 'You have been successfully logged out of the system.',
+                        icon: 'success',
+                        showConfirmButton: false,
+                        timer: 1200
+                    });
+
+                    if (router) {
+                        router.push("/login");
+                    }
+                } else {
+                    console.error("Logout failed:", response.data.message);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Logout failed:", error);
+        if (Swal) {
+            await Swal.fire({
+                title: 'Error',
+                text: 'Logout failed. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+};
+
+
 onMounted(() => {
 	fetchMenuItems();
 });
-
-
-// sample test submission:
-// const submitSampleTest = async () => {
-// 	let submissionData; // Define submissionData outside the try block
-// 	try {
-// 		// Retrieve or initialize submissionData
-// 		submissionData = JSON.parse(localStorage.getItem('submissionDataSaved'));
-// 		const submissionTimestamp = submissionData?.timestamp;
-
-// 		// If submissionData exists and is recent, use it; otherwise, initialize new submissionData
-// 		if (submissionData && submissionTimestamp && (new Date().getTime() - submissionTimestamp < 60000000)) {
-// 			submissionData = submissionData.data;
-// 		}
-// 		console.log('Submitting form data:', submissionData); // Log the submission data
-
-// 		const response = await axios.post(endpoints.submitCluster, submissionData);
-// 		console.error('Server response:', response.data);
-
-// 		// Handle response from server
-// 		if (response.data.error && response.data.error.includes('has already submitted')) {
-// 			const confirmSubmit = await Swal.fire({
-// 				icon: 'warning',
-// 				title: 'You have already submitted for Cluster Screening',
-// 				text: 'Are you sure you want to submit again?',
-// 				showCancelButton: true,
-// 				confirmButtonText: 'Yes, submit again',
-// 				cancelButtonText: 'Cancel'
-// 			});
-
-// 			if (confirmSubmit.isConfirmed) {
-// 				// Add confirmation flag to submissionData
-// 				submissionData.confirmation = true;
-// 				// Retry submission with confirmation
-// 				const retryResponse = await axios.post(endpoints.submitCluster, submissionData);
-// 				console.error('Retry Server response:', retryResponse.data);
-// 				// Show success message if retry is successful
-// 				showConfetti.value = true;
-// 				await Swal.fire({
-// 					icon: 'success',
-// 					title: 'Form Submitted Successfully!',
-// 					text: 'Thank you for your submission.',
-// 					confirmButtonText: 'OK'
-// 				});
-// 			}
-// 		} else {
-// 			// Show success message if no error
-// 			showConfetti.value = true;
-// 			await Swal.fire({
-// 				icon: 'success',
-// 				title: 'Form Submitted Successfully!',
-// 				text: 'Thank you for your submission.',
-// 				confirmButtonText: 'OK'
-// 			});
-// 		}
-// 		router.push('/student-dashboard');
-// 	} catch (error) {
-// 		// Handle submission error
-// 		console.error('Error submitting form data:', error);
-// 		if (error.response && error.response.data && error.response.data.error && error.response.data.error.includes('has already submitted')) {
-// 			const confirmSubmit = await Swal.fire({
-// 				icon: 'warning',
-// 				title: 'You have already submitted for Cluster Screening',
-// 				text: 'Are you sure you want to submit again?',
-// 				showCancelButton: true,
-// 				confirmButtonText: 'Yes, submit again',
-// 				cancelButtonText: 'Cancel'
-// 			});
-
-// 			if (confirmSubmit.isConfirmed) {
-// 				// Add confirmation flag to submissionData
-// 				submissionData.confirmation = true;
-// 				// Retry submission with confirmation
-// 				const retryResponse = await axios.post(endpoints.submitCluster, submissionData);
-// 				console.error('Retry Server response:', retryResponse.data);
-// 				// Show success message if retry is successful
-// 				showConfetti.value = true;
-// 				await Swal.fire({
-// 					icon: 'success',
-// 					title: 'Form Submitted Successfully!',
-// 					text: 'Thank you for your submission.',
-// 					confirmButtonText: 'OK'
-// 				});
-// 				router.push('/student-dashboard');
-// 			}
-// 		} else {
-// 			// Show error message if other errors occur
-// 			await Swal.fire({
-// 				icon: 'error',
-// 				title: 'Submission Failed',
-// 				text: 'An error occurred while submitting the form. Please try again later.',
-// 				confirmButtonText: 'OK'
-// 			});
-// 			router.push('/student-dashboard/screening-start');
-// 		}
-// 	}
-// };
-
 </script>
 
 <style scoped>

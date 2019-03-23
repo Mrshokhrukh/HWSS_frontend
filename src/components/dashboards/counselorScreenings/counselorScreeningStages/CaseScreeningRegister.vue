@@ -4,7 +4,7 @@
             <h4 class="mb-3">Description</h4>
             <h6 class="hwss-primary">*** This tool is for Case Screening Only ***</h6>
         </div>
-        <form @submit.prevent="submitForm">
+        <form @submit.prevent="submitForm" :disabled="isFormDeactivated">
             <div class="px-5">
                 <!-- Case Details Section -->
                 <div class="mb-4 p-3">
@@ -47,7 +47,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="CID" class="form-label">CID</label>
-                            <input type="text" class="form-control hwss-primary" id="CID" v-model="CID" required>
+                            <input type="number" class="form-control hwss-primary" id="CID" v-model="CID" required min="11">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="clientFullName" class="form-label">Full Name</label>
@@ -86,7 +86,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="phoneNumber" class="form-label">Phone Number</label>
                             <input type="tel" class="form-control hwss-primary" id="phoneNumber" v-model="phoneNumber"
-                                required>
+                                required maxlength="8">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="email" class="form-label">Email address</label>
@@ -108,10 +108,17 @@
 
 <script setup>
 import { ref, computed, watchEffect, watch, onMounted } from 'vue';
+import axios from 'axios';
 import Swal from 'sweetalert2';
+import endpoints from '@/api';
+
 const emit = defineEmits(['proceedToSelectTools']);
 
 const maxUsersPerDay = 10;
+
+// Get the user's ID from localStorage
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userId = userDetailsStore ? userDetailsStore.user.id : null;
 
 const caseName = ref('');
 const purpose = ref('');
@@ -131,16 +138,27 @@ const dzongkhags = [
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
+const resetIfNewDay = () => {
+    const today = new Date().toLocaleDateString();
+    const storedDate = localStorage.getItem(`screeningDate_${userId}`);
+
+    if (!storedDate || storedDate !== today) {
+        resetUserScreenedToday();
+        localStorage.setItem(`screeningDate_${userId}`, today);
+        disableFormFields(); // Disable the form fields at the beginning of each new day
+    }
+};
+
 // Define a function to reset the userScreenedToday counter
 const resetUserScreenedToday = () => {
-    localStorage.setItem('userScreenedToday', JSON.stringify({
+    localStorage.setItem(`userScreenedToday_${userId}`, JSON.stringify({
         count: 0,
-        lastUpdated: Date.now() // Store the current timestamp
+        lastUpdated: Date.now()
     }));
 };
 
 // Check if the userScreenedToday data is stored in local storage, if not, initialize it
-if (!localStorage.getItem('userScreenedToday')) {
+if (!localStorage.getItem(`userScreenedToday_${userId}`)) {
     resetUserScreenedToday();
 }
 
@@ -149,9 +167,9 @@ const userScreenedToday = ref(0);
 
 // Watch for changes in userScreenedToday and update local storage accordingly
 watch(userScreenedToday, (newValue) => {
-    localStorage.setItem('userScreenedToday', JSON.stringify({
+    localStorage.setItem(`userScreenedToday_${userId}`, JSON.stringify({
         count: newValue,
-        lastUpdated: Date.now() // Update the lastUpdated timestamp whenever the count changes
+        lastUpdated: Date.now()
     }));
 });
 
@@ -179,12 +197,16 @@ const isUserScreenedTodayValid = computed(() => {
 
 // Define a computed property to check if the form should be deactivated
 const isFormDeactivated = computed(() => {
-    return userScreenedToday.value === 10;
+    return userScreenedToday.value >= 10;
 });
 
 // Combine conditions to determine if the "Proceed to Select Tools" button should be active
 const isProceedButtonActive = computed(() => {
-    return isAllFieldsFilled.value && isUserScreenedTodayValid.value && !isFormDeactivated.value;
+    return (
+        isAllFieldsFilled.value && // Check if all form fields are filled
+        isUserScreenedTodayValid.value && // Check if the daily screening limit has not been reached
+        !isFormDeactivated.value // Check if the form is not deactivated
+    );
 });
 
 // Define a function to display Swal alert when the limit is reached
@@ -193,7 +215,7 @@ const showAlert = () => {
         icon: 'warning',
         title: 'Daily Limit Reached',
         text: 'You have reached the maximum limit for screening today.',
-        showConfirmButton: false
+        showConfirmButton: true
     });
 };
 
@@ -208,34 +230,27 @@ const incrementOnButtonClicked = () => {
 
 // Define a function to increment the userScreenedToday counter
 const incrementUserScreenedToday = () => {
-    const userData = JSON.parse(localStorage.getItem('userScreenedToday'));
-    const currentTime = Date.now();
+    const userData = JSON.parse(localStorage.getItem(`userScreenedToday_${userId}`));
 
-    // Check if 24 hours have passed since the last update
-    if (currentTime - userData.lastUpdated >= 24 * 60 * 60 * 1000) {
-        // Reset the counter if 24 hours have passed
-        resetUserScreenedToday();
-        userScreenedToday.value = 0; // Start counting from 1 for the new day
+    if (userData.count < maxUsersPerDay) {
+        userScreenedToday.value = userData.count + 1;
+        userData.count += 1;
+        localStorage.setItem(`userScreenedToday_${userId}`, JSON.stringify(userData));
     } else {
-        // Increment the counter if within 24 hours and limit it to maxUsersPerDay
-        if (userData.count < maxUsersPerDay) {
-            userScreenedToday.value = userData.count + 1;
-        } else {
-            // Handle max limit reached scenario
-            showAlert();
-        }
+        showAlert();
+        disableFormFields(); // Disable the form fields when the limit is reached
     }
 };
 
 // Watch for changes in reactive variables
 watchEffect(() => {
-    // Log the current state for debugging purposes
     console.log('Current State:', {
         caseName: caseName.value,
         purpose: purpose.value,
         dzongkhag: dzongkhag.value,
         userScreenedToday: userScreenedToday.value,
         CID: CID.value,
+        nationality: 'Bhutanese',
         clientFullName: clientFullName.value,
         DOB: DOB.value,
         gender: gender.value,
@@ -246,32 +261,136 @@ watchEffect(() => {
     });
 });
 
-const submitForm = () => {
-    // Handle form submission logic here
-    console.log('Form submitted:', {
-        caseName: caseName.value,
-        purpose: purpose.value,
-        dzongkhag: dzongkhag.value,
-        userScreenedToday: userScreenedToday.value,
-        CID: CID.value,
-        clientFullName: clientFullName.value,
-        DOB: DOB.value,
-        gender: gender.value,
-        parentalStatus: parentalStatus.value,
-        currentAddress: currentAddress.value,
-        phoneNumber: phoneNumber.value,
-        email: email.value
+const submitForm = async () => {
+    try {
+        // Await the username generation
+        const username = await makeUserName();
+
+        // Create formData with the generated username
+        const formData = {
+            userData: {
+                username: username,
+                caseName: caseName.value,
+                purpose: purpose.value,
+                dzongkhag: dzongkhag.value,
+                userScreenedToday: userScreenedToday.value,
+                CID: CID.value,
+                clientFullName: clientFullName.value,
+                DOB: DOB.value,
+                gender: gender.value,
+                parentalStatus: parentalStatus.value,
+                currentAddress: currentAddress.value,
+                phoneNumber: phoneNumber.value,
+                email: email.value,
+            },
+            userAgencyData: {
+                agency: "11001",
+
+            },
+            agencyData: {
+                agency_code: "11001",
+                agency_name: "Case Base Clients"
+            }
+        };
+
+        // Send a submit request to the endpoint
+        const response = await axios.post(endpoints.registerCounselorUser, formData);
+
+        // Handle successful submission
+        console.log('Form submitted successfully:', response.data);
+        const userId = response.data.userId;
+        localStorage.setItem('ClientUserIdCaseBase', userId);
+        return response.data; // Return the response data
+
+    }catch (error) {
+        // Handle errors
+        console.error('Error submitting form:', error);
+        
+        // Check if the error is due to duplicate entry for CID
+        if (error.response && error.response.data && error.response.data.error.includes('Duplicate entry')) {
+            // Show a confirmation dialog using SweetAlert
+            const confirmDuplicate = await Swal.fire({
+                icon: 'warning',
+                title: 'Duplicate Entry',
+                text: 'Seems like this user was already screened. Do you wish to continue with existing user data?',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'No'
+            });
+
+            if (confirmDuplicate.isConfirmed) {
+                // Resend the confirmed request
+                try {
+                    // Resend the submit request to the endpoint
+                    const response = await axios.post(endpoints.registerCounselorUser, this.formData);
+
+                    // Handle successful submission
+                    console.log('Form submitted successfully:', response.data);
+                    const userId = response.data.userId;
+                    localStorage.setItem('ClientUserIdCaseBase', userId);
+                    return response.data; // Return the response data
+                } catch (resendError) {
+                    // Handle errors during resend
+                    console.error('Error resending form:', resendError);
+                    throw resendError; // Re-throw the error to be caught by the caller
+                }
+            }
+        } else {
+            return error;
+        }
+    }
+};
+
+const makeUserName = () => {
+    return new Promise((resolve) => {
+        // Assuming clientFullName and DOB are reactive ref objects
+        const fullName = clientFullName.value;
+        const dob = DOB.value;
+
+        // Generate the username
+        const username = `${fullName}${dob}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+        // Resolve with the generated username
+        resolve(username);
     });
 };
 
-const proceedToSelectTools = () => {
-    emit('proceedToSelectTools');
-    incrementOnButtonClicked(); // Increment the userScreenedToday counter on button click
+
+
+const proceedToSelectTools = async () => {
+    try {
+        await submitForm();
+        emit('proceedToSelectTools');
+        incrementOnButtonClicked();
+    } catch (error) {
+        console.error('Error submitting form:', error);
+    }
 };
 
-// Increment the userScreenedToday counter on component mount
+const disableFormFields = () => {
+    const form = document.querySelector('form');
+    const inputFields = form.querySelectorAll('input, select, textarea, button');
+    inputFields.forEach(field => {
+        field.disabled = true;
+    });
+};
+
+watch(isFormDeactivated, (newValue) => {
+    if (newValue) {
+        disableFormFields();
+    }
+});
+
 onMounted(() => {
-    incrementUserScreenedToday(); // Increment the userScreenedToday counter on component mount
+    // incrementUserScreenedToday();
+    resetIfNewDay();
+    const userData = JSON.parse(localStorage.getItem(`userScreenedToday_${userId}`));
+    if (userData) {
+        userScreenedToday.value = userData.count;
+        if (userScreenedToday.value === 10) {
+            showAlert()
+        }
+    }
 });
 
 </script>
@@ -284,7 +403,6 @@ textarea {
     border: 1px solid #c9c9c9;
     padding: 0.5rem;
 }
-
 
 .hwss-btn {
     border-radius: 50px;

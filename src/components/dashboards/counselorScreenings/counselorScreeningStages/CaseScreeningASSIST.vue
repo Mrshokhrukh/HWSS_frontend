@@ -40,7 +40,7 @@ import { ref, computed, inject, reactive } from 'vue';
 // import ConfettiExplosion from "vue-confetti-explosion";
 import Swal from 'sweetalert2';
 
-const emit = defineEmits(['proceed', 'goBack']);
+const emit = defineEmits(['goToNext', 'goBack']);
 const substanceAnswered = reactive({});
 // const currentQuestionIndex = ref(0);
 const questions = ref([]);
@@ -124,7 +124,7 @@ const interpretationClass = computed(() => {
 
 // eslint-disable-next-line no-unused-vars
 const proceed = () => {
-    emit('goToPHQ');
+    emit('goToNext', 'ASSIST');
 };
 
 function updateSubstanceAnswered(option, substance) {

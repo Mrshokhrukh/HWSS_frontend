@@ -1,12 +1,12 @@
 <template>
     <div>
-        <div class="row p-5 pt-2">
+        <div class="row p-4 bg-light">
             <div class="col-3 left-selectors">
-                <h5 class="hwss-primary mb-5">Screening Tools</h5>
+                <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
                 <div>
                     <ul>
-                        <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
-                            :class="{ 'active': selectedMenuIndex === index }">
+                        <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
+                            :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
                             <a href="#" class="p-3">
                                 <input type="checkbox" class="form-check-input">
                                 <span class="ms-2">{{ menu.name }}</span>
@@ -17,72 +17,84 @@
             </div>
 
             <div class="col-9">
-                <component :is="currentScreeningComponent" @goToGAD="changeComponent(CaseScreeningGAD)"
-                    @goToASSIST="changeComponent(CaseScreeningASSIST)" @goToPHQ="changeComponent(CaseScreeningPHQ)"
-                    @goToACE="changeComponent(CaseScreeningACE)" @goBack="goBack">
-                </component>
+                <component :is="currentScreeningComponent" @goToNext="handleChangeComponent"></component>
             </div>
         </div>
     </div>
 </template>
   
 <script setup>
-import { ref} from 'vue';
+import { ref, onMounted, watch, defineEmits } from 'vue';
 import CaseScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningGAD.vue';
 import CaseScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningPHQ.vue';
 import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningASSIST.vue';
 import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
+import Swal from 'sweetalert2';
 
-const menus = ref([
-    {
-        name: 'GAD7',
-    },
-    {
-        name: 'PHQ9',
-    },
-    {
-        name: 'ACE',
-    },
-    {
-        name: 'ASSIST',
-    },
+const emit = defineEmits(['goBackToSelectTools', 'goToNext']);
 
-]);
+// Define reactive variables
+const currentScreeningComponent = ref(CaseScreeningPHQ);
+const selectedMenu = ref(null);
+const menus = ref([]);
+const nextMenu = ref(null);
 
+// Define component mapping
 const componentMap = {
-    'GAD7': CaseScreeningGAD,
-    'PHQ9': CaseScreeningPHQ,
+    'GAD': CaseScreeningGAD,
+    'PHQ': CaseScreeningPHQ,
     'ASSIST': CaseScreeningASSIST,
     'ACE': CaseScreeningACE,
 };
 
-const currentScreeningComponent = ref(CaseScreeningGAD);
-const previousScreeningComponent = ref(null);
-
-const selectedMenuIndex = ref(0);
-const selectedMenu = ref(menus.value[selectedMenuIndex.value]);
-
-const selectMenu = (index) => {
-    selectedMenuIndex.value = index;
-    selectedMenu.value = menus.value[index];
-    previousScreeningComponent.value = currentScreeningComponent.value;
-    currentScreeningComponent.value = componentMap[selectedMenu.value.name];
+// Method to select menu
+const selectMenu = (menu) => {
+    selectedMenu.value = menu;
+    const nextMenuIndex = menus.value.findIndex(item => item.id === menu.id) + 1;
+    nextMenu.value = nextMenuIndex < menus.value.length ? menus.value[nextMenuIndex] : null;
+    emit('goToNext', nextMenu.value); // Pass the value of nextMenu
+    currentScreeningComponent.value = componentMap[menu.name];
 };
 
-const goBack = () => {
-    if (previousScreeningComponent.value) {
-        currentScreeningComponent.value = previousScreeningComponent.value;
-        previousScreeningComponent.value = null;
+// Initialize selected menu on component mount
+onMounted(() => {
+    const savedMenus = JSON.parse(localStorage.getItem('selectedTools'));
+    if (savedMenus) {
+        menus.value = savedMenus;
+        selectedMenu.value = menus.value[0];
     } else {
-        console.log('Cannot go back, no previous component');
+        console.log('No menu saved');
     }
+});
+
+// Watch for changes in selected menu and save to local storage
+watch(selectedMenu, (newValue) => {
+    localStorage.setItem('selectedMenu', JSON.stringify([newValue])); // Store selected menu as an array
+});
+
+const handleChangeComponent = (nextMenuName) => {
+    const selectedToolsStr = localStorage.getItem('selectedTools');
+    if (!selectedToolsStr) return console.error('selectedTools is not available in local storage');
+
+    const selectedTools = JSON.parse(selectedToolsStr);
+    const index = selectedTools.findIndex(tool => tool.name === nextMenuName);
+
+    let nextToolName;
+    if (index !== -1 && index < selectedTools.length - 1) nextToolName = selectedTools[index + 1].name;
+    else {
+        console.warn('No more question sets available');
+        Swal.fire({ icon: 'info', title: 'No More Question Sets Available', text: 'You have completed all available question sets.' });
+        return;
+    }
+
+    if (!componentMap[nextToolName]) return console.error(`Component corresponding to ${nextToolName} is not available`);
+
+    currentScreeningComponent.value = componentMap[nextToolName];
 };
 
-function changeComponent(component) {
-    previousScreeningComponent.value = currentScreeningComponent.value;
-    currentScreeningComponent.value = component;
-}
+
 </script>
+
 
   
 <style scoped>
