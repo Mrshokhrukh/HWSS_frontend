@@ -46,6 +46,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.21.0":
+  version: 7.24.1
+  resolution: "@babel/runtime@npm:7.24.1"
+  dependencies:
+    regenerator-runtime: "npm:^0.14.0"
+  checksum: 10c0/500c6a99ddd84f37c7bc5dbc84777af47b1372b20e879941670451d55484faf18a673c5ebee9ca2b0f36208a729417873b35b1b92e76f811620f6adf7b8cb0f1
+  languageName: node
+  linkType: hard
+
 "@babel/types@npm:^7.8.3":
   version: 7.23.9
   resolution: "@babel/types@npm:7.23.9"
@@ -1202,6 +1211,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"date-fns@npm:^2.22.1":
+  version: 2.30.0
+  resolution: "date-fns@npm:2.30.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.21.0"
+  checksum: 10c0/e4b521fbf22bc8c3db332bbfb7b094fd3e7627de0259a9d17c7551e2d2702608a7307a449206065916538e384f37b181565447ce2637ae09828427aed9cb5581
+  languageName: node
+  linkType: hard
+
 "debug@npm:4, debug@npm:4.3.4, debug@npm:^4.3.1, debug@npm:^4.3.2, debug@npm:^4.3.4":
   version: 4.3.4
   resolution: "debug@npm:4.3.4"
@@ -2001,7 +2019,9 @@ __metadata:
     vue-chartkick: "npm:^1.1.0"
     vue-confetti: "npm:^2.3.0"
     vue-confetti-explosion: "npm:^1.0.2"
+    vue-multiselect: "npm:^2.1.9"
     vue-router: "npm:^4.2.5"
+    vue3-datepicker: "npm:^0.4.0"
   languageName: unknown
   linkType: soft
 
@@ -3020,6 +3040,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"regenerator-runtime@npm:^0.14.0":
+  version: 0.14.1
+  resolution: "regenerator-runtime@npm:0.14.1"
+  checksum: 10c0/1b16eb2c4bceb1665c89de70dcb64126a22bc8eb958feef3cd68fe11ac6d2a4899b5cd1b80b0774c7c03591dc57d16631a7f69d2daa2ec98100e2f29f7ec4cc4
+  languageName: node
+  linkType: hard
+
 "require-from-string@npm:^2.0.2":
   version: 2.0.2
   resolution: "require-from-string@npm:2.0.2"
@@ -3764,6 +3791,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vue-multiselect@npm:^2.1.9":
+  version: 2.1.9
+  resolution: "vue-multiselect@npm:2.1.9"
+  checksum: 10c0/baecfbb97b4b225bd2e2054f2eed640917b47f448a76a43f084d344764c813a58e825ea2131f6803c125e6e8d4e0b4edb5712da49dd1b8a082f29ac845cc7c2b
+  languageName: node
+  linkType: hard
+
 "vue-router@npm:^4.2.5":
   version: 4.2.5
   resolution: "vue-router@npm:4.2.5"
@@ -3772,6 +3806,17 @@ __metadata:
   peerDependencies:
     vue: ^3.2.0
   checksum: 10c0/63e51f437a1f10a97fce97c04cde3f87958049c5e20f8b238b66b9a9080c99db0124e680ed0e9921af1f6d81c00bf181e280e36e2370cafea581539334d895ef
+  languageName: node
+  linkType: hard
+
+"vue3-datepicker@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "vue3-datepicker@npm:0.4.0"
+  dependencies:
+    date-fns: "npm:^2.22.1"
+  peerDependencies:
+    vue: ^3.0.0
+  checksum: 10c0/103e2e1cb2ab41d6b249e37d1c1db122eb9acf62a9ea48979503accb078acb4ae133878f86c14bacd248936090f14f30e1b074c7cc9b70c251fdcb28564329a7
   languageName: node
   linkType: hard
 

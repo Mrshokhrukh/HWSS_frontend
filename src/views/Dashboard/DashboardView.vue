@@ -10,7 +10,7 @@
       <main class="col-lg-10 col-md-10 col-sm-12">
         <!-- Top Navbar -->
         <div class="row">
-          <div class="col-md-12 mb-5" v-if="currentComponent === CounsellorDashboard">
+          <div class="col-md-12 mb-4" v-if="currentComponent === CounsellorDashboard">
             <TopNavbarCard />
           </div>
         </div>
