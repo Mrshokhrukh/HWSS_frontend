@@ -20,6 +20,9 @@ const screeningMiddleParams = '/api/v1/screening';
 // Define api middle params
 const measurementMiddleParams = '/api/v1/measurement';
 
+// Define api middle params
+const monitoringMiddleParams = '/api/v1/monitoring';
+
 // Combine BaseURL and middle params for ease of use
 const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
 
@@ -31,6 +34,9 @@ const screeningBaseUrl = `${baseScreeningUrl}${screeningMiddleParams}`;
 
 // Combine BaseURL and middle params for ease of use
 const measurementBaseUrl = `${baseUrl}${measurementMiddleParams}`;
+
+// Combine BaseURL and middle params for ease of use
+const moitoringBaseUrl = `${baseUrl}${monitoringMiddleParams}`;
 
 // Define your API endpoints
 const endpoints = {
@@ -65,6 +71,9 @@ const endpoints = {
   getMeasurement: `${measurementBaseUrl}/get-measurement/`,
   getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
+
+  // monitoring endpoints
+  getRescreeningList: `${moitoringBaseUrl}/check-rescreening-flags/`,
 
 };
 

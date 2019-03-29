@@ -1,7 +1,14 @@
 <template>
   <div class="container-fluid">
     <!-- Filters -->
-    <MonitorFilterCard @filtersApplied="handleFiltersApplied"/>
+    <div class="row d-flex align-items-center">
+      <div class="col-11">
+        <MonitorFilterCard @filtersApplied="handleFiltersApplied" />
+      </div>
+      <div class="col-1">
+        <button class="btn hwss-btn">Rescreen</button>
+      </div>
+    </div>
 
 
     <!-- Table -->
@@ -127,42 +134,40 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(user, index) in filteredUsers" :key="index" class="shadow-row align-middle text-nowrap">
+          <tr v-for="(user, index) in filteredUsers" :key="index" class="shadow-row align-middle text-nowrap text-center">
             <td><input type="checkbox" :value="user.id" v-model="selectedUsers"></td>
             <td>{{ user.date }}</td>
             <td>{{ user.name }}</td>
             <td>{{ user.age }}</td>
             <td>{{ user.sex }}</td>
-            <td><span class="severity-dot"></span>{{
-              user.pastMentalDisorder }}</td>
-            <td><span :class="getSeverityClass(user.depressionSeverity)"><span class="severity-dot"></span>{{
+            <td>{{ user.pastMentalDisorder }}</td>
+            <td><span :class="getSeverityClass(user.depressionSeverity)"><i class="fas fa-flag"></i>{{
               user.depressionSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.generalAnxietySeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.generalAnxietySeverity)"><i class="fas fa-flag"></i>{{
               user.generalAnxietySeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.adverseChildhoodExperienceSeverity)"><span
-                  class="severity-dot"></span>{{
-                    user.adverseChildhoodExperienceSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.tobaccoProductsSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.adverseChildhoodExperienceSeverity)"><i class="fas fa-flag"></i>{{
+              user.adverseChildhoodExperienceSeverity }}</span></td>
+            <td><span :class="getSeverityClass(user.tobaccoProductsSeverity)"><i class="fas fa-flag"></i>{{
               user.tobaccoProductsSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.alcoholicBeveragesSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.alcoholicBeveragesSeverity)"><i class="fas fa-flag"></i>{{
               user.alcoholicBeveragesSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.cannabisSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.cannabisSeverity)"><i class="fas fa-flag"></i>{{
               user.cannabisSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.cocaineSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.cocaineSeverity)"><i class="fas fa-flag"></i>{{
               user.cocaineSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.amphetamineTypeSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.amphetamineTypeSeverity)"><i class="fas fa-flag"></i>{{
               user.amphetamineTypeSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.inhalantsSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.inhalantsSeverity)"><i class="fas fa-flag"></i>{{
               user.inhalantsSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.sedativesSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.sedativesSeverity)"><i class="fas fa-flag"></i>{{
               user.sedativesSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.hallucinogensSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.hallucinogensSeverity)"><i class="fas fa-flag"></i>{{
               user.hallucinogensSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.opioidsSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.opioidsSeverity)"><i class="fas fa-flag"></i>{{
               user.opioidsSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.othersSeverity)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.othersSeverity)"><i class="fas fa-flag"></i>{{
               user.othersSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.substanceByInjection)"><span class="severity-dot"></span>{{
+            <td><span :class="getSeverityClass(user.substanceByInjection)"><i class="fas fa-flag"></i>{{
               user.substanceByInjection }}</span></td>
             <td><button @click="viewDetails(user)" class="btn hwss-btn">View Details</button></td>
           </tr>
@@ -173,15 +178,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import MonitorFilterCard from './MonitorFilterCard.vue';
+import endpoints from '@/api';
+import axios from 'axios';
 
 // Sample data for table body
-const users = ref([
-  { id: 1, date: '2024-03-23', name: 'John Doe', age: 30, sex: 'Male', pastMentalDisorder: 'Yes', depressionSeverity: 'Severe', generalAnxietySeverity: 'Moderate', adverseChildhoodExperienceSeverity: 'Mild', tobaccoProductsSeverity: 'Severe', alcoholicBeveragesSeverity: 'Moderately Severe', cannabisSeverity: 'Mild', cocaineSeverity: 'Moderate', amphetamineTypeSeverity: 'Moderate', inhalantsSeverity: 'Mild', sedativesSeverity: 'Severe', hallucinogensSeverity: 'Moderate', opioidsSeverity: 'Moderately Severe', othersSeverity: 'Moderate', substanceByInjection: 'No' },
-  { id: 2, date: '2024-03-23', name: 'John Doe', age: 30, sex: 'Male', pastMentalDisorder: 'Yes', depressionSeverity: 'Moderate', generalAnxietySeverity: 'Moderate', adverseChildhoodExperienceSeverity: 'Mild', tobaccoProductsSeverity: 'Severe', alcoholicBeveragesSeverity: 'Moderately Severe', cannabisSeverity: 'Mild', cocaineSeverity: 'Moderate', amphetamineTypeSeverity: 'Moderate', inhalantsSeverity: 'Mild', sedativesSeverity: 'Severe', hallucinogensSeverity: 'Moderate', opioidsSeverity: 'Moderately Severe', othersSeverity: 'Moderate', substanceByInjection: 'No' },
-  // Add more mock data as needed
-]);
+const users = ref([]);
 
 // Filter options
 const tableFields = ['Date', 'Name', 'Age', 'Sex', 'Past Mental Disorder History'];
@@ -238,19 +241,17 @@ const sortByColumn = (columnName) => {
   }
 };
 
-// const viewDetails = (user) => {
-//   // Logic to view details of a user
-// };
-
 const getSeverityClass = (severity) => {
-  if (severity === 'Severe' || severity === 'High Risk') {
+  if (severity === 'severe' || severity === 'high risk') {
     return 'severity-severe';
-  } else if (severity === 'Moderately Severe') {
+  } else if (severity === 'moderately severe') {
     return 'severity-moderate-severe';
-  } else if (severity === 'Moderate Risk' || severity === 'Moderate') {
+  } else if (severity === 'moderate risk' || severity === 'moderate') {
     return 'severity-moderate';
-  } else {
+  } else if (severity === 'low risk' || severity === 'mild') {
     return 'severity-mild';
+  } else {
+    return 'severity-none';
   }
 };
 
@@ -258,6 +259,43 @@ const handleFiltersApplied = (filterValues) => {
   // Logic to handle the selected filter values
   console.log("Selected filter values:", filterValues);
 };
+
+onMounted(async () => {
+  try {
+    const response = await axios.get(endpoints.getRescreeningList);
+    if (response && response.data && response.data.flag_details) {
+      const mappedUsers = response.data.flag_details.map(detail => {
+        return {
+          id: detail.user_data.id,
+          date: detail.submission_details[0].submission_data.submission_date.split(' ')[0],
+          name: `${detail.user_data.first_name} ${detail.user_data.middle_name ? detail.user_data.middle_name + ' ' : ''}${detail.user_data.last_name}`,
+          age: new Date().getFullYear() - new Date(detail.user_data.date_of_birth).getFullYear(),
+          sex: detail.user_data.gender,
+          pastMentalDisorder: detail.submission_details[0].submission_data.diagnosis || 'none',
+          depressionSeverity: detail.submission_details[0].measurement_data.phq_measurement || 'none',
+          generalAnxietySeverity: detail.submission_details[0].measurement_data.gad_measurement || 'none',
+          adverseChildhoodExperienceSeverity: 'none',
+          tobaccoProductsSeverity: detail.submission_details[0].measurement_assist_data.tobacco_measurement || 'none',
+          alcoholicBeveragesSeverity: detail.submission_details[0].measurement_assist_data.alcoholic_measurement || 'none',
+          cannabisSeverity: detail.submission_details[0].measurement_assist_data.cannabis_measurement || 'none',
+          cocaineSeverity: detail.submission_details[0].measurement_assist_data.cocaine_measurement || 'none',
+          amphetamineTypeSeverity: detail.submission_details[0].measurement_assist_data.amphetamine_measurement || 'none',
+          inhalantsSeverity: detail.submission_details[0].measurement_assist_data.inhalants_measurement || 'none',
+          sedativesSeverity: detail.submission_details[0].measurement_assist_data.sedatives_measurement || 'none',
+          hallucinogensSeverity: detail.submission_details[0].measurement_assist_data.hallucinogens_measurement || 'none',
+          opioidsSeverity: detail.submission_details[0].measurement_assist_data.opioids_measurement || 'none',
+          othersSeverity: detail.submission_details[0].measurement_assist_data.other_measurement || 'none',
+          substanceByInjection: detail.submission_details[0].measurement_assist_data.injection_measurement || 'none'
+          // Add more fields as needed
+        };
+      });
+      users.value = mappedUsers;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 </script>
 
 
@@ -294,19 +332,27 @@ table td {
 }
 
 .severity-severe {
-  color: red;
+  color: #c40000;
+  background: #a800003a;
 }
 
 .severity-moderate-severe {
-  color: rgb(255, 140, 0);
+  color: #dc6503;
+  background: #b563003a;
 }
 
 .severity-moderate {
-  color: rgb(255, 217, 0);
+  color: #e39700;
+  background: #c8aa003a;
 }
 
 .severity-mild {
-  color: green;
+  color: #008300;
+  background: #0083003a;
+}
+
+.severity-none {
+  color: #5f5f5f;
 }
 
 /* Style for severity dot */
@@ -335,5 +381,9 @@ thead tr td {
 .me-2 {
   display: flex;
   widows: 50rem;
+}
+
+i.fas {
+  margin-right: 0.5rem;
 }
 </style>
