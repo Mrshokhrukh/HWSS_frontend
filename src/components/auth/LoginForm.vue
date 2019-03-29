@@ -166,8 +166,12 @@ const redirectToDashboard = (userRole) => {
     const dashboardRoutes = {
         student: 'student-dashboard',
         school_counselor: 'counselor-dashboard',
+        gyalsung_counselor: 'counselor-dashboard',
         clinical_counselor: 'counselor-dashboard',
-        admin: 'admin-dashboard',
+        mh_admin: 'admin-dashboard',
+        rd_admin: 'admin-dashboard',
+        sud_admin: 'admin-dashboard',
+        aaa_admin: 'admin-dashboard',
     };
 
     const routeName = dashboardRoutes[userRole] || 'student-dashboard';

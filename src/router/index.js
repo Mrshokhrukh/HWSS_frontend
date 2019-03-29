@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 
 // Define a reusable dashboard component
-const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
+const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
 
 // Define a function to generate routes for user dashboards
 const generateDashboardRoutes = (userType) => {
@@ -32,7 +32,25 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Profile`, requiresAuth: true }
     },
-
+    // -------------------------- Public specific routes ---------------------------------------------------
+    {
+      path: `/${userType}-dashboard/public-screening`,
+      name: `${userType}-public-screening`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Public Screening Test`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/public-screening-start`,
+      name: `${userType}-public-screening-start`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Public Screening Start`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/public-profile`,
+      name: `${userType}-public-profile`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Public Profile`, requiresAuth: true }
+    },
     // -------------------------- Counselor specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/counselor-screening`,
@@ -46,6 +64,34 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Monitor`, requiresAuth: true }
     },
+
+    // -------------------------- Admin specific routes ---------------------------------------------------
+    {
+      path: `/${userType}-dashboard/admin-approval`,
+      name: `${userType}-admin-approval`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin approval`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/admin-report`,
+      name: `${userType}-admin-report`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin report`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/admin-help`,
+      name: `${userType}-admin-help`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin help`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/admin-setting`,
+      name: `${userType}-admin-setting`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin setting`, requiresAuth: true }
+    },
+
+
   ];
 
   return dashboardRoutes;
@@ -83,6 +129,7 @@ const createAppRouter = () => {
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
       ...generateDashboardRoutes('admin'),
+      ...generateDashboardRoutes('public'),
     ],
   });
 

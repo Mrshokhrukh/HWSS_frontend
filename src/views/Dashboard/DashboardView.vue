@@ -10,7 +10,11 @@
       <main class="col-lg-10 col-md-10 col-sm-12">
         <!-- Top Navbar -->
         <div class="row">
+<<<<<<< Updated upstream
           <div class="col-md-12 mb-4" v-if="currentComponent === CounsellorDashboard">
+=======
+          <div class="col-md-12 mb-5" v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard">
+>>>>>>> Stashed changes
             <TopNavbarCard />
           </div>
         </div>
@@ -31,6 +35,7 @@
 import { ref, computed } from 'vue';
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
+import PublicDashboard from '@/components/dashboards/PublicDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
@@ -51,12 +56,16 @@ const currentComponent = computed(() => {
       return CounsellorDashboard;
     case 'clinical-counselor':
       return CounsellorDashboard;
-    case 'admin':
+    case 'mh_admin':
       return AdminDashboard;
-    case 'administrator':
+    case 'sud_admin':
+      return AdminDashboard;
+    case 'aaa_admin':
+      return AdminDashboard;
+    case 'rd_admin':
       return AdminDashboard;
     default:
-      return StudentDashboard;
+      return PublicDashboard;
   }
 });
 

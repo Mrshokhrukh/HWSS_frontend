@@ -63,25 +63,15 @@ const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 const userType = computed(() => {
 	const role = userDetailsStore.user.role.toLowerCase();
 
-	const removeSchoolClinicalCounselor = (str) => {
-		if (str === null || str === undefined) {
-			throw new Error("The parameter str is null or undefined.");
-		}
-		return str.replace(/^(school|clinical)?\s*counselor$/i, 'counselor').trim();
-	};
-
-	const toSlug = (str) => {
-		return str.replace(/\s+/g, '-').toLowerCase();
-	};
-
-	let sanitizedRole = removeSchoolClinicalCounselor(role);
-
-	if (sanitizedRole === 'administrator') {
-        sanitizedRole = 'admin';
-    }
-
-	return toSlug(sanitizedRole);
+	if (role.includes("admin")) {
+		return "admin";
+	} else if (role.includes("counselor")) {
+		return "counselor";
+	} else {
+		throw new Error("Invalid user role");
+	}
 });
+
 
 const fetchedMenus = ref([]);
 
@@ -96,14 +86,14 @@ const profilePicClass = computed(() => {
 });
 
 const menus = computed(() => {
-	let baseRoute = `/${userType.value}-dashboard`;
-	let staticMenuItems = [
+	const baseRoute = `/${userType.value}-dashboard`;
+	const staticMenuItems = [
 		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
 	];
 
 	const role = userType.value;
 
-	let dynamicMenuItems = fetchedMenus.value
+	const dynamicMenuItems = fetchedMenus.value
 		.filter((menu) => menu.roles.some((r) => r.name === role))
 		.map((menu) => ({
 			text: menu.name,
