@@ -315,6 +315,7 @@ const confirmDetails = async (isTrue) => {
     }
 };
 
+<<<<<<< Updated upstream
 
 const loading = ref(false);
 
@@ -365,6 +366,23 @@ const proceed = async () => {
             console.error('Invalid agency selected');
             loading.value = false;
             return;
+=======
+const loading = ref(false);
+
+const proceed = async () => {
+    loading.value = true;
+    // Data preparation for the API call
+    let apiURL;
+    if (selectedAgency.value === 'RCSC' && selectedParameter.value === 'Citizen ID') {
+        apiURL = `http://localhost:8000/api/v1/access/get-rcsc-details/${parameterValue.value}`;
+    }
+    else if (selectedAgency.value === 'EMIS') {
+        if (selectedParameter.value === 'Student ID') {
+            apiURL = '/path/to/emis/student/api'; // Replace with actual API endpoint
+        } else if (selectedParameter.value === 'Employee ID') {
+            apiURL = '/path/to/emis/employee/api'; // Replace with actual API endpoint
+        }
+>>>>>>> Stashed changes
     }
 
     try {
@@ -374,6 +392,7 @@ const proceed = async () => {
             return;
         }
 
+<<<<<<< Updated upstream
         const response = await axios.get(apiURL);
         console.log('Response:', response.data);
 
@@ -397,6 +416,17 @@ const proceed = async () => {
             router.push('/register');
         });
     } finally {
+=======
+        // Update the user data with the RCSC details
+        emit('go-to-next-step', 'step-four', {
+            userData: { ...props.userData, ...data },
+            agencyData: data
+        });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    } finally {
+        // Set loading to false after the API call completes
+>>>>>>> Stashed changes
         loading.value = false;
     }
 };

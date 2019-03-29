@@ -128,6 +128,7 @@ const createUser = async () => {
     }
 
     try {
+<<<<<<< Updated upstream
         let userData = JSON.parse(sessionStorage.getItem('user_data'));
         const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
         const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'));
@@ -149,6 +150,16 @@ const createUser = async () => {
         const response = await axios.post(endpoints.registerUser, userSubmissionData, {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
             withCredentials: true,
+=======
+        const response = await fetch('http://localhost:8000/api/v1/access/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Origin': 'http://localhost:5173',  // Ensure this matches your frontend origin
+            },
+            credentials: 'include',  // Include this line for cross-origin requests with cookies
+            body: JSON.stringify(userSubmissionData),
+>>>>>>> Stashed changes
         });
 
         if (response.status === 201) {
@@ -181,6 +192,7 @@ const createUser = async () => {
         Swal.fire('Error', errorMessage.value, 'error');
     }
 };
+
 </script>
 
 
