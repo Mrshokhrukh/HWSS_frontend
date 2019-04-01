@@ -23,6 +23,9 @@ const measurementMiddleParams = '/api/v1/measurement';
 // Define api middle params
 const monitoringMiddleParams = '/api/v1/monitoring';
 
+// Define api middle params
+const reportingMiddleParams = '/api/v1/reporting';
+
 // Combine BaseURL and middle params for ease of use
 const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
 
@@ -37,6 +40,9 @@ const measurementBaseUrl = `${baseUrl}${measurementMiddleParams}`;
 
 // Combine BaseURL and middle params for ease of use
 const moitoringBaseUrl = `${baseUrl}${monitoringMiddleParams}`;
+
+// Combine BaseURL and middle params for ease of use
+const reportingBaseUrl = `${baseUrl}${reportingMiddleParams}`;
 
 // Define your API endpoints
 const endpoints = {
@@ -74,7 +80,11 @@ const endpoints = {
 
   // monitoring endpoints
   getRescreeningList: `${moitoringBaseUrl}/check-rescreening-flags/`,
+  getServiceAndTreatmentList: `${moitoringBaseUrl}/get-service-and-treatment/`,
+  getReferralList: `${moitoringBaseUrl}/get-referral-list/`,
 
+  // reporting endpoints
+  generateReport: `${reportingBaseUrl}/generate-report/`,
 };
 
 export default endpoints;

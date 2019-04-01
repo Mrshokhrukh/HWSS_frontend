@@ -49,9 +49,11 @@ const currentComponent = computed(() => {
   switch (role) {
     case 'student':
       return StudentDashboard;
-    case 'school-counselor':
+    case 'general_public':
+      return PublicDashboard;
+    case 'school_counselor':
       return CounsellorDashboard;
-    case 'clinical-counselor':
+    case 'clinical_counselor':
       return CounsellorDashboard;
     case 'mh_admin':
       return AdminDashboard;

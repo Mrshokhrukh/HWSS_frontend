@@ -26,7 +26,7 @@
 				<i class="fas fa-sign-out-alt"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
 			</router-link>
-			<!-- <router-link to="#" class="side-btn" @click="submitSampleTest">Send Sample Submission</router-link> -->
+			
 			<router-link to="#" class="side-btn" @click="toggle">
 				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
@@ -55,23 +55,25 @@ const showConfetti = ref(false);
 
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
-	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
+	return `${ firstName } ${ middleName ? middleName + ' ' : '' }${ lastName }`.trim();
 });
 
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
-	const role = userDetailsStore.user.role.toLowerCase();
+    const role = userDetailsStore.user.role?.toLowerCase();
+    if (!role) return "public";
 
-	if (role.includes("admin")) {
-		return "admin";
-	} else if (role.includes("counselor")) {
-		return "counselor";
-	} else {
-		throw new Error("Invalid user role");
-	}
+    if (role.includes("admin")) {
+        return "admin";
+    } else if (role.includes("counselor")) {
+        return "counselor";
+    } else if (role === "student") {
+        return "student";
+    } else {
+        return role;
+    }
 });
-
 
 const fetchedMenus = ref([]);
 
@@ -100,7 +102,7 @@ const menus = computed(() => {
 			route: menu.route,
 			iconClass: menu.icon_class,
 		}));
-		
+
 	return [...staticMenuItems, ...dynamicMenuItems];
 });
 
@@ -125,58 +127,58 @@ const profilePictureUrl = computed(() => {
 
 
 const logout = async () => {
-    const progressStore = useProgressStore();
-    if (progressStore) {
-        progressStore.resetStore();
-    }
+	const progressStore = useProgressStore();
+	if (progressStore) {
+		progressStore.resetStore();
+	}
 
-    try {
-        if (endpoints.logOutUser) {
-            const response = await axios.post(endpoints.logOutUser);
-            if (response && response.data) {
-                if (response.data.message === "Logout successful") {
-                    if (localStorage) {
-                        // Clear all items from localStorage except 'userScreenedToday'
-                        for (let key in localStorage) {
-                            if (key !== 'userScreenedToday') {
-                                localStorage.removeItem(key);
-                            }
-                        }
-                    }
-                    if (sessionStorage) {
-                        sessionStorage.clear();
-                    }
-                    if (userDetailsStore) {
-                        userDetailsStore.clearUserDetails();
-                    }
+	try {
+		if (endpoints.logOutUser) {
+			const response = await axios.post(endpoints.logOutUser);
+			if (response && response.data) {
+				if (response.data.message === "Logout successful") {
+					if (localStorage) {
+						// Clear all items from localStorage except 'userScreenedToday'
+						for (let key in localStorage) {
+							if (key !== 'userScreenedToday') {
+								localStorage.removeItem(key);
+							}
+						}
+					}
+					if (sessionStorage) {
+						sessionStorage.clear();
+					}
+					if (userDetailsStore) {
+						userDetailsStore.clearUserDetails();
+					}
 
-                    await Swal.fire({
-                        title: 'Logged Out',
-                        text: 'You have been successfully logged out of the system.',
-                        icon: 'success',
-                        showConfirmButton: false,
-                        timer: 1200
-                    });
+					await Swal.fire({
+						title: 'Logged Out',
+						text: 'You have been successfully logged out of the system.',
+						icon: 'success',
+						showConfirmButton: false,
+						timer: 1200
+					});
 
-                    if (router) {
-                        router.push("/login");
-                    }
-                } else {
-                    console.error("Logout failed:", response.data.message);
-                }
-            }
-        }
-    } catch (error) {
-        console.error("Logout failed:", error);
-        if (Swal) {
-            await Swal.fire({
-                title: 'Error',
-                text: 'Logout failed. Please try again.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        }
-    }
+					if (router) {
+						router.push("/login");
+					}
+				} else {
+					console.error("Logout failed:", response.data.message);
+				}
+			}
+		}
+	} catch (error) {
+		console.error("Logout failed:", error);
+		if (Swal) {
+			await Swal.fire({
+				title: 'Error',
+				text: 'Logout failed. Please try again.',
+				icon: 'error',
+				confirmButtonText: 'OK'
+			});
+		}
+	}
 };
 
 
@@ -266,21 +268,24 @@ onMounted(() => {
 
 .side-btn.active::before,
 .side-btn.active::after {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 10px; /* Adjust height as needed */
-  background-color: white;
+	content: "";
+	position: absolute;
+	width: 100%;
+	height: 10px;
+	/* Adjust height as needed */
+	background-color: white;
 }
 
 .side-btn.active::before {
-  top: -10px; /* Adjust based on element height */
-  border-radius: 0 0 30px 0;
+	top: -10px;
+	/* Adjust based on element height */
+	border-radius: 0 0 30px 0;
 }
 
 .side-btn.active::after {
-  bottom: -10px; /* Adjust based on element height */
-  border-radius: 0 30px 0 0;
+	bottom: -10px;
+	/* Adjust based on element height */
+	border-radius: 0 30px 0 0;
 }
 
 .side-btn i {
@@ -300,5 +305,4 @@ onMounted(() => {
 .sidebar:not(.sidebar-open) {
 	width: 4.5rem;
 	/* Adjust according to your icon size */
-}
-</style>
+}</style>

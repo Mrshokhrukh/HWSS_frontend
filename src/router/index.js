@@ -59,10 +59,22 @@ const generateDashboardRoutes = (userType) => {
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Screening Test`, requiresAuth: true }
     },
     {
+      path: `/${userType}-dashboard/counselor-rescreening`,
+      name: `${userType}-counselor-rescreening`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Rescreening Test`, requiresAuth: true }
+    },
+    {
       path: `/${userType}-dashboard/counselor-monitor`,
       name: `${userType}-counselor-monitor`,
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Monitor`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/counselor-reports`,
+      name: `${userType}-counselor-reports`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Reports`, requiresAuth: true }
     },
 
     // -------------------------- Admin specific routes ---------------------------------------------------

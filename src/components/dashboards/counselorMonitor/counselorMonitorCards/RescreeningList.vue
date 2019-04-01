@@ -6,173 +6,17 @@
         <MonitorFilterCard @filtersApplied="handleFiltersApplied" />
       </div>
       <div class="col-1">
-        <button class="btn hwss-btn">Rescreen</button>
+        <button class="btn hwss-btn" @click="rescreenSelectedPatients">Rescreen</button>
       </div>
     </div>
 
-
     <!-- Table -->
-    <div class="main-container">
-      <table class="table">
-        <thead>
-          <tr class="align-middle">
-            <th scope="col"><input type="checkbox" @change="selectAll($event)"></th>
-            <th scope="col" @click="sortBy('date')">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Date
-                <i class="fa"
-                  :class="{ 'fa-sort': sortByColumn !== 'date', 'fa-sort-asc': sortByColumn === 'date' && sortDirection === 'asc', 'fa-sort-desc': sortByColumn === 'date' && sortDirection === 'desc' }"></i>
-              </div>
-            </th>
-            <th scope="col" @click="sortBy('name')">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Name
-                <i class="fa "
-                  :class="{ 'fa-sort': sortByColumn !== 'name', 'fa-sort-asc': sortByColumn === 'name' && sortDirection === 'asc', 'fa-sort-desc': sortByColumn === 'name' && sortDirection === 'desc' }"></i>
-              </div>
-            </th>
-            <th scope="col" @click="sortBy('age')">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Age
-                <i class="fa"
-                  :class="{ 'fa-sort': sortByColumn !== 'age', 'fa-sort-asc': sortByColumn === 'age' && sortDirection === 'asc', 'fa-sort-desc': sortByColumn === 'age' && sortDirection === 'desc' }"></i>
-              </div>
-            </th>
-            <th scope="col" @click="sortBy('sex')">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Sex
-                <i class="fa"
-                  :class="{ 'fa-sort': sortByColumn !== 'sex', 'fa-sort-asc': sortByColumn === 'sex' && sortDirection === 'asc', 'fa-sort-desc': sortByColumn === 'sex' && sortDirection === 'desc' }"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Past Mental Disorder History
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Depression Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                General Anxiety Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Adverse Childhood Experience Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Tobacco Products Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Alcoholic Beverages Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Cannabis Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col" class="table-head-td">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Cocaine Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Amphetamine Type Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Inhalants Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Sedatives Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Hallucinogens Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Opioids Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">
-              <div class="d-flex justify-content-between align-items-center me-2">
-                Others Severity
-                <i class="fa fa-sort"></i>
-              </div>
-            </th>
-            <th scope="col">Substance by Injection</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(user, index) in filteredUsers" :key="index" class="shadow-row align-middle text-nowrap text-center">
-            <td><input type="checkbox" :value="user.id" v-model="selectedUsers"></td>
-            <td>{{ user.date }}</td>
-            <td>{{ user.name }}</td>
-            <td>{{ user.age }}</td>
-            <td>{{ user.sex }}</td>
-            <td>{{ user.pastMentalDisorder }}</td>
-            <td><span :class="getSeverityClass(user.depressionSeverity)"><i class="fas fa-flag"></i>{{
-              user.depressionSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.generalAnxietySeverity)"><i class="fas fa-flag"></i>{{
-              user.generalAnxietySeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.adverseChildhoodExperienceSeverity)"><i class="fas fa-flag"></i>{{
-              user.adverseChildhoodExperienceSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.tobaccoProductsSeverity)"><i class="fas fa-flag"></i>{{
-              user.tobaccoProductsSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.alcoholicBeveragesSeverity)"><i class="fas fa-flag"></i>{{
-              user.alcoholicBeveragesSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.cannabisSeverity)"><i class="fas fa-flag"></i>{{
-              user.cannabisSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.cocaineSeverity)"><i class="fas fa-flag"></i>{{
-              user.cocaineSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.amphetamineTypeSeverity)"><i class="fas fa-flag"></i>{{
-              user.amphetamineTypeSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.inhalantsSeverity)"><i class="fas fa-flag"></i>{{
-              user.inhalantsSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.sedativesSeverity)"><i class="fas fa-flag"></i>{{
-              user.sedativesSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.hallucinogensSeverity)"><i class="fas fa-flag"></i>{{
-              user.hallucinogensSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.opioidsSeverity)"><i class="fas fa-flag"></i>{{
-              user.opioidsSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.othersSeverity)"><i class="fas fa-flag"></i>{{
-              user.othersSeverity }}</span></td>
-            <td><span :class="getSeverityClass(user.substanceByInjection)"><i class="fas fa-flag"></i>{{
-              user.substanceByInjection }}</span></td>
-            <td><button @click="viewDetails(user)" class="btn hwss-btn">View Details</button></td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="main-container mt-5">
+      <ag-grid-vue style="width: 100%; height: 500px;" class="ag-theme-quartz" :rowData="filteredUsers"
+        :columnDefs="columnDefs" :defaultColDef="defaultColDef" :rowSelection="'multiple'" :headerCheckboxSelection="true"
+        :pagination="true" :paginationPageSize="50" :rowHeight="50" @selectionChanged="onSelectionChanged">
+        <ag-grid-vue-viewport-header select-all="true"></ag-grid-vue-viewport-header>
+      </ag-grid-vue>
     </div>
   </div>
 </template>
@@ -180,83 +24,153 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import MonitorFilterCard from './MonitorFilterCard.vue';
+import { useRouter } from 'vue-router';
 import endpoints from '@/api';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
+import { AgGridVue } from "ag-grid-vue3";
+
+const router = useRouter();
+
+const rescreenSelectedPatients = (patientId) => {
+  const selectedPatient = selectedUsers.value.find(patient => patient.id === patientId);
+
+  if (!selectedPatient) {
+    Swal.fire({
+      icon: 'warning',
+      text: 'Please select a valid patient to rescreen.',
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return;
+  }
+
+  Swal.fire({
+    title: 'Confirm Rescreen',
+    text: `Are you sure you want to rescreen ${selectedPatient.name}?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Rescreen',
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+  }).then((result) => {
+    if (result.isConfirmed) {
+      console.log('Patient selected for rescreening:', selectedPatient);
+      router.push('/counselor-dashboard/counselor-rescreening')
+    }
+  });
+};
+
+
+// eslint-disable-next-line no-unused-vars
+const rescreenRenderer = (params) => {
+  const button = document.createElement('button');
+  button.className = 'btn hwss-btn';
+  button.textContent = 'Rescreen';
+  button.addEventListener('click', () => {
+    console.log('Rescreen button clicked', params.data.id);
+    rescreenSelectedPatients(params.data.id);
+  });
+  return button;
+};
+
+
+const severityRenderer = (params) => {
+  const severity = params.value;
+  let iconClass = 'fas fa-flag'; // Default icon class
+  let severityClass = ''; // Default severity class
+
+  // Determine severity icon and class based on severity level
+  switch (severity) {
+    case 'severe':
+    case 'high risk':
+      severityClass = 'severity-severe';
+      break;
+    case 'moderately severe':
+      severityClass = 'severity-moderate-severe';
+      break;
+    case 'moderate risk':
+    case 'moderate':
+      severityClass = 'severity-moderate';
+      break;
+    case 'low risk':
+    case 'mild':
+      severityClass = 'severity-mild';
+      break;
+    default:
+      severityClass = 'severity-none';
+      break;
+  }
+
+  // Return the HTML string with severity class applied
+  return `<span class="${severityClass}"><i class="${iconClass}"></i> ${severity}</span>`;
+};
+
+
+const columnDefs = ref([
+  { headerCheckboxSelection: true, checkboxSelection: true },
+  { headerName: 'Date', field: 'date', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'Name', field: 'name', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'Age', field: 'age', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'Sex', field: 'sex', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'Past Mental Disorder History', field: 'pastMentalDisorder', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'Depression Severity', field: 'depressionSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'General Anxiety Severity', field: 'generalAnxietySeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Adverse Childhood Experience Severity', field: 'adverseChildhoodExperienceSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Tobacco Products Severity', field: 'tobaccoProductsSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Alcoholic Beverages Severity', field: 'alcoholicBeveragesSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Cannabis Severity', field: 'cannabisSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Cocaine Severity', field: 'cocaineSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Amphetamine Type Severity', field: 'amphetamineTypeSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Inhalants Severity', field: 'inhalantsSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Sedatives Severity', field: 'sedativesSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Hallucinogens Severity', field: 'hallucinogensSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Opioids Severity', field: 'opioidsSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Others Severity', field: 'othersSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Substance by Injection', field: 'substanceByInjection', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
+  { headerName: 'Actions', cellRenderer: rescreenRenderer },
+]);
+
+const defaultColDef = ref({
+  sortable: true,
+  resizable: true,
+});
 
 // Sample data for table body
 const users = ref([]);
 
 // Filter options
-const tableFields = ['Date', 'Name', 'Age', 'Sex', 'Past Mental Disorder History'];
-// const severityOptions = ['Severe', 'Moderately Severe', 'Moderate', 'Mild'];
+const tableFields = [columnDefs.value];
 
 // Filter and sorting variables
 const searchQuery = ref('');
 const selectedFields = ref(tableFields);
-const sortBy = ref('');
-
-// Selected users for bulk actions
 const selectedUsers = ref([]);
 
 // Filtered users based on search query and selected fields
 const filteredUsers = computed(() => {
-  if (!searchQuery.value.trim()) {
-    // No search query, return all users
+  if (!searchQuery.value.trim() || !Array.isArray(users.value) || users.value.length === 0) {
     return users.value;
   }
 
-  if (!Array.isArray(users.value) || users.value.length === 0) {
-    // Handle empty or invalid user data
-    return [];
-  }
-
-  const filtered = users.value.filter(user => {
+  return users.value.filter(user => {
     return selectedFields.value.some(field => {
       const fieldValue = user[field.toLowerCase()];
-      if (typeof fieldValue === 'undefined') {
-        // Handle missing field value
-        return false;
-      }
-      return fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
+      return fieldValue !== undefined && fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
     });
   });
-
-  return filtered;
 });
 
-// Methods
-const selectAll = (event) => {
-  if (event.target.checked) {
-    selectedUsers.value = filteredUsers.value.map(user => user.id);
-  } else {
-    selectedUsers.value = [];
-  }
+const onSelectionChanged = (event) => {
+  const selectedNodes = event.api.getSelectedNodes();
+  const selectedData = selectedNodes.map(node => node.data);
+  selectedUsers.value = selectedData.map(user => user);
 };
 
-const sortByColumn = (columnName) => {
-  if (sortBy.value === columnName) {
-    sortBy.value = '';
-  } else {
-    sortBy.value = columnName;
-  }
-};
-
-const getSeverityClass = (severity) => {
-  if (severity === 'severe' || severity === 'high risk') {
-    return 'severity-severe';
-  } else if (severity === 'moderately severe') {
-    return 'severity-moderate-severe';
-  } else if (severity === 'moderate risk' || severity === 'moderate') {
-    return 'severity-moderate';
-  } else if (severity === 'low risk' || severity === 'mild') {
-    return 'severity-mild';
-  } else {
-    return 'severity-none';
-  }
-};
 
 const handleFiltersApplied = (filterValues) => {
-  // Logic to handle the selected filter values
   console.log("Selected filter values:", filterValues);
 };
 
@@ -265,28 +179,31 @@ onMounted(async () => {
     const response = await axios.get(endpoints.getRescreeningList);
     if (response && response.data && response.data.flag_details) {
       const mappedUsers = response.data.flag_details.map(detail => {
+        const submissionData = detail.submission_details[0].submission_data;
+        const measurementData = detail.submission_details[0].measurement_data;
+        const measurementAssistData = detail.submission_details[0].measurement_assist_data;
+        
         return {
           id: detail.user_data.id,
-          date: detail.submission_details[0].submission_data.submission_date.split(' ')[0],
+          date: submissionData.submission_date.split(' ')[0],
           name: `${detail.user_data.first_name} ${detail.user_data.middle_name ? detail.user_data.middle_name + ' ' : ''}${detail.user_data.last_name}`,
           age: new Date().getFullYear() - new Date(detail.user_data.date_of_birth).getFullYear(),
           sex: detail.user_data.gender,
-          pastMentalDisorder: detail.submission_details[0].submission_data.diagnosis || 'none',
-          depressionSeverity: detail.submission_details[0].measurement_data.phq_measurement || 'none',
-          generalAnxietySeverity: detail.submission_details[0].measurement_data.gad_measurement || 'none',
+          pastMentalDisorder: submissionData.diagnosis || 'none',
+          depressionSeverity: measurementData.phq_measurement || 'none',
+          generalAnxietySeverity: measurementData.gad_measurement || 'none',
           adverseChildhoodExperienceSeverity: 'none',
-          tobaccoProductsSeverity: detail.submission_details[0].measurement_assist_data.tobacco_measurement || 'none',
-          alcoholicBeveragesSeverity: detail.submission_details[0].measurement_assist_data.alcoholic_measurement || 'none',
-          cannabisSeverity: detail.submission_details[0].measurement_assist_data.cannabis_measurement || 'none',
-          cocaineSeverity: detail.submission_details[0].measurement_assist_data.cocaine_measurement || 'none',
-          amphetamineTypeSeverity: detail.submission_details[0].measurement_assist_data.amphetamine_measurement || 'none',
-          inhalantsSeverity: detail.submission_details[0].measurement_assist_data.inhalants_measurement || 'none',
-          sedativesSeverity: detail.submission_details[0].measurement_assist_data.sedatives_measurement || 'none',
-          hallucinogensSeverity: detail.submission_details[0].measurement_assist_data.hallucinogens_measurement || 'none',
-          opioidsSeverity: detail.submission_details[0].measurement_assist_data.opioids_measurement || 'none',
-          othersSeverity: detail.submission_details[0].measurement_assist_data.other_measurement || 'none',
-          substanceByInjection: detail.submission_details[0].measurement_assist_data.injection_measurement || 'none'
-          // Add more fields as needed
+          tobaccoProductsSeverity: measurementAssistData.tobacco_measurement || 'none',
+          alcoholicBeveragesSeverity: measurementAssistData.alcoholic_measurement || 'none',
+          cannabisSeverity: measurementAssistData.cannabis_measurement || 'none',
+          cocaineSeverity: measurementAssistData.cocaine_measurement || 'none',
+          amphetamineTypeSeverity: measurementAssistData.amphetamine_measurement || 'none',
+          inhalantsSeverity: measurementAssistData.inhalants_measurement || 'none',
+          sedativesSeverity: measurementAssistData.sedatives_measurement || 'none',
+          hallucinogensSeverity: measurementAssistData.hallucinogens_measurement || 'none',
+          opioidsSeverity: measurementAssistData.opioids_measurement || 'none',
+          othersSeverity: measurementAssistData.other_measurement || 'none',
+          substanceByInjection: measurementAssistData.injection_measurement || 'none'
         };
       });
       users.value = mappedUsers;
@@ -295,9 +212,7 @@ onMounted(async () => {
     console.error(error);
   }
 });
-
 </script>
-
 
 <style scoped>
 table {
@@ -355,20 +270,8 @@ table td {
   color: #5f5f5f;
 }
 
-/* Style for severity dot */
-.severity-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 5px;
-}
-
-/* Apply border, border-radius, and padding to severity text */
-td span.severity-severe,
-td span.severity-moderate-severe,
-td span.severity-moderate,
-td span.severity-mild {
+.ag-cell .ag-react-container .ag-value-wrapper .ag-group-value,
+.ag-cell .ag-react-container .ag-value-wrapper span {
   border: 2px solid;
   border-radius: 50px;
   padding: 0.5rem 1rem;

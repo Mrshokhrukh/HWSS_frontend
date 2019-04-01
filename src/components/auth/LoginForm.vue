@@ -174,7 +174,7 @@ const redirectToDashboard = (userRole) => {
         aaa_admin: 'admin-dashboard',
     };
 
-    const routeName = dashboardRoutes[userRole] || 'student-dashboard';
+    const routeName = dashboardRoutes[userRole] || 'public-dashboard';
     router.push({ name: routeName });
 };
 
