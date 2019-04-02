@@ -1,60 +1,26 @@
 <template>
-    <ag-grid-vue style="width: 100%; height: 500px;" class="ag-theme-quartz" :rowData="rowData" :columnDefs="columnDefs"
-        :defaultColDef="defaultColDef" :rowSelection="'multiple'" :headerCheckboxSelection="true" :pagination="true"
-        :paginationPageSize="50" :rowHeight="50" @selectionChanged="onSelectionChanged">
-        <ag-grid-vue-viewport-header select-all="true"></ag-grid-vue-viewport-header>
-    </ag-grid-vue>
+    <el-table :data="rowData" :row-class-name="rowClassName" height="500px" stripe
+        :default-sort="{ prop: 'date', order: 'descending' }" :selection-change="onSelectionChanged"
+        style="width: 100%">
+        <el-table-column type="selection" width="50"></el-table-column>
+        <el-table-column prop="date" label="Date" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="user_data.name" label="Name" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="user_data.age" label="Age" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="user_data.gender" label="Sex" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="referred_to_name" label="Referred To" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="referred_by_name" label="Referred By" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="referral_status" label="Referral Status" sortable
+            show-overflow-tooltip></el-table-column>
+        <el-table-column prop="referral_remarks" label="Referral Remarks" sortable
+            show-overflow-tooltip></el-table-column>
+    </el-table>
 </template>
-  
+
 <script setup>
 import { ref } from 'vue';
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
-import { AgGridVue } from "ag-grid-vue3";
 
 const rowData = ref([]);
-const columnDefs = ref([
-    { headerName: 'Date', field: 'date', filter: true, },
-    { headerName: 'Name', field: 'user_data.name', filter: true, },
-    { headerName: 'Age', field: 'user_data.age', filter: true, },
-    { headerName: 'Sex', field: 'user_data.gender', filter: true, },
-    {
-        headerName: 'Referred To', field: 'referred_to_name', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Referred By', field: 'referred_by_name', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Referral Status', field: 'referral_status', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Referral Remarks', field: 'referral_remarks', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    }
-]);
-const defaultColDef = ref({ sortable: true, resizable: true });
-
 const onSelectionChanged = () => {
     // Implement selectionChanged logic
 };
 </script>
-  

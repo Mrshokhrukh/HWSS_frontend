@@ -1,76 +1,74 @@
 <template>
-
-
-    <div v-if="currentRoute === '/admin-dashboard/admin-approval'" class="admin-approval">
-        <MentalhealthApproval />
-    </div>
-
-    <div v-else-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-        <MentalhealthReport />
-    </div>
- 
-    <div class="container my-5" v-else>
-        <DashboardCurrentStatus />
-        <div class="row mt-5">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Status Table</h5>
-                        <div class="table-responsive">
-                            <table class="table table-bordered w-100">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>Female</th>
-                                        <th>Male</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <th>Total Screened</th>
-                                        <td>865</td>
-                                        <td>983</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Total Old Screened</th>
-                                        <td>470</td>
-                                        <td>588</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Total New Screened</th>
-                                        <td>395</td>
-                                        <td>395</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row mt-5">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title text-center bold" style="color: #2c6975;">Independent Screening Overview</h5>
-                        <canvas ref="chartLeft"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title text-center bold" style="color: #2c6975;"> Cluster Screening Overview</h5>
-                        <canvas ref="chartRight"></canvas>
-                    </div>
-                </div>
-            </div>
+    <!-- template for Mental Health admin -->
+    <div v-if="userRole === 'mh_admin'">
+        <div v-if="currentRoute === '/admin-dashboard/admin-approval'" class="admin-approval">
+            <MentalhealthApproval />
         </div>
 
-        
-    <div>
-        {{ currentRoute }}
+        <div v-else-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
+            <MentalhealthReport />
+        </div>
+
+        <div v-else>
+            <DashboardCurrentStatus />
+            <div class="row mt-5">
+                <div class="col-md-12">
+                    <TableTotalScreening />
+                </div>
+            </div>
+            <ChartCard />
+        </div>
     </div>
+
+    <!-- Template for SUD Admin -->
+    <div v-if="userRole === 'sud_admin'">
+        <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
+            <SudDahsboard/>
+       <SudTotalScreening/>
+       <SudSubstanceCard/>
+        </div>
+       
+       <div v-if="currentRoute === '/admin-dashboard/admin-approval'" class="admin-approval">
+            <SudProcessRequest />
+        </div>
+
+        <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
+            <SudReport />
+        </div>
+
+        <div v-if="currentRoute === '/admin-dashboard/admin-setting'" class="admin-setting">
+            <SudSetting />
+        </div>
+    </div>
+
+    <!-- Template for AAA Admin -->
+    <div v-if="userRole === 'aaa_admin'">
+        <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
+            <AaaDashboard/>
+        </div>
+
+        <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
+            <AAAReport />
+        </div>
+
+        <div v-if="currentRoute === '/admin-dashboard/admin-setting'" class="admin-setting">
+            <AaaSetting />
+        </div>
+    </div>
+
+     <!-- Template for AAA Admin -->
+     <div v-if="userRole === 'rd_admin'">
+        <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
+            <RnDDashboard/>
+        </div>
+
+        <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
+            <AAAReport />
+        </div>
+
+        <div v-if="currentRoute === '/admin-dashboard/admin-setting'" class="admin-setting">
+            <AaaSetting />
+        </div>
     </div>
 
 </template>
@@ -81,7 +79,19 @@ import Chart from 'chart.js/auto';
 import MentalhealthApproval from "@/components/dashboards/Adminpages/Approval/MentalhealthApproval.vue"
 import MentalhealthReport from "@/components/dashboards/Adminpages/report/MentalhealthReport.vue"
 import DashboardCurrentStatus from "@/components/dashboards/Adminpages/Mentalhealthcard/DashboardCurrentStatus.vue"
-import {useRoute} from 'vue-router';
+import TableTotalScreening from "@/components/dashboards/Adminpages/Mentalhealthcard/TableTotalScreening.vue"
+import ChartCard from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue"
+import SudDahsboard from "@/components/dashboards/Adminpages/Sud/SudDashboard.vue"
+import SudSubstanceCard from "@/components/dashboards/Adminpages/Sud/SudSubstanceCard.vue"
+import SudTotalScreening from "@/components/dashboards/Adminpages/Sud/SudTotalScreening.vue"
+import SudProcessRequest from "@/components/dashboards/Adminpages/Sud/processrequest/SudProcessRequest.vue"
+import SudReport from "@/components/dashboards/Adminpages/Sud/sudreport/SudReport.vue"
+import SudSetting from "@/components/dashboards/Adminpages/Sud/SudSetting.vue"
+import AaaDashboard from "@/components/dashboards/Adminpages/AAA/AaaDashboard.vue"
+import AAAReport from "@/components/dashboards/Adminpages/AAA/report/AAAReport.vue"
+import AaaSetting from "@/components/dashboards/Adminpages/AAA/AaaSetting.vue"
+import RnDDashboard from "@/components/dashboards/Adminpages/R&D/RnDDashboard.vue"
+import { useRoute } from 'vue-router';
 
 const route = useRoute();
 
@@ -132,6 +142,12 @@ const optionsRight = {
     },
 };
 
+const userRole = computed(() => {
+    const savedUserRole = JSON.parse(localStorage.getItem('userDetailsStore'));
+    return savedUserRole.user.role;
+});
+
+
 onMounted(async () => {
     await nextTick(); // Wait for the DOM to update
     const ctxLeft = chartLeftRef.value.getContext('2d');
@@ -156,7 +172,7 @@ onMounted(async () => {
 </script>
   
 <style>
-.bg{
-background-color: #d3e2e4;
+.bg {
+    background-color: #d3e2e4;
 }
 </style>

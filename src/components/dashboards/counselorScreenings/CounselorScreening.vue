@@ -27,8 +27,8 @@
                         <!-- Event Based Screening tab -->
                         <div v-if="activeTab === 'event-based-screening'">
                             <component :is="currentEventComponent"
-                                @proceedToSelectTools="switchComponent(EventScreeningSelectTools)"
-                                @proceedToScreening="switchComponent(EventScreeningScreening)" />
+                                @proceedToEventSelectTools="switchEventComponent(EventScreeningSelectTools)"
+                                @proceedToEventScreening="switchEventComponent(EventScreeningScreening)" @logEmit="logEmit()" />
                         </div>
                     </div>
                 </div>
@@ -36,14 +36,17 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted, provide } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+
+import { useRoute } from 'vue-router';
 import CaseScreeningRegister from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningRegister.vue';
 import CaseScreeningSelectTools from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSelectTools.vue';
 import CaseScreeningScreening from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningScreening.vue';
+
 import EventScreeningRegister from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningRegister.vue';
 import EventScreeningSelectTools from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningSelectTools.vue';
 import EventScreeningScreening from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningScreening.vue';
@@ -55,14 +58,35 @@ const userAgeGroup = ref({});
 
 // Define a ref to hold the current component
 const currentComponent = ref(CaseScreeningRegister);
-// Define a ref to hold the current component
 const currentEventComponent = ref(EventScreeningRegister);
+
 // Define a ref to hold the active tab
-const activeTab = ref('case-screening');
+const activeTab = ref('');
+const route = useRoute();
 
 function switchComponent(component) {
     currentComponent.value = component;
 }
+
+function switchEventComponent(component) {
+    currentEventComponent.value = component;
+}
+
+onMounted(() => {
+    const hash = route.hash;
+
+    if (hash) {
+        // Extract the ID from the hash
+        const id = hash.substring(1); // Removing the leading '#'
+
+        // Set the value of activeTab to the extracted ID
+        activeTab.value = id;
+    } else {
+        // Set the default value of activeTab to "case-screening"
+        activeTab.value = 'case-screening';
+    }
+});
+
 
 // Function to activate a tab
 function activateTab(tabName) {
@@ -104,6 +128,10 @@ onMounted(() => {
     }
 });
 
+function logEmit() {
+    console.log('detected emit from Event Registration Component');
+}
+
 
 provide('counselorScreeningQuestions', counselorScreeningQuestions);
 provide('isLoadingQuestions', isLoadingQuestions);
@@ -142,4 +170,3 @@ provide('userAgeGroup', userAgeGroup);
     backdrop-filter: blur(10px);
 }
 </style>
-  

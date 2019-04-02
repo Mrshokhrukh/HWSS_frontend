@@ -28,7 +28,8 @@
                     <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
                         <!-- Existing layout for other question sets -->
                         <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
-                            <h4>Over the last 2 weeks, how often have you been bothered by any of the following problems:
+                            <h4>Over the last 2 weeks, how often have you been bothered by any of the following
+                                problems:
                             </h4>
                         </div>
                         <div class="question-area text-center px-5" v-if="currentQuestion">
@@ -355,9 +356,6 @@ const handleStorageChange = () => {
     answeredSubstances.value = updatedAnsweredSubstances;
 };
 
-// function findLoggedQuestionIndex(question) {
-//     return testResponses.responses.findIndex(entry => entry.question === question);
-// }
 
 function findLoggedQuestionIndex(question, substance) {
     return testResponses.responses.findIndex(entry =>
@@ -387,7 +385,7 @@ function logQuestionAndResponse(option, substance) {
         setName: questionSetName,
         response: response,
         point: point,
-        substance: substance || null, // Set substance to null if not provided
+        substance: substance || null,
         diagnosis: null,
     };
 
@@ -399,15 +397,24 @@ function logQuestionAndResponse(option, substance) {
             answers.substanceName = substance;
             substanceAnswered[substance] = answer === 'Yes';
         }
+
+        const allNeverUsed = Object.values(substanceAnswered).every(answer => typeof answer === 'string' && answer.trim() === 'Never, not used in the last 3 months');
+        if (questionText === 'In the past three months, how often have you used?' && allNeverUsed) {
+            showConfetti.value = true;
+            showMessage.value = true;
+            setTimeout(() => {
+                jumpToNextRelevantSet('ASSIST'); // Assuming 'ASSIST' is the set name to jump
+            }, 3000);
+        }
     }
 
     if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
         // console.log('Log Entry Replacing (same substance):', logEntry);
         testResponses.responses[index] = logEntry;
     } else {
-        // console.log('Log Entry:', logEntry);
+        console.log('Log Entry:', logEntry);
         // Log even if substance is different
-        // console.log('(Substance different from existing entry)');
+        console.log('(Substance different from existing entry)');
         testResponses.responses.push(logEntry);
     }
 }
@@ -994,6 +1001,7 @@ function flushStore() {
         }
     });
 }
+
 
 // Function to render substance options
 function renderSubstanceOptions(substance) {

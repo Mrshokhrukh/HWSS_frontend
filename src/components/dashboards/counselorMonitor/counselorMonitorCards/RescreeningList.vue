@@ -6,17 +6,35 @@
         <MonitorFilterCard @filtersApplied="handleFiltersApplied" />
       </div>
       <div class="col-1">
-        <button class="btn hwss-btn" @click="rescreenSelectedPatients">Rescreen</button>
+        <el-button class="btn hwss-btn" @click="rescreenSelectedPatients">Rescreen</el-button>
       </div>
     </div>
 
     <!-- Table -->
     <div class="main-container mt-5">
-      <ag-grid-vue style="width: 100%; height: 500px;" class="ag-theme-quartz" :rowData="filteredUsers"
-        :columnDefs="columnDefs" :defaultColDef="defaultColDef" :rowSelection="'multiple'" :headerCheckboxSelection="true"
-        :pagination="true" :paginationPageSize="50" :rowHeight="50" @selectionChanged="onSelectionChanged">
-        <ag-grid-vue-viewport-header select-all="true"></ag-grid-vue-viewport-header>
-      </ag-grid-vue>
+      <el-table :data="filteredUsers" :row-class-name="rowClassName" height="500px" stripe
+        :default-sort="{ prop: 'date', order: 'descending' }" @selection-change="onSelectionChanged"
+        style="width: 100%">
+        <el-table-column type="selection" width="50"></el-table-column>
+        <el-table-column prop="date" label="Date" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="name" label="Name" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="age" label="Age" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="sex" label="Sex" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="pastMentalDisorder" label="Past Mental Disorder History" sortable
+          show-overflow-tooltip></el-table-column>
+        <el-table-column prop="depressionSeverity" label="Depression Severity" sortable :formatter="severityFormatter"
+          show-overflow-tooltip></el-table-column>
+        <el-table-column prop="generalAnxietySeverity" label="General Anxiety Severity" sortable
+          :formatter="severityFormatter" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="adverseChildhoodExperienceSeverity" label="Adverse Childhood Experience Severity"
+          sortable :formatter="severityFormatter" show-overflow-tooltip></el-table-column>
+        <!-- Add more columns as needed -->
+        <el-table-column label="Actions">
+          <template #default="{ row }">
+            <el-button class="btn hwss-btn" @click="rescreenSelectedPatients(row.id)">Rescreen</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
   </div>
 </template>
@@ -28,9 +46,6 @@ import { useRouter } from 'vue-router';
 import endpoints from '@/api';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
-import { AgGridVue } from "ag-grid-vue3";
 
 const router = useRouter();
 
@@ -58,27 +73,13 @@ const rescreenSelectedPatients = (patientId) => {
   }).then((result) => {
     if (result.isConfirmed) {
       console.log('Patient selected for rescreening:', selectedPatient);
-      router.push('/counselor-dashboard/counselor-rescreening')
+      router.push('/counselor-dashboard/counselor-rescreening');
     }
   });
 };
 
-
-// eslint-disable-next-line no-unused-vars
-const rescreenRenderer = (params) => {
-  const button = document.createElement('button');
-  button.className = 'btn hwss-btn';
-  button.textContent = 'Rescreen';
-  button.addEventListener('click', () => {
-    console.log('Rescreen button clicked', params.data.id);
-    rescreenSelectedPatients(params.data.id);
-  });
-  return button;
-};
-
-
-const severityRenderer = (params) => {
-  const severity = params.value;
+const severityFormatter = (row) => {
+  const severity = row.value;
   let iconClass = 'fas fa-flag'; // Default icon class
   let severityClass = ''; // Default severity class
 
@@ -108,7 +109,6 @@ const severityRenderer = (params) => {
   return `<span class="${severityClass}"><i class="${iconClass}"></i> ${severity}</span>`;
 };
 
-
 const columnDefs = ref([
   { headerCheckboxSelection: true, checkboxSelection: true },
   { headerName: 'Date', field: 'date', sortable: true, filter: true, floatingFilter: true },
@@ -116,48 +116,24 @@ const columnDefs = ref([
   { headerName: 'Age', field: 'age', sortable: true, filter: true, floatingFilter: true },
   { headerName: 'Sex', field: 'sex', sortable: true, filter: true, floatingFilter: true },
   { headerName: 'Past Mental Disorder History', field: 'pastMentalDisorder', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Depression Severity', field: 'depressionSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'General Anxiety Severity', field: 'generalAnxietySeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Adverse Childhood Experience Severity', field: 'adverseChildhoodExperienceSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Tobacco Products Severity', field: 'tobaccoProductsSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Alcoholic Beverages Severity', field: 'alcoholicBeveragesSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Cannabis Severity', field: 'cannabisSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Cocaine Severity', field: 'cocaineSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Amphetamine Type Severity', field: 'amphetamineTypeSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Inhalants Severity', field: 'inhalantsSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Sedatives Severity', field: 'sedativesSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Hallucinogens Severity', field: 'hallucinogensSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Opioids Severity', field: 'opioidsSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Others Severity', field: 'othersSeverity', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Substance by Injection', field: 'substanceByInjection', sortable: true, cellRenderer: severityRenderer, filter: true, floatingFilter: true },
-  { headerName: 'Actions', cellRenderer: rescreenRenderer },
+  { headerName: 'Depression Severity', field: 'depressionSeverity', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'General Anxiety Severity', field: 'generalAnxietySeverity', sortable: true, filter: true, floatingFilter: true },
+  { headerName: 'Adverse Childhood Experience Severity', field: 'adverseChildhoodExperienceSeverity', sortable: true, filter: true, floatingFilter: true },
+  // Add more columns as needed
 ]);
 
-const defaultColDef = ref({
-  sortable: true,
-  resizable: true,
-});
-
-// Sample data for table body
 const users = ref([]);
-
-// Filter options
-const tableFields = [columnDefs.value];
-
-// Filter and sorting variables
 const searchQuery = ref('');
-const selectedFields = ref(tableFields);
 const selectedUsers = ref([]);
 
-// Filtered users based on search query and selected fields
 const filteredUsers = computed(() => {
   if (!searchQuery.value.trim() || !Array.isArray(users.value) || users.value.length === 0) {
     return users.value;
   }
 
   return users.value.filter(user => {
-    return selectedFields.value.some(field => {
-      const fieldValue = user[field.toLowerCase()];
+    return columnDefs.value.some(column => {
+      const fieldValue = user[column.field];
       return fieldValue !== undefined && fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
     });
   });
@@ -168,7 +144,6 @@ const onSelectionChanged = (event) => {
   const selectedData = selectedNodes.map(node => node.data);
   selectedUsers.value = selectedData.map(user => user);
 };
-
 
 const handleFiltersApplied = (filterValues) => {
   console.log("Selected filter values:", filterValues);
@@ -181,8 +156,8 @@ onMounted(async () => {
       const mappedUsers = response.data.flag_details.map(detail => {
         const submissionData = detail.submission_details[0].submission_data;
         const measurementData = detail.submission_details[0].measurement_data;
-        const measurementAssistData = detail.submission_details[0].measurement_assist_data;
-        
+        // const measurementAssistData = detail.submission_details[0].measurement_assist_data;
+
         return {
           id: detail.user_data.id,
           date: submissionData.submission_date.split(' ')[0],
@@ -193,17 +168,7 @@ onMounted(async () => {
           depressionSeverity: measurementData.phq_measurement || 'none',
           generalAnxietySeverity: measurementData.gad_measurement || 'none',
           adverseChildhoodExperienceSeverity: 'none',
-          tobaccoProductsSeverity: measurementAssistData.tobacco_measurement || 'none',
-          alcoholicBeveragesSeverity: measurementAssistData.alcoholic_measurement || 'none',
-          cannabisSeverity: measurementAssistData.cannabis_measurement || 'none',
-          cocaineSeverity: measurementAssistData.cocaine_measurement || 'none',
-          amphetamineTypeSeverity: measurementAssistData.amphetamine_measurement || 'none',
-          inhalantsSeverity: measurementAssistData.inhalants_measurement || 'none',
-          sedativesSeverity: measurementAssistData.sedatives_measurement || 'none',
-          hallucinogensSeverity: measurementAssistData.hallucinogens_measurement || 'none',
-          opioidsSeverity: measurementAssistData.opioids_measurement || 'none',
-          othersSeverity: measurementAssistData.other_measurement || 'none',
-          substanceByInjection: measurementAssistData.injection_measurement || 'none'
+          // Add more fields as needed
         };
       });
       users.value = mappedUsers;

@@ -26,7 +26,7 @@
 				<i class="fas fa-sign-out-alt"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
 			</router-link>
-			
+
 			<router-link to="#" class="side-btn" @click="toggle">
 				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
@@ -55,24 +55,25 @@ const showConfetti = ref(false);
 
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
-	return `${ firstName } ${ middleName ? middleName + ' ' : '' }${ lastName }`.trim();
+	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
 });
 
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
-    const role = userDetailsStore.user.role?.toLowerCase();
-    if (!role) return "public";
+	const role = userDetailsStore.user.role?.toLowerCase();
+	console.log("Role:", role); // Log the role for debugging
+	if (!role) return "public";
 
-    if (role.includes("admin")) {
-        return "admin";
-    } else if (role.includes("counselor")) {
-        return "counselor";
-    } else if (role === "student") {
-        return "student";
-    } else {
-        return role;
-    }
+	if (role.includes("admin")) {
+		return "admin";
+	} else if (role.includes("counselor")) {
+		return "counselor";
+	} else if (role === "student") {
+		return "student";
+	} else {
+		return role; // Returning role as is for other cases
+	}
 });
 
 const fetchedMenus = ref([]);
@@ -88,22 +89,30 @@ const profilePicClass = computed(() => {
 });
 
 const menus = computed(() => {
-	const baseRoute = `/${userType.value}-dashboard`;
-	const staticMenuItems = [
-		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
-	];
+    const baseRoute = `/${userType.value}-dashboard`;
+    console.log("Base Route:", baseRoute); // Log the base route for debugging
+    
+    const staticMenuItems = [
+        { text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
+    ];
 
-	const role = userType.value;
+    const role = userType.value;
+    console.log("User Type:", role); // Log the user type for debugging
 
-	const dynamicMenuItems = fetchedMenus.value
-		.filter((menu) => menu.roles.some((r) => r.name === role))
-		.map((menu) => ({
-			text: menu.name,
-			route: menu.route,
-			iconClass: menu.icon_class,
-		}));
+    const dynamicMenuItems = fetchedMenus.value
+        .filter((menu) => {
+            console.log("Menu:", menu); // Log each menu for debugging
+            return menu.roles.some((r) => r.name === role);
+        })
+        .map((menu) => ({
+            text: menu.name,
+            route: menu.route,
+            iconClass: menu.icon_class,
+        }));
 
-	return [...staticMenuItems, ...dynamicMenuItems];
+    console.log("Dynamic Menu Items:", dynamicMenuItems); // Log dynamic menu items for debugging
+    
+    return [...staticMenuItems, ...dynamicMenuItems];
 });
 
 // Function to fetch menu items from the API
@@ -305,4 +314,5 @@ onMounted(() => {
 .sidebar:not(.sidebar-open) {
 	width: 4.5rem;
 	/* Adjust according to your icon size */
-}</style>
+}
+</style>

@@ -26,6 +26,9 @@ const monitoringMiddleParams = '/api/v1/monitoring';
 // Define api middle params
 const reportingMiddleParams = '/api/v1/reporting';
 
+// Define api middle params
+const counselorScreeningMiddleParams = '/api/v1/screening';
+
 // Combine BaseURL and middle params for ease of use
 const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
 
@@ -43,6 +46,9 @@ const moitoringBaseUrl = `${baseUrl}${monitoringMiddleParams}`;
 
 // Combine BaseURL and middle params for ease of use
 const reportingBaseUrl = `${baseUrl}${reportingMiddleParams}`;
+
+// Combine BaseURL and middle params for ease of use
+const counselorScreeninggBaseUrl = `${baseUrl}${counselorScreeningMiddleParams}`;
 
 // Define your API endpoints
 const endpoints = {
@@ -67,6 +73,7 @@ const endpoints = {
 
   settings: `${settingsBaseUrl}/appconfig/`,
   menuItem: `${settingsBaseUrl}/menuItem/`,
+  getVideo: `${settingsBaseUrl}/get-videos/`,
 
   // screening endpoint 
   ScreeningPreTests: `${screeningBaseUrl}/screening-questions/`,
@@ -77,6 +84,7 @@ const endpoints = {
   getMeasurement: `${measurementBaseUrl}/get-measurement/`,
   getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
+  getSUDData: `${measurementBaseUrl}/get-sud-data/`,
 
   // monitoring endpoints
   getRescreeningList: `${moitoringBaseUrl}/check-rescreening-flags/`,
@@ -85,6 +93,10 @@ const endpoints = {
 
   // reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,
+
+  // counselor endpoints
+  createEventScreening: `${counselorScreeninggBaseUrl}/create-event-screening/`,
+  getEventInfo: (counselorName) => `${counselorScreeninggBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
 };
 
 export default endpoints;

@@ -2,32 +2,42 @@
     <div>
         <div class="row">
             <h5 class="card-title">Service and Treatment List</h5>
-            <ag-grid-vue style="width: 100%; height: 500px;" class="ag-theme-quartz" :rowData="filteredRows"
-                :columnDefs="columnDefs" :defaultColDef="defaultColDef" :rowSelection="'multiple'"
-                :headerCheckboxSelection="true" :pagination="true" :paginationPageSize="50" :rowHeight="50"
-                @selectionChanged="onSelectionChanged">
-                <ag-grid-vue-viewport-header select-all="true"></ag-grid-vue-viewport-header>
-            </ag-grid-vue>
-            <!-- Button to save changes -->
+            <el-table :data="filteredRows" :row-height="50" :default-sort="{ prop: 'date', order: 'descending' }"
+                height="500px" stripe @selection-change="onSelectionChanged" style="width: 100%">
+                <el-table-column prop="date" label="Date" sortable show-overflow-tooltip
+                    :formatter="formatDate"></el-table-column>
+                <el-table-column prop="user_data.name" label="Name" sortable show-overflow-tooltip></el-table-column>
+                <el-table-column prop="user_data.age" label="Age" sortable show-overflow-tooltip></el-table-column>
+                <el-table-column prop="user_data.gender" label="Sex" sortable show-overflow-tooltip></el-table-column>
+                <el-table-column prop="assessment_status" label="Assessment Status" sortable show-overflow-tooltip
+                    :formatter="formatEmpty"></el-table-column>
+                <el-table-column prop="case_status" label="Case Status" sortable show-overflow-tooltip
+                    :formatter="formatEmpty"></el-table-column>
+                <el-table-column prop="counseling" label="Counseling" sortable show-overflow-tooltip
+                    :formatter="formatEmpty"></el-table-column>
+                <el-table-column prop="follow_up" label="Follow Up" sortable show-overflow-tooltip
+                    :formatter="formatEmpty"></el-table-column>
+                <el-table-column prop="comments" label="Comments" sortable show-overflow-tooltip
+                    :formatter="formatEmpty"></el-table-column>
+                <el-table-column label="Actions">
+                    <template #default="{ row }">
+                        <button class="btn hwss-btn" @click="viewDetails(row.id)">View Details</button>
+                    </template>
+                </el-table-column>
+            </el-table>
         </div>
         <div class="row mt-4 d-flex justify-content-end">
             <button class="btn hwss-btn col-1" @click="saveChanges">Save Changes</button>
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
-import { AgGridVue } from "ag-grid-vue3";
-// import { useModal } from '../composables/useModal'
 
-const gridOptions = ref(null);
-
-
+// eslint-disable-next-line no-unused-vars
 const followUpList = ref([
     'Treatment Completed',
     'Undergoing Treatment',
@@ -43,84 +53,30 @@ const followUpList = ref([
     'Detention-based SUD Treatment and Care',
 ]);
 
-const viewDetailsRenderer = (params) => {
-    return `<button class="btn hwss-btn" @click="viewDetails(${params.data.id})">View Details</button>`;
+const formatDate = (row, column) => {
+    // Implement date formatting logic
 };
 
-const columnDefs = ref([
-    { headerName: 'Date', field: 'date', filter: true, },
-    { headerName: 'Name', field: 'user_data.name', filter: true, },
-    { headerName: 'Age', field: 'user_data.age', filter: true, },
-    { headerName: 'Sex', field: 'user_data.gender', filter: true, },
-    {
-        headerName: 'Assessment Status', field: 'assessment_status', filter: true,
-        cellEditor: 'agSelectCellEditor', cellEditorParams: { values: ['Not Conducted', 'Conducted'] }, enableCellChangeFlash: true, editable: true,
-        valueFormatter: function (params) {
-            // Check if the value is null or empty
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Case Status', field: 'case_status', filter: true,
-        cellEditor: 'agSelectCellEditor', cellEditorParams: { values: ['On Going', 'Case Discontinued', 'Case Closed'] }, enableCellChangeFlash: true, editable: true,
-        valueFormatter: function (params) {
-            // Check if the value is null or empty
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Counseling', field: 'counseling', filter: true, enableCellChangeFlash: true, editable: true,
-        cellEditor: 'agSelectCellEditor', cellEditorParams: { values: ['Availed', 'Not Required', 'Waiting List'] },
-        valueFormatter: function (params) {
-            // Check if the value is null or empty
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Follow Up', field: 'follow_up', filter: true, enableCellChangeFlash: true, editable: true,
-        cellEditor: 'agSelectCellEditor', cellEditorParams: { values: followUpList.value, defaultValue: '' },
-        valueFormatter: function (params) {
-            // Check if the value is null or empty
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Comments',
-        field: 'comments',
-
-        filter: true,
-
-        cellEditor: 'agLargeTextCellEditor',
-        cellEditorParams: { maxLength: 250, rows: 10, cols: 50 }, enableCellChangeFlash: true, editable: true,
-        valueFormatter: function (params) {
-            // Check if the value is null or empty
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    { headerName: 'Actions', cellRenderer: viewDetailsRenderer }
-]);
-
+const formatEmpty = (row, column) => {
+    if (!row[column.property] || row[column.property].trim() === '') {
+        return '----';
+    }
+    return row[column.property];
+};
 
 const rowData = ref([]);
-const defaultColDef = ref({ sortable: true, resizable: true });
-
 const searchQuery = ref('');
-const selectedFields = ref(columnDefs.value.map(column => column.field));
+const selectedFields = ref([
+    'date',
+    'user_data.name',
+    'user_data.age',
+    'user_data.gender',
+    'assessment_status',
+    'case_status',
+    'counseling',
+    'follow_up',
+    'comments',
+]);
 
 const filteredRows = computed(() => {
     if (!searchQuery.value.trim() || !Array.isArray(rowData.value) || rowData.value.length === 0) {
@@ -137,29 +93,23 @@ const filteredRows = computed(() => {
 
 const saveChanges = async () => {
     try {
-        const updatedData = gridOptions.value.api.getRowData();
-        // Implement logic to send updatedData to backend for saving
-        console.log("Updated Data:", updatedData);
-        // Optionally, you can show a success message or perform other actions here
+        // Implement logic to save changes to backend
+        console.log('Changes saved successfully!');
     } catch (error) {
-        console.error("Error saving changes:", error);
-        // Optionally, you can show an error message or perform other error handling here
+        console.error('Error saving changes:', error);
     }
-}
+};
 
 onMounted(async () => {
     try {
         const response = await axios.get(endpoints.getServiceAndTreatmentList);
-        console.log("Response:", response.data);
         if (response && response.data && Array.isArray(response.data.service_and_treatment_data)) {
             rowData.value = response.data.service_and_treatment_data;
-            console.log("rowData:", rowData.value);
         } else {
-            console.error("Invalid response format:", response);
+            console.error('Invalid response format:', response);
         }
     } catch (error) {
         console.error(error);
     }
 });
 </script>
-  

@@ -1,5 +1,15 @@
 <template>
   <div class="content-wrapper">
+    <!-- Chat Widget Icon -->
+    <div class="chat-icon" :class="{ 'active': isChatOpen }" @click="toggleChat">
+      <img :src="chatIcon" alt="Chat Icon" />
+    </div>
+
+    <!-- Chat Widget -->
+    <div class="chat-widget" v-if="isChatOpen">
+      <ChatWidget :isOpen="isChatOpen" @minimize="minimizeChat" @close="closeChat" @sendMessage="handleNewMessage" />
+    </div>
+
     <header>
       <div class="wrapper">
         <nav>
@@ -20,11 +30,34 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import endpoints from '@/api'
 import Cookies from 'js-cookie'
+import chatIcon from '@/assets/images/chat.gif'
+import ChatWidget from '@/components/common/ChatWidget.vue'
 
 const copyright = ref('')
 const isMobileDevice = ref(false)
 const csrfToken = ref('')
+
+const isChatOpen = ref(false)
+const messages = ref([])
+
+const toggleChat = () => {
+  isChatOpen.value = !isChatOpen.value;
+}
+
+const minimizeChat = () => {
+  isChatOpen.value = false; // Minimize logic
+}
+
+const closeChat = () => {
+  isChatOpen.value = false; // Close logic
+}
+
+const handleNewMessage = (message) => {
+  messages.value.push({ text: message, sentByUser: true });
+}
+
 onMounted(async () => {
+  // Fetch CSRF token
   try {
     const csrfResponse = await axios.get(endpoints.getCSRFToken)
     if (csrfResponse.data && csrfResponse.data.csrf_token) {
@@ -35,6 +68,7 @@ onMounted(async () => {
     console.error('Error fetching CSRF token:', error)
   }
 
+  // Fetch copyright message
   try {
     const response = await axios.get(endpoints.settings)
     if (response.data && response.data.length > 0 && response.data[0].copyright_message) {
@@ -45,8 +79,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error fetching copyright message:', error)
   }
+
+  // Check if mobile device
   isMobileDevice.value = window.innerWidth <= 768;
 
+  // Redirect if mobile
   if (isMobileDevice.value) {
     alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
 
@@ -56,7 +93,6 @@ onMounted(async () => {
   }
 })
 </script>
-
 
 <style scoped>
 .content-wrapper {
@@ -69,13 +105,64 @@ onMounted(async () => {
   color: #2B656F;
 }
 
-footer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+.chat-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  cursor: pointer;
+  background-color: #ffffffb5;
+  border-radius: 50%;
+  /* animation: float-around 10s infinite ease-in-out; */
+}
+
+.chat-icon img {
+  width: 60px;
+  height: 60px;
+  padding: 10px;
+}
+
+.chat-icon.active {
+  display: none;
+}
+
+.chat-icon:hover {
+  background-color: #ffffff;
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9998;
+  width: 300px;
+  height: 400px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes float-around {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-20px, -10px);
+  }
+
+  50% {
+    transform: translate(-10px, -20px);
+  }
+
+  75% {
+    transform: translate(-20px, -10px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
 }
 </style>

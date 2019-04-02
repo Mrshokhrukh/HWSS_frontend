@@ -8,7 +8,8 @@
                         <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
                             :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
                             <a href="#" class="p-3">
-                                <input type="checkbox" class="form-check-input">
+                                <input type="checkbox" class="form-check-input" :checked="menu.completed"
+                                    :disabled="menu.completed">
                                 <span class="ms-2">{{ menu.name }}</span>
                             </a>
                         </li>
@@ -17,12 +18,18 @@
             </div>
 
             <div class="col-9">
-                <component :is="currentScreeningComponent" @goToNext="handleChangeComponent"></component>
+                <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
+                    @goToNext="handleChangeComponent"></component>
+                <div v-else>
+                    <div class="d-flex justify-content-center">
+                        <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted, watch, defineEmits } from 'vue';
 import CaseScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningGAD.vue';
@@ -30,11 +37,15 @@ import CaseScreeningPHQ from '@/components/dashboards/counselorScreenings/counse
 import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningASSIST.vue';
 import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
 import Swal from 'sweetalert2';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const emit = defineEmits(['goBackToSelectTools', 'goToNext']);
 
 // Define reactive variables
-const currentScreeningComponent = ref(CaseScreeningPHQ);
+// Define reactive variables
+const currentScreeningComponent = ref(null);
 const selectedMenu = ref(null);
 const menus = ref([]);
 const nextMenu = ref(null);
@@ -60,7 +71,7 @@ const selectMenu = (menu) => {
 onMounted(() => {
     const savedMenus = JSON.parse(localStorage.getItem('selectedTools'));
     if (savedMenus) {
-        menus.value = savedMenus;
+        menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
     } else {
         console.log('No menu saved');
@@ -82,21 +93,60 @@ const handleChangeComponent = (nextMenuName) => {
     let nextToolName;
     if (index !== -1 && index < selectedTools.length - 1) nextToolName = selectedTools[index + 1].name;
     else {
-        console.warn('No more question sets available');
-        Swal.fire({ icon: 'info', title: 'No More Question Sets Available', text: 'You have completed all available question sets.' });
+        Swal.fire({
+            icon: 'question',
+            title: 'All tests have been completed',
+            text: 'Do you wish to proceed to submission?',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, submit',
+            cancelButtonText: 'No, not yet'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                submitAssessments();
+            }
+        });
         return;
     }
 
     if (!componentMap[nextToolName]) return console.error(`Component corresponding to ${nextToolName} is not available`);
 
+    // Mark the previous menu as completed
+    if (selectedMenu.value) {
+        const completedMenuIndex = menus.value.findIndex(menu => menu.id === selectedMenu.value.id);
+        if (completedMenuIndex !== -1) {
+            menus.value[completedMenuIndex].completed = true;
+        }
+    }
+
+    // Update selectedMenu to the next menu
+    const nextMenu = menus.value.find(menu => menu.name === nextToolName);
+    selectedMenu.value = nextMenu;
+
     currentScreeningComponent.value = componentMap[nextToolName];
+};
+
+const submitAssessments = () => {
+    // Perform fake submission (replace with actual submission logic)
+    setTimeout(() => {
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'Assessments Submitted Successfully',
+            text: 'Thank you for submitting the assessments.',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            // Redirect to "/counselor-dashboard"
+            router.push('/counselor-dashboard');
+        });
+    }, 1000); // Simulating a delay for submission
 };
 
 
 </script>
 
 
-  
+
+
 <style scoped>
 .hwss-icon {
     font-size: 5rem;
@@ -145,4 +195,3 @@ const handleChangeComponent = (nextMenuName) => {
     font-weight: 600;
 }
 </style>
-  

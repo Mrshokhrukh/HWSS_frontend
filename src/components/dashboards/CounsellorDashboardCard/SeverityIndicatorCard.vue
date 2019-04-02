@@ -51,7 +51,7 @@ const buttonData = computed(() => {
       break;
     case 'assist':
       // Handle multiple fields in the "Assist" case
-      fieldToExtract = ['alcoholic_measurement', 'tobacco_measurement', 'cannabis_measurement', 'cocaine_measurement', 'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement', 'hallucinogens_measurement', 'opioids_measurement', 'other_measurement'];
+      fieldToExtract = ['alcoholic_measurement', 'tobacco_measurement', 'cannabis_measurement', 'cocaine_measurement', 'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement', 'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'];
       break;
     default:
       break;

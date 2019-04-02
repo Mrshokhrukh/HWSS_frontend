@@ -30,7 +30,8 @@
                             <select class="form-select hwss-primary" id="dzongkhag" v-model="dzongkhag" required>
                                 <option value="" disabled selected>Select Dzongkhag</option>
                                 <!-- Dynamically generate options for all 20 dzongkhags of Bhutan -->
-                                <option v-for="dzongkhag in dzongkhags" :key="dzongkhag" :value="dzongkhag">{{ dzongkhag }}
+                                <option v-for="dzongkhag in dzongkhags" :key="dzongkhag" :value="dzongkhag">{{ dzongkhag
+                                    }}
                                 </option>
                             </select>
                         </div>
@@ -47,7 +48,8 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="CID" class="form-label">CID</label>
-                            <input type="number" class="form-control hwss-primary" id="CID" v-model="CID" required min="11">
+                            <input type="number" class="form-control hwss-primary" id="CID" v-model="CID" required
+                                min="11">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="clientFullName" class="form-label">Full Name</label>
@@ -69,7 +71,8 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="parentalStatus" class="form-label">Parental Status</label>
-                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus" required>
+                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus"
+                                required>
                                 <option value="" disabled selected>Select Parental Status</option>
                                 <option value="Married">Married</option>
                                 <option value="Divorce">Divorce</option>
@@ -265,47 +268,53 @@ const submitForm = async () => {
     try {
         // Await the username generation
         const username = await makeUserName();
+        const getCounselorName = JSON.parse(localStorage.getItem('userDetailsStore'));
 
-        // Create formData with the generated username
-        const formData = {
-            userData: {
-                username: username,
-                caseName: caseName.value,
-                purpose: purpose.value,
-                dzongkhag: dzongkhag.value,
-                userScreenedToday: userScreenedToday.value,
-                CID: CID.value,
-                clientFullName: clientFullName.value,
-                DOB: DOB.value,
-                gender: gender.value,
-                parentalStatus: parentalStatus.value,
-                currentAddress: currentAddress.value,
-                phoneNumber: phoneNumber.value,
-                email: email.value,
-            },
-            userAgencyData: {
-                agency: "11001",
+        // Ensure getCounselorName is not null and user is defined
+        if (getCounselorName && getCounselorName.user) {
+            const formData = {
+                userData: {
+                    caseName: caseName.value,
+                    purpose: purpose.value,
+                    dzongkhag: dzongkhag.value,
+                    userScreenedToday: userScreenedToday.value,
+                    username: username,
+                    // user related fields
+                    CID: CID.value,
+                    clientFullName: clientFullName.value,
+                    DOB: DOB.value,
+                    gender: gender.value,
+                    parentalStatus: parentalStatus.value,
+                    currentAddress: currentAddress.value,
+                    phoneNumber: phoneNumber.value,
+                    email: email.value,
+                    counselorName: `${getCounselorName.user.firstName} ${getCounselorName.user.lastName}`,
+                },
+                userAgencyData: {
+                    agency: "11001",
+                },
+                agencyData: {
+                    agency_code: "11001",
+                    agency_name: "Case Base Clients"
+                },
+            };
+            // Send a submit request to the endpoint
+            const response = await axios.post(endpoints.registerCounselorUser, formData);
 
-            },
-            agencyData: {
-                agency_code: "11001",
-                agency_name: "Case Base Clients"
-            }
-        };
+            // Handle successful submission
+            console.log('Form submitted successfully:', response.data);
+            const userId = response.data.userId;
+            localStorage.setItem('ClientUserIdCaseBase', userId);
+            return response.data; // Return the response data
+        } else {
+            console.error('Error: User details not found in localStorage');
+            // Handle the case where user details are not found in localStorage
+        }
 
-        // Send a submit request to the endpoint
-        const response = await axios.post(endpoints.registerCounselorUser, formData);
-
-        // Handle successful submission
-        console.log('Form submitted successfully:', response.data);
-        const userId = response.data.userId;
-        localStorage.setItem('ClientUserIdCaseBase', userId);
-        return response.data; // Return the response data
-
-    }catch (error) {
+    } catch (error) {
         // Handle errors
         console.error('Error submitting form:', error);
-        
+
         // Check if the error is due to duplicate entry for CID
         if (error.response && error.response.data && error.response.data.error.includes('Duplicate entry')) {
             // Show a confirmation dialog using SweetAlert
@@ -319,12 +328,9 @@ const submitForm = async () => {
             });
 
             if (confirmDuplicate.isConfirmed) {
-                // Resend the confirmed request
                 try {
-                    // Resend the submit request to the endpoint
                     const response = await axios.post(endpoints.registerCounselorUser, this.formData);
 
-                    // Handle successful submission
                     console.log('Form submitted successfully:', response.data);
                     const userId = response.data.userId;
                     localStorage.setItem('ClientUserIdCaseBase', userId);
@@ -338,6 +344,8 @@ const submitForm = async () => {
         } else {
             return error;
         }
+        console.error('Error submitting form:', error);
+        return null;
     }
 };
 
@@ -359,13 +367,19 @@ const makeUserName = () => {
 
 const proceedToSelectTools = async () => {
     try {
-        await submitForm();
-        emit('proceedToSelectTools');
-        incrementOnButtonClicked();
+        const responseData = await submitForm(); // Wait for form submission
+        if (responseData) { // Check if form submission was successful
+            emit('proceedToSelectTools');
+            incrementOnButtonClicked();
+        } else {
+            // Handle case where form submission failed
+            console.error('Form submission failed');
+        }
     } catch (error) {
         console.error('Error submitting form:', error);
     }
 };
+
 
 const disableFormFields = () => {
     const form = document.querySelector('form');
@@ -394,7 +408,7 @@ onMounted(() => {
 });
 
 </script>
-  
+
 <style scoped>
 input,
 select,
@@ -408,4 +422,3 @@ textarea {
     border-radius: 50px;
 }
 </style>
-  

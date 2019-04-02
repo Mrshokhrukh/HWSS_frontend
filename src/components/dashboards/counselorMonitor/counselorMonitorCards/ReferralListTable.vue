@@ -1,80 +1,65 @@
 <template>
-    <ag-grid-vue style="width: 100%; height: 500px;" class="ag-theme-quartz" :rowData="rowData" :columnDefs="columnDefs"
-        :defaultColDef="defaultColDef" :rowSelection="'multiple'" :headerCheckboxSelection="true" :pagination="true"
-        :paginationPageSize="50" :rowHeight="50" @selectionChanged="onSelectionChanged">
-        <ag-grid-vue-viewport-header select-all="true"></ag-grid-vue-viewport-header>
-    </ag-grid-vue>
+    <el-table :data="rowData" :row-height="50" :header-cell-style="{ 'height': '50px' }" height="500px" stripe
+        :default-sort="{ prop: 'date', order: 'descending' }" @selection-change="onSelectionChanged"
+        style="width: 100%">
+        <el-table-column prop="date" label="Date" sortable show-overflow-tooltip
+            :formatter="formatDate"></el-table-column>
+        <el-table-column prop="user_data.name" label="Name" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="user_data.age" label="Age" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="user_data.gender" label="Sex" sortable show-overflow-tooltip></el-table-column>
+        <el-table-column prop="referred_to_name" label="Referred To" sortable show-overflow-tooltip
+            :formatter="formatEmpty"></el-table-column>
+        <el-table-column prop="referred_by_name" label="Referred By" sortable show-overflow-tooltip
+            :formatter="formatEmpty"></el-table-column>
+        <el-table-column prop="referral_status" label="Referral Status" sortable show-overflow-tooltip
+            :formatter="formatEmpty"></el-table-column>
+        <el-table-column prop="referral_remarks" label="Referral Remarks" sortable show-overflow-tooltip
+            :formatter="formatEmpty"></el-table-column>
+    </el-table>
 </template>
-  
+
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
-import { AgGridVue } from "ag-grid-vue3";
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import { ElTable, ElTableColumn } from 'element-plus';
 
 const referrals = ref([]);
-
 const rowData = ref([]);
-const columnDefs = ref([
-    { headerName: 'Date', field: 'date', filter: true, },
-    { headerName: 'Name', field: 'user_data.name', filter: true, },
-    { headerName: 'Age', field: 'user_data.age', filter: true, },
-    { headerName: 'Sex', field: 'user_data.gender', filter: true, },
-    {
-        headerName: 'Referred To', field: 'referred_to_name', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Referred By', field: 'referred_by_name', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Referral Status', field: 'referral_status', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    },
-    {
-        headerName: 'Referral Remarks', field: 'referral_remarks', filter: true, valueFormatter: function (params) {
-            if (!params.value || params.value.trim() === '') {
-                return '----';
-            }
-            return params.value;
-        }
-    }
-]);
-const defaultColDef = ref({ sortable: true, resizable: true });
+
+const formatDate = (row, column) => {
+  // Assuming the 'date' property contains a Unix timestamp
+  const timestamp = row[column.property];
+  const date = new Date(timestamp * 1000); // Multiply by 1000 to convert seconds to milliseconds
+
+  // Format the date as desired (e.g., "YYYY-MM-DD HH:MM:SS")
+  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+
+  return formattedDate;
+};
+
+
+const formatEmpty = (row, column) => {
+  if (!row[column.property] || row[column.property].trim() === '') {
+    return '----';
+  }
+  return row[column.property];
+};
 
 const onSelectionChanged = () => {
     // Implement selectionChanged logic
 };
 
-watch(referrals, (newValue) => {
-    rowData.value = newValue.referral_list;
-});
-
 const loadData = async () => {
-    try {
-        const response = await axios.get(endpoints.getReferralList);
-        referrals.value = response.data;
-    } catch (error) {
-        console.error('Error loading data:', error);
-    }
+  try {
+    const response = await axios.get(endpoints.getReferralList);
+    referrals.value = response.data.referral_list;
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
 };
 
 onMounted(async () => {
-    loadData();
+  await loadData();
 });
 </script>

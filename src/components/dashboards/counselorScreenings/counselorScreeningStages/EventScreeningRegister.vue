@@ -2,93 +2,58 @@
     <div class="bg-white p-4">
         <div class="mb-3 text-center">
             <h4 class="mb-3">Description</h4>
-            <h6 class="hwss-primary">*** This tool is for Case Screening Only ***</h6>
+            <h6 class="hwss-primary">*** This tool is for Event Screening Only ***</h6>
         </div>
         <form @submit.prevent="submitForm">
             <div class="px-5">
-                <!-- Case Details Section -->
+                <!-- Event Details Section -->
                 <div class="mb-4 p-3">
-                    <h4 class="mb-3">Case Details</h4>
+                    <h4 class="mb-3">Event Details</h4>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="caseName" class="form-label">Case Name</label>
-                            <input type="text" class="form-control hwss-primary w-50" id="caseName" v-model="caseName"
+                            <label for="eventName" class="form-label">Event Name</label>
+                            <input type="text" class="form-control hwss-primary w-50" id="eventName" v-model="eventName"
                                 required>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="purpose" class="form-label">Purpose</label>
-                            <select class="form-select hwss-primary" id="purpose" v-model="purpose" required>
-                                <option value="" disabled selected>Select Purpose</option>
-                                <option value="Assessment">Assessment</option>
-                                <option value="Intervention">Intervention</option>
-                                <option value="Follow up">Follow up</option>
-                                <option value="Termination">Termination</option>
-                            </select>
+                        <div class="col-md-12 mb-3">
+                            <label for="text" class="form-label">Purpose</label>
+                            <textarea type="text" class="form-control hwss-primary" id="text" v-model="purpose"
+                                required>
+                                </textarea>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control hwss-primary" id="location" v-model="location"
+                                required>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label for="dzongkhag" class="form-label">Dzongkhag</label>
                             <select class="form-select hwss-primary" id="dzongkhag" v-model="dzongkhag" required>
                                 <option value="" disabled selected>Select Dzongkhag</option>
-                                <!-- Add options for all 20 dzongkhags of Bhutan -->
+                                <option v-for="dzongkhag in dzongkhags" :key="dzongkhag" :value="dzongkhag">{{ dzongkhag
+                                    }}
+                                </option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="userScreenedToday" class="form-label">User Screened Today</label>
-                            <input type="number" class="form-control hwss-primary" id="userScreenedToday"
-                                v-model="userScreenedToday" readonly>
-                        </div>
-                    </div>
-                </div>
-                <!-- Client Details Section -->
-                <div class="mb-4 p-3">
-                    <h4 class="mb-3">Client Details</h4>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="CID" class="form-label">CID</label>
-                            <input type="text" class="form-control hwss-primary" id="CID" v-model="CID" required>
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control hwss-primary" id="startDate" v-model="startDate"
+                                :min="today" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="clientFullName" class="form-label">Full Name</label>
-                            <input type="text" class="form-control hwss-primary" id="clientFullName"
-                                v-model="clientFullName" required>
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control hwss-primary" id="endDate" v-model="endDate"
+                                :min="startDate" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="DOB" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control hwss-primary" id="DOB" v-model="DOB" required>
+                            <label for="duration" class="form-label">Duration (Days)</label>
+                            <input type="text" class="form-control hwss-primary" id="duration" v-model="duration"
+                                readonly>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select hwss-primary" id="gender" v-model="gender" required>
-                                <option value="" disabled selected>Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="parentalStatus" class="form-label">Parental Status</label>
-                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus" required>
-                                <option value="" disabled selected>Select Parental Status</option>
-                                <option value="Married">Married</option>
-                                <option value="Divorce">Divorce</option>
-                                <option value="Single Parent">Single Parent</option>
-                                <option value="One Deceased">One Deceased</option>
-                                <!-- Add more options as needed -->
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="currentAddress" class="form-label">Current Address</label>
-                            <textarea class="form-control hwss-primary" id="currentAddress" v-model="currentAddress"
-                                rows="3" required></textarea>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control hwss-primary" id="phoneNumber" v-model="phoneNumber"
+                            <label for="totalUsers" class="form-label">Total Users to be Screened</label>
+                            <input type="number" class="form-control hwss-primary" id="totalUsers" v-model="totalUsers"
                                 required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="email" class="form-label">Email address</label>
-                            <input type="email" class="form-control hwss-primary" id="email" v-model="email" required>
                         </div>
                     </div>
                 </div>
@@ -96,56 +61,145 @@
         </form>
         <!-- Button Section -->
         <div class="d-flex justify-content-end">
-            <button type="button" class="btn hwss-btn" @click="proceedToSelectTools">
+            <button type="button" class="btn hwss-btn" @click="proceed">
                 Proceed to Select Tools <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
 </template>
-  
+
 <script setup>
-import { ref } from 'vue';
-const emit = defineEmits(['proceedToSelectTools']);
+import { ref, watch, onMounted } from 'vue';
+import axios from 'axios';
+import Swal from 'sweetalert2';
+import endpoints from '@/api';
+import { useRouter } from 'vue-router';
 
-const caseName = ref('');
+const router = useRouter();
+
+const emit = defineEmits(['proceedToEventSelectTools', 'goBack', 'logEmit']);
+
+const eventName = ref('');
 const purpose = ref('');
+const location = ref('');
 const dzongkhag = ref('');
-const userScreenedToday = ref(0);
+const startDate = ref('');
+const endDate = ref('');
+const duration = ref('');
+const totalUsers = ref('');
+const today = new Date().toISOString().split('T')[0];
+const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+const counselorName = ref(`${userDetails.user.firstName} ${userDetails.user.lastName}`);
+const eventStatus = ref('');
 
-const CID = ref('');
-const clientFullName = ref('');
-const DOB = ref('');
-const gender = ref('');
-const parentalStatus = ref('');
-const currentAddress = ref('');
-const phoneNumber = ref('');
-const email = ref('');
+console.log(counselorName.value);
 
-const submitForm = () => {
-    // Handle form submission logic here
-    console.log('Form submitted:', {
-        caseName: caseName.value,
-        purpose: purpose.value,
-        dzongkhag: dzongkhag.value,
-        userScreenedToday: userScreenedToday.value,
-        CID: CID.value,
-        clientFullName: clientFullName.value,
-        DOB: DOB.value,
-        gender: gender.value,
-        parentalStatus: parentalStatus.value,
-        currentAddress: currentAddress.value,
-        phoneNumber: phoneNumber.value,
-        email: email.value
-    });
+const submitForm = async () => {
+    try {
+        // Proceed with registering the new event screening
+        const eventData = {
+            event_name: eventName.value,
+            event_purpose: purpose.value,
+            location: location.value,
+            start_date: startDate.value,
+            end_date: endDate.value,
+            duration: duration.value,
+            counselor: counselorName.value,
+            total_users: totalUsers.value
+        };
+
+        // Make POST request to backend to create event screening
+        const createResponse = await axios.post(endpoints.createEventScreening, eventData);
+
+        // Handle successful response
+        if (createResponse.status === 201) {
+            Swal.fire({
+                title: 'Event Screening Created',
+                text: 'Proceeding to tool selection.',
+                icon: 'success',
+                timer: 1000,
+                showConfirmButton: false
+            });
+            setTimeout(() => {
+                emit('proceedToEventSelectTools');
+            }, 1000);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Failed to create event screening.',
+            icon: 'error'
+        });
+    }
 };
 
-const proceedToSelectTools = () => {
-    // console.log('Proceed to Select Tools button clicked');
-    emit('proceedToSelectTools');
+const fetchEventStatus = async () => {
+    try {
+        // Make GET request to backend to fetch counselor's event info
+        const response = await axios.get(endpoints.getEventInfo(counselorName.value));
+
+        if (response.status === 200) {
+            const eventData = response.data;
+            if (eventData.approval_status === 'pending') {
+                Swal.fire({
+                    title: 'Event Screening Pending',
+                    text: 'The admin has not yet approved your event screening request.',
+                    icon: 'warning'
+                }).then(() => {
+                    router.push('/counselor-dashboard'); 
+
+                });
+            } else if (eventData.approval_status === 'approved') {
+                Swal.fire({
+                    title: 'Event Screening Ongoing',
+                    text: 'Proceeding to tool selection.',
+                    icon: 'success',
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+                setTimeout(() => {
+                    emit('proceedToEventSelectTools');
+                }, 1000);
+            } else {
+                eventStatus.value = eventData.approval_status;
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
 };
 
+onMounted(() => {
+    fetchEventStatus(); // Fetch event status when component is mounted
+});
+
+const proceed = async () => {
+    try {
+        await submitForm(); 
+        emit('proceedToEventSelectTools');
+    } catch (error) {
+        console.error('Error submitting form:', error);
+    }
+};
+
+// eslint-disable-next-line no-unused-vars
+watch(endDate, (newValue, oldValue) => {
+    // Calculate duration when end date changes
+    const start = new Date(startDate.value);
+    const end = new Date(newValue);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    duration.value = diffDays;
+});
+
+// Optionally, you can also fetch dzongkhags on component mount
+const dzongkhags = [
+    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
+];
 </script>
-  
+
 <style scoped>
 input,
 select,
@@ -160,4 +214,3 @@ textarea {
     border-radius: 50px;
 }
 </style>
-  

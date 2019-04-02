@@ -14,7 +14,8 @@
           </div>
           <div class="card-body align-items-center bg-white d-flex">
             <div class="tab-content">
-              <div class="tab-pane fade show active" id="quickToolContent" role="tabpanel" aria-labelledby="quickToolTab">
+              <div class="tab-pane fade show active" id="quickToolContent" role="tabpanel"
+                aria-labelledby="quickToolTab">
                 <QuickToolCard />
               </div>
             </div>
@@ -62,14 +63,26 @@
       <CounselorReporting />
     </div>
 
+    <!-- Reporting Dashboard View -->
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-help'" class="screening-dashboard">
+      <CounselorHelp />
+    </div>
+
+    <!-- Reporting Dashboard View -->
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-settings'" class="screening-dashboard">
+      <CounselorSetting />
+    </div>
+
 
   </div>
 </template>
 
-    
+
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import axios from "axios";
+import endpoints from "@/api";
 import QuickToolCard from '@/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue';
 import ScreeningPrevYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningPrevYearCard.vue';
 import ScreeningCurrentYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningCurrentYearCard.vue';
@@ -78,14 +91,25 @@ import CounselorScreening from '@/components/dashboards/counselorScreenings/Coun
 import CounselorRescreening from '@/components/dashboards/counselorRescreenings/CounselorRescreening.vue';
 import CounselorReporting from '@/components/dashboards/counselorReporting/CounselorReporting.vue';
 import CounselorMonitor from '@/components/dashboards/counselorMonitor/CounselorMonitor.vue';
+import CounselorHelp from '@/components/dashboards/counselorHelp/CounselorHelp.vue';
+import CounselorSetting from '@/components/dashboards/counselorSetting/CounselorSetting.vue';
 
 
 const route = useRoute();
 
 const currentRoute = computed(() => route.path);
 
+onMounted(async () => {
+  // get user age group
+  const response = await axios.get(endpoints.getSUDData);
+  // if response positive then jsonify and save to local as SUD Data
+  if (response.data.success) {
+    localStorage.setItem('SUDData', JSON.stringify(response.data.data));
+  }
+});
+
 </script>
-    
+
 <style scoped>
 .nav-link {
   color: #2B656F !important;
