@@ -7,7 +7,7 @@
       <div class="row">
         <div :class="columnClass" v-for="(buttonRow, index) in buttonRows" :key="index">
           <div v-for="(data, dataIndex) in buttonRow" :key="dataIndex" class="my-3">
-            <router-link :to="`#${data.text.toLowerCase()}`" class="card bg-hwss">
+            <router-link :to="`#${data.text.toLowerCase()}`" class="card bg-hwss" @click="handleButtonClick(data)">
               <div class="card-body d-flex align-items-center justify-content-center p-3">
                 <div class="color-dot" :style="{ background: determineFlag(data.flag) }"></div>
                 <h5 class="card-title mx-2 text-capitalize">{{ data.text }}</h5>
@@ -137,9 +137,17 @@ const determineIcon = (buttonText) => {
   else if (buttonText === 'minimal') return 'fas fa-thumbs-up';
   else return 'fas fa-ban';
 };
+
 const props = defineProps({
   cardTitle: String
 });
+
+const selectedButtonData = ref(null);
+
+const handleButtonClick = (data) => {
+  selectedButtonData.value = data;
+  // Show your modal here
+};
 </script>
 
 <style scoped>

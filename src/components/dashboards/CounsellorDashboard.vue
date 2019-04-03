@@ -72,6 +72,18 @@ const route = useRoute();
 
 const currentRoute = computed(() => route.path);
 
+<<<<<<< Updated upstream
+=======
+onMounted(async () => {
+  // get user age group
+  const response = await axios.get(endpoints.getSUDData);
+  if (response.data) {
+    console.log(response.data);
+    localStorage.setItem('SUDData', JSON.stringify(response.data));
+  }
+});
+
+>>>>>>> Stashed changes
 </script>
     
 <style scoped>

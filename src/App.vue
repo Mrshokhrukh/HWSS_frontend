@@ -69,6 +69,7 @@ onMounted(async () => {
   color: #2B656F;
 }
 
+<<<<<<< Updated upstream
 footer {
   position: absolute;
   left: 0;
@@ -79,3 +80,67 @@ footer {
   width: 100%;
 }
 </style>
+=======
+.chat-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  cursor: pointer;
+  background-color: #ffffff;
+  border-radius: 50%;
+  box-shadow: 14px 14px 14px 18px rgba(0, 0, 0, 0.1);
+}
+
+.chat-icon img {
+  width: 80px;
+  height: 80px;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.chat-icon.active {
+  display: none;
+}
+
+.chat-icon:hover {
+  background-color: #ffffff;
+  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9998;
+  width: 300px;
+  height: 400px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes float-around {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-20px, -10px);
+  }
+
+  50% {
+    transform: translate(-10px, -20px);
+  }
+
+  75% {
+    transform: translate(-20px, -10px);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
+}
+</style>
+>>>>>>> Stashed changes

@@ -61,14 +61,23 @@ const fullName = computed(() => {
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
+<<<<<<< Updated upstream
 	const role = userDetailsStore.user.role.toLowerCase();
+=======
+	const role = userDetailsStore.user.role?.toLowerCase();
+	if (!role) return "public";
+>>>>>>> Stashed changes
 
 	if (role.includes("admin")) {
 		return "admin";
 	} else if (role.includes("counselor")) {
 		return "counselor";
 	} else {
+<<<<<<< Updated upstream
 		throw new Error("Invalid user role");
+=======
+		return role; 
+>>>>>>> Stashed changes
 	}
 });
 

@@ -3,19 +3,39 @@
         <div class="chat-header">
             <span>Chat Widget</span>
             <div class="header-icons">
+<<<<<<< Updated upstream
                 <span @click="minimizeChat" class="text-lg">&#8211;</span> <span @click="closeChat">&times;</span>
+=======
+                <span @click="minimizeChat" class="fa fa-minus me-3"></span>
+>>>>>>> Stashed changes
             </div>
         </div>
         <div class="chat-messages p-4">
-            <div class="message received">
-                <p>Hello, how can I help you today?</p>
+            <!-- Initial info message for user to input alias -->
+            <div class="message received" v-if="!aliasInput">
+                <p>Hi There, Please input a nick name for the other person to call you.</p>
             </div>
+            <!-- Thank you message after alias is input -->
+            <div class="message received" v-if="aliasInput && !agentJoined">
+                <p>Thank you! Please wait until one of our agents joins in to start the conversation with you...</p>
+            </div>
+            <!-- Agent joined message -->
+            <div class="message received" v-if="agentJoined && !defaultMessageShown">
+                <p>{{ agentName }} has joined the chat.</p>
+            </div>
+            <!-- Display typing indicator when agent is typing -->
+            <div v-if="showTypingIndicator" class="typing-indicator">{{ agentName }} is typing...</div>
+            <!-- Default welcome message after agent joins -->
+            <div class="message received" v-if="defaultMessageShown">
+                <p>Hi {{ userAlias }}, welcome to HWSS chat. How can I help?</p>
+            </div>
+            <!-- Display messages -->
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'message': true, 'sent': message.sentByUser, 'received': !message.sentByUser }">
                 <p>{{ message.text }}</p>
             </div>
-            <div v-if="showTypingIndicator" class="typing-indicator">Nado is typing...</div>
         </div>
+        <!-- Input field and send button -->
         <div class="chat-footer">
             <input type="text" v-model="newMessage" placeholder="Type your message here..." @keyup.enter="sendMessage" />
             <button @click="sendMessage"><img :src="sendIcon" alt="Send" /></button>
@@ -33,6 +53,11 @@ const { isOpen } = defineProps(['isOpen'])
 const messages = ref([])
 const newMessage = ref('')
 const showTypingIndicator = ref(false)
+const aliasInput = ref(false)
+const agentJoined = ref(false)
+const defaultMessageShown = ref(false)
+const agentName = ref('')
+const userAlias = ref('')
 
 // Improved responsesDictionary with some phrases
 const responsesDictionary = {
@@ -45,9 +70,10 @@ const responsesDictionary = {
 }
 
 const minimizeChat = () => {
-    emit('minimize') // Emit event to parent
+    emit('minimize')
 }
 
+<<<<<<< Updated upstream
 const closeChat = () => {
     emit('close') // Emit event to parent
 }
@@ -58,11 +84,26 @@ const sendMessage = () => {
         showTypingIndicator.value = true;
         simulateResponse();
         newMessage.value = '';
+=======
+const sendMessage = () => {
+    if (!aliasInput.value) {
+        userAlias.value = newMessage.value.trim();
+        aliasInput.value = true;
+        newMessage.value = '';
+    } else {
+        if (newMessage.value.trim() !== '') {
+            messages.value.push({ text: newMessage.value, sentByUser: true });
+            showTypingIndicator.value = true;
+            simulateResponse();
+            newMessage.value = '';
+        }
+>>>>>>> Stashed changes
     }
 }
 
 const simulateResponse = () => {
     setTimeout(() => {
+<<<<<<< Updated upstream
         const userMessage = newMessage.value.toLowerCase();
         let response = "I'm still under development and learning.";
 
@@ -88,16 +129,44 @@ const simulateResponse = () => {
                     }
                 }
             }
+=======
+        if (!aliasInput.value) return;
+        if (!agentJoined.value) {
+            agentJoined.value = true;
+            simulateAgentJoin();
+        } else {
+            defaultMessageShown.value = true;
+        }
+
+        const userMessage = newMessage.value.toLowerCase();
+        let response = responsesDictionary[userMessage] || "I'm still learning to respond to that.";
+
+        // Check if user's message contains a question mark
+        if (userMessage.includes("?")) {
+            response = responsesDictionary["?"] || response;
+>>>>>>> Stashed changes
         }
 
         messages.value.push({ text: response, sentByUser: false });
         showTypingIndicator.value = false;
+<<<<<<< Updated upstream
     }, 1000);
+=======
+    }, 3000);
 }
 
+const simulateAgentJoin = () => {
+    agentName.value = 'Noko';
+>>>>>>> Stashed changes
+}
+
+<<<<<<< Updated upstream
 </script>
   
   
+=======
+
+>>>>>>> Stashed changes
 <style scoped>
 .typing-indicator {
     text-align: center;

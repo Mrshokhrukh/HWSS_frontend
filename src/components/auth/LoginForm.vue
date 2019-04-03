@@ -140,7 +140,6 @@ const fetchUserAndAgencyDetails = async (userRole) => {
 
         // Handle the response from the store
         if (storeResponse.status === 'success') {
-            // Show success message before redirecting
             await Swal.fire({
                 title: 'Login Successful!',
                 text: 'Your data has been successfully retrieved.',
@@ -152,14 +151,21 @@ const fetchUserAndAgencyDetails = async (userRole) => {
             // Redirect to the appropriate dashboard
             redirectToDashboard(userRole);
         } else {
-            // Show error message
-            Swal.fire('Error', storeResponse.message, 'error');
+            // Show error message based on the response message
+            if (storeResponse.message.includes('Invalid Credentials')) {
+                Swal.fire('Error', 'Invalid username or password.', 'error');
+            } else if (storeResponse.message.includes('User with username:')) {
+                Swal.fire('Error', 'User with the given username not found.', 'error');
+            } else {
+                Swal.fire('Error', 'Failed to fetch user details.', 'error');
+            }
         }
     } catch (error) {
         console.error('Error fetching user details:', error);
         Swal.fire('Error', 'Failed to fetch user details.', 'error');
     }
 };
+
 
 
 const redirectToDashboard = (userRole) => {
@@ -179,13 +185,21 @@ const redirectToDashboard = (userRole) => {
 };
 
 const handleLoginError = (error) => {
-    let errorMessage = 'Login failed: An unexpected error occurred.';
-    if (error.response && error.response.data && error.response.data.detail) {
-        errorMessage = `Login failed: ${error.response.data.detail}`;
+    let errorMessage = 'Login failed';
+    if (error.response && error.response.data) {
+        const data = error.response.data.error;
+        if (data === 'Wrong password') {
+            errorMessage = 'The given password for your username is invalid.';
+        } else if (data === 'User not found') {
+            errorMessage = 'User with the given username was not found in our system.';
+        } else {
+            errorMessage = `Login failed: ${data.error}`;
+        }
     }
     loginStatus.value = errorMessage;
     Swal.fire('Login Failed', errorMessage, 'error');
 };
+
 </script>
 
 

@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row" v-if="activeItem.title !== 'Assist'">
       <!-- Suicidal Behaviour Card -->
       <div class="col-md-4">
         <div class="h-100">
@@ -29,6 +29,10 @@
       </div>
     </div>
 
+    <div class="row" v-else>
+      <AssistSeverityAndGraph />
+    </div>
+
   </div>
 </template>
 
@@ -38,6 +42,7 @@ import axios from 'axios';
 import endpoints from '@/api';
 
 import SeverityGraphCard from '@/components/dashboards/CounsellorDashboardCard/SeverityGraphCard.vue';
+import AssistSeverityAndGraph from '@/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue';
 import SeverityIndicatorCard from '@/components/dashboards/CounsellorDashboardCard/SeverityIndicatorCard.vue';
 
 const items = ref([

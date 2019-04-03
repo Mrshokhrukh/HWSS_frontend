@@ -41,6 +41,7 @@ const endpoints = {
   registerAgency: `${accessBaseUrl}/register-agency/`,
   getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
   getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,
+  authenticateToken: `${accessBaseUrl}/authenticate-token/`,
 
   verifyPreRecordedUser: `${accessBaseUrl}/verify-pre-recorded-user/`,
   registerPreRecordedUser: `${accessBaseUrl}/register-pre-recorded-user/`,
