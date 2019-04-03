@@ -1,5 +1,4 @@
 <template>
-    <div class="container">
       <div class="row">
         <div class="col">
           <h2>Total Screened</h2>
@@ -52,7 +51,6 @@
           </table>
         </div>
       </div>
-    </div>
   </template>
   
   <script setup>

@@ -1,5 +1,4 @@
 <template>
-    <div class="container bg">
       <h1 class="text-center mt-5 mb-4">Current Status In Bhutan</h1>
   
       <div class="row">
@@ -39,7 +38,6 @@
           </div>
         </div>
       </div>
-    </div>
   </template>
   
   <script setup>
