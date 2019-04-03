@@ -10,11 +10,7 @@
       <main class="col-lg-10 col-md-10 col-sm-12">
         <!-- Top Navbar -->
         <div class="row">
-<<<<<<< Updated upstream
           <div class="col-md-12 mb-4" v-if="currentComponent === CounsellorDashboard">
-=======
-          <div class="col-md-12 mb-5" v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard">
->>>>>>> Stashed changes
             <TopNavbarCard />
           </div>
         </div>
