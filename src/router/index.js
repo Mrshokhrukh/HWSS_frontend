@@ -28,7 +28,7 @@ if(userDetailsStore){
 localStorage.setItem('userType', userType.value);
 
 // Define a reusable dashboard component
-const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
+const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
 
 
 // Define a function to generate routes for user dashboards
