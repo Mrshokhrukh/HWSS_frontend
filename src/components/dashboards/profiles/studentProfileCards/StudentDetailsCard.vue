@@ -29,7 +29,7 @@
                         <div class="col-md-6">
                             <label>Phone</label>
                             <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.phone">
+                                v-model="userDetails.user.mobile">
                         </div>
                         <!-- Nationality -->
                         <div class="col-md-6">

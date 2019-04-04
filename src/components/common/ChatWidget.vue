@@ -3,85 +3,185 @@
         <div class="chat-header">
             <span>Chat Widget</span>
             <div class="header-icons">
+<<<<<<< Updated upstream
+                <span @click="minimizeChat" class="text-lg">&#8211;</span> <span @click="closeChat">&times;</span>
+=======
                 <span @click="minimizeChat" class="fa fa-minus me-3"></span>
-                <!-- Minimize button -->
-                <!-- <span @click="closeChat">&times;</span> Close button -->
+>>>>>>> Stashed changes
             </div>
         </div>
         <div class="chat-messages p-4">
-            <div class="message received">
-                <p>Hello, how can I help you today?</p>
+            <!-- Initial info message for user to input alias -->
+            <div class="message received" v-if="!aliasInput">
+                <p>Hi There, Please input a nick name for the other person to call you.</p>
             </div>
+            <!-- Thank you message after alias is input -->
+            <div class="message received" v-if="aliasInput && !agentJoined">
+                <p>Thank you! Please wait until one of our agents joins in to start the conversation with you...</p>
+            </div>
+            <!-- Agent joined message -->
+            <div class="message received" v-if="agentJoined && !defaultMessageShown">
+                <p>{{ agentName }} has joined the chat.</p>
+            </div>
+            <!-- Display typing indicator when agent is typing -->
+            <div v-if="showTypingIndicator" class="typing-indicator">{{ agentName }} is typing...</div>
+            <!-- Default welcome message after agent joins -->
+            <div class="message received" v-if="defaultMessageShown">
+                <p>Hi {{ userAlias }}, welcome to HWSS chat. How can I help?</p>
+            </div>
+            <!-- Display messages -->
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'message': true, 'sent': message.sentByUser, 'received': !message.sentByUser }">
                 <p>{{ message.text }}</p>
             </div>
-            <div v-if="showTypingIndicator" class="typing-indicator">Nado is typing...</div>
         </div>
+        <!-- Input field and send button -->
         <div class="chat-footer">
-            <input type="text" v-model="newMessage" placeholder="Type your message here..."
-                @keyup.enter="sendMessage" />
+            <input type="text" v-model="newMessage" placeholder="Type your message here..." @keyup.enter="sendMessage" />
             <button @click="sendMessage"><img :src="sendIcon" alt="Send" /></button>
         </div>
     </div>
 </template>
-
+  
 <script setup>
 import { ref } from 'vue'
 import sendIcon from '@/assets/images/send.png'
 
 const emit = defineEmits(['minimize', 'close'])
-const { isOpen } = defineProps(['isOpen']) // Remove 'messages' from defineProps
+const { isOpen } = defineProps(['isOpen'])
 
 const messages = ref([])
 const newMessage = ref('')
 const showTypingIndicator = ref(false)
+const aliasInput = ref(false)
+const agentJoined = ref(false)
+const defaultMessageShown = ref(false)
+const agentName = ref('')
+const userAlias = ref('')
 
-// Define dictionary of patterns and corresponding responses
+// Improved responsesDictionary with some phrases
 const responsesDictionary = {
     "hi": "Hello! How can I assist you today?",
     "hello": "Hi there! How can I help you?",
-    "how are you": "I'm just a bot, but I'm here to help you!",
+    "how are you": "I'm doing well, thanks for asking! How can I be of service?",
     "what's up": "Not much, just here to chat with you!",
+    "can you help me with": "Sure, I can help you with a few things. What would you like to know?",
     "?": "That's an interesting question! Let me know if you need assistance with anything else."
 }
 
 const minimizeChat = () => {
-    emit('minimize') // Emit event to parent
+    emit('minimize')
 }
 
+<<<<<<< Updated upstream
+const closeChat = () => {
+    emit('close') // Emit event to parent
+}
 
 const sendMessage = () => {
     if (newMessage.value.trim() !== '') {
-        messages.value.push({ text: newMessage.value, sentByUser: true }); // Add user's sent message
-        showTypingIndicator.value = true; // Show typing indicator
-        simulateResponse(); // Simulate receiving a response
-        newMessage.value = ''; // Clear the input field after sending
+        messages.value.push({ text: newMessage.value, sentByUser: true });
+        showTypingIndicator.value = true;
+        simulateResponse();
+        newMessage.value = '';
+=======
+const sendMessage = () => {
+    if (!aliasInput.value) {
+        userAlias.value = newMessage.value.trim();
+        aliasInput.value = true;
+        newMessage.value = '';
+    } else {
+        if (newMessage.value.trim() !== '') {
+            messages.value.push({ text: newMessage.value, sentByUser: true });
+            showTypingIndicator.value = true;
+            simulateResponse();
+            newMessage.value = '';
+        }
+>>>>>>> Stashed changes
     }
 }
 
 const simulateResponse = () => {
     setTimeout(() => {
-        const userMessage = newMessage.value.toLowerCase(); // Convert user's message to lowercase for case-insensitive matching
-        let response = responsesDictionary[userMessage] || "I'm not sure how to respond to that."; // Default response if no match found
+<<<<<<< Updated upstream
+        const userMessage = newMessage.value.toLowerCase();
+        let response = "I'm still under development and learning.";
+
+        // Improved matching logic using regular expressions
+        const greetings = /^(hi|hello|hey)/;
+        const questions = /.*\?$/;
+
+        // Check for greetings first
+        if (greetings.test(userMessage)) {
+            response = responsesDictionary[userMessage.match(greetings)[0]];
+        } else {
+            // Then check for questions   
+            if (questions.test(userMessage)) {
+                response = responsesDictionary["?"] || response;
+            } else {
+                // Finally, check for keywords in the dictionary
+                const words = userMessage.split(' ');
+                for (const word of words) {
+                    // eslint-disable-next-line no-prototype-builtins
+                    if (responsesDictionary.hasOwnProperty(word)) {
+                        response = responsesDictionary[word];
+                        break;
+                    }
+                }
+            }
+=======
+        if (!aliasInput.value) return;
+        if (!agentJoined.value) {
+            agentJoined.value = true;
+            simulateAgentJoin();
+        } else {
+            defaultMessageShown.value = true;
+        }
+
+        const userMessage = newMessage.value.toLowerCase();
+        let response = responsesDictionary[userMessage] || "I'm still learning to respond to that.";
 
         // Check if user's message contains a question mark
         if (userMessage.includes("?")) {
-            response = responsesDictionary["?"] || response; // Use specific response for questions if available
+            response = responsesDictionary["?"] || response;
+>>>>>>> Stashed changes
         }
 
-        messages.value.push({ text: response, sentByUser: false }); // Simulate receiving a response
-        showTypingIndicator.value = false; // Hide typing indicator after receiving response
-    }, 3000); // Simulate a response delay of 3 seconds (3000 milliseconds)
+        messages.value.push({ text: response, sentByUser: false });
+        showTypingIndicator.value = false;
+<<<<<<< Updated upstream
+    }, 1000);
+=======
+    }, 3000);
 }
-</script>
 
+const simulateAgentJoin = () => {
+    agentName.value = 'Noko';
+>>>>>>> Stashed changes
+}
+
+<<<<<<< Updated upstream
+</script>
+  
+  
+=======
+
+>>>>>>> Stashed changes
 <style scoped>
+.typing-indicator {
+    text-align: center;
+    font-style: italic;
+    font-size: 12px;
+    color: #888;
+    margin-top: 20px;
+    align-self: flex-start
+}
+
 .chat-widget {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 9998;
+    z-index: 99999;
     width: 300px;
     height: 400px;
     background-color: #fff;
@@ -110,7 +210,6 @@ const simulateResponse = () => {
 .chat-messages {
     display: flex;
     flex-direction: column;
-    /* Ensure messages stack vertically */
     width: 100%;
     height: calc(100% - 100px);
     overflow-y: auto;
@@ -119,9 +218,8 @@ const simulateResponse = () => {
 
 .message {
     display: flex;
-    /* Ensure each message occupies full width */
-    justify-content: flex-end;
-    /* Align sent messages to the right */
+    justify-content: flex-start;
+    align-items: center;
     margin-bottom: 10px;
 }
 
@@ -132,6 +230,7 @@ const simulateResponse = () => {
 
 .received {
     background-color: #2B656F;
+    align-self: flex-start;
     color: #fff;
     border-radius: 20px 20px 20px 2px;
     max-width: 70%;
@@ -139,10 +238,10 @@ const simulateResponse = () => {
 
 .sent {
     background-color: #D3D3D3;
+    align-self: flex-end;
     color: #000;
     border-radius: 20px 20px 2px 20px;
     max-width: 70%;
-    align-self: flex-end;
 }
 
 .chat-footer {
@@ -155,7 +254,7 @@ const simulateResponse = () => {
 .chat-footer input[type="text"] {
     flex: 1;
     padding: 10px;
-    border: none;
+    border: 2px solid #e3e3e3;
     border-radius: 5px;
     margin-right: 10px;
 }
@@ -171,3 +270,4 @@ const simulateResponse = () => {
     width: 100%;
 }
 </style>
+  

@@ -14,8 +14,8 @@
                             <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
                             <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
                         </div> <br>
-                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0"
-                            aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
+                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }"
+                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
                         </div>
                         <div class="step-container d-flex justify-content-between align-items-center px-5">
                             <div class="step-circle" @click="handleProgressBarClick(1)">1</div>
@@ -38,8 +38,8 @@
                                             <input class="form-check-input" type="radio" :id="identifier.id"
                                                 :value="identifier.value" v-model="formData.selectedIdentifier">
                                             <label class="form-check-label text-muted" :for="identifier.id">{{
-                                                identifier.label
-                                            }}</label>
+                            identifier.label
+                        }}</label>
                                         </div>
                                     </div>
 
@@ -57,7 +57,8 @@
                                             <div class="row">
                                                 <!-- Month -->
                                                 <div class="col">
-                                                    <label for="dobMonth" class="form-label text-muted mb-0">Month:</label>
+                                                    <label for="dobMonth"
+                                                        class="form-label text-muted mb-0">Month:</label>
                                                     <select id="dobMonth" class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedMonth">
                                                         <option v-for="month in months" :key="month.value"
@@ -68,20 +69,24 @@
                                                 </div>
                                                 <!-- Date -->
                                                 <div class="col">
-                                                    <label for="dobDate" class="form-label text-muted mb-0">Date:</label>
+                                                    <label for="dobDate"
+                                                        class="form-label text-muted mb-0">Date:</label>
                                                     <select id="dobDate" class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedDate">
-                                                        <option v-for="date in dates" :key="date.value" :value="date.value">
+                                                        <option v-for="date in dates" :key="date.value"
+                                                            :value="date.value">
                                                             {{ date.label }}
                                                         </option>
                                                     </select>
                                                 </div>
                                                 <!-- Year -->
                                                 <div class="col">
-                                                    <label for="dobYear" class="form-label text-muted mb-0">Year:</label>
+                                                    <label for="dobYear"
+                                                        class="form-label text-muted mb-0">Year:</label>
                                                     <select id="dobYear" class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedYear">
-                                                        <option v-for="year in years" :key="year" :value="year">{{ year }}
+                                                        <option v-for="year in years" :key="year" :value="year">{{ year
+                                                            }}
                                                         </option>
                                                     </select>
                                                 </div>
@@ -94,7 +99,8 @@
                                         <!-- Improved Display message or prompt for Case File -->
                                         <div class="alert alert-info" role="alert">
                                             <h4 class="alert-heading">Important Notice for Case File Holders!</h4>
-                                            <p>Please contact The PEMA directly to proceed with your registration. Ensure
+                                            <p>Please contact The PEMA directly to proceed with your registration.
+                                                Ensure
                                                 you provide the following details:</p>
                                             <hr>
                                             <div class="ms-4">
@@ -102,17 +108,22 @@
                                                 <div class="ps-3">
                                                     <div><i class="fas fa-check-circle text-success"></i> Case File
                                                         Number</div>
-                                                    <div><i class="fas fa-check-circle text-success"></i> Nationality</div>
-                                                    <div><i class="fas fa-check-circle text-success"></i> First Name</div>
-                                                    <div><i class="fas fa-check-circle text-success"></i> Middle Name (if
+                                                    <div><i class="fas fa-check-circle text-success"></i> Nationality
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> First Name
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Middle Name
+                                                        (if
                                                         any)</div>
-                                                    <div><i class="fas fa-check-circle text-success"></i> Last Name</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Last Name
+                                                    </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Date of Birth
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Sex</div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Mobile Number
                                                     </div>
-                                                    <div><i class="fas fa-check-circle text-success"></i> Permanent Address
+                                                    <div><i class="fas fa-check-circle text-success"></i> Permanent
+                                                        Address
                                                         (Village, Gewog, Dzongkhag)</div>
                                                 </div>
                                             </div>
@@ -132,7 +143,8 @@
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-6">
-                                                <label for="nationality" class="form-label text-muted">Nationality:</label>
+                                                <label for="nationality"
+                                                    class="form-label text-muted">Nationality:</label>
                                                 <input type="text" id="nationality" v-model="formData.nationality"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
@@ -141,12 +153,14 @@
                                         <div class="row">
                                             <!-- Personal Details -->
                                             <div class="col-md-4">
-                                                <label for="first_name" class="form-label text-muted">First Name:</label>
+                                                <label for="first_name" class="form-label text-muted">First
+                                                    Name:</label>
                                                 <input type="text" id="first_name" v-model="formData.first_name"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="middle_name" class="form-label text-muted">Middle Name:</label>
+                                                <label for="middle_name" class="form-label text-muted">Middle
+                                                    Name:</label>
                                                 <input type="text" id="middle_name" v-model="formData.middle_name"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
@@ -174,7 +188,8 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="mob_number" class="form-label text-muted">Mobile Number:</label>
+                                                <label for="mob_number" class="form-label text-muted">Mobile
+                                                    Number:</label>
                                                 <input type="text" id="mob_number" v-model="formData.mob_number"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
@@ -185,11 +200,13 @@
                                             <div class="col-md-4">
                                                 <label for="perm_add_village" class="form-label text-muted">Permanent
                                                     Address Village:</label>
-                                                <input type="text" id="perm_add_village" v-model="formData.perm_add_village"
+                                                <input type="text" id="perm_add_village"
+                                                    v-model="formData.perm_add_village"
                                                     class="form-control bg-transparent border-dark">
                                             </div>
                                             <div class="col-md-4">
-                                                <label for="perm_add_gewog" class="form-label text-muted">Permanent Address
+                                                <label for="perm_add_gewog" class="form-label text-muted">Permanent
+                                                    Address
                                                     Gewog:</label>
                                                 <input type="text" id="perm_add_gewog" v-model="formData.perm_add_gewog"
                                                     class="form-control bg-transparent border-dark">
@@ -248,17 +265,28 @@
 
 
                         <div class="text-center my-5">
-                            Already Have an Account? <router-link to="/login" style="color: #2B656F; font-weight: bold">Sign
+                            Already Have an Account? <router-link to="/login"
+                                style="color: #2B656F; font-weight: bold">Sign
                                 In</router-link>
                         </div>
                     </div>
                 </div>
             </div>
+<<<<<<< Updated upstream
+=======
+            <button type="submit" class="btn btn-primary">Next</button>
+        </form>
+        <div v-if="showSuccessMessage" class="alert alert-success mt-3" role="alert">
+            Details fetched successfully! Registering user...
+>>>>>>> Stashed changes
         </div>
         <!-- Loading, Success, and Failed Modals/Overlays can be inserted here if they should be fullscreen -->
     </div>
 </template>
-  
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
@@ -305,6 +333,7 @@ const state = reactive({
     cidError: '',
 });
 
+<<<<<<< Updated upstream
 const validateCID = () => {
     const cidPattern = /^\d+$/;
 
@@ -416,6 +445,64 @@ const fetchCitizenDetails = async () => {
 };
 
 
+=======
+const fetchCitizenDetails = async () => {
+    try {
+        // Ensure that the CSRF token is set in the headers
+        const csrfToken = getCSRFToken();
+        const headers = { 'X-CSRFToken': csrfToken };
+
+        const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${cid.value}`, { headers });
+
+        if (response.data) {
+            const citizenDetails = response.data;
+            const temporaryUsername = generateTemporaryUsername();
+            const mappedData = {
+                identity_number: citizenDetails.cid,
+                first_name: citizenDetails.firstName,
+                middle_name: citizenDetails.middleName || '',
+                last_name: citizenDetails.lastName,
+                date_of_birth: formatDOB(citizenDetails.dob),
+                gender: mapGender(citizenDetails.gender),
+                mob_number: citizenDetails.mobileNumber,
+                perm_add_village: citizenDetails.villageName,
+                perm_add_gewog: citizenDetails.gewogName,
+                perm_add_dzongkhag: citizenDetails.dzongkhagName,
+                nationality: mapNationality(citizenDetails.country),
+                username: temporaryUsername,
+            };
+
+            console.log(mappedData);
+
+            await registerUser(mappedData);
+
+            emit('go-to-next-step', 'step-three', mappedData);
+            console.log('Response from Django:', citizenDetails);
+            showSuccessMessage.value = true;
+
+            setTimeout(() => {
+                moveToStep3(citizenDetails);
+            }, 3000);
+        } else {
+            errorMessage.value = 'Citizen details not found';
+        }
+    } catch (error) {
+        errorMessage.value = error.response?.data?.error || 'An error occurred during fetching details';
+    }
+};
+
+
+
+const registerUser = async (userData) => {
+    try {
+        const response = await axios.post('http://localhost:8000/api/v1/access/register-api-user/', userData);
+        console.log('User registration response:', response.data);
+    } catch (error) {
+        console.error('Error registering user:', error.response?.data?.error || 'An error occurred during user registration');
+    }
+};
+
+>>>>>>> Stashed changes
 function getCSRFToken() {
     const name = 'csrftoken';
     const value = "; " + document.cookie;
@@ -428,6 +515,26 @@ function getCSRFToken() {
     return null;
 }
 
+<<<<<<< Updated upstream
+=======
+const generateTemporaryUsername = () => {
+    // You can use any logic to generate a temporary username
+    // For example, a combination of 'temp_user' and a random string
+    const generateRandomString = (length) => {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
+    }
+    return `temp_user_${generateRandomString(8)}`;
+};
+
+
+// Helper functions
+>>>>>>> Stashed changes
 function formatDOB(dob) {
     return dob.split('/').reverse().join('-');
 }
@@ -556,4 +663,9 @@ const moveToStep3 = (citizenDetails) => {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     /* Enhanced focus state */
 }
+
+/* input[type="radio"] {
+    accent-color: #2B656F;
+    scale: 1.2;
+} */
 </style>

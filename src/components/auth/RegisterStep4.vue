@@ -10,8 +10,8 @@
                             <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User </p>
                         </div>
 
-                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0"
-                            aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
+                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }"
+                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
                         </div>
 
                         <div class="step-container d-flex justify-content-between align-items-center">
@@ -35,7 +35,8 @@
 
 
                         <div class="container p-5 text-start" style="background-color: #E2E9EB; border-radius: 15px;">
-                            <h5 class="mb-3 text-mutedcust-text"> <span class="rounded-number  p-3">3</span> Login Details
+                            <h5 class="mb-3 text-mutedcust-text"> <span class="rounded-number  p-3">3</span> Login
+                                Details
                             </h5>
                             <form @submit.prevent="createUser">
                                 <!-- Username and password fields -->
@@ -60,7 +61,8 @@
                             </form>
                         </div>
                         <div class="text-center mt-4">
-                            Already Have an Account? <router-link to="login" style="color: #2B656F; font-weight: bold">Sign
+                            Already Have an Account? <router-link to="login"
+                                style="color: #2B656F; font-weight: bold">Sign
                                 In</router-link>
                         </div>
 
@@ -128,6 +130,7 @@ const createUser = async () => {
     }
 
     try {
+<<<<<<< Updated upstream
         let userData = JSON.parse(sessionStorage.getItem('user_data'));
         const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
         const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'));
@@ -149,6 +152,16 @@ const createUser = async () => {
         const response = await axios.post(endpoints.registerUser, userSubmissionData, {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
             withCredentials: true,
+=======
+        const response = await fetch('http://localhost:8000/api/v1/access/register/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Origin': 'http://localhost:5173',  // Ensure this matches your frontend origin
+            },
+            credentials: 'include',  // Include this line for cross-origin requests with cookies
+            body: JSON.stringify(userSubmissionData),
+>>>>>>> Stashed changes
         });
 
         if (response.status === 201) {
@@ -160,27 +173,170 @@ const createUser = async () => {
             });
         } else {
             Swal.fire('Error', `Error: ${response.data.error}`, 'error');
+
+            // Handle duplicate username and email errors
+            if (response.data.error) {
+                const errorDetail = response.data.error;
+                if (errorDetail.includes('access_customuser.username')) {
+                    const existingUsername = errorDetail.split("'")[1]; // Assuming username is wrapped in quotes in the error message
+                    const confirmNewUsername = await Swal.fire({
+                        title: 'Username already exists!',
+                        text: `The username ${existingUsername} is already taken. Enter a new username:`,
+                        input: 'text',
+                        showCancelButton: true,
+                        confirmButtonText: 'Use New Username',
+                        cancelButtonText: 'Cancel',
+                        showLoaderOnConfirm: true,
+                        preConfirm: (newUsername) => {
+                            return new Promise((resolve) => {
+                                if (!newUsername) {
+                                    Swal.showValidationMessage('Please enter a new username');
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        }
+                    });
+
+                    if (confirmNewUsername.isConfirmed) {
+                        userData.username = confirmNewUsername.value;
+                        sessionStorage.setItem('user_data', JSON.stringify(userData));
+                        // Call createUser again with the new username in userData
+                        createUser();
+                    }
+                } else if (errorDetail.includes('access_customuser.email')) {
+                    const existingEmail = errorDetail.split("'")[1];
+                    const confirmNewEmail = await Swal.fire({
+                        title: 'Email already exists!',
+                        text: `The email ${existingEmail} is already registered. Enter a new email address:`,
+                        input: 'email',
+                        inputAttributes: {
+                            autocapitalize: 'off'
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Use New Email',
+                        cancelButtonText: 'Cancel',
+                        showLoaderOnConfirm: true,
+                        preConfirm: (newEmail) => {
+                            return new Promise((resolve) => {
+                                if (!newEmail) {
+                                    Swal.showValidationMessage('Please enter a new email address');
+                                } else {
+                                    resolve();
+                                }
+                            });
+                        }
+                    });
+
+                    if (confirmNewEmail.isConfirmed) {
+                        userData.email = confirmNewEmail.value;
+                        sessionStorage.setItem('user_data', JSON.stringify(userData));
+                        // Call createUser again with the new email in userData
+                        createUser();
+                    }
+                }
+            }
         }
     } catch (error) {
-        console.log(error);
+        let userData = JSON.parse(sessionStorage.getItem('user_data'));
 
         if (error.response && error.response.data && error.response.data.error) {
             const errorDetail = error.response.data.error;
             if (errorDetail.includes('access_customuser.username')) {
-                errorMessage.value = 'Oops! That username is already taken. Try something unique.';
-            } else if (errorDetail.includes('access_customuser.identity_number')) {
-                errorMessage.value = 'It seems this CID/Identity number already exists. Are you sure you don’t have an account already?';
+                const confirmNewUsername = await Swal.fire({
+                    title: 'Username already exists!',
+                    text: `The username ${userData.username} is already taken. Enter a new username:`,
+                    input: 'text',
+                    showCancelButton: true,
+                    confirmButtonText: 'Use New Username',
+                    cancelButtonText: 'Cancel',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (newUsername) => {
+                        return new Promise((resolve) => {
+                            if (!newUsername) {
+                                Swal.showValidationMessage('Please enter a new username');
+                            } else {
+                                resolve();
+                            }
+                        });
+                    }
+                });
+
+                if (confirmNewUsername.isConfirmed) {
+                    userData.username = confirmNewUsername.value;
+                    sessionStorage.setItem('user_data', JSON.stringify(userData));
+                    // Call createUser again with the new username in userData
+                    createUser();
+                }
             } else if (errorDetail.includes('access_customuser.email')) {
-                errorMessage.value = 'This email has already been registered. Please consider using a new email or try logging in instead.';
+                const confirmNewEmail = await Swal.fire({
+                    title: 'Email already exists!',
+                    text: `The email ${userData.email} is already registered. Enter a new email address:`,
+                    input: 'email',
+                    inputAttributes: {
+                        autocapitalize: 'off'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Use New Email',
+                    cancelButtonText: 'Cancel',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (newEmail) => {
+                        return new Promise((resolve) => {
+                            if (!newEmail) {
+                                Swal.showValidationMessage('Please enter a new email address');
+                            } else {
+                                resolve();
+                            }
+                        });
+                    }
+                });
+
+                if (confirmNewEmail.isConfirmed) {
+                    userData.email = confirmNewEmail.value;
+                    sessionStorage.setItem('user_data', JSON.stringify(userData));
+                    // Call createUser again with the new email in userData
+                    createUser();
+                }
+            } else if (errorDetail.includes('access_customuser.identity_number')) {
+                const confirmNewIdentity = await Swal.fire({
+                    title: 'CID/Identity number already exists!',
+                    text: `The CID/Identity number ${userData.identity} is already registered. Enter a new CID/Identity number:`,
+                    input: 'text',
+                    showCancelButton: true,
+                    confirmButtonText: 'Use New CID/Identity',
+                    cancelButtonText: 'Cancel',
+                    showLoaderOnConfirm: true,
+                    preConfirm: (newIdentity) => {
+                        return new Promise((resolve) => {
+                            if (!newIdentity) {
+                                Swal.showValidationMessage('Please enter a new CID/Identity number');
+                            } else {
+                                resolve();
+                            }
+                        });
+                    }
+                });
+
+                if (confirmNewIdentity.isConfirmed) {
+                    userData.identity_number = confirmNewIdentity.value;
+                    sessionStorage.setItem('user_data', JSON.stringify(userData));
+                    // Call createUser again with the new identity in userData
+                    createUser();
+                }
             } else {
                 errorMessage.value = 'Error creating user. Please try again.';
             }
         } else {
             errorMessage.value = 'An unexpected error occurred. Please try again later.';
         }
-        Swal.fire('Error', errorMessage.value, 'error');
+        Swal.fire('Error', errorMessage.value, 'User cancelled the registration process.');
     }
 };
+
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 </script>
 
 

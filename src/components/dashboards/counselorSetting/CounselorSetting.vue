@@ -22,9 +22,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
-import CounselorDetailsCard from '@/components/dashboards/counselorSetting/profileCard/CounselorDetailsCard.vue';
-import PersonalDetailsCard from '@/components/dashboards/counselorSetting/profileCard/PersonalDetailsCard.vue';
-import ChangePasswordCard from '@/components/dashboards/counselorSetting/profileCard/ChangePasswordCard.vue';
+import CounselorDetailsCard from './counselorProfileCard/CounselorDetailsCard.vue';
+import PersonalDetailsCard from './counselorProfileCard/CounselorPersonalDetailsCard.vue';
+import ChangePasswordCard from './counselorProfileCard/CounselorChangePasswordCard.vue';
 
 const userDetailsStore = useUserDetailsStore();
 const userDetails = ref({});

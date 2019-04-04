@@ -54,7 +54,7 @@ import ContactDetailCard from "@/components/dashboards/dashboardCard/ContactDeta
 import LandingDashboardCard from "@/components/dashboards/dashboardCard/LandingDashboardCard.vue";
 import ImageCard from "@/components/dashboards/dashboardCard/ImageCard.vue";
 import PemaResponseServicesCard from "@/components/dashboards/dashboardCard/PemaResponseServicesCard.vue";
-import ScreeningTest from "@/components/dashboards/screenings/ScreeningTest.vue";
+import ScreeningTest from "@/components/dashboards/screenings/ScreeningTestContainer.vue";
 import StudentProfile from "@/components/dashboards/profiles/StudentProfile.vue";
 import ScreeningStart from "./screenings/ScreeningStart.vue";
 

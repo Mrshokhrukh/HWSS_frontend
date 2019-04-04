@@ -1,8 +1,35 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
+import { ref, computed } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+
+const userType = ref([]);
+
+if(userDetailsStore){
+  userType.value = computed(() => {
+    const role = userDetailsStore.user.role?.toLowerCase();
+    if (!role) return "public";
+  
+    if (role.includes("admin")) {
+      return "admin";
+    } else if (role.includes("counselor")) {
+      return "counselor";
+    } else if (role === "student") {
+      return "student";
+    } else {
+      return role;
+    }
+  });
+}
+
+localStorage.setItem('userType', userType.value);
 
 // Define a reusable dashboard component
 const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
+
 
 // Define a function to generate routes for user dashboards
 const generateDashboardRoutes = (userType) => {
@@ -157,18 +184,40 @@ const createAppRouter = () => {
     ],
   });
 
-  router.beforeEach((to, from, next) => {
+  router.beforeEach(async (to, from, next) => {
+    const isAuthenticated = localStorage.getItem('authToken') !== null;
+  
     if (to.matched.some(record => record.meta.requiresAuth)) {
-      const isAuthenticated = localStorage.getItem('authToken') !== null;
-
       if (!isAuthenticated) {
-        alert('Access Denied! You need to be logged in to view this page.')
-        next({ name: 'login' });
+        next({ name: 'login' }); // Redirect to login page if not authenticated
       } else {
-        next();
+        // Validate token
+        try {
+          const authToken = localStorage.getItem('authToken');
+          const response = await axios.post(endpoints.authenticateToken, null, {
+            headers: {
+              'Authorization': `Token ${authToken}`
+            }
+          });
+          if (response.data.valid) {
+            next(); // User is authenticated, allow access
+          } else {
+            localStorage.removeItem('authToken'); // Remove invalid token from local storage
+            next({ name: 'login' }); // Redirect to login page if token is invalid
+          }
+        } catch (error) {
+          console.error('Error validating token:', error);
+          next({ name: 'login' }); // Redirect to login page if there's an error validating token
+        }
+      }
+    } else if (['login', 'register', 'forgot-password', 'home'].includes(to.name)) {
+      if (isAuthenticated) {
+        next({ name: `${userType.value}-dashboard` }); // Redirect to user's dashboard based on their userType
+      } else {
+        next(); // Allow access to these pages if not logged in
       }
     } else {
-      next();
+      next(); // Allow access to other routes
     }
   });
 
