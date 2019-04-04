@@ -76,13 +76,10 @@ onMounted(() => {
     const hash = route.hash;
 
     if (hash) {
-        // Extract the ID from the hash
-        const id = hash.substring(1); // Removing the leading '#'
+        const id = hash.substring(1);
 
-        // Set the value of activeTab to the extracted ID
         activeTab.value = id;
     } else {
-        // Set the default value of activeTab to "case-screening"
         activeTab.value = 'case-screening';
     }
 });

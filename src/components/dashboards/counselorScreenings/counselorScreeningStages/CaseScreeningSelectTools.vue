@@ -44,7 +44,7 @@
 </template>
   
 <script setup>
-import { ref, computed, onMounted, defineEmits } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 const emit = defineEmits(['proceed', 'goBack']);
 

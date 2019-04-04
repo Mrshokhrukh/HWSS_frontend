@@ -130,7 +130,6 @@ const createUser = async () => {
     }
 
     try {
-<<<<<<< Updated upstream
         let userData = JSON.parse(sessionStorage.getItem('user_data'));
         const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
         const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'));
@@ -152,16 +151,6 @@ const createUser = async () => {
         const response = await axios.post(endpoints.registerUser, userSubmissionData, {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
             withCredentials: true,
-=======
-        const response = await fetch('http://localhost:8000/api/v1/access/register/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Origin': 'http://localhost:5173',  // Ensure this matches your frontend origin
-            },
-            credentials: 'include',  // Include this line for cross-origin requests with cookies
-            body: JSON.stringify(userSubmissionData),
->>>>>>> Stashed changes
         });
 
         if (response.status === 201) {
@@ -265,7 +254,6 @@ const createUser = async () => {
                 if (confirmNewUsername.isConfirmed) {
                     userData.username = confirmNewUsername.value;
                     sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    // Call createUser again with the new username in userData
                     createUser();
                 }
             } else if (errorDetail.includes('access_customuser.email')) {
@@ -294,7 +282,6 @@ const createUser = async () => {
                 if (confirmNewEmail.isConfirmed) {
                     userData.email = confirmNewEmail.value;
                     sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    // Call createUser again with the new email in userData
                     createUser();
                 }
             } else if (errorDetail.includes('access_customuser.identity_number')) {
@@ -320,7 +307,6 @@ const createUser = async () => {
                 if (confirmNewIdentity.isConfirmed) {
                     userData.identity_number = confirmNewIdentity.value;
                     sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    // Call createUser again with the new identity in userData
                     createUser();
                 }
             } else {
@@ -333,10 +319,6 @@ const createUser = async () => {
     }
 };
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 </script>
 
 

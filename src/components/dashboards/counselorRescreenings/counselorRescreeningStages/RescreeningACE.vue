@@ -110,10 +110,10 @@ const proceed = () => {
 
     // Save responses, total score, and interpretation to local storage
     const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
-    localStorage.setItem('ACE_set_counselor_screening', JSON.stringify(data));
+    localStorage.setItem('ACE_set_counselor_rescreening', JSON.stringify(data));
 
     // Emit the goToNext event
-    emit('goToNext', 'ACE');
+    emit('goToNext');
 };
 
 </script>

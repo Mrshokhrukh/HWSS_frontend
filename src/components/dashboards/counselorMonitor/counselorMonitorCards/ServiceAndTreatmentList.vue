@@ -53,10 +53,6 @@ const followUpList = ref([
     'Detention-based SUD Treatment and Care',
 ]);
 
-const formatDate = (row, column) => {
-    // Implement date formatting logic
-};
-
 const formatEmpty = (row, column) => {
     if (!row[column.property] || row[column.property].trim() === '') {
         return '----';

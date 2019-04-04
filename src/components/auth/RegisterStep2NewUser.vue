@@ -272,21 +272,10 @@
                     </div>
                 </div>
             </div>
-<<<<<<< Updated upstream
-=======
-            <button type="submit" class="btn btn-primary">Next</button>
-        </form>
-        <div v-if="showSuccessMessage" class="alert alert-success mt-3" role="alert">
-            Details fetched successfully! Registering user...
->>>>>>> Stashed changes
         </div>
         <!-- Loading, Success, and Failed Modals/Overlays can be inserted here if they should be fullscreen -->
     </div>
 </template>
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
@@ -333,7 +322,6 @@ const state = reactive({
     cidError: '',
 });
 
-<<<<<<< Updated upstream
 const validateCID = () => {
     const cidPattern = /^\d+$/;
 
@@ -445,64 +433,6 @@ const fetchCitizenDetails = async () => {
 };
 
 
-=======
-const fetchCitizenDetails = async () => {
-    try {
-        // Ensure that the CSRF token is set in the headers
-        const csrfToken = getCSRFToken();
-        const headers = { 'X-CSRFToken': csrfToken };
-
-        const response = await axios.get(`http://localhost:8000/api/v1/access/get-citizen-details/${cid.value}`, { headers });
-
-        if (response.data) {
-            const citizenDetails = response.data;
-            const temporaryUsername = generateTemporaryUsername();
-            const mappedData = {
-                identity_number: citizenDetails.cid,
-                first_name: citizenDetails.firstName,
-                middle_name: citizenDetails.middleName || '',
-                last_name: citizenDetails.lastName,
-                date_of_birth: formatDOB(citizenDetails.dob),
-                gender: mapGender(citizenDetails.gender),
-                mob_number: citizenDetails.mobileNumber,
-                perm_add_village: citizenDetails.villageName,
-                perm_add_gewog: citizenDetails.gewogName,
-                perm_add_dzongkhag: citizenDetails.dzongkhagName,
-                nationality: mapNationality(citizenDetails.country),
-                username: temporaryUsername,
-            };
-
-            console.log(mappedData);
-
-            await registerUser(mappedData);
-
-            emit('go-to-next-step', 'step-three', mappedData);
-            console.log('Response from Django:', citizenDetails);
-            showSuccessMessage.value = true;
-
-            setTimeout(() => {
-                moveToStep3(citizenDetails);
-            }, 3000);
-        } else {
-            errorMessage.value = 'Citizen details not found';
-        }
-    } catch (error) {
-        errorMessage.value = error.response?.data?.error || 'An error occurred during fetching details';
-    }
-};
-
-
-
-const registerUser = async (userData) => {
-    try {
-        const response = await axios.post('http://localhost:8000/api/v1/access/register-api-user/', userData);
-        console.log('User registration response:', response.data);
-    } catch (error) {
-        console.error('Error registering user:', error.response?.data?.error || 'An error occurred during user registration');
-    }
-};
-
->>>>>>> Stashed changes
 function getCSRFToken() {
     const name = 'csrftoken';
     const value = "; " + document.cookie;
@@ -515,26 +445,6 @@ function getCSRFToken() {
     return null;
 }
 
-<<<<<<< Updated upstream
-=======
-const generateTemporaryUsername = () => {
-    // You can use any logic to generate a temporary username
-    // For example, a combination of 'temp_user' and a random string
-    const generateRandomString = (length) => {
-        let result = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-    return `temp_user_${generateRandomString(8)}`;
-};
-
-
-// Helper functions
->>>>>>> Stashed changes
 function formatDOB(dob) {
     return dob.split('/').reverse().join('-');
 }

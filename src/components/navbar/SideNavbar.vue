@@ -62,7 +62,6 @@ const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
 	const role = userDetailsStore.user.role?.toLowerCase();
-	console.log("Role:", role); // Log the role for debugging
 	if (!role) return "public";
 
 	if (role.includes("admin")) {
@@ -72,7 +71,7 @@ const userType = computed(() => {
 	} else if (role === "student") {
 		return "student";
 	} else {
-		return role; // Returning role as is for other cases
+		return role;
 	}
 });
 
@@ -90,27 +89,22 @@ const profilePicClass = computed(() => {
 
 const menus = computed(() => {
     const baseRoute = `/${userType.value}-dashboard`;
-    console.log("Base Route:", baseRoute); // Log the base route for debugging
     
     const staticMenuItems = [
         { text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
     ];
 
     const role = userType.value;
-    console.log("User Type:", role); // Log the user type for debugging
 
     const dynamicMenuItems = fetchedMenus.value
         .filter((menu) => {
-            console.log("Menu:", menu); // Log each menu for debugging
             return menu.roles.some((r) => r.name === role);
         })
         .map((menu) => ({
             text: menu.name,
             route: menu.route,
             iconClass: menu.icon_class,
-        }));
-
-    console.log("Dynamic Menu Items:", dynamicMenuItems); // Log dynamic menu items for debugging
+        })); // Log dynamic menu items for debugging
     
     return [...staticMenuItems, ...dynamicMenuItems];
 });
@@ -147,7 +141,6 @@ const logout = async () => {
 			if (response && response.data) {
 				if (response.data.message === "Logout successful") {
 					if (localStorage) {
-						// Clear all items from localStorage except 'userScreenedToday'
 						for (let key in localStorage) {
 							if (key !== 'userScreenedToday') {
 								localStorage.removeItem(key);

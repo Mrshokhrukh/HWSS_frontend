@@ -111,15 +111,15 @@ onMounted(async () => {
   right: 20px;
   z-index: 9999;
   cursor: pointer;
-  background-color: #ffffffb5;
+  background-color: #ffffffe9;
   border-radius: 50%;
-  /* animation: float-around 10s infinite ease-in-out; */
+  box-shadow: 14px 14px 14px 18px rgba(0, 0, 0, 0.1);
 }
 
 .chat-icon img {
   width: 60px;
   height: 60px;
-  padding: 10px;
+  border-radius: 50%;
 }
 
 .chat-icon.active {
@@ -128,7 +128,7 @@ onMounted(async () => {
 
 .chat-icon:hover {
   background-color: #ffffff;
-  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 14px 14px 14px rgba(0, 0, 0, 0.15);
 }
 
 .chat-widget {

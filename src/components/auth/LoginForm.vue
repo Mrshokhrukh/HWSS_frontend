@@ -20,7 +20,6 @@
                                 </div>
                             </form>
 
-                            <!-- Show status message based on loginStatus -->
                             <div v-if="loginStatus === 'success'" class="alert alert-success mt-3" role="alert">
                                 Login successful! Redirecting...
                             </div>
@@ -38,7 +37,6 @@
                                 Don't have an account? <router-link to="/register"
                                     style="color: #2B656F; font-weight: bold">Sign Up</router-link>
                             </p>
-                            <!-- Add Forgot Password link -->
                             <p class="text-center my-3">
                                 <router-link to="/forgot-password" style="color: #2B656F; font-weight: bold;">Forgot
                                     Password?</router-link>
@@ -47,17 +45,14 @@
                     </div>
                 </div>
                 <div class="col-md-5 custombg position-relative">
-                    <!-- Float-start image -->
                     <img class="position-absolute bottom-0 start-0" src="../../assets/images/shape.png"
                         alt="Shape Image">
 
-                    <!-- Logo and tagline container -->
                     <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <!-- Bind src to the dynamic logo -->
-                        <img :src="loginLogo" alt="Logo" style="width: 350px;">
-                        <!-- Bind text to the dynamic tagline -->
+                        <img :src="loginLogo" alt="Logo" class="img-fluid" style="max-width: 100%; height: auto;">
                         <h2 class="text-white display-7 mt-3 tag-line-login">{{ tagline }}</h2>
                     </div>
+
                 </div>
             </div>
         </div>

@@ -154,17 +154,17 @@ onMounted(async () => {
 .logo-image {
   position: absolute;
   max-width: 450px;
-  width:100%;
+  /* width: auto; */
   top: 50%;
-  right: 10rem;
-  transform: translateY(-50%);
+  left: 100%;
+  transform: translate(-130%, -50%);
 }
 
 .store-button {
   display: inline-flex;
   align-items: center;
-  background-color: #f5f5f5; 
-  padding: 10px 20px; 
+  background-color: #f5f5f5;
+  padding: 10px 20px;
   text-decoration: none;
   color: inherit;
 }
@@ -175,10 +175,11 @@ onMounted(async () => {
 }
 
 .icon-area {
-  margin-right: 10px; 
+  margin-right: 10px;
 }
 
-.store-icon, .fab {
+.store-icon,
+.fab {
   height: 40px;
   width: auto;
 }
@@ -195,8 +196,8 @@ onMounted(async () => {
 }
 
 .store-name {
-  font-size: larger; /* Adjust store name text size as needed */
+  font-size: larger;
+  /* Adjust store name text size as needed */
   font-weight: bold;
 }
-
 </style>

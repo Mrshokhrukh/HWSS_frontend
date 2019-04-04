@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, defineProps } from 'vue';
+import { ref, computed, inject } from 'vue';
 
 const measurementData = ref(inject('measurementData'));
 const measuremenAssisttData = ref(inject('measuremenAssisttData'));

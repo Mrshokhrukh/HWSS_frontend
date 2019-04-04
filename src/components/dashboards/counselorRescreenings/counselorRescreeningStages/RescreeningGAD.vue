@@ -110,10 +110,10 @@ const proceed = () => {
 
     // Save responses, total score, and interpretation to local storage
     const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
-    localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
+    localStorage.setItem('GAD_set_counselor_rescreening', JSON.stringify(data));
 
     // Emit the goToNext event
-    emit('goToNext', 'GAD');
+    emit('goToNext');
 };
 
 </script>
