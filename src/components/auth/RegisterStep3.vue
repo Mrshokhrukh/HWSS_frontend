@@ -10,8 +10,8 @@
                             <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
                             <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User</p>
                         </div>
-                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }" aria-valuenow="0"
-                            aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
+                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }"
+                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
                         </div>
 
                         <div class="step-container d-flex justify-content-between align-items-center px-5">
@@ -38,7 +38,8 @@
                                         <label for="fullName" class="col-sm-6 col-form-label cst-color bold"></label>
                                         <div class="col-md-12">
                                             <input type="text" id="fullName" :value="fullName" placeholder="Full Name"
-                                                class="form-control cst-color bg-transparent border-dark" readonly disabled>
+                                                class="form-control cst-color bg-transparent border-dark" readonly
+                                                disabled>
                                         </div>
                                     </div>
 
@@ -60,7 +61,8 @@
                                                     :class="detailsConfirmed ? border - secondary : border - danger"
                                                     required :disabled="detailsConfirmed" :readonly="detailsConfirmed">
                                                 <!-- Validation message -->
-                                                <small v-if="!isValidEmail && !detailsConfirmed" class="text-danger">Please
+                                                <small v-if="!isValidEmail && !detailsConfirmed"
+                                                    class="text-danger">Please
                                                     enter a valid email address.</small>
                                             </div>
                                         </div>
@@ -79,7 +81,8 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="gender" class="cst-color bold"></label>
-                                                <input type="text" id="gender" placeholder="Gender" :value="userData.gender"
+                                                <input type="text" id="gender" placeholder="Gender"
+                                                    :value="userData.gender"
                                                     class="form-control cst-color bg-transparent border-dark" readonly
                                                     disabled>
                                             </div>
@@ -151,15 +154,17 @@
                                                 <div class="col">
                                                     <select class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedDate">
-                                                        <option v-for="date in dates" :key="date.value" :value="date.value">
+                                                        <option v-for="date in dates" :key="date.value"
+                                                            :value="date.value">
                                                             {{
-                                                                date.label }}</option>
+                            date.label }}</option>
                                                     </select>
                                                 </div>
                                                 <div class="col">
                                                     <select class="form-select bg-transparent border-dark"
                                                         v-model="formData.selectedYear">
-                                                        <option v-for="year in years" :key="year" :value="year">{{ year }}
+                                                        <option v-for="year in years" :key="year" :value="year">{{ year
+                                                            }}
                                                         </option>
                                                     </select>
                                                 </div>
@@ -187,21 +192,23 @@
                                 <div v-if="selectedParameter && selectedParameter !== 'Student Code'"
                                     class="form-group cust-text">
                                     <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter
-                                    }}:</label>
+                                        }}:</label>
                                     <input type="text" id="parameterValue" v-model="parameterValue"
                                         class="form-control mt-2 bg-transparent border-dark">
                                 </div>
 
+                                <!-- If selected parameter is Student Code, do not prefill with user CID -->
                                 <div v-if="selectedParameter === 'Student Code'" class="form-group mt-3">
                                     <label class="mt-2 cst-color bold" for="parameterValue">Enter {{ selectedParameter
-                                    }}:</label>
-                                    <input type="text" id="parameterValue" v-model="formattedStudentCode"
-                                        @input="formatStudentCode" class="form-control mt-2 bg-transparent border-dark"
+                                        }}:</label>
+                                    <input type="text" id="parameterValue" :value="formattedStudentCode"
+                                        @input="formatStudentCode" class="form-control mt-2 bg-transparent border-dark empty-input"
                                         maxlength="16">
                                 </div>
 
                                 <!-- Proceed button -->
-                                <button type="button" @click="proceed" class="btn  col-md-12 custom-btn mt-3">Next</button>
+                                <button type="button" @click="proceed"
+                                    class="btn  col-md-12 custom-btn mt-3">Next</button>
                             </div>
                         </div>
 
@@ -211,7 +218,8 @@
                             </div>
                         </div>
                         <div class="text-center mt-4">
-                            Already Have an Account? <router-link to="/login" style="color: #2B656F; font-weight: bold">Sign
+                            Already Have an Account? <router-link to="/login"
+                                style="color: #2B656F; font-weight: bold">Sign
                                 In</router-link>
                         </div>
                     </div>
@@ -323,10 +331,15 @@ const storedApiCID = localStorage.getItem('userCID');
 onMounted(() => {
     parameterValue.value = storedApiCID || '';
 });
+onMounted(() => {
+    const inputField = document.querySelector('.empty-input');
+    if (inputField  === parameterValue.value) {
+        inputField.value = null;
+    }
+});
 
 
 const formattedStudentCode = computed(() => {
-    // Format the student code with periods at the specified intervals
     return parameterValue.value.replace(/[^0-9]/g, '')  // Remove any non-digit characters
         .replace(/(\d{3})(\d{5})(\d{2})(\d{4})/, '$1.$2.$3.$4');  // Insert periods at specified intervals
 });
@@ -377,7 +390,13 @@ const proceed = async () => {
         const response = await axios.get(apiURL);
         console.log('Response:', response.data);
 
-        if (response.data && response.data.agency_data && response.data.user_agency_data) {
+        if (
+            response.data &&
+            Object.keys(response.data.agency_data).length === 0 &&
+            Object.keys(response.data.user_agency_data).length === 0
+        ) {
+            Swal.fire('Empty Response', 'No data was found for the given Student Code.', 'warning');
+        } else if (response.data && response.data.agency_data && response.data.user_agency_data) {
             sessionStorage.setItem('agencyData', JSON.stringify(response.data.agency_data));
             sessionStorage.setItem('userAgencyData', JSON.stringify(response.data.user_agency_data));
 
@@ -389,7 +408,7 @@ const proceed = async () => {
         } else if (response.data.error) {
             Swal.fire('Error', response.data.error, 'error');
         } else {
-            Swal.fire('Warning', 'No data found for the provided information.', 'warning');
+            Swal.fire('Warning', 'An unexpected response was received.', 'warning');
         }
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -399,6 +418,7 @@ const proceed = async () => {
     } finally {
         loading.value = false;
     }
+
 };
 
 </script>

@@ -43,8 +43,6 @@ const router = useRouter();
 
 const emit = defineEmits(['goBackToSelectTools', 'goToNext']);
 
-// Define reactive variables
-// Define reactive variables
 const currentScreeningComponent = ref(null);
 const selectedMenu = ref(null);
 const menus = ref([]);
