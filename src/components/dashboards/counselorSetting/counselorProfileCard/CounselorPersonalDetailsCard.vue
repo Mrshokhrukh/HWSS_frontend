@@ -1,63 +1,39 @@
 <template>
-    <div class="card p-4">
-        <div class="border-div-personal p-3">
+    <div class="card p-3">
             <div class="card-header">
                 <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
             </div>
             <div class="user-profile text-center">
                 <img :src="profilePictureUrl" alt="User" class="profile-pic" />
+                <button class="edit-button" @click="openFileSelection">
+                    <i class="fas fa-edit"></i>
+                </button>
             </div>
 
-            <div class="card-body p-1">
-
+            <div class="card-body p-1 h-100">
                 <!-- Example content -->
-                <div class="col-md-12">
+                <div class="col-md-12 mb-3">
                     <label>User Name</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
                         v-model="userDetailsStore.user.username">
                 </div>
-                <div class="col-md-12">
+                <div class="col-md-12 mb-3">
                     <label>Student Number</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
                         v-model="userDetailsStore.userAgency.userCode">
                 </div>
-                <div class="col-md-12">
+                <div class="col-md-12 mb-3">
                     <label>Is Gyalsung</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
                         v-model="userDetailsStore.user.isGyalsung">
                 </div>
-                <div class="col-md-12">
-                    <label>Gender</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.user.gender">
-                </div>
-                <div class="col-md-12">
-                    <label>Date of Birth</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.user.dateOfBirth">
-                </div>
-                <div class="col-md-12">
-                    <label>Age</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled v-model="userAge">
-                </div>
-                <div class="col-md-12">
-                    <label>Role</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.user.role">
-                </div>
-                <div class="col-md-12">
-                    <label>Class/Section</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userClassSection">
-                </div>
-                <div class="col-md-12">
-                    <label>School/Agency</label>
+                <div class="col-md-12 mb-3">
+                    <label>School/Agency/Gyalsung Academy</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
                         v-model="userDetailsStore.agency.agencyName">
                 </div>
             </div>
         </div>
-    </div>
 </template>
 
 <script setup>
@@ -68,12 +44,6 @@ import deFaultProfilePic from "@/assets/images/icon.png";
 const userDetailsStore = useUserDetailsStore();
 
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
-
-
-const userClassSection = computed(() => {
-    const { userClass, userStream, userSubClass } = userDetailsStore.userAgency;
-    return `${userClass} ${userStream ? userStream + ' ' : ''}${userSubClass}`.trim();
-});
 
 const profilePictureUrl = computed(() => {
     const baseUrl =
@@ -107,6 +77,10 @@ const userAgeGroup = computed(() => {
     }
 });
 
+const openFileSelection = () => {
+    // Implement the logic to open file selection dialog here
+};
+
 onMounted(() => {
     localStorage.setItem('userAge', userAge.value.toString());
     localStorage.setItem('userAgeGroup', userAgeGroup.value);
@@ -135,10 +109,25 @@ onMounted(() => {
 }
 
 .user-profile {
-
+    position: relative;
     padding: 0.5rem 0;
     transition: all 0.3s ease-in-out;
     overflow: hidden;
     height: auto;
+}
+
+.edit-button {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.edit-button:hover {
+    color: #2c6975;
 }
 </style>

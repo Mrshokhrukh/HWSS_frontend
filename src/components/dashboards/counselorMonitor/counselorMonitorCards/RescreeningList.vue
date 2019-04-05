@@ -1,91 +1,264 @@
 <template>
   <div class="container-fluid">
+    <!-- <MonitorFilterCard @filtersApplied="handleFiltersApplied" /> -->
     <!-- Filters -->
     <div class="row d-flex align-items-center">
       <div class="col-11">
-        <MonitorFilterCard @filtersApplied="handleFiltersApplied" />
+        <!-- General Table Search -->
+        <el-input v-model="tableSearch" placeholder="Search in table"></el-input>
       </div>
       <div class="col-1">
-        <el-button class="btn hwss-btn" @click="rescreenSelectedPatients">Rescreen</el-button>
+        <el-button class="btn hwss-btn" @click="handleRescreen">Rescreen</el-button>
       </div>
     </div>
 
     <!-- Table -->
     <div class="main-container mt-5">
-      <el-table :data="filteredUsers" :row-class-name="rowClassName" height="500px" stripe
-        :default-sort="{ prop: 'date', order: 'descending' }" @selection-change="onSelectionChanged"
-        style="width: 100%">
+      <el-table :data="filteredPatients" v-loading="loadingPatients" style="width: 100%;" highlight-current-row
+        class="custom-table" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="50"></el-table-column>
-        <el-table-column prop="date" label="Date" sortable show-overflow-tooltip></el-table-column>
-        <el-table-column prop="name" label="Name" sortable show-overflow-tooltip></el-table-column>
-        <el-table-column prop="age" label="Age" sortable show-overflow-tooltip></el-table-column>
-        <el-table-column prop="sex" label="Sex" sortable show-overflow-tooltip></el-table-column>
-        <el-table-column prop="pastMentalDisorder" label="Past Mental Disorder History" sortable
-          show-overflow-tooltip></el-table-column>
-        <el-table-column prop="depressionSeverity" label="Depression Severity" sortable :formatter="severityFormatter"
-          show-overflow-tooltip></el-table-column>
-        <el-table-column prop="generalAnxietySeverity" label="General Anxiety Severity" sortable
-          :formatter="severityFormatter" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="adverseChildhoodExperienceSeverity" label="Adverse Childhood Experience Severity"
-          sortable :formatter="severityFormatter" show-overflow-tooltip></el-table-column>
-        <!-- Add more columns as needed -->
-        <el-table-column label="Actions">
+        <el-table-column prop="date" label="Date" sortable :sort-method="dateSort" width="150"></el-table-column>
+        <el-table-column prop="name" label="Name" sortable :sort-method="nameSort" width="150"></el-table-column>
+        <el-table-column prop="age" label="Age" sortable :sort-method="ageSort" width="80"></el-table-column>
+        <el-table-column prop="sex" label="Sex" sortable :sort-method="sexSort" width="100"></el-table-column>
+        <el-table-column prop="pastDiagnosis" label="Past Diagnosis" width="150" :filters="pastDiagnosisFilters"
+          :filter-method="filterPastDiagnosis"></el-table-column>
+        <el-table-column prop="phqSeverity" label="PHQ Severity" width="200">
           <template #default="{ row }">
-            <el-button class="btn hwss-btn" @click="rescreenSelectedPatients(row.id)">Rescreen</el-button>
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.phqSeverity }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="gadSeverity" label="GAD Severity" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.gadSeverity }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="aceSeverity" label="ACE Severity" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.aceSeverity }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="tobaccoRisk" label="Tobacco Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.tobaccoRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="alcoholRisk" label="Alcohol Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.alcoholRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="cannabisRisk" label="Cannabis Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.cannabisRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="cocaineRisk" label="Cocaine Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.cocaineRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="amphetamineRisk" label="Amphetamine Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.amphetamineRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="inhalantsRisk" label="Inhalants Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.inhalantsRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sedativeRisk" label="Sedative Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.sedativeRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="hallucinogensRisk" label="Hallucinogens Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.hallucinogensRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="opioidsRisk" label="Opioids Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.opioidsRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="othersRisk" label="Others Risk" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.othersRisk }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="nonMedicalInjectionUse" label="Non Medical Injection Use" width="200">
+          <template #default="{ row }">
+            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
+              <i class="fas fa-flag"></i>
+              {{ row.nonMedicalInjectionUse }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="Actions" width="120">
+          <template v-slot="{ row }">
+            <el-button type="btn hwss-btn" icon="el-icon-edit" size="mini" @click="handleRescreen">Rescreen</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
   </div>
+
+  <el-dialog v-model="modalVisible" title="Modal Title">
+    <!-- Modal Content Here -->
+    <p>Modal Content</p>
+    <template v-slot:footer>
+      <span class="dialog-footer">
+        <el-button @click="modalVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="modalVisible = false">Confirm</el-button>
+      </span>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import MonitorFilterCard from './MonitorFilterCard.vue';
+// import MonitorFilterCard from './MonitorFilterCard.vue';
 import { useRouter } from 'vue-router';
-import endpoints from '@/api';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import endpoints from '@/api';
+const modalVisible = ref(false);
 
 const router = useRouter();
+const users = ref([]);
+const tableSearch = ref('');
+const pastDiagnosisFilter = ref('');
+const loadingPatients = ref(false);
 
-const rescreenSelectedPatients = (patientId) => {
-  const selectedPatient = selectedUsers.value.find(patient => patient.id === patientId);
+const selectedUsers = ref([]);
 
-  if (!selectedPatient) {
+const handleRescreen = () => {
+  if (selectedUsers.value.length === 0) {
     Swal.fire({
-      icon: 'warning',
-      text: 'Please select a valid patient to rescreen.',
-      timer: 2000,
-      timerProgressBar: true,
+      icon: 'error',
+      title: 'No users selected',
+      text: 'Please select at least one user to perform rescreening.',
     });
     return;
   }
 
-  Swal.fire({
-    title: 'Confirm Rescreen',
-    text: `Are you sure you want to rescreen ${selectedPatient.name}?`,
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonText: 'Rescreen',
-    cancelButtonText: 'Cancel',
-    reverseButtons: true,
-  }).then((result) => {
-    if (result.isConfirmed) {
-      console.log('Patient selected for rescreening:', selectedPatient);
-      router.push('/counselor-dashboard/counselor-rescreening');
-    }
+  if (selectedUsers.value.length === 1) {
+    // Only one user selected
+    const user = selectedUsers.value[0];
+    Swal.fire({
+      icon: 'question',
+      title: `Do you wish to rescreen ${user.name}?`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, rescreen',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        sessionStorage.setItem('RescreeningUserID', user.id);
+        router.push('/counselor-dashboard/counselor-rescreening');
+      }
+    });
+  } else {
+    // Multiple users selected
+    const plural = selectedUsers.value.length > 1 ? 's' : '';
+    Swal.fire({
+      icon: 'question',
+      title: `Do you wish to rescreen these ${selectedUsers.value.length} user${plural}?`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, rescreen',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const userIds = selectedUsers.value.map(user => user.id);
+        sessionStorage.setItem('RescreeningUserIDs', JSON.stringify(userIds));
+        router.push('/counselor-dashboard/counselor-rescreening');
+      }
+    });
+  }
+};
+
+const handleSelectionChange = (selected) => {
+  selectedUsers.value = selected;
+};
+
+const filteredPatients = computed(() => {
+  // Apply general table search
+  let filtered = users.value.filter(user => {
+    return Object.values(user).some(val => {
+      if (typeof val === 'string') {
+        return val.toLowerCase().includes(tableSearch.value.toLowerCase());
+      }
+      return false;
+    });
+  });
+
+  if (pastDiagnosisFilter.value) {
+    filtered = filtered.filter(user => user.pastDiagnosis === pastDiagnosisFilter.value);
+  }
+
+  return filtered;
+});
+
+const applyCellClasses = () => {
+  const tableRows = document.querySelectorAll('.el-table__body .el-table__row');
+  tableRows.forEach(row => {
+    const cells = row.querySelectorAll('.icon-wrapper');
+    cells.forEach(cell => {
+      const cellText = cell.innerText.trim();
+      cell.classList.add(getCellClass(cellText));
+    });
   });
 };
 
-const severityFormatter = (row) => {
-  const severity = row.value;
-  let iconClass = 'fas fa-flag'; // Default icon class
-  let severityClass = ''; // Default severity class
+// Function to determine class based on cell value
+const getCellClass = (cellValue) => {
+  console.log('Cell value:', cellValue); // Log the cell value
 
-  // Determine severity icon and class based on severity level
-  switch (severity) {
-    case 'severe':
+  if (!cellValue) return 'severity-none'; // Add a guard clause
+
+  let severityClass = '';
+
+  switch (cellValue.trim().toLowerCase()) { // Trim whitespace and convert to lowercase for comparison
     case 'high risk':
       severityClass = 'severity-severe';
       break;
@@ -93,10 +266,14 @@ const severityFormatter = (row) => {
       severityClass = 'severity-moderate-severe';
       break;
     case 'moderate risk':
+    severityClass = 'severity-moderate';
+      break;
     case 'moderate':
       severityClass = 'severity-moderate';
       break;
     case 'low risk':
+    severityClass = 'severity-mild';
+      break;
     case 'mild':
       severityClass = 'severity-mild';
       break;
@@ -105,58 +282,19 @@ const severityFormatter = (row) => {
       break;
   }
 
-  // Return the HTML string with severity class applied
-  return `<span class="${severityClass}"><i class="${iconClass}"></i> ${severity}</span>`;
+  return severityClass;
 };
 
-const columnDefs = ref([
-  { headerCheckboxSelection: true, checkboxSelection: true },
-  { headerName: 'Date', field: 'date', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Name', field: 'name', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Age', field: 'age', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Sex', field: 'sex', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Past Mental Disorder History', field: 'pastMentalDisorder', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Depression Severity', field: 'depressionSeverity', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'General Anxiety Severity', field: 'generalAnxietySeverity', sortable: true, filter: true, floatingFilter: true },
-  { headerName: 'Adverse Childhood Experience Severity', field: 'adverseChildhoodExperienceSeverity', sortable: true, filter: true, floatingFilter: true },
-  // Add more columns as needed
-]);
-
-const users = ref([]);
-const searchQuery = ref('');
-const selectedUsers = ref([]);
-
-const filteredUsers = computed(() => {
-  if (!searchQuery.value.trim() || !Array.isArray(users.value) || users.value.length === 0) {
-    return users.value;
-  }
-
-  return users.value.filter(user => {
-    return columnDefs.value.some(column => {
-      const fieldValue = user[column.field];
-      return fieldValue !== undefined && fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
-    });
-  });
-});
-
-const onSelectionChanged = (event) => {
-  const selectedNodes = event.api.getSelectedNodes();
-  const selectedData = selectedNodes.map(node => node.data);
-  selectedUsers.value = selectedData.map(user => user);
-};
-
-const handleFiltersApplied = (filterValues) => {
-  console.log("Selected filter values:", filterValues);
-};
 
 onMounted(async () => {
   try {
+    loadingPatients.value = true;
     const response = await axios.get(endpoints.getRescreeningList);
     if (response && response.data && response.data.flag_details) {
       const mappedUsers = response.data.flag_details.map(detail => {
         const submissionData = detail.submission_details[0].submission_data;
         const measurementData = detail.submission_details[0].measurement_data;
-        // const measurementAssistData = detail.submission_details[0].measurement_assist_data;
+        const measurementAssistData = detail.submission_details[0].measurement_assist_data;
 
         return {
           id: detail.user_data.id,
@@ -164,20 +302,42 @@ onMounted(async () => {
           name: `${detail.user_data.first_name} ${detail.user_data.middle_name ? detail.user_data.middle_name + ' ' : ''}${detail.user_data.last_name}`,
           age: new Date().getFullYear() - new Date(detail.user_data.date_of_birth).getFullYear(),
           sex: detail.user_data.gender,
-          pastMentalDisorder: submissionData.diagnosis || 'none',
-          depressionSeverity: measurementData.phq_measurement || 'none',
-          generalAnxietySeverity: measurementData.gad_measurement || 'none',
-          adverseChildhoodExperienceSeverity: 'none',
-          // Add more fields as needed
+          pastDiagnosis: submissionData.diagnosis || 'none',
+          phqSeverity: measurementData.phq_measurement || 'none',
+          gadSeverity: measurementData.gad_measurement || 'none',
+          aceSeverity: measurementData.ace_measurement || 'none',
+          tobaccoRisk: measurementAssistData.tobacco_measurement || 'none',
+          alcoholRisk: measurementAssistData.alcoholic_measurement || 'none',
+          cannabisRisk: measurementAssistData.cannabis_measurement || 'none',
+          cocaineRisk: measurementAssistData.cocaine_measurement || 'none',
+          amphetamineRisk: measurementAssistData.amphetamine_measurement || 'none',
+          inhalantsRisk: measurementAssistData.inhalants_measurement || 'none',
+          sedativeRisk: measurementAssistData.sedatives_measurement || 'none',
+          hallucinogensRisk: measurementAssistData.hallucinogens_measurement || 'none',
+          opioidsRisk: measurementAssistData.opioids_measurement || 'none',
+          othersRisk: measurementAssistData.other_measurement || 'none',
+          nonMedicalInjectionUse: measurementAssistData.injection_measurement || 'none',
         };
       });
       users.value = mappedUsers;
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    loadingPatients.value = false;
   }
+
+  setTimeout(() => {
+    applyCellClasses();
+  }, 2000);
 });
+
+const filterPastDiagnosis = (value, row) => {
+  return row.pastDiagnosis === value;
+};
+
 </script>
+
 
 <style scoped>
 table {
@@ -212,27 +372,43 @@ table td {
 }
 
 .severity-severe {
-  color: #c40000;
-  background: #a800003a;
+  color: #c40000 !important;
+  background: #a800003a !important;
+  padding: 0.5rem 1rem;
+  border: 2px solid #c40000;
+  border-radius: 50px;
+  line-height: 5rem;
 }
 
 .severity-moderate-severe {
-  color: #dc6503;
-  background: #b563003a;
+  color: #dc6503 !important;
+  background: #b563003a !important;
+  padding: 0.5rem 1rem;
+  border: 2px solid #dc6503;
+  border-radius: 50px;
+  line-height: 5rem;
 }
 
 .severity-moderate {
-  color: #e39700;
-  background: #c8aa003a;
+  color: #e39700, !important;
+  background: #c8aa003a !important;
+  padding: 0.5rem 1rem;
+  border: 2px solid #e39700;
+  border-radius: 50px;
+  line-height: 5rem;
 }
 
 .severity-mild {
-  color: #008300;
-  background: #0083003a;
+  color: #008300 !important;
+  background: #0083003a !important;
+  padding: 0.5rem 1rem;
+  border: 2px solid #008300;
+  border-radius: 50px;
+  line-height: 5rem;
 }
 
 .severity-none {
-  color: #5f5f5f;
+  line-height: 5rem;
 }
 
 .ag-cell .ag-react-container .ag-value-wrapper .ag-group-value,
@@ -253,5 +429,9 @@ thead tr td {
 
 i.fas {
   margin-right: 0.5rem;
+}
+
+.el-table .cell {
+  height: 2rem !important;
 }
 </style>

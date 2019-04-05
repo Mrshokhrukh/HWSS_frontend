@@ -1,7 +1,7 @@
 <template>
     <div class="container-fluid py-4">
         <div class="row">
-            <div class="col-lg-8 mx-auto">
+            <div class="col-lg-8 mx-auto h-100">
                 <!-- Counselor Details Card -->
                 <counselor-details-card :user-details="userDetails" />
             </div>
@@ -10,7 +10,7 @@
                     <!-- Personal Details Card -->
                     <personal-details-card :user-details="userDetails" />
                 </div>
-                <div class="mx-auto mb-4 b-0">
+                <div class="mx-auto b-0">
                     <!-- Change Password Card -->
                     <change-password-card :user-details="userDetails" />
                 </div>
