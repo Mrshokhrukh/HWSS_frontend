@@ -1,117 +1,139 @@
 <template>
-    <div class="row p-5 bg-light">
-        <!-- Left Selectors -->
-        <div class="col-3 left-selectors">
-            <h5 class="hwss-primary mb-5">Screening Tools</h5>
-            <ul>
-                <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
-                    :class="{ 'active': index === selectedMenuIndex }">
-                    <a href="#">{{ menu.name }}</a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Right Content -->
-        <div class="col-9">
-            <div class="row mb-5">
-                <div class="d-flex align-items-center justify-content-between w-100">
-                    <div>
-                        <button class="btn hwss-btn-outline" @click="goBack">Back</button>
-                    </div>
-                    <div>
-                        <button class="btn hwss-btn2 me-3" @click="selectAll">{{ selectAllText }}</button>
-                        <button class="btn hwss-btn" @click="proceed">Proceed</button>
-                    </div>
+    <div>
+        <div class="row p-4 bg-light">
+            <div class="col-3 left-selectors">
+                <h5 class="hwss-primary mb-5">Screening Tools</h5>
+                <div>
+                    <ul>
+                        <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
+                            :class="{ 'active': index === selectedMenuIndex }">
+                            <a href="#">{{ menu.name }}</a>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-            <!-- Tool Cards -->
-            <div class="row">
-                <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
-                    <div class="selectable-card card py-5" @click="toggleSelection(index)">
-                        <div class="tick-area">
-                            <input class="form-check-input" type="checkbox" :checked="selectedTools.includes(index)">
+            <div class="col-9">
+                <div class="row mb-5">
+                    <div class="d-flex align-items-center justify-content-between w-100">
+                        <div>
+                            <button class="btn hwss-btn-outline" @click="goBack">Back</button>
                         </div>
-                        <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
-                        <p>{{ tool.name }}</p>
+                        <div>
+                            <button class="btn hwss-btn2 me-3" @click="selectAll"
+                                :disabled="selectedMenu.value === 0">{{
+                            selectAllText }}</button>
+                            <button class="btn hwss-btn" @click="proceed"
+                                :disabled="selectedTools.length === 0">Proceed</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
+                        <div class="selectable-card card py-5" @click="toggleSelection(tool)">
+                            <div class="tick-area">
+                                <input class="form-check-input" type="checkbox" :checked="isSelected(tool)">
+                            </div>
+                            <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
+                            <p>{{ tool.name }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
-  
-<script setup>
-import { ref, computed } from 'vue';
 
-const emit = defineEmits(['proceed', 'goBack']);
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+
+const emit = defineEmits(['proceedToEventScreening', 'goBack']);
+
+// Define a separate array of tool objects
+const allTools = [
+    { id: 1, name: 'PHQ', icon: 'self_improvement' },
+    { id: 2, name: 'GAD', icon: 'sentiment_calm' },
+    { id: 3, name: 'ASSIST', icon: 'vaccines' },
+    { id: 4, name: 'ACE', icon: 'family_restroom' }
+];
 
 const menus = ref([
     {
-        name: 'Both Tools',
-        tools: [
-            { name: 'PHQ', icon: 'self_improvement' },
-            { name: 'GAD', icon: 'sentiment_calm' },
-            { name: 'ASSIST', icon: 'vaccines' },
-            { name: 'ACE', icon: 'family_restroom' }
-        ]
+        name: 'Both Tools', tools: allTools
     },
     {
-        name: 'Mental Health Tools',
-        tools: [
-            { name: 'PHQ', icon: 'self_improvement' },
-            { name: 'GAD', icon: 'sentiment_calm' }
-        ]
+        name: 'Mental Health Tools', tools: allTools.filter(tool => tool.name !== 'ASSIST')
     },
     {
-        name: 'SUD Tools',
-        tools: [
-            { name: 'ASSIST', icon: 'vaccines' },
-            { name: 'ACE', icon: 'family_restroom' }
-        ]
+        name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
     }
 ]);
 
 const selectedMenuIndex = ref(0);
+
 const selectedMenu = computed(() => menus.value[selectedMenuIndex.value]);
-const selectedTools = ref([]);
+
+const selectedToolsKey = 'selectedTools';
+
+// Initialize selected tools array from localStorage or empty if not found
+let selectedToolsFromLocalStorage = localStorage.getItem(selectedToolsKey);
+selectedToolsFromLocalStorage = selectedToolsFromLocalStorage ? JSON.parse(selectedToolsFromLocalStorage) : [];
+
+const selectedTools = ref(selectedToolsFromLocalStorage);
 
 const selectMenu = (index) => {
     selectedMenuIndex.value = index;
-    selectedTools.value = [];
 };
 
-const toggleSelection = (toolIndex) => {
-    const index = selectedTools.value.indexOf(toolIndex);
-    if (index !== -1) {
-        selectedTools.value.splice(index, 1);
+const toggleSelection = (tool) => {
+    const existingToolIndex = selectedTools.value.findIndex(t => t.id === tool.id);
+    if (existingToolIndex !== -1) {
+        // Remove the tool if it's already selected
+        selectedTools.value.splice(existingToolIndex, 1);
     } else {
-        selectedTools.value.push(toolIndex);
+        // Add the tool if it's not selected
+        selectedTools.value.push({ id: tool.id, name: tool.name });
     }
+    // Save selected tools to local storage whenever they change
+    saveSelectedTools();
 };
 
-const goBack = () => console.log('Go back clicked');
+const goBack = () => {
+    // Implement go back logic
+    console.log('Go back clicked');
+    emit('goBackToRegister');
+};
 
 const selectAll = () => {
     if (selectedTools.value.length === selectedMenu.value.tools.length) {
         selectedTools.value = [];
     } else {
-        selectedTools.value = Array.from({ length: selectedMenu.value.tools.length }, (_, i) => i);
+        selectedTools.value = selectedMenu.value.tools.map(tool => ({ id: tool.id, name: tool.name }));
     }
+    // Save selected tools to local storage whenever they change
+    saveSelectedTools();
 };
 
 const proceed = () => {
-    if (selectedTools.value.length === 0) {
-        console.error('No tool selected');
-        return;
-    }
-    emit('proceedToScreening');
+    emit('proceedToEventScreening');
 };
 
 const selectAllText = computed(() => selectedTools.value.length === selectedMenu.value.tools.length ? 'Deselect All' : 'Select All');
+
+const isSelected = (tool) => {
+    return selectedTools.value.some(selectedTool => selectedTool.id === tool.id);
+};
+
+const saveSelectedTools = () => {
+    localStorage.setItem(selectedToolsKey, JSON.stringify(selectedTools.value));
+};
+
+onMounted(() => {
+    selectMenu(selectedMenuIndex.value);
+});
+
 </script>
-  
-  
+
 <style scoped>
 .hwss-icon {
     font-size: 5rem;
@@ -188,4 +210,3 @@ const selectAllText = computed(() => selectedTools.value.length === selectedMenu
     /* Scale width to 1 */
 }
 </style>
-  
