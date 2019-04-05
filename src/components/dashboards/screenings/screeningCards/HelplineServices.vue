@@ -17,11 +17,9 @@
       </div>
 
       <div class="row mt-3">
-        <div class="card col-md-12 text-center p-3 top-component-card">
-          <div class="border-div-screening p-3">
-            <div class="rounded p-3">
-              <h2 class="fw-bold mb-0">Screening for Health & Well Being</h2>
-            </div>
+        <div class="card col-md-12 text-center top-component-card">
+          <div class="rounded p-2">
+            <h1 class="fw-bold mb-0 display-3 hwss-primary">Screening for Health & Well Being</h1>
           </div>
         </div>
       </div>
@@ -53,5 +51,6 @@
 
 .top-component-card {
   width: 80vw;
+  box-shadow: 4px 8px 4px rgba(0, 0, 0, 0.2);
 }
 </style>

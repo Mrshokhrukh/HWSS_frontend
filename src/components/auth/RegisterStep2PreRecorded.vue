@@ -18,7 +18,7 @@
               or not</p>
             <form @submit.prevent="verifyUser">
               <div class="mb-3">
-                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID</label>
+                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID / Casefile no / Any Other Any other identity Number</label>
                 <input type="text" class="form-control" id="cid" v-model="cid" required>
               </div>
               <div class="row g-3">

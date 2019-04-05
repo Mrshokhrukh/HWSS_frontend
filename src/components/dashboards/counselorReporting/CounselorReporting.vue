@@ -141,6 +141,7 @@ const fetchReportData = async () => {
     try {
         const response = await axios.get(endpoints.generateReport);
         if (response.data && Array.isArray(response.data)) {
+            console.log('Report data:', response.data);
             reportData.value = response.data;
         } else {
             reportData.value = [];

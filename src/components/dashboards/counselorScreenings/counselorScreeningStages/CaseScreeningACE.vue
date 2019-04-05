@@ -113,7 +113,7 @@ const proceed = () => {
     localStorage.setItem('ACE_set_counselor_screening', JSON.stringify(data));
 
     // Emit the goToNext event
-    emit('goToNext');
+    emit('goToNext', 'ACE');
 };
 
 </script>

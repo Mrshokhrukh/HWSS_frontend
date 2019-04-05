@@ -96,7 +96,6 @@ console.log(counselorName.value);
 
 const submitForm = async () => {
     try {
-        // Proceed with registering the new event screening
         const eventData = {
             event_name: eventName.value,
             event_purpose: purpose.value,
@@ -108,7 +107,6 @@ const submitForm = async () => {
             total_users: totalUsers.value
         };
 
-        // Make POST request to backend to create event screening
         const createResponse = await axios.post(endpoints.createEventScreening, eventData);
 
         // Handle successful response
@@ -120,9 +118,6 @@ const submitForm = async () => {
                 timer: 1000,
                 showConfirmButton: false
             });
-            setTimeout(() => {
-                emit('proceedToEventSelectTools');
-            }, 1000);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -136,7 +131,6 @@ const submitForm = async () => {
 
 const fetchEventStatus = async () => {
     try {
-        // Make GET request to backend to fetch counselor's event info
         const response = await axios.get(endpoints.getEventInfo(counselorName.value));
 
         if (response.status === 200) {
@@ -148,7 +142,6 @@ const fetchEventStatus = async () => {
                     icon: 'warning'
                 }).then(() => {
                     router.push('/counselor-dashboard'); 
-
                 });
             } else if (eventData.approval_status === 'approved') {
                 Swal.fire({
@@ -171,13 +164,13 @@ const fetchEventStatus = async () => {
 };
 
 onMounted(() => {
-    fetchEventStatus(); // Fetch event status when component is mounted
+    fetchEventStatus();
 });
 
 const proceed = async () => {
     try {
         await submitForm(); 
-        emit('proceedToEventSelectTools');
+        window.location.reload();
     } catch (error) {
         console.error('Error submitting form:', error);
     }

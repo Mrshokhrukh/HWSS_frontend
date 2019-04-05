@@ -2,14 +2,16 @@
     <div>
         <div class="row p-4 bg-light">
             <div class="col-3 left-selectors">
-                <h5 class="hwss-primary mb-5">Screening Tools</h5>
-                <div>
-                    <ul>
-                        <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
-                            :class="{ 'active': index === selectedMenuIndex }">
-                            <a href="#">{{ menu.name }}</a>
-                        </li>
-                    </ul>
+                <div class="card h-100 p-4">
+                    <h5 class="hwss-primary mb-5">Screening Tools</h5>
+                    <div>
+                        <ul>
+                            <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
+                                :class="{ 'active': index === selectedMenuIndex }">
+                                <a href="#">{{ menu.name }}</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -20,7 +22,8 @@
                             <button class="btn hwss-btn-outline" @click="goBack">Back</button>
                         </div>
                         <div>
-                            <button class="btn hwss-btn2 me-3" @click="selectAll" :disabled="selectedMenu.value === 0">{{
+                            <button class="btn hwss-btn2 me-3" @click="selectAll"
+                                :disabled="selectedMenu.value === 0">{{
                                 selectAllText }}</button>
                             <button class="btn hwss-btn" @click="proceed"
                                 :disabled="selectedTools.length === 0">Proceed</button>
@@ -42,7 +45,7 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
@@ -132,7 +135,7 @@ onMounted(() => {
 });
 
 </script>
-  
+
 <style scoped>
 .hwss-icon {
     font-size: 5rem;
@@ -177,9 +180,9 @@ onMounted(() => {
 }
 
 .left-selectors ul li.active a {
-    border-bottom: 2px solid #2B656F;
-    color: #2B656F;
+    background: #ccdfc8;
     font-weight: 600;
+    width: 100%;
 }
 
 /* Hover effect */
@@ -209,4 +212,3 @@ onMounted(() => {
     /* Scale width to 1 */
 }
 </style>
-  

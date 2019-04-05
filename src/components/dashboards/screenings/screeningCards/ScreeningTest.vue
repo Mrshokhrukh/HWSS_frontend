@@ -6,20 +6,11 @@
         </div>
         <div class="border-div-test p-3">
             <div class="card-inner">
-                <div class="card-header mx-auto p-3" v-if="currentQuestionText">
-                    <div class="test-info d-flex justify-content-between align-items-center d-none">
-                        <h5>Current Section: {{ currentQuestionSetName }}</h5>
-                        <p class="mx-3">PHQ2 Score: {{ progressStore.scores.PHQ2 }}</p>
-                        <p class="mx-3">PHQ9 Score: {{ progressStore.scores.PHQ9 }}</p>
-                        <p class="mx-3">GAD2 Score: {{ progressStore.scores.GAD2 }}</p>
-                        <p class="mx-3">GAD7 Score: {{ progressStore.scores.GAD7 }}</p>
-                    </div>
-                </div>
 
                 <!-- Progress bar -->
                 <div class="card-body">
-                    <div class="progress-container py-3">
-                        <div class="progress" style="height: 10px; border-radius: 5px">
+                    <div class="progress-container py-1">
+                        <div class="progress" style="height: 15px; border-radius: 20px">
                             <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
                                 aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
@@ -57,19 +48,20 @@
 
                     <!-- Layout for "ASSIST" question set -->
                     <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
-                        <h4 class="my-5 text-center">{{ currentQuestion.text }}</h4>
+                        <h4 class="my-5 text-left text-black question">{{ currentQuestion.text }}</h4>
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Substances</th>
-                                    <th v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+                                    <th></th>
+                                    <th v-for="option in currentQuestion.answers" :key="option.id"
+                                        class="text-center text-black">
                                         {{ option.option }}
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
-                                    <td class="text-capitalize">{{ renderSubstanceOptions(substance) }}</td>
+                                    <td class="text-capitalize text-black">{{ renderSubstanceOptions(substance) }}</td>
                                     <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
                                         <input type="radio" :name="`substance-${substance}`" :value="option.id"
                                             @change="handleAnswerSelection(option, substance)" required />
@@ -85,18 +77,18 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Question</th>
-                                    <th>Strongly Agree</th>
-                                    <th>Agree</th>
-                                    <th>Neutral/Indifferent</th>
-                                    <th>Disagree</th>
-                                    <th>Strongly Disagree</th>
-                                    <th v-if="requiresTextInput()">Specify</th>
+                                    <th class="text-black">Question</th>
+                                    <th class="text-black">Strongly Agree</th>
+                                    <th class="text-black">Agree</th>
+                                    <th class="text-black">Neutral/Indifferent</th>
+                                    <th class="text-black">Disagree</th>
+                                    <th class="text-black">Strongly Disagree</th>
+                                    <th class="text-black" v-if="requiresTextInput()">Specify</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
-                                    <td>{{ question.text }}</td>
+                                    <td class="text-black">{{ question.text }}</td>
                                     <template v-if="index < 8"> <!-- For questions 1-8 -->
                                         <td v-for="option in question.answers.slice().reverse()" :key="option.id"
                                             class="text-center">
@@ -1217,10 +1209,11 @@ textarea {
 }
 
 input[type="radio"] {
-    background: #2c6975;
+    transform: scale(1.5);
+    border: 2px solid #2c6975 !important;
 }
 
-input[type="radio"] {
-    transform: scale(1.5);
+.question {
+    line-height: 2.2rem;
 }
 </style>

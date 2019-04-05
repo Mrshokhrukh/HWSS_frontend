@@ -1,5 +1,5 @@
 <template>
-    <div class="card custom-card p-5">
+    <div class="card custom-card p-5 h-100">
         <div class="border p-3">
             <div class="card-header">
                 <h5 class="header-title">Personal Details</h5>
@@ -11,7 +11,7 @@
                 </div>
 
                 <!-- Personal Details Form -->
-                <form @submit.prevent="saveChanges">
+                <form @submit.prevent>
                     <div class="row g-3">
                         <!-- Citizenship Identity Number -->
                         <div class="col-md-6">
@@ -143,16 +143,17 @@
             </div>
             <div class="card-footer text-end">
                 <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
-                <button v-if="isEditing" class="btn custom-btn" type="submit">Save Changes</button>
+                <button v-if="isEditing" class="btn custom-btn" type="submit" @click="saveChanges">Save Changes</button>
                 <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
             </div>
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, watch } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import endpoints from '@/api';
 import { useUserDetailsStore } from '@/stores/userDetails';
 
@@ -167,12 +168,12 @@ const notification = ref({
     type: '', // 'success' or 'error'
 });
 
-
 const enableEdit = () => {
     isEditing.value = true;
 };
 
 const saveChanges = async () => {
+    console.log('click detected')
     try {
         const authToken = localStorage.getItem('authToken');
         const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
@@ -181,29 +182,36 @@ const saveChanges = async () => {
                 'Authorization': `Token ${authToken}`,
             },
         });
+
+        // Log successful response data
+        // console.log('Successful response:', response.data);
+
         userDetailsStore.setUserDetails(response.data);
         originalUserDetails.value = { ...response.data };
         isEditing.value = false;
-        // Set success notification
-        notification.value = {
-            show: true,
-            message: 'Profile updated successfully!',
-            type: 'success',
-        };
+
+        // Show success notification
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Profile updated successfully!',
+        }).then(() => {
+            // Refresh the window upon successful update
+            //   window.location.reload();
+        });
     } catch (error) {
-        console.error('Error saving changes:', error);
-        // Set error notification
-        notification.value = {
-            show: true,
-            message: 'Failed to update profile. Please try again.',
-            type: 'error',
-        };
+        // Log error response
+        // console.error('Error saving changes:', error.response.data);
+
+        // Show error notification
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Failed to update profile. Please try again.',
+        });
     }
-    // Hide notification after 5 seconds
-    setTimeout(() => {
-        notification.value.show = false;
-    }, 5000);
 };
+
 
 const cancelChanges = () => {
     userDetails.value = { ...originalUserDetails.value };
@@ -213,6 +221,7 @@ const cancelChanges = () => {
 watch(() => userDetailsStore.$state, (newState) => {
     originalUserDetails.value = { ...newState };
 }, { deep: true });
+
 </script>
 
 <style scoped>

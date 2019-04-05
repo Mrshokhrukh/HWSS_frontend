@@ -8,49 +8,25 @@
         <img :src="profilePictureUrl" alt="User" class="profile-pic" />
       </div>
 
-      <div class="card-body p-1">
-
+      <div class="card-body p-1 h-100">
         <!-- Example content -->
-        <div class="col-md-12">
+        <div class="col-md-12 mb-3">
           <label>User Name</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
             v-model="userDetailsStore.user.username">
         </div>
-        <div class="col-md-12">
+        <div class="col-md-12 mb-3">
           <label>Student Number</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
             v-model="userDetailsStore.userAgency.userCode">
         </div>
-        <div class="col-md-12">
+        <div class="col-md-12 mb-3">
           <label>Is Gyalsung</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
             v-model="userDetailsStore.user.isGyalsung">
         </div>
-        <div class="col-md-12">
-          <label>Gender</label>
-          <input type="text" class="form-control input-noneditable" readonly disabled
-            v-model="userDetailsStore.user.gender">
-        </div>
-        <div class="col-md-12">
-          <label>Date of Birth</label>
-          <input type="text" class="form-control input-noneditable" readonly disabled
-            v-model="userDetailsStore.user.dateOfBirth">
-        </div>
-        <div class="col-md-12">
-          <label>Age</label>
-          <input type="text" class="form-control input-noneditable" readonly disabled v-model="userAge">
-        </div>
-        <div class="col-md-12">
-          <label>Role</label>
-          <input type="text" class="form-control input-noneditable" readonly disabled
-            v-model="userDetailsStore.user.role">
-        </div>
-        <div class="col-md-12">
-          <label>Class/Section</label>
-          <input type="text" class="form-control input-noneditable" readonly disabled v-model="userClassSection">
-        </div>
-        <div class="col-md-12">
-          <label>School/Agency</label>
+        <div class="col-md-12 mb-3">
+          <label>School/Agency/Gyalsung Academy</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
             v-model="userDetailsStore.agency.agencyName">
         </div>
@@ -68,11 +44,6 @@ const userDetailsStore = useUserDetailsStore();
 
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
-
-const userClassSection = computed(() => {
-  const { userClass, userStream, userSubClass } = userDetailsStore.userAgency;
-  return `${userClass} ${userStream ? userStream + ' ' : ''}${userSubClass}`.trim();
-});
 
 const profilePictureUrl = computed(() => {
   const baseUrl =

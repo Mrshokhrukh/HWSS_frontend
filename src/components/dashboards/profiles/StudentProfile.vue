@@ -10,7 +10,7 @@
                     <!-- Personal Details Card -->
                     <personal-details-card :user-details="userDetails" />
                 </div>
-                <div class="mx-auto mb-4 b-0">
+                <div class="mx-auto b-0">
                     <!-- Change Password Card -->
                     <change-password-card :user-details="userDetails" />
                 </div>
@@ -18,7 +18,7 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
@@ -33,7 +33,7 @@ onMounted(() => {
     console.log(userDetailsStore.$state);
 });
 </script>
-  
+
 <style scoped>
 /* Additional styles if needed */
 </style>

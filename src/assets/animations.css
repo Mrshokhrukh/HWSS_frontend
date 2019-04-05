@@ -49,11 +49,11 @@
   background-color: #fff !important;
 }
 
-.hwss-primary{
+.hwss-primary {
   color: #2c6975 !important;
 }
 
-.hwss-btn{
+.hwss-btn {
   background-color: #2c6975 !important;
   color: #fff !important;
   border: 0;
@@ -63,18 +63,18 @@
   cursor: pointer;
 }
 
-.hwss-btn-outline{
+.hwss-btn-outline {
   background-color: transparent !important;
   color: #2c6975 !important;
   border: 2px solid #2c6975 !important;
-  border-radius: 50px ;
+  border-radius: 50px;
   font-weight: 500;
   padding: 10px 20px;
   cursor: pointer;
   transition: ease-in-out 0.3s;
 }
 
-.hwss-btn2{
+.hwss-btn2 {
   background-color: #89c1ad !important;
   color: #fff !important;
   border: 0;
@@ -84,7 +84,11 @@
   cursor: pointer;
 }
 
-.hwss-btn-outline:hover{
+.hwss-btn-outline:hover {
   background-color: #2c6975 !important;
   color: #fff !important;
+}
+
+.bg-milk {
+  background-color: #edf6f9;
 }

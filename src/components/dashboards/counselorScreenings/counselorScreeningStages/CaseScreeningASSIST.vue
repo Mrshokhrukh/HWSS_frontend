@@ -248,7 +248,7 @@ function logQuestionAndResponse(option, substance) {
 
 const proceed = () => {
     localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
-    emit('goToNext');
+    emit('goToNext', 'ASSIST');
 };
 
 
