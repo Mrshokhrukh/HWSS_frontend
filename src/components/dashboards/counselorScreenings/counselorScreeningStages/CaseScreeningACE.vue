@@ -70,25 +70,21 @@ const GADQuestion = ref('While you were growing up: ')
 
 
 const interpretation = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4) {
-        return 'Minimal';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
+    if (totalScore.value === 0 ) {
         return 'Mild';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'Moderate';
-    } else {
+    } else if (totalScore.value >= 1 && totalScore.value <= 3) {
+        return 'Intermediate';
+    }  else {
         return 'Severe';
     }
 });
 
 const interpretationClass = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4) {
+    if (totalScore.value === 0 ) {
         return 'bg-primary bg-opacity-50 text-primary';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
+    } else if (totalScore.value >= 1 && totalScore.value <= 3) {
         return 'bg-success bg-opacity-50 text-success';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'bg-warning bg-opacity-50 text-warning';
-    } else {
+    }  else {
         return 'bg-danger bg-opacity-50 text-danger';
     }
 });
