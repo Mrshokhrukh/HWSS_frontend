@@ -253,6 +253,7 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import Swal from 'sweetalert2';
 
 const showModal = ref(false);
 const selectedUser = ref(null);
@@ -354,6 +355,18 @@ const fetchUserDetails = async (userId) => {
     console.log(response.data);
     return response.data;
 };
+
+const saveChanges = () => {
+    // Perform any necessary saving logic here
+    handleModalClose()
+    // Show success message using SweetAlert
+    Swal.fire({
+        icon: 'success',
+        title: 'Changes saved successfully!',
+        showConfirmButton: false,
+        timer: 1500 // Auto close after 1.5 seconds
+    });
+}
 
 onMounted(getServiceList);
 </script>

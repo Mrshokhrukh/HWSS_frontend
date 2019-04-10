@@ -1,124 +1,123 @@
 <template>
-    <div class="row mt-5">
-      <!-- Card for Independent Screening Overview -->
-      <div class="col-md-6">
+  <div class="container">
+    <div class="row">
+      <!-- Clustered Screening Donut Graph -->
+      <div class="col-md-4">
+        <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Clustered Screening</h4>
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title text-center bold" style="color: #2c6975;">Independent Screening Overview</h5>
-            <div class="row">
-              <!-- Full-sized doughnut graph -->
-              <div class="col-md-8">
-                <canvas ref="fullDoughnutChart"></canvas>
-              </div>
-              <!-- Total counts -->
-              <div class="col-md-4 mt-5">
-                <div class="">
-                  <h6>Total Screened</h6>
-                  <p>{{ totalScreened }}</p>
-                  <h6>Total Male</h6>
-                  <p>{{ totalMale }}</p>
-                  <h6>Total Female</h6>
-                  <p>{{ totalFemale }}</p>
-                </div>
-              </div>
-            </div>
+            <canvas ref="clusteredDonutChart"></canvas>
           </div>
-        </div>
+         
+            <p class=" text-center fs-3 fw-bold">Total {{ total }}</p>
+            <div class="d-flex flex-row">
+              <p class="fs-3 fw-bold ms-5">M {{ maleCount }}</p>
+            <p class="fs-3 fw-bold ms-5">F {{ femaleCount }}</p>
+
+            </div>
+       
+            </div>
       </div>
-  
-      <!-- Card for Cluster Screening Overview -->
-      <div class="col-md-6">
+      
+      <!-- Independent Donut Graph -->
+      <div class=" graph2 col-md-4">
+        <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Independent Screening</h4>
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title text-center bold" style="color: #2c6975;">Cluster Screening Overview</h5>
-            <div class="row">
-              <!-- Full-sized doughnut graph -->
-              <div class="col-md-8">
-                <canvas ref="clusterFullDoughnutChart"></canvas>
-              </div>
-              <!-- Total counts -->
-              <div class="col-md-4 mt-5">
-                <div class="">
-                  <h6>Total Screened</h6>
-                  <p>{{ clusterTotalScreened }}</p>
-                  <h6>Total Male</h6>
-                  <p>{{ clusterTotalMale }}</p>
-                  <h6>Total Female</h6>
-                  <p>{{ clusterTotalFemale }}</p>
-                </div>
-              </div>
-            </div>
+            <canvas ref="independentDonutChart"></canvas>
           </div>
+            <!-- Customize the data and labels as needed for the independent graph -->
+            <p class=" text-center fs-3 fw-bold">Total {{ independentTotal }}</p>
+            <div class="d-flex flex-row">
+  <p class="fs-3 fw-bold ms-5">M {{ data1 }}</p>
+  <p class="fs-3 fw-bold ms-5">F {{ data2 }}</p>
+</div>
+
+          
         </div>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted } from 'vue';
-  import Chart from 'chart.js/auto';
-  
-  // Independent Screening Overview Chart
-  const fullDoughnutChart = ref(null);
-  let totalScreened = ref(0);
-  let totalMale = ref(0);
-  let totalFemale = ref(0);
-  
-  // Cluster Screening Overview Chart
-  const clusterFullDoughnutChart = ref(null);
-  let clusterTotalScreened = ref(0);
-  let clusterTotalMale = ref(0);
-  let clusterTotalFemale = ref(0);
-  
-  // Function to fetch data from API
-  const fetchData = async () => {
-    try {
-      const response = await fetch('YOUR_API_ENDPOINT');
-      const data = await response.json();
-      // Assuming API response contains total screened, total male, and total female counts
-      totalScreened.value = data.totalScreened;
-      totalMale.value = data.totalMale;
-      totalFemale.value = data.totalFemale;
-  
-      clusterTotalScreened.value = data.clusterTotalScreened;
-      clusterTotalMale.value = data.clusterTotalMale;
-      clusterTotalFemale.value = data.clusterTotalFemale;
-  
-      // Create and render doughnut charts
-      createDoughnutChart(fullDoughnutChart, [totalFemale.value, totalMale.value], ['Total Female', 'Total Male']);
-      createDoughnutChart(clusterFullDoughnutChart, [clusterTotalFemale.value, clusterTotalMale.value], ['Total Female', 'Total Male']);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+  </div>
+</template>
+
+<script>
+import { ref, onMounted } from 'vue';
+import Chart from 'chart.js/auto';
+
+export default {
+  name: 'DualDonutCharts',
+  data() {
+    return {
+      total: 500,
+      maleCount: 200,
+      femaleCount: 300,
+      clusteredDonutChart: null,
+      independentTotal: 400, // Customize with your independent data
+      data1:300, // Customize with your independent data
+      data2: 100, // Customize with your independent data
+      independentDonutChart: null
+    };
+  },
+  mounted() {
+    this.createClusteredDonutChart();
+    this.createIndependentDonutChart();
+  },
+  methods: {
+    createClusteredDonutChart() {
+      const ctx = this.$refs.clusteredDonutChart.getContext('2d');
+      this.clusteredDonutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Male', 'Female'],
+          datasets: [{
+            data: [this.maleCount, this.femaleCount],
+            backgroundColor: [
+              '#2c6975',
+              '#000000',
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            display: false
+          }
+        }
+      });
+    },
+    createIndependentDonutChart() {
+      const ctx = this.$refs.independentDonutChart.getContext('2d');
+      this.independentDonutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Label 1', 'Label 2'],
+          datasets: [{
+            data: [this.data1, this.data2],
+            backgroundColor: [
+              '#2c6975',
+              '#000000',
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          legend: {
+            display: false
+          }
+        }
+      });
     }
-  };
-  
-  onMounted(() => {
-    fetchData();
-  });
-  
-  // Function to create and render a doughnut chart
-  const createDoughnutChart = (canvasRef, data, labels) => {
-    const ctx = canvasRef.value.getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: labels,
-        datasets: [{
-          data: data,
-          backgroundColor: ['#FF6384', '#36A2EB']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-  };
-  </script>
-  
-  <style>
-  .bold {
-    font-weight: bold;
   }
-  </style>
-  
+};
+</script>
+
+<style scoped>
+.graph2{
+  margin-left: 300px;;
+}
+/* Add your custom styles here */
+</style>

@@ -10,7 +10,16 @@
 		</div>
 
 		<!-- Menu Items -->
-		<div>
+		<div v-if="isRNDAdmin.value==='rd_admin'">
+			<nav class="menu-items">
+				<router-link class="side-btn"
+					:class="{ active: $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
+					<i :class="menu.iconClass" class="link-icon"></i>
+					<span class="link-text" v-if="sidebarStore.isOpen">RD Admin Test</span>
+				</router-link>
+			</nav>
+		</div>
+		<div v-else>
 			<nav class="menu-items">
 				<router-link v-for="(menu, index) in menus" :key="index" :to="menu.route" class="side-btn"
 					:class="{ active: $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
@@ -46,6 +55,7 @@ import { useProgressStore } from "@/stores/progressStore";
 import deFaultProfilePic from "@/assets/images/icon.png";
 import Swal from 'sweetalert2';
 import ConfettiExplosion from "vue-confetti-explosion";
+
 
 const router = useRouter();
 const sidebarStore = useSidebarStore();
@@ -128,6 +138,12 @@ const profilePictureUrl = computed(() => {
 });
 
 
+const adminRole = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userOriginalRole = adminRole.user.role;
+console.log(userOriginalRole);
+
+// Check if the user is a school counselor
+const isRNDAdmin = ref(userOriginalRole === 'rd_admin');
 
 const logout = async () => {
 	const progressStore = useProgressStore();

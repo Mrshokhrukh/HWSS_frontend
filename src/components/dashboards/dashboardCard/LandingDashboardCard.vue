@@ -338,7 +338,6 @@ ul li a:hover {
 }
 
 .row {
-	border: 1px solid #ccc;
 	border-radius: 8px;
 	padding: 20px;
 	margin-bottom: 20px;

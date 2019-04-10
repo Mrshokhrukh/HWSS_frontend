@@ -1,85 +1,61 @@
 <template>
-    <div class="chart-card">
-      <div class="card">
-        <div class="card-body">
-          <h2 class="card-title text-center">Current Status of Bhutan</h2>
-          <canvas ref="chartCanvas"></canvas>
-        </div>
-      </div>
-    </div>
-  </template>
-  
-  <script>
-  import { defineComponent } from 'vue';
-  import { Chart, registerables } from 'chart.js';
-  
-  export default defineComponent({
-    mounted() {
-      this.renderChart();
-    },
-    methods: {
-      renderChart() {
-        const ctx = this.$refs.chartCanvas.getContext('2d');
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: ['Primary Phase', 'Continuing Care', 'Undergoing Rehabilitation', 'Treatment Completed', 'Non-compliance'],
-            datasets: [
-              {
-                label: '2024',
-                data: [20, 30, 40, 50, 10], // Dummy counts for 2024
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-              },
-              {
-                label: '2025',
-                data: [30, 40, 50, 60, 15], // Dummy counts for 2025
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                display: true
-              },
-              tooltip: {
-                mode: 'index',
-                intersect: false
-              }
+
+  <h1 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Current Status in Bhutans</h1>
+  <div>
+    <canvas ref="chartCanvas"></canvas>
+  </div>
+</template>
+
+<script>
+import { defineComponent, onMounted, ref } from 'vue';
+import Chart from 'chart.js/auto';
+
+export default defineComponent({
+  name: 'App',
+  setup() {
+    const chartCanvas = ref(null);
+
+    onMounted(() => {
+      const ctx = chartCanvas.value.getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: [
+            'Primary Phase',
+            'Continuing Care',
+            'Undergoing Rehabilitation',
+            'Treatment Completed',
+            'Non-compliance',
+          ],
+          datasets: [
+            {
+              label: 'Dummy Data',
+              data: [28, 66, 90, 50, 44],
+              backgroundColor: [
+                'rgba(44, 105, 117, 100%)',
+                'rgba(114, 190, 203, 100%)',
+                'rgba(104,178, 160, 100%)',
+                'rgba(180, 213, 191, 100%)',
+                'rgba(0, 0, 0, 100%)',
+              ],
+              borderWidth: 1,
             },
-            scales: {
-              x: {
-                stacked: true
-              },
-              y: {
-                stacked: true,
-                ticks: {
-                  beginAtZero: true
-                }
-              }
-            }
-          },
-          plugins: registerables
-        });
-      }
-    }
-  });
-  </script>
-  
-  <style scoped>
-  .chart-card {
-    display: flex;
-    justify-content: center;
-  }
-  
-  .card {
-    margin: 20px;
-    width:100%;
-  }
-  </style>
-  
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+        },
+      });
+    });
+
+    return {
+      chartCanvas,
+    };
+  },
+});
+</script>
+
+<style>
+/* Add any custom styles for the chart canvas here */
+</style>

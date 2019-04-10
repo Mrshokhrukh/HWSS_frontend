@@ -98,7 +98,8 @@
 .p-multiselect-panel{
   max-width: 80vw !important;
 }
-/* 
-.hwss-searchbox{
-  width: 500px;
-} */
+
+
+.btn-primary {
+  background-color: #2c6975 !important;
+}

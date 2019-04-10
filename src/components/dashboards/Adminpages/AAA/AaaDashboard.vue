@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    
     <div>
         <CurrentStatus />
     </div>
@@ -8,7 +8,6 @@
     </div>
     <div>
         <TestTypeScreening />
-    </div>
     </div>
 </template>
 

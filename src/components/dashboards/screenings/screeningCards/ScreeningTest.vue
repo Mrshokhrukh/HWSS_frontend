@@ -1,7 +1,7 @@
 <template>
     <div class="container-fluid screening-test p-4 card">
         <!-- VueConfetti component -->
-        <div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
+        <div style="z-index: 9999;" class="text-center mx-auto d-none" v-if="showConfetti">
             <ConfettiExplosion :particleCount="200" :particleSize="10" :duration="5000" :force="0.8" />
         </div>
         <div class="card-inner">
