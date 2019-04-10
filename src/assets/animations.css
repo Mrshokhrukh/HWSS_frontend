@@ -1,3 +1,5 @@
+@import url('primeicons/primeicons.css');
+
 .animated-icon {
   animation: breathing 2s ease-in-out infinite, glitterShine 1.5s linear infinite;
   cursor: pointer;
@@ -92,3 +94,11 @@
 .bg-milk {
   background-color: #edf6f9;
 }
+
+.p-multiselect-panel{
+  max-width: 80vw !important;
+}
+/* 
+.hwss-searchbox{
+  width: 500px;
+} */

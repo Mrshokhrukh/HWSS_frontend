@@ -91,7 +91,10 @@ const endpoints = {
   // monitoring endpoints
   getRescreeningList: `${moitoringBaseUrl}/check-rescreening-flags/`,
   getServiceAndTreatmentList: `${moitoringBaseUrl}/get-service-and-treatment/`,
+  generateServiceAndTreatment: `${moitoringBaseUrl}/generate-service-and-treatment/`,
   getReferralList: `${moitoringBaseUrl}/get-referral-list/`,
+  rescreenSubmission: `${moitoringBaseUrl}/submit-rescreening/`,
+  getUserMonitoringDetails: `${moitoringBaseUrl}/get-user-monitoring-details/`,
 
   // reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,

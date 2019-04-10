@@ -247,8 +247,8 @@ function logQuestionAndResponse(option, substance) {
 }
 
 const proceed = () => {
-    localStorage.setItem('ASSIST_set_counselor_rescreening', JSON.stringify(assistAnswer));
-    emit('goToNext');
+    localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
+    emit('goToNext', 'ASSIST');
 };
 
 

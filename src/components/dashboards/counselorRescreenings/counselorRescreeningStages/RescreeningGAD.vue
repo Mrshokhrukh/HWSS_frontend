@@ -4,14 +4,14 @@
             <thead>
                 <tr>
                     <th>{{ GADQuestion }}</th>
-                    <th v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
+                    <th v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center text-black">
                         {{ option.option }}
                     </th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="text in currentQuestion" :key="text">
-                    <td class="text-capitalize">{{ text.text }}</td>
+                    <td class="text-capitalize ">{{ text.text }}</td>
                     <td v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
                         <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
                             :name="'question_' + text.id" required />
@@ -110,10 +110,10 @@ const proceed = () => {
 
     // Save responses, total score, and interpretation to local storage
     const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
-    localStorage.setItem('GAD_set_counselor_rescreening', JSON.stringify(data));
+    localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
 
     // Emit the goToNext event
-    emit('goToNext');
+    emit('goToNext', 'GAD');
 };
 
 </script>

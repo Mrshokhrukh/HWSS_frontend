@@ -1,147 +1,145 @@
 <template>
-    <div class="container-fluid screening-test p-5 card">
+    <div class="container-fluid screening-test p-4 card">
         <!-- VueConfetti component -->
         <div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
             <ConfettiExplosion :particleCount="200" :particleSize="10" :duration="5000" :force="0.8" />
         </div>
-        <div class="border-div-test p-3">
-            <div class="card-inner">
-
-                <!-- Progress bar -->
-                <div class="card-body">
-                    <div class="progress-container py-1">
-                        <div class="progress" style="height: 15px; border-radius: 20px">
-                            <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
-                                aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
+        <div class="card-inner">
+            <!-- Progress bar -->
+            <div class="card-body">
+                <div class="progress-container py-1 mt-2 mb-4">
+                    <div class="progress" style="height: 15px; border-radius: 20px">
+                        <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
+                            aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
+                </div>
 
-                    <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
-                        <!-- Existing layout for other question sets -->
-                        <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
-                            <h4>Over the last 2 weeks, how often have you been bothered by any of the following
-                                problems:
-                            </h4>
-                        </div>
-                        <div class="question-area text-center px-5" v-if="currentQuestion">
-                            <div class="row my-4 justify-content-center text-center">
-                                <div class="col d-flex justify-content-center align-items-center">
-                                    <div class="icon-container d-inline-flex align-items-center">
-                                        <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
-                                            class="mx-4 my-3 animated-icon" />
-                                        <div class="question-text d-inline-block">
-                                            <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
-                                        </div>
+                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
+                    <!-- Existing layout for other question sets -->
+                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
+                        <h4>Over the last 2 weeks, how often have you been bothered by any of the following
+                            problems:
+                        </h4>
+                    </div>
+                    <div class="question-area text-center px-5" v-if="currentQuestion">
+                        <div class="row my-4 justify-content-center text-center">
+                            <div class="col d-flex justify-content-center align-items-center">
+                                <div class="icon-container d-inline-flex align-items-center">
+                                    <img :src="iconURL" alt="Question Icon" style="max-width: 100px;"
+                                        class="mx-4 my-3 animated-icon" />
+                                    <div class="question-text d-inline-block">
+                                        <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
                                     </div>
                                 </div>
                             </div>
-                            <div class="answer-options d-flex flex-wrap justify-content-center">
-                                <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
-                                    <button :class="{ 'selected': isSelectedAnswer(option) }"
-                                        @click="handleAnswerSelection(option)" class="btn btn-lg">
-                                        {{ option.option }} <span class="d-none">{{ option.points }}</span>
-                                    </button>
-                                </div>
+                        </div>
+                        <div class="answer-options d-flex flex-wrap justify-content-center">
+                            <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
+                                <button :class="{ 'selected': isSelectedAnswer(option) }"
+                                    @click="handleAnswerSelection(option)" class="btn btn-lg">
+                                    {{ option.option }} <span class="d-none">{{ option.points }}</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Layout for "ASSIST" question set -->
-                    <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
-                        <h4 class="my-5 text-left text-black question">{{ currentQuestion.text }}</h4>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th v-for="option in currentQuestion.answers" :key="option.id"
-                                        class="text-center text-black">
-                                        {{ option.option }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
-                                    <td class="text-capitalize text-black">{{ renderSubstanceOptions(substance) }}</td>
-                                    <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
-                                        <input type="radio" :name="`substance-${substance}`" :value="option.id"
-                                            @change="handleAnswerSelection(option, substance)" required />
-                                        <span class="d-none">{{ option.points }}</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Layout for "SCHOOL ENV" question set -->
-                    <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th class="text-black">Question</th>
-                                    <th class="text-black">Strongly Agree</th>
-                                    <th class="text-black">Agree</th>
-                                    <th class="text-black">Neutral/Indifferent</th>
-                                    <th class="text-black">Disagree</th>
-                                    <th class="text-black">Strongly Disagree</th>
-                                    <th class="text-black" v-if="requiresTextInput()">Specify</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
-                                    <td class="text-black">{{ question.text }}</td>
-                                    <template v-if="index < 8"> <!-- For questions 1-8 -->
-                                        <td v-for="option in question.answers.slice().reverse()" :key="option.id"
-                                            class="text-center">
-                                            <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
-                                                :name="`question-${question.id}`" :value="option.option"
-                                                v-model="answers[question.id]"
-                                                @change="handleRadioClick(question.text, question.id, option.option)">
-
-
-                                            <label :for="`question-${question.id}-answer-${option.id}`"></label>
-                                        </td>
-                                        <td v-if="requiresTextInput(question.id)">
-                                            <input type="text" class="form-control" v-model="textResponses[question.id]"
-                                                :required="requiresTextInput(question.id)" placeholder="Please Specify"
-                                                @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id)">
-                                        </td>
-                                    </template>
-
-                                    <template v-else>
-                                        <td colspan="6">
-                                            <input type="text" class="form-control mb-3" placeholder="Answer 1"
-                                                v-model="textResponses[question.id + '_1']" required
-                                                @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_1')">
-                                            <input type="text" class="form-control" placeholder="Answer 2"
-                                                v-model="textResponses[question.id + '_2']" required
-                                                @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_2')">
-                                        </td>
-                                    </template>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
                 </div>
 
-                <!-- Footer buttons -->
-                <div class="card-footer text-end">
-                    <div class="button-group">
-                        <button @click="goBack" class="btn rounded-btn back-button">
-                            <i class="fas fa-arrow-left"></i> Back
-                        </button>
-                        <button v-if="currentQuestionSetName === 'SCHOOL ENV'"
-                            @click="submitFormData(answerOption, question)" class="btn rounded-btn submit-button">
-                            <i class="fas fa-check"></i> Submit
-                        </button>
-                        <button v-if="currentQuestionSetName === 'ASSIST'" @click="jumpToNextQuestion"
-                            class="btn rounded-btn submit-button">
-                            Next <i class="fas fa-chevron-right ms-2"></i>
-                        </button>
-                        <button @click="flushStore" class="btn rounded-btn back-button">
-                            <i class="fas fa-undo"></i> Reset Progress
-                        </button>
-                    </div>
+                <!-- Layout for "ASSIST" question set -->
+                <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
+                    <h4 class="my-5 text-left text-black question">{{ currentQuestion.text }}</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th v-for="option in currentQuestion.answers" :key="option.id"
+                                    class="text-center text-black">
+                                    {{ option.option }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance">
+                                <td class="text-capitalize text-black">{{ renderSubstanceOptions(substance) }}</td>
+                                <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+                                    <input type="radio" :name="`substance-${substance}`" :value="option.id"
+                                        @change="handleAnswerSelection(option, substance)" required />
+                                    <span class="d-none">{{ option.points }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <!-- Layout for "SCHOOL ENV" question set -->
+                <div v-if="currentQuestionSetName === 'SCHOOL ENV'" class="school-env-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th class="text-black">Question</th>
+                                <th class="text-black">Strongly Agree</th>
+                                <th class="text-black">Agree</th>
+                                <th class="text-black">Neutral/Indifferent</th>
+                                <th class="text-black">Disagree</th>
+                                <th class="text-black">Strongly Disagree</th>
+                                <th class="text-black" v-if="requiresTextInput()">Specify</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(question, index) in currentSetQuestions" :key="question.id">
+                                <td class="text-black">{{ question.text }}</td>
+                                <template v-if="index < 8"> <!-- For questions 1-8 -->
+                                    <td v-for="option in question.answers.slice().reverse()" :key="option.id"
+                                        class="text-center">
+                                        <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
+                                            :name="`question-${question.id}`" :value="option.option"
+                                            v-model="answers[question.id]"
+                                            @change="handleRadioClick(question.text, question.id, option.option)">
+
+
+                                        <label :for="`question-${question.id}-answer-${option.id}`"></label>
+                                    </td>
+                                    <td v-if="requiresTextInput(question.id)">
+                                        <input type="text" class="form-control" v-model="textResponses[question.id]"
+                                            :required="requiresTextInput(question.id)" placeholder="Please Specify"
+                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id)">
+                                    </td>
+                                </template>
+
+                                <template v-else>
+                                    <td colspan="6">
+                                        <input type="text" class="form-control mb-3" placeholder="Answer 1"
+                                            v-model="textResponses[question.id + '_1']" required
+                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_1')">
+                                        <input type="text" class="form-control" placeholder="Answer 2"
+                                            v-model="textResponses[question.id + '_2']" required
+                                            @change="logQuestionAndResponseSchoolEnv(question.text, $event.target.value, question.id + '_2')">
+                                    </td>
+                                </template>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- Footer buttons -->
+            <div class="card-footer text-end">
+                <div class="button-group">
+                    <button @click="goBack" class="btn rounded-btn back-button">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button v-if="currentQuestionSetName === 'SCHOOL ENV'"
+                        @click="submitFormData(answerOption, question)" class="btn rounded-btn submit-button">
+                        <i class="fas fa-check"></i> Submit
+                    </button>
+                    <button v-if="currentQuestionSetName === 'ASSIST'" @click="jumpToNextQuestion"
+                        class="btn rounded-btn submit-button">
+                        Next <i class="fas fa-chevron-right ms-2"></i>
+                    </button>
+                    <button @click="flushStore" class="btn rounded-btn back-button">
+                        <i class="fas fa-undo"></i> Reset Progress
+                    </button>
                 </div>
             </div>
         </div>
@@ -171,6 +169,7 @@ const stronglyDisagreeSelected = reactive({});
 const router = useRouter();
 const storedResponses = ref({});
 // const answerAtIndexZero = ref('');
+
 
 const testResponses = reactive({
     responses: [],

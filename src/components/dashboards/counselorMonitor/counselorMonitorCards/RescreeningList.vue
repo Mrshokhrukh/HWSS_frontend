@@ -1,177 +1,94 @@
 <template>
   <div class="container-fluid">
-    <!-- <MonitorFilterCard @filtersApplied="handleFiltersApplied" /> -->
+    <!-- Title -->
+    <h4 class="mt-2 text-center mb-3">Refine Results</h4>
+
     <!-- Filters -->
-    <div class="row d-flex align-items-center">
-      <div class="col-11">
-        <!-- General Table Search -->
-        <el-input v-model="tableSearch" placeholder="Search in table"></el-input>
+    <div class="row d-flex align-items-center mb-4">
+      <div class="col-5">
+        <!-- Search Input -->
+        <InputText v-model="tableSearch" placeholder="Search in table" class="hwss-searchbox w-100"></InputText>
+      </div>
+      <div class="col-5">
+        <!-- Multiselect -->
+        <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
+          display="chip" placeholder="Select Columns" class="custom-multiselect w-100" />
       </div>
       <div class="col-1">
-        <el-button class="btn hwss-btn" @click="handleRescreen">Rescreen</el-button>
+        <!-- Rescreen Button -->
+        <Button class="btn hwss-btn w-100" @click="handleRescreen">Rescreen</Button>
+      </div>
+      <div class="col-1">
+        <!-- Export Button -->
+        <Button icon="pi pi-external-link" label="Export" @click="exportCSV($event)" class="btn hwss-btn" />
       </div>
     </div>
 
     <!-- Table -->
-    <div class="main-container mt-5">
-      <el-table :data="filteredPatients" v-loading="loadingPatients" style="width: 100%;" highlight-current-row
-        class="custom-table" @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="50"></el-table-column>
-        <el-table-column prop="date" label="Date" sortable :sort-method="dateSort" width="150"></el-table-column>
-        <el-table-column prop="name" label="Name" sortable :sort-method="nameSort" width="150"></el-table-column>
-        <el-table-column prop="age" label="Age" sortable :sort-method="ageSort" width="80"></el-table-column>
-        <el-table-column prop="sex" label="Sex" sortable :sort-method="sexSort" width="100"></el-table-column>
-        <el-table-column prop="pastDiagnosis" label="Past Diagnosis" width="150" :filters="pastDiagnosisFilters"
-          :filter-method="filterPastDiagnosis"></el-table-column>
-        <el-table-column prop="phqSeverity" label="PHQ Severity" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.phqSeverity }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="gadSeverity" label="GAD Severity" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.gadSeverity }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="aceSeverity" label="ACE Severity" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.aceSeverity }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="tobaccoRisk" label="Tobacco Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.tobaccoRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="alcoholRisk" label="Alcohol Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.alcoholRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="cannabisRisk" label="Cannabis Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.cannabisRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="cocaineRisk" label="Cocaine Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.cocaineRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="amphetamineRisk" label="Amphetamine Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.amphetamineRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="inhalantsRisk" label="Inhalants Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.inhalantsRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="sedativeRisk" label="Sedative Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.sedativeRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="hallucinogensRisk" label="Hallucinogens Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.hallucinogensRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="opioidsRisk" label="Opioids Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.opioidsRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="othersRisk" label="Others Risk" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.othersRisk }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="nonMedicalInjectionUse" label="Non Medical Injection Use" width="200">
-          <template #default="{ row }">
-            <span class="icon-wrapper" :class="getCellClass(row.opioidsRisk)">
-              <i class="fas fa-flag"></i>
-              {{ row.nonMedicalInjectionUse }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Actions" width="120">
-          <template v-slot="{ row }">
-            <el-button type="btn hwss-btn" icon="el-icon-edit" size="mini" @click="handleRescreen">Rescreen</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+    <div class="main-container mt-2">
+      <DataTable v-model:selection="selectedUsers" :value="filteredPatients" :loading="loadingPatients"
+        :paginator="true" :rows="10" resizableColumns size="large" columnResizeMode="expand"
+        :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="multiple" :selection="selectedUsers"
+        @selectionChange="handleSelectionChange">
+        <!-- Columns -->
+        <Column selectionMode="multiple" headerStyle="width: 3rem" frozen class="font-bold"></Column>
+        <Column v-for="(col, index) of selectedColumns" :field="col.field" :header="col.header"
+          :key="col.field + '_' + index" :frozen="col.frozen === true ? true : false">
+        </Column>
+      </DataTable>
+
+
     </div>
   </div>
-
-  <el-dialog v-model="modalVisible" title="Modal Title">
-    <!-- Modal Content Here -->
-    <p>Modal Content</p>
-    <template v-slot:footer>
-      <span class="dialog-footer">
-        <el-button @click="modalVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="modalVisible = false">Confirm</el-button>
-      </span>
-    </template>
-  </el-dialog>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-// import MonitorFilterCard from './MonitorFilterCard.vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import endpoints from '@/api';
-const modalVisible = ref(false);
 
 const router = useRouter();
 const users = ref([]);
 const tableSearch = ref('');
-const pastDiagnosisFilter = ref('');
 const loadingPatients = ref(false);
-
 const selectedUsers = ref([]);
+const dt = ref();
+
+const columns = ref([
+  { header: 'Date', field: 'date', frozen: true },
+  { header: 'Name', field: 'name', frozen: true },
+  { header: 'Age', field: 'age' },
+  { header: 'Sex', field: 'sex' },
+  { header: 'Past Diagnosis', field: 'pastDiagnosis' },
+  { header: 'PHQ Severity', field: 'phqSeverity' },
+  { header: 'GAD Severity', field: 'gadSeverity' },
+  { header: 'ACE Severity', field: 'aceSeverity' },
+  { header: 'Tobacco Risk', field: 'tobaccoRisk' },
+  { header: 'Alcohol Risk', field: 'alcoholRisk' },
+  { header: 'Cannabis Risk', field: 'cannabisRisk' },
+  { header: 'Cocaine Risk', field: 'cocaineRisk' },
+  { header: 'Amphetamine Risk', field: 'amphetamineRisk' },
+  { header: 'Inhalants Risk', field: 'inhalantsRisk' },
+  { header: 'Sedative Risk', field: 'sedativeRisk' },
+  { header: 'Hallucinogens Risk', field: 'hallucinogensRisk' },
+  { header: 'Opioids Risk', field: 'opioidsRisk' },
+  { header: 'Others Risk', field: 'othersRisk' },
+  { header: 'Non Medical Injection Use', field: 'nonMedicalInjectionUse' },
+]);
+
+const selectedColumns = ref(columns.value);
+
+const exportCSV = () => {
+  dt.value.exportCSV();
+};
+
+const onToggle = (val) => {
+  selectedColumns.value = columns.value.filter(col => val.includes(col));
+};
+
+
 
 const handleRescreen = () => {
   if (selectedUsers.value.length === 0) {
@@ -183,46 +100,32 @@ const handleRescreen = () => {
     return;
   }
 
-  if (selectedUsers.value.length === 1) {
-    // Only one user selected
-    const user = selectedUsers.value[0];
-    Swal.fire({
-      icon: 'question',
-      title: `Do you wish to rescreen ${user.name}?`,
-      showCancelButton: true,
-      confirmButtonText: 'Yes, rescreen',
-      cancelButtonText: 'Cancel',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        sessionStorage.setItem('RescreeningUserID', user.id);
-        router.push('/counselor-dashboard/counselor-rescreening');
-      }
-    });
-  } else {
-    // Multiple users selected
-    const plural = selectedUsers.value.length > 1 ? 's' : '';
-    Swal.fire({
-      icon: 'question',
-      title: `Do you wish to rescreen these ${selectedUsers.value.length} user${plural}?`,
-      showCancelButton: true,
-      confirmButtonText: 'Yes, rescreen',
-      cancelButtonText: 'Cancel',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const userIds = selectedUsers.value.map(user => user.id);
-        sessionStorage.setItem('RescreeningUserIDs', JSON.stringify(userIds));
-        router.push('/counselor-dashboard/counselor-rescreening');
-      }
-    });
-  }
+  const plural = selectedUsers.value.length > 1 ? 's' : '';
+  const message = selectedUsers.value.length === 1 ? `Do you wish to rescreen ${selectedUsers.value[0].name}?` : `Do you wish to rescreen these ${selectedUsers.value.length} user${plural}?`;
+
+  Swal.fire({
+    icon: 'question',
+    title: message,
+    showCancelButton: true,
+    confirmButtonText: 'Yes, rescreen',
+    cancelButtonText: 'Cancel',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const userIds = selectedUsers.value.map(user => user.id);
+      sessionStorage.setItem('RescreeningUserIDs', JSON.stringify(userIds));
+      router.push('/counselor-dashboard/counselor-rescreening');
+    }
+  });
 };
 
+
+
+// eslint-disable-next-line no-unused-vars
 const handleSelectionChange = (selected) => {
   selectedUsers.value = selected;
 };
 
 const filteredPatients = computed(() => {
-  // Apply general table search
   let filtered = users.value.filter(user => {
     return Object.values(user).some(val => {
       if (typeof val === 'string') {
@@ -231,34 +134,15 @@ const filteredPatients = computed(() => {
       return false;
     });
   });
-
-  if (pastDiagnosisFilter.value) {
-    filtered = filtered.filter(user => user.pastDiagnosis === pastDiagnosisFilter.value);
-  }
-
   return filtered;
 });
 
-const applyCellClasses = () => {
-  const tableRows = document.querySelectorAll('.el-table__body .el-table__row');
-  tableRows.forEach(row => {
-    const cells = row.querySelectorAll('.icon-wrapper');
-    cells.forEach(cell => {
-      const cellText = cell.innerText.trim();
-      cell.classList.add(getCellClass(cellText));
-    });
-  });
-};
 
-// Function to determine class based on cell value
 const getCellClass = (cellValue) => {
-  console.log('Cell value:', cellValue); // Log the cell value
-
-  if (!cellValue) return 'severity-none'; // Add a guard clause
+  if (!cellValue) return 'severity-none';
 
   let severityClass = '';
-
-  switch (cellValue.trim().toLowerCase()) { // Trim whitespace and convert to lowercase for comparison
+  switch (cellValue.trim().toLowerCase()) {
     case 'high risk':
       severityClass = 'severity-severe';
       break;
@@ -266,14 +150,10 @@ const getCellClass = (cellValue) => {
       severityClass = 'severity-moderate-severe';
       break;
     case 'moderate risk':
-    severityClass = 'severity-moderate';
-      break;
     case 'moderate':
       severityClass = 'severity-moderate';
       break;
     case 'low risk':
-    severityClass = 'severity-mild';
-      break;
     case 'mild':
       severityClass = 'severity-mild';
       break;
@@ -285,23 +165,27 @@ const getCellClass = (cellValue) => {
   return severityClass;
 };
 
-
 onMounted(async () => {
   try {
     loadingPatients.value = true;
     const response = await axios.get(endpoints.getRescreeningList);
-    if (response && response.data && response.data.flag_details) {
-      const mappedUsers = response.data.flag_details.map(detail => {
-        const submissionData = detail.submission_details[0].submission_data;
-        const measurementData = detail.submission_details[0].measurement_data;
-        const measurementAssistData = detail.submission_details[0].measurement_assist_data;
+    // console.log('Rescreening List:', response.data);
+    if (response && response.data && Array.isArray(response.data['Rescreening List'])) {
+      const mappedUsers = response.data['Rescreening List'].map(submissionData => {
+        const user_details = submissionData.user_details;
+        const measurementData = submissionData.measurement_data;
+        const measurementAssistData = submissionData.measurement_assist_data;
+        const flags = submissionData.flags;
+
+        // Check if created_at property exists in submissionData
+        const date = submissionData.created_at ? submissionData.created_at.split('T')[0] : '';
 
         return {
-          id: detail.user_data.id,
-          date: submissionData.submission_date.split(' ')[0],
-          name: `${detail.user_data.first_name} ${detail.user_data.middle_name ? detail.user_data.middle_name + ' ' : ''}${detail.user_data.last_name}`,
-          age: new Date().getFullYear() - new Date(detail.user_data.date_of_birth).getFullYear(),
-          sex: detail.user_data.gender,
+          id: user_details.user_id,
+          date: date,
+          name: user_details.full_name,
+          age: user_details.age,
+          sex: user_details.sex,
           pastDiagnosis: submissionData.diagnosis || 'none',
           phqSeverity: measurementData.phq_measurement || 'none',
           gadSeverity: measurementData.gad_measurement || 'none',
@@ -317,24 +201,42 @@ onMounted(async () => {
           opioidsRisk: measurementAssistData.opioids_measurement || 'none',
           othersRisk: measurementAssistData.other_measurement || 'none',
           nonMedicalInjectionUse: measurementAssistData.injection_measurement || 'none',
+          flags: flags  // Add the flags object to the mapped data
         };
       });
       users.value = mappedUsers;
+
+      // Apply cell classes simultaneously as the table is getting populated
+      const table = document.querySelector('.main-container table');
+      if (table) {
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          cells.forEach(cell => {
+            const cellText = cell.textContent.trim();
+            const cellClass = getCellClass(cellText);
+
+            // Create a span element
+            const span = document.createElement('span');
+            span.classList.add(cellClass); // Apply the class to the span
+            span.innerHTML = `<i class="fas fa-flag"></i> ${cellText}`; // Add the icon and cell text to the span
+
+            // Clear the cell content and append the span
+            cell.innerHTML = '';
+            cell.appendChild(span);
+          });
+        });
+      }
+
+    } else {
+      console.error("Invalid response data format");
     }
   } catch (error) {
     console.error(error);
   } finally {
     loadingPatients.value = false;
   }
-
-  setTimeout(() => {
-    applyCellClasses();
-  }, 2000);
 });
-
-const filterPastDiagnosis = (value, row) => {
-  return row.pastDiagnosis === value;
-};
 
 </script>
 
@@ -434,4 +336,8 @@ i.fas {
 .el-table .cell {
   height: 2rem !important;
 }
+
+/* .custom-multiselect {
+  max-width: 500px;
+} */
 </style>

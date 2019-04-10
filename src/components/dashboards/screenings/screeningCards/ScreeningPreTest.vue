@@ -1,6 +1,6 @@
 <template>
-	<div class="card p-5">
-		<div class="row border-div container-fluid p-5">
+	<div class="card p-4">
+		<div class="row container-fluid p-5">
 			<div class="col-md-8">
 				<div v-if="loading" class="loading-container">
 					<div class="loading-spinner"></div>

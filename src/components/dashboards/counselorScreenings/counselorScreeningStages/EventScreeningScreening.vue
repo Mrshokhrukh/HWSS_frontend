@@ -38,6 +38,8 @@ import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/cou
 import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
+import endpoints from '@/api';
+import axios from 'axios';
 
 const router = useRouter();
 
@@ -123,22 +125,60 @@ const handleChangeComponent = (nextMenuName) => {
     currentScreeningComponent.value = componentMap[nextToolName];
 };
 
-const submitAssessments = () => {
-    // Perform fake submission (replace with actual submission logic)
-    setTimeout(() => {
-        // Show success message
-        Swal.fire({
-            icon: 'success',
-            title: 'Assessments Submitted Successfully',
-            text: 'Thank you for submitting the assessments.',
-            confirmButtonText: 'OK'
-        }).then(() => {
-            // Redirect to "/counselor-dashboard"
-            router.push('/counselor-dashboard');
-        });
-    }, 1000); // Simulating a delay for submission
-};
 
+const submitAssessments = async () => {
+    // Gather data from localStorage and sessionStorage
+    const gadData = JSON.parse(localStorage.getItem('GAD_set_counselor_screening')) || {};
+    const phqData = JSON.parse(localStorage.getItem('PHQ_set_counselor_screening')) || {};
+    const aceData = JSON.parse(localStorage.getItem('ACE_set_counselor_screening')) || {};
+    const assistData = JSON.parse(localStorage.getItem('ASSIST_set_counselor_screening')) || {};
+    const schoolEnvData = JSON.parse(localStorage.getItem('SCHOOLENV_set_counselor_screening')) || {};
+    const rescreeningUserIDs = JSON.parse(sessionStorage.getItem('RescreeningUserIDs')) || [];
+
+    // Construct form data
+    const formData = new FormData();
+    formData.append('gadData', JSON.stringify(gadData));
+    formData.append('phqData', JSON.stringify(phqData));
+    formData.append('aceData', JSON.stringify(aceData));
+    formData.append('assistData', JSON.stringify(assistData));
+    formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+    formData.append('rescreeningUserIDs', JSON.stringify(rescreeningUserIDs));
+
+    try {
+
+        console.log('Form data:', formData);
+        // Submit data to endpoint
+        const response = await axios.post(endpoints.counselorSubmission, formData);
+        // Show success message
+        if (response.status === 200) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Assessments Submitted Successfully',
+                text: 'Thank you for submitting the assessments.',
+                confirmButtonText: 'OK'
+            }).then(() => {
+                router.push('/counselor-dashboard');
+            });
+        } else {
+            // Show error message
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to submit assessments. Please try again later.',
+                confirmButtonText: 'OK'
+            })
+        }
+    } catch (error) {
+        console.error('Error submitting assessments:', error);
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to submit assessments. Please try again later.',
+            confirmButtonText: 'OK'
+        });
+    }
+};
 
 </script>
 

@@ -4,29 +4,6 @@ import { ref, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 
-const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
-
-const userType = ref([]);
-
-if(userDetailsStore){
-  userType.value = computed(() => {
-    const role = userDetailsStore.user.role?.toLowerCase();
-    if (!role) return "public";
-  
-    if (role.includes("admin")) {
-      return "admin";
-    } else if (role.includes("counselor")) {
-      return "counselor";
-    } else if (role === "student") {
-      return "student";
-    } else {
-      return role;
-    }
-  });
-}
-
-localStorage.setItem('userType', userType.value);
-
 // Define a reusable dashboard component
 const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
 
@@ -186,7 +163,7 @@ const createAppRouter = () => {
 
   router.beforeEach(async (to, from, next) => {
     const isAuthenticated = localStorage.getItem('authToken') !== null;
-  
+
     if (to.matched.some(record => record.meta.requiresAuth)) {
       if (!isAuthenticated) {
         next({ name: 'login' }); // Redirect to login page if not authenticated
@@ -200,6 +177,29 @@ const createAppRouter = () => {
             }
           });
           if (response.data.valid) {
+            // Your code to execute after user login goes here
+            const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+            const userType = ref([]);
+
+            if (userDetailsStore) {
+              userType.value = computed(() => {
+                const role = userDetailsStore.user.role?.toLowerCase();
+                if (!role) return "public";
+
+                if (role.includes("admin")) {
+                  return "admin";
+                } else if (role.includes("_counselor")) {
+                  return "counselor";
+                } else if (role === "student") {
+                  return "student";
+                } else {
+                  return "public";
+                }
+              });
+            }
+
+            localStorage.setItem('userType', userType.value.value);
+
             next(); // User is authenticated, allow access
           } else {
             localStorage.removeItem('authToken'); // Remove invalid token from local storage
@@ -210,12 +210,6 @@ const createAppRouter = () => {
           next({ name: 'login' }); // Redirect to login page if there's an error validating token
         }
       }
-    } else if (['login', 'register', 'forgot-password', 'home'].includes(to.name)) {
-      if (isAuthenticated) {
-        next({ name: `${userType.value}-dashboard` }); // Redirect to user's dashboard based on their userType
-      } else {
-        next(); // Allow access to these pages if not logged in
-      }
     } else {
       next(); // Allow access to other routes
     }
@@ -223,5 +217,6 @@ const createAppRouter = () => {
 
   return router;
 };
+
 
 export default createAppRouter;

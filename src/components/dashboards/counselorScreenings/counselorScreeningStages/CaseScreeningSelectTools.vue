@@ -2,16 +2,14 @@
     <div>
         <div class="row p-4 bg-light">
             <div class="col-3 left-selectors">
-                <div class="card h-100 p-4">
-                    <h5 class="hwss-primary mb-5">Screening Tools</h5>
-                    <div>
-                        <ul>
-                            <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
-                                :class="{ 'active': index === selectedMenuIndex }">
-                                <a href="#">{{ menu.name }}</a>
-                            </li>
-                        </ul>
-                    </div>
+                <h5 class="hwss-primary mb-5">Screening Tools</h5>
+                <div>
+                    <ul>
+                        <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
+                            :class="{ 'active': index === selectedMenuIndex }">
+                            <a href="#">{{ menu.name }}</a>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
@@ -24,22 +22,26 @@
                         <div>
                             <button class="btn hwss-btn2 me-3" @click="selectAll"
                                 :disabled="selectedMenu.value === 0">{{
-                                selectAllText }}</button>
+                            selectAllText }}</button>
                             <button class="btn hwss-btn" @click="proceed"
                                 :disabled="selectedTools.length === 0">Proceed</button>
                         </div>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
-                        <div class="selectable-card card py-5" @click="toggleSelection(tool)">
-                            <div class="tick-area">
-                                <input class="form-check-input" type="checkbox" :checked="isSelected(tool)">
-                            </div>
-                            <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
-                            <p>{{ tool.name }}</p>
+                    
+                <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
+                    <div class="selectable-card card py-5"
+                        :class="{ 'disabled': !isSchoolCounselor && tool.name === 'SCHOOL ENV' }"
+                        @click="toggleSelection(tool)">
+                        <div class="tick-area">
+                            <input class="form-check-input" type="checkbox" :checked="isSelected(tool)"
+                                :disabled="!isSchoolCounselor && tool.name === 'SCHOOL ENV'">
                         </div>
+                        <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
+                        <p>{{ tool.name }}</p>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -49,26 +51,38 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
-const emit = defineEmits(['proceed', 'goBack']);
+const emit = defineEmits(['proceedToScreening', 'goBack']);
+
+// Retrieve userOriginalRole from local storage
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userOriginalRole = userDetailsStore.user.role;
+console.log(userOriginalRole);
+
+// Check if the user is a school counselor
+const isSchoolCounselor = ref(userOriginalRole === 'school_counselor');
 
 // Define a separate array of tool objects
 const allTools = [
     { id: 1, name: 'PHQ', icon: 'self_improvement' },
     { id: 2, name: 'GAD', icon: 'sentiment_calm' },
     { id: 3, name: 'ASSIST', icon: 'vaccines' },
-    { id: 4, name: 'ACE', icon: 'family_restroom' }
+    { id: 4, name: 'ACE', icon: 'family_restroom' },
+    { id: 5, name: 'SCHOOL ENV', icon: 'school' }
 ];
 
 const menus = ref([
     {
-        name: 'Both Tools', tools: allTools
+        name: 'All Tools', tools: allTools
     },
     {
         name: 'Mental Health Tools', tools: allTools.filter(tool => tool.name !== 'ASSIST')
     },
     {
         name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
-    }
+    },
+    {
+        name: 'School Environment Tools', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
+    },
 ]);
 
 const selectedMenuIndex = ref(0);
@@ -176,39 +190,40 @@ onMounted(() => {
     color: #5d5d5d;
     font-weight: 500;
     position: relative;
-    /* Add relative positioning */
 }
 
 .left-selectors ul li.active a {
-    background: #ccdfc8;
+    border-bottom: 2px solid #2B656F;
+    color: #2B656F;
     font-weight: 600;
-    width: 100%;
 }
 
-/* Hover effect */
 .left-selectors ul li a::after {
     content: "";
     position: absolute;
     left: 0;
     bottom: -2px;
     width: 100%;
-    /* Start with full width */
     height: 2px;
     background-color: #2B656F;
     transition: width 0.3s ease, left 0.3s ease;
-    /* Add transition for width and left */
     transform: scaleX(0);
-    /* Initially scale the width to 0 */
     transform-origin: center;
-    /* Set the transform origin to the center */
 }
 
 .left-selectors ul li a:hover::after {
     left: 0;
-    /* Start from left edge */
     width: 100%;
-    /* Expand width to 100% on hover */
     transform: scaleX(1);
-    /* Scale width to 1 */
+}
+
+.disabled{
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.disabled span{
+    color: #353535
 }
 </style>

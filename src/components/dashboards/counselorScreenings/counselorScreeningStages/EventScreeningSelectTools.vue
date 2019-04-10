@@ -29,15 +29,19 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
-                        <div class="selectable-card card py-5" @click="toggleSelection(tool)">
-                            <div class="tick-area">
-                                <input class="form-check-input" type="checkbox" :checked="isSelected(tool)">
-                            </div>
-                            <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
-                            <p>{{ tool.name }}</p>
+                    
+                <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
+                    <div class="selectable-card card py-5"
+                        :class="{ 'disabled': !isSchoolCounselor && tool.name === 'SCHOOL ENV' }"
+                        @click="toggleSelection(tool)">
+                        <div class="tick-area">
+                            <input class="form-check-input" type="checkbox" :checked="isSelected(tool)"
+                                :disabled="!isSchoolCounselor && tool.name === 'SCHOOL ENV'">
                         </div>
+                        <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
+                        <p>{{ tool.name }}</p>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -49,24 +53,36 @@ import { ref, computed, onMounted } from 'vue';
 
 const emit = defineEmits(['proceedToEventScreening', 'goBack']);
 
+// Retrieve userOriginalRole from local storage
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userOriginalRole = userDetailsStore.user.role;
+console.log(userOriginalRole);
+
+// Check if the user is a school counselor
+const isSchoolCounselor = ref(userOriginalRole === 'school_counselor');
+
 // Define a separate array of tool objects
 const allTools = [
     { id: 1, name: 'PHQ', icon: 'self_improvement' },
     { id: 2, name: 'GAD', icon: 'sentiment_calm' },
     { id: 3, name: 'ASSIST', icon: 'vaccines' },
-    { id: 4, name: 'ACE', icon: 'family_restroom' }
+    { id: 4, name: 'ACE', icon: 'family_restroom' },
+    { id: 5, name: 'SCHOOL ENV', icon: 'school' }
 ];
 
 const menus = ref([
     {
-        name: 'Both Tools', tools: allTools
+        name: 'All Tools', tools: allTools
     },
     {
         name: 'Mental Health Tools', tools: allTools.filter(tool => tool.name !== 'ASSIST')
     },
     {
         name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
-    }
+    },
+    {
+        name: 'School Environment Tools', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
+    },
 ]);
 
 const selectedMenuIndex = ref(0);
@@ -208,5 +224,15 @@ onMounted(() => {
     /* Expand width to 100% on hover */
     transform: scaleX(1);
     /* Scale width to 1 */
+}
+
+.disabled{
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.disabled span{
+    color: #353535
 }
 </style>

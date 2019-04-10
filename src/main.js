@@ -7,9 +7,10 @@ import SweetAlertPlugin from './sweetalert-plugin';
 import VueConfetti from 'vue-confetti';
 import VueChartkick from 'vue-chartkick';
 import 'chartkick/chart.js';
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+import PrimeVue from 'primevue/config';
+import 'primevue/resources/themes/aura-light-green/theme.css'
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -19,6 +20,7 @@ app.use(SweetAlertPlugin);
 app.use(VueConfetti);
 app.use(VueChartkick);
 app.use(ElementPlus)
+app.use(PrimeVue);
 
 const router = createAppRouter(pinia);
 app.use(router);
