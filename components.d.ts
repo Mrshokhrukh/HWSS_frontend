@@ -24,7 +24,7 @@ declare module 'vue' {
     CaseScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningScreening.vue')['default']
     CaseScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSelectTools.vue')['default']
     CaseStatusReport: typeof import('./src/components/dashboards/Adminpages/AAA/report/CaseStatusReport.vue')['default']
-    ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/ChangePasswordCard.vue')['default']
+    ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/MentalhealthcardProfile/ChangePasswordCard.vue')['default']
     ChartCard: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue')['default']
     ChatWidget: typeof import('./src/components/common/ChatWidget.vue')['default']
     Column: typeof import('primevue/column')['default']
@@ -44,11 +44,9 @@ declare module 'vue' {
     DataComponent: typeof import('./src/components/dashboards/Adminpages/R&D/DataComponent.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     Dialog: typeof import('primevue/dialog')['default']
-    ElButton: typeof import('element-plus/es')['ElButton']
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
-    ElInput: typeof import('element-plus/es')['ElInput']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     EventScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningRegister.vue')['default']
@@ -78,7 +76,7 @@ declare module 'vue' {
     MultiSelect: typeof import('primevue/multiselect')['default']
     PemaResponseServicesCard: typeof import('./src/components/dashboards/dashboardCard/PemaResponseServicesCard.vue')['default']
     PendingRequest: typeof import('./src/components/dashboards/Adminpages/Approval/PendingRequest.vue')['default']
-    PersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/PersonalDetailsCard.vue')['default']
+    PersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/MentalhealthcardProfile/PersonalDetailsCard.vue')['default']
     ProfileCard: typeof import('./src/components/dashboards/dashboardCard/ProfileCard.vue')['default']
     PublicDashboard: typeof import('./src/components/dashboards/PublicDashboard.vue')['default']
     QuickToolCard: typeof import('./src/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue')['default']
@@ -140,5 +138,8 @@ declare module 'vue' {
     TestTypeScreening: typeof import('./src/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue')['default']
     TopNavbarCard: typeof import('./src/components/navbar/TopNavbarCard.vue')['default']
     TopNavigationCards: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/TopNavigationCards.vue')['default']
+  }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }
