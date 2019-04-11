@@ -124,21 +124,22 @@
             </div>
 
             <!-- Footer buttons -->
-            <div class="card-footer text-end">
+            <div class="d-flex card-footer justify-content-end">
                 <div class="button-group">
-                    <button @click="goBack" class="btn rounded-btn back-button">
+                    <button @click="goBack" class="btn rounded-btn back-button d-none">
                         <i class="fas fa-arrow-left"></i> Back
                     </button>
                     <button v-if="currentQuestionSetName === 'SCHOOL ENV'"
                         @click="submitFormData(answerOption, question)" class="btn rounded-btn submit-button">
                         <i class="fas fa-check"></i> Submit
                     </button>
+                    
+                    <button @click="flushStore" class="btn rounded-btn back-button">
+                        <i class="fas fa-undo"></i> Reset Progress
+                    </button>
                     <button v-if="currentQuestionSetName === 'ASSIST'" @click="jumpToNextQuestion"
                         class="btn rounded-btn submit-button">
                         Next <i class="fas fa-chevron-right ms-2"></i>
-                    </button>
-                    <button @click="flushStore" class="btn rounded-btn back-button">
-                        <i class="fas fa-undo"></i> Reset Progress
                     </button>
                 </div>
             </div>

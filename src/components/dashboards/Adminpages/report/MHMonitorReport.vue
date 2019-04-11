@@ -1,27 +1,30 @@
 <template>
   <div class="card p-4">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
-      filterDisplay="row" :loading="loading" :globalFilterFields="[
-      'rescreening',
-      'counselingServices',
-      'assessment',
-      'followUp',
-      'referrals',
-      'year',
-      'gender',
-      'dzongkha',
-      'location',
-      'age',
-      'class',
-      'employmentHistory'
-    ]">
+    <div class="row mb-4">
+      <Button type="button" icon="pi pi-eye" class="p-button-text btn hwss-btn ms-auto col-2" label="Visualize Report"
+        @click="goToChartMaker" />
+    </div>
+
+    <DataTable v-model:filters="filters" :value="filteredData" stripedRows paginator showGridlines :rows="10"
+      dataKey="id" filterDisplay="row" :loading="loading" :globalFilterFields="[
+          'rescreening',
+          'counselingServices',
+          'assessment',
+          'followUp',
+          'referrals',
+          'year',
+          'gender',
+          'dzongkha',
+          'location',
+          'age',
+          'class',
+          'employmentHistory'
+        ]">
       <template #header>
-        <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
-            @click="clearFilter()" />
-          <div class="p-input-icon-left">
+        <div class="d-flex justify-content-end align-items-center my-2">
+          <div class="p-input-icon-left ">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
+            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm ms-2 " />
           </div>
         </div>
       </template>
@@ -175,7 +178,9 @@ import Column from 'primevue/column'
 import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
-// import { FilterMatchMode, FilterOperator } from 'primevue/api';
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const monitorData = ref()
 const filters = ref({
@@ -482,4 +487,8 @@ onMounted(() => {
 
   loading.value = false
 })
+
+const goToChartMaker = () => {
+  router.push( '/admin-dashboard/admin-chart-maker')
+}
 </script>

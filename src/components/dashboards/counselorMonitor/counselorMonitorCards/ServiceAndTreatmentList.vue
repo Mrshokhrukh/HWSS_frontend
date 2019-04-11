@@ -1,10 +1,10 @@
 <template>
     <div>
         <div class="row">
-            <div class="d-flex my-">
+            <div class="d-flex justify-content-end">
                 <div class="col-1 ms-auto">
-                    <Button label="Refresh List" icon="pi pi-refresh" @click="getServiceList"
-                        class="p-button-rounded hwss-btn" />
+                    <Button label="Refresh List" @click="getServiceList"
+                        class="btn hwss-btn" />
                 </div>
             </div>
         </div>
@@ -260,13 +260,6 @@ const selectedUser = ref(null);
 const selectedServiceAndTreatment = ref(null);
 const selectedReferral = ref(null);
 
-const formatEmpty = (rowData, column) => {
-    if (!rowData[column.field] || rowData[column.field].trim() === '') {
-        return '----';
-    }
-    return rowData[column.field];
-};
-
 const rowData = ref([]);
 const searchQuery = ref('');
 const selectedFields = ref([
@@ -280,6 +273,13 @@ const selectedFields = ref([
     'follow_up',
     'comments',
 ]);
+
+const formatEmpty = (rowData, column) => {
+    if (rowData[column.field] === 'follow_up' && rowData[column.field] === '') {
+        return '----';
+    }
+    return rowData[column.field];
+};
 
 const filteredRows = computed(() => {
     if (!searchQuery.value.trim() || !Array.isArray(rowData.value) || rowData.value.length === 0) {
@@ -298,7 +298,6 @@ const getServiceList = async () => {
     try {
         const response = await axios.get(endpoints.generateServiceAndTreatment);
         if (response && response.data && Array.isArray(response.data.data)) {
-            console.log(response.data);
             rowData.value = response.data.data;
         } else {
             console.error('Invalid response format:', response);

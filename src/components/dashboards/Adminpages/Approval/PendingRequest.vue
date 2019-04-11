@@ -1,13 +1,15 @@
 <template>
   <div class="card p-4">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
-               :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'submittedBy', 'approvalProcess']">
+    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
+      filterDisplay="row" :loading="loading"
+      :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'submittedBy', 'approvalProcess']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined @click="clearFilter()" />
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
+            @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
+            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm ms-3" />
           </div>
         </div>
       </template>
@@ -22,7 +24,8 @@
           {{ data.toolsUsed.join(', ') }}
         </template>
         <template #filter="{ filterModel, filterCallback }">
-          <MultiSelect v-model="filterModel.value" @change="filterCallback('toolsUsed')" :options="toolOptions" placeholder="Select"  class="p-column-filter" :optionLabel="'label'"  />
+          <MultiSelect v-model="filterModel.value" @change="filterCallback('toolsUsed')" :options="toolOptions"
+            placeholder="Select" class="p-column-filter" :optionLabel="'label'" />
         </template>
       </Column>
       <Column field="duration" header="Duration" :sortable="true" />
@@ -30,43 +33,43 @@
 
       <!-- New column for Approval Process -->
       <Column header="Approval Process" :showFilterMenu="false">
-        <template #body="{}">
-          <Button type="button" icon="pi pi-info-circle" class="custom-button" @click="visible = true" label="Process for Approval" />
+        <template #body="{ }">
+          <Button type="button" icon="pi pi-info-circle" class="custom-button" @click="visible = true"
+            label="Process for Approval" />
         </template>
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="visible" header="Approval Process Details" modal>
-      <div class="event-details container">
-    <h2 class="event-details__title">Event Details</h2>
-    <section v-for="(section, index) in sections" :key="index" class="event-details__section">
-      <h3 class="event-details__label">{{ section.label }}:</h3>
-      <p class="event-details__value">{{ section.value }}</p>
-    </section>
-    <h3 class="event-details__label">Purpose:</h3>
-    <p class="event-details__description">
-      Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.
-    </p>
-    <h3 class="event-details__label">Tools to be used:</h3>
-    <p class="event-details__tools">Mental Health / SUD / Mental health & SUD</p>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Total users to be screened:</h3>
-      <p class="event-details__value">12</p>
-    </section>
-    <section class="event-details__actions">
-      <button class="event-details__button event-details__button--accept">Accept</button>
-      <button class="event-details__button event-details__button--reject" @click="showRejectPopup">Reject</button>
-    </section>
-    <div v-if="showPopup" class="popup">
-      <div class="popup-content">
-        <span class="close" @click="closePopup">×</span>
-        <label for="comment">Comment:</label>
-        <textarea id="comment" v-model="rejectComment"></textarea>
-        <button @click="rejectEvent">Save</button>
+    <Dialog v-model:visible="visible" header="Approval Process Details" modal style="max-width: 50%;">
+      <div class="card p-4">
+        <h4 class="event-details__title">Event Details</h4>
+        <section v-for="(section, index) in sections" :key="index" class="event-details__section">
+          <h6 class="hwss-primary">{{ section.label }}:</h6>
+          <p class="event-details__value">{{ section.value }}</p>
+        </section>
+        <h6 class="hwss-primary">Purpose:</h6>
+        <div class="event-details__description px-4 py-2 mb-4 lh-base ">
+          {{ eventPurpose }}
+        </div>
+        <h6 class="hwss-primary">Tools to be used:</h6>
+        <p class="event-details__tools">Mental Health / SUD / Mental health & SUD</p>
+        <section class="event-details__section">
+          <h6 class="hwss-primary">Total users to be screened:</h6>
+          <p class="event-details__value">12</p>
+        </section>
+        <section class="event-details__actions">
+          <button class="btn hwss-btn mx-1">Accept</button>
+          <button class="btn hwss-btn2 mx-1" @click="showRejectPopup">Reject</button>
+        </section>
+        <div v-if="showPopup" class="popup">
+          <div class="popup-content">
+            <span class="close" @click="closePopup">×</span>
+            <label for="comment">Comment:</label>
+            <textarea id="comment" v-model="rejectComment"></textarea>
+            <button @click="rejectEvent">Save</button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-      <!-- <Button type="button" label="Close" icon="pi pi-times" class="p-button-text" @click="visible = false" /> -->
     </Dialog>
   </div>
 </template>
@@ -80,6 +83,8 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+
+const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
 
 const monitorData = ref();
 const filters = ref({
@@ -121,7 +126,7 @@ onMounted(() => {
       eventName: 'Empower Wellness Summit',
       toolsUsed: ['Mental Health', 'SUD'],
       duration: '5 days',
-      submittedBy: 'Ms. Nangay Tshering, Clinical Counselor',
+      submittedBy: 'Ms. Namgay Tshering, Clinical Counselor',
       approvalProcess: 'Your approval process details here'
     },
     {
@@ -195,10 +200,13 @@ function rejectEvent() {
 
 <style scoped>
 .custom-button {
-  background-color: #f0f0f0; /* Grey background color */
-  border: 1px solid #ccc; /* Grey border */
+  background-color: #f0f0f0;
+  /* Grey background color */
+  border: 1px solid #ccc;
+  /* Grey border */
   color: black;
 }
+
 .event-details {
   border-radius: 0 5px 5px 0;
   box-shadow: 4px 4px 14.2px 0 rgba(0, 0, 0, 0.25);
@@ -207,15 +215,14 @@ function rejectEvent() {
   max-width: 751px;
   flex-direction: column;
   padding: 20px 15px;
-  margin: 0 auto; /* Added margin to center the element */
+  margin: 0 auto;
+  /* Added margin to center the element */
 }
 
 .event-details__title {
   color: #000;
   text-align: center;
-  text-decoration: underline;
   align-self: center;
-  font: 700 20px Roboto, sans-serif;
 }
 
 .event-details__section {
@@ -231,14 +238,12 @@ function rejectEvent() {
   }
 }
 
-.event-details__label {
+.hwss-primary {
   color: #30406b;
-  font: 700 20px Roboto, sans-serif;
 }
 
 .event-details__value {
   color: #000;
-  font: 400 18px Roboto, sans-serif;
 }
 
 @media (max-width: 991px) {
@@ -252,10 +257,10 @@ function rejectEvent() {
   align-self: start;
   color: #000;
   margin-top: 5px;
-  font: 400 18px Roboto, sans-serif;
 }
 
 @media (max-width: 991px) {
+
   .event-details__description,
   .event-details__tools {
     max-width: 100%;
@@ -267,8 +272,6 @@ function rejectEvent() {
   align-items: center;
   display: flex;
   margin-top: 20px;
-  font-size: 20px;
-  font-weight: 400;
   text-align: center;
   padding: 10px;
 }
@@ -281,7 +284,6 @@ function rejectEvent() {
 }
 
 .event-details__button {
-  font-family: Roboto, sans-serif;
   justify-content: center;
   border-radius: 8px;
   padding: 2px 25px;

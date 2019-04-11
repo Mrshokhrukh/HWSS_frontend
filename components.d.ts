@@ -26,6 +26,9 @@ declare module 'vue' {
     CaseStatusReport: typeof import('./src/components/dashboards/Adminpages/AAA/report/CaseStatusReport.vue')['default']
     ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/MentalhealthcardProfile/ChangePasswordCard.vue')['default']
     ChartCard: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue')['default']
+    'ChartConfiguration ': typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartConfiguration.vue')['default']
+    ChartMakerAdmin: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue')['default']
+    ChartRendering: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartRendering.vue')['default']
     ChatWidget: typeof import('./src/components/common/ChatWidget.vue')['default']
     Column: typeof import('primevue/column')['default']
     ContactDetailCard: typeof import('./src/components/dashboards/dashboardCard/ContactDetailCard.vue')['default']
@@ -138,8 +141,5 @@ declare module 'vue' {
     TestTypeScreening: typeof import('./src/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue')['default']
     TopNavbarCard: typeof import('./src/components/navbar/TopNavbarCard.vue')['default']
     TopNavigationCards: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/TopNavigationCards.vue')['default']
-  }
-  export interface ComponentCustomProperties {
-    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
   }
 }

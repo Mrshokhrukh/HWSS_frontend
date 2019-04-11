@@ -36,8 +36,6 @@
           :key="col.field + '_' + index" :frozen="col.frozen === true ? true : false">
         </Column>
       </DataTable>
-
-
     </div>
   </div>
 </template>

@@ -1,13 +1,14 @@
 <template>
   <div class="card p-4">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
-               :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'status']">
+    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
+      filterDisplay="row" :loading="loading" :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'status']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined @click="clearFilter()" />
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="hwss-btn" label="Clear" outlined
+            @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
+            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm ms-2" />
           </div>
         </div>
       </template>
@@ -21,64 +22,67 @@
       <Column field="duration" header="Duration" :sortable="true" />
       <Column header="Status" :sortable="true">
         <template #body="{ data }">
-          <Badge :class="{'p-badge-success': data.status === 'Accepted', 'p-badge-danger': data.status === 'Rejected'}" :value="data.status" @click="showStatusPopup(data.status)" />
+          <Badge
+            :class="{ 'p-badge-success': data.status === 'Accepted', 'p-badge-danger': data.status === 'Rejected' }"
+            :value="data.status" @click="showStatusPopup(data.status)" style="cursor: pointer" class="w-50" />
         </template>
       </Column>
     </DataTable>
   </div>
 
-  <Dialog  v-model="showPopup" :visible="showPopup" width="400px" :modal="true">
-    <!-- <p>Status: {{ selectedStatus }}</p> -->
-    <div class="event-details container">
-    <h2 class="event-details__title">Event Details</h2>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Event Name:</h3>
-      <p class="event-details__value">Empower Wellness Summit</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Proposed/Submitted By:</h3>
-      <p class="event-details__value">Mr. Namgay Tshering</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Working Agency:</h3>
-      <p class="event-details__value">Clincial Counselor</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Location:</h3>
-      <p class="event-details__value">Motithang Higher Secondary School</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Dzongkhag:</h3>
-      <p class="event-details__value">Thimphu</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Start Date:</h3>
-      <p class="event-details__value">01/12/2023</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">End Date:</h3>
-      <p class="event-details__value">05/12/2023</p>
-    </section>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Duration:</h3>
-      <p class="event-details__value">4 days</p>
-    </section>
-    <h3 class="event-details__label">Purpose:</h3>
-    <p class="event-details__description">
-      Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.
-    </p>
-    <h3 class="event-details__label">Tools to be used:</h3>
-    <p class="event-details__tools">Mental Health / SUD / Mental health & SUD</p>
-    <section class="event-details__section">
-      <h3 class="event-details__label">Total users to be screened:</h3>
-      <p class="event-details__value">12</p>
-    </section>
-    <section class="event-details__section">
-  <h3 class="event-details__label">Status:</h3>
-  <p class="event-details__status" v-if="showPopup">{{ selectedStatus }}</p>
-</section>
-  </div>
-    <Button type="button" label="Close" class="p-button-text" @click="closePopup" />
+  <Dialog v-model:visible="showPopup" :modal="true" style="max-width: 50%;">
+    <div class="card p-4">
+      <h4 class="event-details__title">Event Details</h4>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Event Name:</h6>
+        <p class="event-details__value">Empower Wellness Summit</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Proposed/Submitted By:</h6>
+        <p class="event-details__value">Mr. Namgay Tshering</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Working Agency:</h6>
+        <p class="event-details__value">Clincial Counselor</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Location:</h6>
+        <p class="event-details__value">Motithang Higher Secondary School</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Dzongkhag:</h6>
+        <p class="event-details__value">Thimphu</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Start Date:</h6>
+        <p class="event-details__value">01/12/2023</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">End Date:</h6>
+        <p class="event-details__value">05/12/2023</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Duration:</h6>
+        <p class="event-details__value">4 days</p>
+      </section>
+      <h6 class="hwss-primary">Purpose:</h6>
+      <div class="event-details__description py-2 px-4 mb-3">
+        {{ eventPurpose }}
+      </div>
+      <h6 class="hwss-primary">Tools to be used:</h6>
+      <p class="event-details__tools">Mental Health / SUD / Mental health & SUD</p>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Total users to be screened:</h6>
+        <p class="event-details__value">12</p>
+      </section>
+      <section class="event-details__section">
+        <h6 class="hwss-primary">Status:</h6>
+        <p class="event-details__status" v-if="showPopup">{{ selectedStatus }}</p>
+      </section>
+    </div>
+    <div class="d-flex">
+      <Button type="button" label="Close" class="btn hwss-btn my-4 ms-auto" @click="closePopup" />
+    </div>
   </Dialog>
 </template>
 
@@ -91,6 +95,8 @@ import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+
+const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
 
 const monitorData = ref();
 const filters = ref({
@@ -193,9 +199,7 @@ const showStatusPopup = (status) => {
 .event-details__title {
   color: #000;
   text-align: center;
-  text-decoration: underline;
   align-self: center;
-  font: 700 20px Roboto, sans-serif;
 }
 
 .event-details__section {
@@ -207,12 +211,10 @@ const showStatusPopup = (status) => {
 
 .event-details__label {
   color: #30406b;
-  font: 700 20px Roboto, sans-serif;
 }
 
 .event-details__value {
   color: #000;
-  font: 400 18px Roboto, sans-serif;
 }
 
 .event-details__description,
@@ -220,11 +222,9 @@ const showStatusPopup = (status) => {
   align-self: start;
   color: #000;
   margin-top: 5px;
-  font: 400 18px Roboto, sans-serif;
 }
 
 .event-details__status {
   color: #2b656f;
-  font: 400 18px Roboto, sans-serif;
 }
 </style>

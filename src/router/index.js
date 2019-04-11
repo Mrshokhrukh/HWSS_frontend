@@ -118,6 +118,12 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin setting`, requiresAuth: true }
     },
+    {
+      path: `/${userType}-dashboard/admin-chart-maker`,
+      name: `${userType}-admin-chart-maker`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin setting`, requiresAuth: true }
+    },
 
 
   ];

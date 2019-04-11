@@ -61,7 +61,7 @@ const changeTab = (tabName) => {
 }
 
 .nav-tabs {
-    padding: 0.2rem;
+    padding: 0.4rem;
     border-radius: 10px;
     background-color: #2c697552;
     backdrop-filter: blur(5px);
