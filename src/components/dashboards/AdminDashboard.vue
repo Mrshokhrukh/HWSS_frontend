@@ -10,10 +10,21 @@
                 <MentalhealthReport />
             </div>
 
+            <div v-else-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
+                <MentalhealthHelp />
+            </div>
+
+            
+            <div v-else-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-settings">
+                <MentalhealthcardSetting/>
+            </div>
+
+            
             <div v-else-if="currentRoute === '/admin-dashboard/admin-chart-maker'" class="admin-report">
                 <ChartMakerAdmin />
             </div>
-
+            
+            
             <div v-else>
                 <DashboardCurrentStatus />
                 <div class="row mt-5">
@@ -41,7 +52,11 @@
                 <SudReport />
             </div>
 
-            <div v-if="currentRoute === '/admin-dashboard/admin-setting'" class="admin-setting">
+            <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
+                <SudHelp />
+            </div>
+
+            <div v-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-setting">
                 <SudSetting />
             </div>
         </div>
@@ -56,12 +71,16 @@
                 <AAAReport />
             </div>
 
-            <div v-if="currentRoute === '/admin-dashboard/admin-setting'" class="admin-setting">
+            <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
+                <AaaHelp />
+            </div>
+
+            <div v-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-setting">
                 <AaaSetting />
             </div>
         </div>
 
-        <!-- Template for AAA Admin -->
+        <!-- Template for R&D Admin -->
         <div v-if="userRole === 'rd_admin'">
             <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
                 <RnDDashboard />
@@ -71,8 +90,12 @@
                 <AAAReport />
             </div>
 
-            <div v-if="currentRoute === '/admin-dashboard/admin-setting'" class="admin-setting">
-                <AaaSetting />
+            <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
+                <RndHelp />
+            </div>
+
+            <div v-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-setting">
+                <RnDSetting />
             </div>
         </div>
     </div>
@@ -83,6 +106,8 @@
 import { computed } from 'vue';
 import MentalhealthApproval from "@/components/dashboards/Adminpages/Approval/MentalhealthApproval.vue"
 import MentalhealthReport from "@/components/dashboards/Adminpages/report/MentalhealthReport.vue"
+import MentalhealthHelp from "@/components/dashboards/Adminpages/MentalhealthHelp/MentalhealthHelp.vue"
+import MentalhealthcardSetting from "@/components/dashboards/Adminpages/MentalhealthcardProfile/MentalhealthcardSetting.vue"
 import DashboardCurrentStatus from "@/components/dashboards/Adminpages/Mentalhealthcard/DashboardCurrentStatus.vue"
 import TableTotalScreening from "@/components/dashboards/Adminpages/Mentalhealthcard/TableTotalScreening.vue"
 import ChartCard from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue"
@@ -92,10 +117,14 @@ import SudTotalScreening from "@/components/dashboards/Adminpages/Sud/SudTotalSc
 import SudProcessRequest from "@/components/dashboards/Adminpages/Sud/processrequest/SudProcessRequest.vue"
 import SudReport from "@/components/dashboards/Adminpages/Sud/sudreport/SudReport.vue"
 import SudSetting from "@/components/dashboards/Adminpages/Sud/SudSetting.vue"
+import SudHelp from "@/components/dashboards/Adminpages/Sud/SudHelp/SudHelp.vue"
 import AaaDashboard from "@/components/dashboards/Adminpages/AAA/AaaDashboard.vue"
 import AAAReport from "@/components/dashboards/Adminpages/AAA/report/AAAReport.vue"
 import AaaSetting from "@/components/dashboards/Adminpages/AAA/AaaSetting.vue"
+import AaaHelp from "@/components/dashboards/Adminpages/AAA/AaaHelp.vue"
 import RnDDashboard from "@/components/dashboards/Adminpages/R&D/RnDDashboard.vue"
+import RndHelp from "@/components/dashboards/Adminpages/R&D/RndHelp.vue"
+import RnDSetting from "@/components/dashboards/Adminpages/R&D/RnDProfile/RnDSetting.vue"
 import ChartMakerAdmin from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue"
 import { useRoute } from 'vue-router';
 

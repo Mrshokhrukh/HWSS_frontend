@@ -8,11 +8,11 @@
             <div class="col-lg-4 mx-auto">
                 <div class="mx-auto mb-4">
                     <!-- Personal Details Card -->
-                    <personal-details-card :user-details="userDetails" />
+                    <Mentalhealth-personal-details-card :user-details="userDetails" />
                 </div>
                 <div class="mx-auto mb-4 b-0">
                     <!-- Change Password Card -->
-                    <change-password-card :user-details="userDetails" />
+                    <Mentalhealth-change-password-card :user-details="userDetails" />
                 </div>
             </div>
         </div>
@@ -21,8 +21,8 @@
 
 <script setup>
 import MentalhealthcardAdminDetailsCard from "@/components/dashboards/Adminpages/MentalhealthcardProfile/MentalhealthcardAdminDetailsCard.vue"
-import ChangePasswordCard from "@/components/dashboards/Adminpages/MentalhealthcardProfile/ChangePasswordCard.vue"
-import PersonalDetailsCard from "@/components/dashboards/Adminpages//MentalhealthcardProfile/PersonalDetailsCard.vue"
+import MentalhealthChangePasswordCard from "@/components/dashboards/Adminpages/MentalhealthcardProfile/MentalhealthChangePasswordCard.vue"
+import MentalhealthPersonalDetailsCard from "@/components/dashboards/Adminpages/MentalhealthcardProfile/MentalhealthPersonalDetailsCard.vue"
 
 
 </script>
