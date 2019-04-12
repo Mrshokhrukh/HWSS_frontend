@@ -5,7 +5,7 @@ import axios from 'axios';
 import endpoints from '@/api';
 
 // Define a reusable dashboard component
-const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
+const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
 
 
 // Define a function to generate routes for user dashboards
@@ -113,7 +113,7 @@ const generateDashboardRoutes = (userType) => {
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin help`, requiresAuth: true }
     },
     {
-      path: `/${userType}-dashboard/admin-setting`,
+      path: `/${userType}-dashboard/admin-settings`,
       name: `${userType}-admin-setting`,
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin setting`, requiresAuth: true }

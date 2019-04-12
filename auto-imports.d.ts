@@ -6,4 +6,5 @@
 export {}
 declare global {
   const Chart: typeof import('primevue/chart')['Chart']
+  const ElMessage: typeof import('element-plus/es')['ElMessage']
 }

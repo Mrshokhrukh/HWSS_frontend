@@ -1,125 +1,98 @@
 <template>
   <div class="container">
-    <div class="row">
+    <div class="row d-flex justify-content-center">
       <!-- Clustered Screening Donut Graph -->
-      <div class="col-md-4">
+      <div class="col-md-4 mx-auto">
         <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Clustered Screening</h4>
         <div class="card">
           <div class="card-body">
-            <canvas ref="clusteredDonutChart"></canvas>
+            <Chart :type="chartType" :data="clusteredData" :options="donutOptions" legend="bottom" loading="Loading..." />
           </div>
-
-          <p class=" text-center fs-3 fw-bold">Total {{ total }}</p>
-          <div class="d-flex flex-row">
-            <p class="fs-3 fw-bold ms-5">M {{ maleCount }}</p>
-            <p class="fs-3 fw-bold ms-5">F {{ femaleCount }}</p>
-
+          <div class="d-flex">
+            <p class="fs-5 fw-bold mx-auto">Male: {{ maleCount }}</p>
+            <p class="fs-5 fw-bold mx-auto">Female: {{ femaleCount }}</p>
           </div>
-
         </div>
       </div>
 
       <!-- Independent Donut Graph -->
-      <div class=" graph2 col-md-4">
+      <div class="col-md-4 mx-auto">
         <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Independent Screening</h4>
         <div class="card">
           <div class="card-body">
-            <canvas ref="independentDonutChart"></canvas>
+            <Chart :type="chartType" :data="independentData" :options="donutOptions" />
           </div>
-          <!-- Customize the data and labels as needed for the independent graph -->
-          <p class=" text-center fs-3 fw-bold">Total {{ independentTotal }}</p>
-          <div class="d-flex flex-row">
-            <p class="fs-3 fw-bold ms-5">M {{ data1 }}</p>
-            <p class="fs-3 fw-bold ms-5">F {{ data2 }}</p>
+          <div class="d-flex justify-content-between">
+            <p class="fs-5 fw-bold mx-auto">Male: {{ data1 }}</p>
+            <p class="fs-5 fw-bold mx-auto">Female: {{ data2 }}</p>
           </div>
-
-
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from 'vue';
-import Chart from 'chart.js/auto';
+import Chart from 'primevue/chart';
 
-export default {
-  name: 'DualDonutCharts',
-  data() {
-    return {
-      total: 500,
-      maleCount: 200,
-      femaleCount: 300,
-      clusteredDonutChart: null,
-      independentTotal: 400, // Customize with your independent data
-      data1: 300, // Customize with your independent data
-      data2: 100, // Customize with your independent data
-      independentDonutChart: null
-    };
-  },
-  mounted() {
-    this.createClusteredDonutChart();
-    this.createIndependentDonutChart();
-  },
-  methods: {
-    createClusteredDonutChart() {
-      const ctx = this.$refs.clusteredDonutChart.getContext('2d');
-      this.clusteredDonutChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Male', 'Female'],
-          datasets: [{
-            data: [this.maleCount, this.femaleCount],
-            backgroundColor: [
-              '#2c6975',
-              '#000000',
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          legend: {
-            display: false
-          }
+
+const maleCount = ref(200);
+const femaleCount = ref(300);
+const data1 = ref(300);
+const data2 = ref(100);
+
+const clusteredData = ref([]);
+const independentData = ref([]);
+const donutOptions = ref({});
+const chartType = 'doughnut';
+
+onMounted(() => {
+  setChartData();
+  setChartOptions();
+});
+
+const setChartData = () => {
+  clusteredData.value = {
+    labels: ['Male', 'Female'],
+    datasets: [
+      {
+        data: [maleCount.value, femaleCount.value],
+        backgroundColor: ['#242424', '#64ac99']
+      }
+    ]
+  };
+
+  independentData.value = {
+    labels: ['Male', 'Female'],
+    datasets: [
+      {
+        data: [data1.value, data2.value],
+        backgroundColor: ['#242424', '#64ac99']
+      }
+    ]
+  };
+
+};
+
+const setChartOptions = () => {
+  // Set common options for both charts here
+  donutOptions.value = {
+    plugins: {
+      legend: {
+        labels: {
+          cutout: '60%',
+          color: '#242424'
         }
-      });
-    },
-    createIndependentDonutChart() {
-      const ctx = this.$refs.independentDonutChart.getContext('2d');
-      this.independentDonutChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Label 1', 'Label 2'],
-          datasets: [{
-            data: [this.data1, this.data2],
-            backgroundColor: [
-              '#2c6975',
-              '#000000',
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          legend: {
-            display: false
-          }
-        }
-      });
+      }
     }
-  }
+  };
+
 };
 </script>
 
 <style scoped>
 .graph2 {
   margin-left: 300px;
-  ;
 }
-
-/* Add your custom styles here */
 </style>

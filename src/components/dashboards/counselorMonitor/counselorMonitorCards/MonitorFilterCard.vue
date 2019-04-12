@@ -37,7 +37,7 @@
                             <Datepicker v-model="startDate" id="startDate"></Datepicker>
                         </div>
                         <div class="col-md-2">
-                            <label for="endDate" class="form-label">Select End Date:</label>
+                            <label for="endDate" class="form-label">Select End Date:</label> 
                             <Datepicker v-model="endDate" id="endDate"></Datepicker>
                         </div>
                     </div>
