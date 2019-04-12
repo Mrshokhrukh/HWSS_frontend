@@ -26,7 +26,7 @@ declare module 'vue' {
     CaseStatusReport: typeof import('./src/components/dashboards/Adminpages/AAA/report/CaseStatusReport.vue')['default']
     ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/MentalhealthcardProfile/ChangePasswordCard.vue')['default']
     ChartCard: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue')['default']
-    'ChartConfiguration ': typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartConfiguration.vue')['default']
+    ChartConfiguration: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartConfiguration.vue')['default']
     ChartMakerAdmin: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue')['default']
     ChartRendering: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartRendering.vue')['default']
     ChatWidget: typeof import('./src/components/common/ChatWidget.vue')['default']
