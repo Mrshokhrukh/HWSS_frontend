@@ -87,6 +87,7 @@ const endpoints = {
   getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
   getSUDData: `${measurementBaseUrl}/get-sud-data/`,
+  getSchoolEnvData: `${measurementBaseUrl}/get-school-env-data/`,
 
   // monitoring endpoints
   getRescreeningList: `${moitoringBaseUrl}/check-rescreening-flags/`,
@@ -102,6 +103,9 @@ const endpoints = {
   // counselor endpoints
   createEventScreening: `${counselorScreeninggBaseUrl}/create-event-screening/`,
   getEventInfo: (counselorName) => `${counselorScreeninggBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
+  
+  caseScreenSubmission: `${counselorScreeninggBaseUrl}/submit-case-screening/`,
+  eventScreenSubmission: `${counselorScreeninggBaseUrl}/submit-event-screening/`,
 };
 
 export default endpoints;

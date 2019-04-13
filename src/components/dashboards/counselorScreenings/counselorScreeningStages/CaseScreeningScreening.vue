@@ -42,6 +42,8 @@ import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/cou
 import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import endpoints from '@/api';
 
 const router = useRouter();
 
@@ -129,22 +131,148 @@ const handleChangeComponent = (nextMenuName) => {
     currentScreeningComponent.value = componentMap[nextToolName];
 };
 
-const submitAssessments = () => {
-    // Perform fake submission (replace with actual submission logic)
-    setTimeout(() => {
-        // Show success message
+
+const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || [];
+const currentUserIdIndex = ref(0);
+
+const submitAssessments = async () => {
+    console.log('Submitting assessments...');
+    try {
+
+        const userId = ClientUserIdCaseBase;
+        const { gadData, phqData, aceData, assistRiskSeverity, schoolEnvData } = gatherAssessmentData();
+        const formData = constructFormData(userId, gadData, phqData, aceData, assistRiskSeverity, schoolEnvData);
+
+        const response = await submitFormData(formData);
+
+        handleSuccessResponse(response);
+    } catch (error) {
+        handleSubmissionError(error);
+    }
+};
+
+const gatherAssessmentData = () => {
+    const getDataFromLocalStorage = (key) => {
+        try {
+            const data = localStorage.getItem(`${key}_set_counselor_screening`);
+            return data ? JSON.parse(data) : {};
+        } catch (error) {
+            console.error(`Error parsing ${key} data:`, error);
+            return {};
+        }
+    };
+
+    const gadData = getDataFromLocalStorage('GAD');
+    const phqData = getDataFromLocalStorage('PHQ');
+    const aceData = getDataFromLocalStorage('ACE');
+    const assistData = getDataFromLocalStorage('ASSIST');
+    const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
+
+    let assistRiskSeverity = null;
+    if (assistData !== null && assistData.length > 0) {
+        assistRiskSeverity = calculateRiskSeverity(assistData);
+    }
+
+    return { gadData, phqData, aceData, assistRiskSeverity, schoolEnvData };
+};
+
+
+const calculateRiskSeverity = (assistData) => {
+    const thresholds = {
+        mild: 3,
+        moderate: 5,
+        moderatelySevere: 8,
+        severe: 11
+    };
+
+    const substanceScores = {};
+    assistData.forEach(entry => {
+        const substanceName = entry.substance;
+        const point = entry.point;
+        substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+    });
+
+    const substanceRiskSeverity = {};
+    for (const substanceName in substanceScores) {
+        const score = substanceScores[substanceName];
+        substanceRiskSeverity[substanceName] = calculateSeverityLevel(score, thresholds);
+    }
+
+    return substanceRiskSeverity;
+};
+
+const calculateSeverityLevel = (score, thresholds) => {
+    if (score >= thresholds.severe) {
+        return 'severe';
+    } else if (score >= thresholds.moderatelySevere) {
+        return 'moderately severe';
+    } else if (score >= thresholds.moderate) {
+        return 'moderate';
+    } else if (score >= thresholds.mild) {
+        return 'mild';
+    } else {
+        return 'none';
+    }
+};
+
+const constructFormData = (userId, gadData, phqData, aceData, assistRiskSeverity, schoolEnvData) => {
+    const formData = new FormData();
+    formData.append('userId', userId);
+    formData.append('gadData', JSON.stringify(gadData));
+    formData.append('phqData', JSON.stringify(phqData));
+    formData.append('aceData', JSON.stringify(aceData));
+    formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
+    formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+
+    return formData;
+};
+
+const submitFormData = async (formData) => {
+    console.log('Submitting form data:', formData);
+    return await axios.post(endpoints.caseScreenSubmission, formData);
+};
+
+const handleSuccessResponse = (response) => {
+    ClientUserIdCaseBase.shift();
+    sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
+    currentUserIdIndex.value++;
+
+    if (response.data === 'success') {
+        clearLocalStorageData();
+
         Swal.fire({
             icon: 'success',
             title: 'Assessments Submitted Successfully',
-            text: 'Thank you for submitting the assessments.',
+            text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            // Redirect to "/counselor-dashboard"
-            router.push('/counselor-dashboard');
+            if (ClientUserIdCaseBase.length > 0) {
+                window.location.reload();
+            } else {
+                router.push('/counselor-dashboard');
+            }
         });
-    }, 1000); // Simulating a delay for submission
+    }
 };
 
+const clearLocalStorageData = () => {
+    ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
+        localStorage.removeItem(`${key}_set_counselor_screening`);
+    });
+    localStorage.removeItem('answeredSubstances');
+    localStorage.removeItem('selectedMenu');
+    localStorage.removeItem('selectedTools');
+};
+
+const handleSubmissionError = (error) => {
+    console.error('Error submitting assessments:', error);
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to submit assessments. Please try again later.',
+        confirmButtonText: 'OK'
+    });
+};
 
 </script>
 

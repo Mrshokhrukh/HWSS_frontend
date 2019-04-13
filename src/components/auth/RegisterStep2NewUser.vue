@@ -297,7 +297,7 @@ const formData = ref({
 const identifiers = [
     { id: 'cidRadio', value: 'cid', label: 'CID Number' },
     { id: 'casefileRadio', value: 'casefile', label: 'Casefile No' },
-    { id: 'passportRadio', value: 'passport', label: 'Foreign Passport/Work Permit' },
+    // { id: 'passportRadio', value: 'passport', label: 'Foreign Passport/Work Permit' },
 ];
 
 const months = [

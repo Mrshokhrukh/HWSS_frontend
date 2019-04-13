@@ -18,7 +18,7 @@
                         v-model="userDetailsStore.user.username">
                 </div>
                 <div class="col-md-12 mb-3">
-                    <label>Student Number</label>
+                    <label>Employee ID</label>
                     <input type="text" class="form-control input-noneditable" readonly disabled
                         v-model="userDetailsStore.userAgency.userCode">
                 </div>

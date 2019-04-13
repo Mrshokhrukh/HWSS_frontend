@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="row">
-            <h5 class="card-title">{{ selectedValue }}</h5>
+            <!-- <h5 class="card-title">{{ selectedValue }}</h5> -->
             <component :is="selectedTable" :referrals="referrals"></component>
         </div>
         <div class="row mt-4 d-flex justify-content-end">
@@ -36,8 +36,6 @@ const referrals = ref([]);
 const selectedValue = ref('referralList');
 
 const selectedTable = ref(ReferralListTable);
-
-
 
 const saveChanges = async () => {
     // Implement saveChanges logic
