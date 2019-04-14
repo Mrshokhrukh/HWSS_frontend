@@ -18,18 +18,39 @@
         <div class="col-md-12 mb-3">
           <label>Student Number</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
-            v-model="userDetailsStore.userAgency.userCode">
+            v-model="userDetailsStore.user.usercode">
         </div>
         <div class="col-md-12 mb-3">
-          <label>Is Gyalsung</label>
+          <label>Is gylasung</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
-            v-model="userDetailsStore.user.isGyalsung">
+            v-model="userDetailsStore.user.usercode">
         </div>
         <div class="col-md-12 mb-3">
-          <label>School/Agency/Gyalsung Academy</label>
+          <label>Gender</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
-            v-model="userDetailsStore.agency.agencyName">
+          v-model="userDetailsStore.user.gender">
         </div>
+        <div class="col-md-12 mb-3">
+          <label>Date of birth</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.dateOfBirth">
+        </div>
+        <div class="col-md-12 mb-3">
+          <label>Role</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.user.role">
+        </div>
+        <div class="col-md-12 mb-3">
+          <label>School</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.agency_name">
+        </div>
+        <div class="col-md-12 mb-3">
+          <label>class</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.agency_name">
+        </div>
+        
       </div>
     </div>
   </div>

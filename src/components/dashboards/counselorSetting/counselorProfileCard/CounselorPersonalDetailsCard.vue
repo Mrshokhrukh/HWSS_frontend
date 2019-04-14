@@ -1,133 +1,250 @@
 <template>
-    <div class="card p-3">
-            <div class="card-header">
-                <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
-            </div>
-            <div class="user-profile text-center">
-                <img :src="profilePictureUrl" alt="User" class="profile-pic" />
-                <button class="edit-button" @click="openFileSelection">
-                    <i class="fas fa-edit"></i>
-                </button>
-            </div>
-
-            <div class="card-body p-1 h-100">
-                <!-- Example content -->
-                <div class="col-md-12 mb-3">
-                    <label>User Name</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.user.username">
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Employee ID</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.userAgency.userCode">
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>Is Gyalsung</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.user.isGyalsung">
-                </div>
-                <div class="col-md-12 mb-3">
-                    <label>School/Agency/Gyalsung Academy</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.agency.agencyName">
-                </div>
-            </div>
+    <div class="card custom-card p-3 h-100">
+        <div class="card-header">
+            <h5 class="header-title">Personal Details</h5>
         </div>
+        <div class="card-body">
+            <!-- Notification -->
+            <!-- <div class="notification" :class="notification.type" v-if="notification.show">
+                {{ notification.message }}
+            </div> -->
+
+            <!-- Personal Details Form -->
+            <form @submit.prevent>
+                <div class="row g-3">
+
+
+
+                    <!-- Citizenship Identity Number -->
+                    <div class="row mb-5">
+                        <div class="col-md-6 mb-4">
+                            <label>Citizenship Identity Number</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.identityNumber">
+                        </div>
+                        <!-- Nationality -->
+                        <div class="col-md-6 mb-4">
+                            <label>Nationality</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.nationality">
+                        </div>
+                        <!-- Phone -->
+                        <div class="col-md-6 mb-4">
+                            <label>Phone</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.mobNumber">
+                        </div>
+                        <!-- Email -->
+                        <div class="col-md-6 mb-4">
+                            <label>Email</label>
+                            <input type="email" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.email">
+                        </div>
+                    </div>
+
+
+
+                    <!-- Permanent Address -->
+                    <div class="row mb-5">
+                        <div class="col-md-12">
+                            <div class="card-header">
+                                <h5 class="header-title">Permanent Address</h5>
+                            </div>
+                        </div>
+                        <!-- Dzongkhag -->
+                        <div class="col-md-6 mb-4">
+                            <label>Dzongkhag</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddDzongkhag">
+                        </div>
+                        <!-- Gewog -->
+                        <div class="col-md-6 mb-4">
+                            <label>Gewog</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddGewog">
+                        </div>
+                        <!-- Village -->
+                        <div class="col-md-6 mb-4">
+                            <label>Village</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddVillage">
+                        </div>
+                    </div>
+
+
+
+                    <!-- Present Address -->
+                    <div class="row mb-5">
+                        <div class="col-md-12">
+                            <div class="card-header">
+                                <h5 class="header-title">Present Address</h5>
+                            </div>
+                        </div>
+                        <!-- Present Address -->
+                        <!-- <div :class="{ 'col-md-6 mb-4': userDetails.user.currentLivingWith !== 'others', 'col-md-12': userDetails.user.currentLivingWith === 'others' }">
+                            <label>Present Address</label>
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.psAddDzongkhag">
+                        </div> -->
+                        <!-- Dzongkhag -->
+                        <div class="col-md-6 mb-4">
+                            <label>Dzongkhag</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddDzongkhag">
+                        </div>
+                        <!-- Gewog -->
+                        <div class="col-md-6 mb-4">
+                            <label>Gewog</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddGewog">
+                        </div>
+                        <!-- Village -->
+                        <div class="col-md-6 mb-4">
+                            <label>Village</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddVillage">
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-end">
+            <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
+            <button v-if="isEditing" class="btn custom-btn" type="submit" @click="saveChanges">Save Changes</button>
+            <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
+        </div>
+    </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, watch } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
 import { useUserDetailsStore } from '@/stores/userDetails';
-import deFaultProfilePic from "@/assets/images/icon.png";
 
 const userDetailsStore = useUserDetailsStore();
+const userDetails = ref(userDetailsStore.$state);
+const isEditing = ref(false);
+const originalUserDetails = ref({ ...userDetailsStore.$state });
 
-const profilePicture = computed(() => userDetailsStore.user.profilePicture);
-
-const profilePictureUrl = computed(() => {
-    const baseUrl =
-        window.location.hostname === "localhost" && window.location.port === "5173"
-            ? "http://localhost:8000"
-            : "http://172.30.3.5";
-    return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
+const notification = ref({
+    show: false,
+    message: '',
+    type: '', // 'success' or 'error'
 });
 
-const userAge = computed(() => {
-    const dob = userDetailsStore.user.dateOfBirth;
-    if (!dob) return ''; // Handle case where date of birth is not available
-    const dobDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - dobDate.getFullYear();
-    const monthDiff = today.getMonth() - dobDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
-        age--;
-    }
-    return age;
-});
 
-const userAgeGroup = computed(() => {
-    const age = parseInt(userAge.value);
-    if (age < 14) {
-        return 'Below 14';
-    } else if (age >= 15 && age <= 17) {
-        return '15 to 17';
-    } else {
-        return '18 and above';
-    }
-});
-
-const openFileSelection = () => {
-    // Implement the logic to open file selection dialog here
+const enableEdit = () => {
+    isEditing.value = true;
 };
 
-onMounted(() => {
-    localStorage.setItem('userAge', userAge.value.toString());
-    localStorage.setItem('userAgeGroup', userAgeGroup.value);
-});
+const saveChanges = async () => {
+    try {
+        const authToken = localStorage.getItem('authToken');
+        const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Token ${authToken}`,
+            },
+        });
+        userDetailsStore.setUserDetails(response.data);
+        originalUserDetails.value = { ...response.data };
+        isEditing.value = false;
+        // Set success notification
+        notification.value = {
+            show: true,
+            message: 'Profile updated successfully!',
+            type: 'success',
+        };
+    } catch (error) {
+        console.error('Error saving changes:', error);
+        // Set error notification
+        notification.value = {
+            show: true,
+            message: 'Failed to update profile. Please try again.',
+            type: 'error',
+        };
+    }
+    // Hide notification after 5 seconds
+    setTimeout(() => {
+        notification.value.show = false;
+    }, 5000);
+};
 
+const cancelChanges = () => {
+    userDetails.value = { ...originalUserDetails.value };
+    isEditing.value = false;
+};
+
+watch(() => userDetailsStore.$state, (newState) => {
+    originalUserDetails.value = { ...newState };
+}, { deep: true });
 </script>
 
 <style scoped>
-.border-div-personal {
-    border: 1px solid #c9c9c9;
-    border-radius: 10px;
+.input-editable {
+    background-color: #fff;
 }
 
 .input-noneditable {
     background-color: #68B2A03D;
 }
 
-.profile-pic {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    border: 5px solid #2c6975;
-    object-fit: cover;
-    object-position: top;
-    margin: 10px auto;
+.if-others {
+    display: none;
 }
 
-.user-profile {
-    position: relative;
-    padding: 0.5rem 0;
-    transition: all 0.3s ease-in-out;
-    overflow: hidden;
-    height: auto;
+.if-others[editing]:not([readonly]) {
+    display: block;
 }
 
-.edit-button {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    background-color: transparent;
-    border: none;
+
+/* Add border and adjust spacing */
+.custom-card {
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.border {
+    border: 1px solid #939393;
+    border-radius: 10px;
+}
+
+.header-title {
+    color: #2B656F;
+    font-weight: bold;
+}
+
+.notification {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.notification.success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.notification.error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.custom-btn {
+    background-color: #2B656F;
     color: #fff;
-    font-size: 20px;
+    border-radius: 10px;
     cursor: pointer;
-}
-
-.edit-button:hover {
-    color: #2c6975;
+    margin-left: 0.5rem;
 }
 </style>

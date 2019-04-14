@@ -32,7 +32,7 @@
                         <div class="col-md-6 mb-4">
                             <label>Phone</label>
                             <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.phone">
+                                v-model="userDetails.user.mobNumber">
                         </div>
                         <!-- Email -->
                         <div class="col-md-6 mb-4">
