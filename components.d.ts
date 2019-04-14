@@ -51,8 +51,6 @@ declare module 'vue' {
     ElDropdown: typeof import('element-plus/es')['ElDropdown']
     ElDropdownItem: typeof import('element-plus/es')['ElDropdownItem']
     ElDropdownMenu: typeof import('element-plus/es')['ElDropdownMenu']
-    ElTable: typeof import('element-plus/es')['ElTable']
-    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     EventScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningRegister.vue')['default']
     EventScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningScreening.vue')['default']
     EventScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningSelectTools.vue')['default']
