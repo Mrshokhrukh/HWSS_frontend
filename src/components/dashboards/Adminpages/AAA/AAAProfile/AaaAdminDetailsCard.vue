@@ -1,175 +1,187 @@
 <template>
-    <div class="card custom-card p-5 h-100">
-        <div class="border p-3">
-            <div class="card-header">
-                <h5 class="header-title">Personal Details</h5>
-            </div>
-            <div class="card-body">
-                <!-- Notification -->
-                <div class="notification" :class="notification.type" v-if="notification.show">
-                    {{ notification.message }}
-                </div>
+    <div class="card custom-card p-3 h-100">
+        <div class="card-header">
+            <h5 class="header-title">Personal Details</h5>
+        </div>
+        <div class="card-body">
+            <!-- Notification -->
+            <!-- <div class="notification" :class="notification.type" v-if="notification.show">
+                {{ notification.message }}
+            </div> -->
 
-                <!-- Personal Details Form -->
-                <form @submit.prevent>
-                    <div class="row g-3">
-                        <!-- Citizenship Identity Number -->
-                        <div class="col-md-6">
+            <!-- Personal Details Form -->
+            <form @submit.prevent>
+                <div class="row g-3">
+
+
+
+                    <!-- Citizenship Identity Number -->
+                    <div class="row mb-5">
+                        <div class="col-md-6 mb-4">
                             <label>Citizenship Identity Number</label>
                             <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.identityNumber" />
-                        </div>
-                        <!-- Email -->
-                        <div class="col-md-6">
-                            <label>Email</label>
-                            <input type="email" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.email" />
-                        </div>
-                        <!-- Phone -->
-                        <div class="col-md-6">
-                            <label>Phone</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.mobile" />
+                                v-model="userDetails.user.identityNumber">
                         </div>
                         <!-- Nationality -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-4">
                             <label>Nationality</label>
                             <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.nationality" />
+                                v-model="userDetails.user.nationality">
                         </div>
+                        <!-- Phone -->
+                        <div class="col-md-6 mb-4">
+                            <label>Phone</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.mobNumber">
+                        </div>
+                        <!-- Email -->
+                        <div class="col-md-6 mb-4">
+                            <label>Email</label>
+                            <input type="email" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.email">
+                        </div>
+                    </div>
 
-                        <!-- Permanent Address -->
+
+
+                    <!-- Permanent Address -->
+                    <div class="row mb-5">
                         <div class="col-md-12">
                             <div class="card-header">
                                 <h5 class="header-title">Permanent Address</h5>
                             </div>
                         </div>
-                        <!-- Village -->
-                        <div class="col-md-4">
-                            <label>Village</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddVillage" />
-                        </div>
-                        <!-- Gewog -->
-                        <div class="col-md-4">
-                            <label>Gewog</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddGewog" />
-                        </div>
                         <!-- Dzongkhag -->
-                        <div class="col-md-4">
+                        <div class="col-md-6 mb-4">
                             <label>Dzongkhag</label>
                             <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddDzongkhag" />
+                                v-model="userDetails.user.permAddDzongkhag">
                         </div>
-                        <!-- Present Address -->
+                        <!-- Gewog -->
+                        <div class="col-md-6 mb-4">
+                            <label>Gewog</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddGewog">
+                        </div>
+                        <!-- Village -->
+                        <div class="col-md-6 mb-4">
+                            <label>Village</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddVillage">
+                        </div>
+                    </div>
+
+
+
+                    <!-- Present Address -->
+                    <div class="row mb-5">
                         <div class="col-md-12">
                             <div class="card-header">
                                 <h5 class="header-title">Present Address</h5>
                             </div>
                         </div>
                         <!-- Present Address -->
-                        <div :class="{
-                            'col-md-6': userDetails.user.currentLivingWith !== 'others',
-                            'col-md-12': userDetails.user.currentLivingWith === 'others'
-                        }">
+                        <!-- <div :class="{ 'col-md-6 mb-4': userDetails.user.currentLivingWith !== 'others', 'col-md-12': userDetails.user.currentLivingWith === 'others' }">
                             <label>Present Address</label>
-                            <input type="text" class="form-control"
-                                v-model="userDetails.user.psAddDzongkhag" />
-                             <label>Gewog</label>
-                             <input type="text" class="form-control"/>
-                             <label>Village</label>
-                             <input type="text" class="form-control"/>
-                            
+                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
+                                v-model="userDetails.user.psAddDzongkhag">
+                        </div> -->
+                        <!-- Dzongkhag -->
+                        <div class="col-md-6 mb-4">
+                            <label>Dzongkhag</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddDzongkhag">
+                        </div>
+                        <!-- Gewog -->
+                        <div class="col-md-6 mb-4">
+                            <label>Gewog</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddGewog">
+                        </div>
+                        <!-- Village -->
+                        <div class="col-md-6 mb-4">
+                            <label>Village</label>
+                            <input type="text" class="form-control input-noneditable" readonly disabled
+                                v-model="userDetails.user.permAddVillage">
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="card-footer text-end">
-                <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
-                <button v-if="isEditing" class="btn custom-btn" type="submit" @click="saveChanges">
-                    Save Changes
-                </button>
-                <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
-            </div>
+
+
+
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-end">
+            <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
+            <button v-if="isEditing" class="btn custom-btn" type="submit" @click="saveChanges">Save Changes</button>
+            <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import axios from 'axios'
-import Swal from 'sweetalert2'
-import endpoints from '@/api'
-import { useUserDetailsStore } from '@/stores/userDetails'
+import { ref, watch } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+import { useUserDetailsStore } from '@/stores/userDetails';
 
-const userDetailsStore = useUserDetailsStore()
-const userDetails = ref(userDetailsStore.$state)
-const isEditing = ref(false)
-const originalUserDetails = ref({ ...userDetailsStore.$state })
+const userDetailsStore = useUserDetailsStore();
+const userDetails = ref(userDetailsStore.$state);
+const isEditing = ref(false);
+const originalUserDetails = ref({ ...userDetailsStore.$state });
 
 const notification = ref({
     show: false,
     message: '',
-    type: '' // 'success' or 'error'
-})
+    type: '', // 'success' or 'error'
+});
+
 
 const enableEdit = () => {
-    isEditing.value = true
-}
+    isEditing.value = true;
+};
 
 const saveChanges = async () => {
-    console.log('click detected')
     try {
-        const authToken = localStorage.getItem('authToken')
+        const authToken = localStorage.getItem('authToken');
         const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Token ${authToken}`
-            }
-        })
-
-        // Log successful response data
-        // console.log('Successful response:', response.data);
-
-        userDetailsStore.setUserDetails(response.data)
-        originalUserDetails.value = { ...response.data }
-        isEditing.value = false
-
-        // Show success notification
-        Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Profile updated successfully!'
-        }).then(() => {
-            // Refresh the window upon successful update
-            //   window.location.reload();
-        })
+                'Authorization': `Token ${authToken}`,
+            },
+        });
+        userDetailsStore.setUserDetails(response.data);
+        originalUserDetails.value = { ...response.data };
+        isEditing.value = false;
+        // Set success notification
+        notification.value = {
+            show: true,
+            message: 'Profile updated successfully!',
+            type: 'success',
+        };
     } catch (error) {
-        // Log error response
-        // console.error('Error saving changes:', error.response.data);
-
-        // Show error notification
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Failed to update profile. Please try again.'
-        })
+        console.error('Error saving changes:', error);
+        // Set error notification
+        notification.value = {
+            show: true,
+            message: 'Failed to update profile. Please try again.',
+            type: 'error',
+        };
     }
-}
+    // Hide notification after 5 seconds
+    setTimeout(() => {
+        notification.value.show = false;
+    }, 5000);
+};
 
 const cancelChanges = () => {
-    userDetails.value = { ...originalUserDetails.value }
-    isEditing.value = false
-}
+    userDetails.value = { ...originalUserDetails.value };
+    isEditing.value = false;
+};
 
-watch(
-    () => userDetailsStore.$state,
-    (newState) => {
-        originalUserDetails.value = { ...newState }
-    },
-    { deep: true }
-)
+watch(() => userDetailsStore.$state, (newState) => {
+    originalUserDetails.value = { ...newState };
+}, { deep: true });
 </script>
 
 <style scoped>
@@ -178,7 +190,7 @@ watch(
 }
 
 .input-noneditable {
-    background-color: #68b2a03d;
+    background-color: #68B2A03D;
 }
 
 .if-others {
@@ -188,6 +200,7 @@ watch(
 .if-others[editing]:not([readonly]) {
     display: block;
 }
+
 
 /* Add border and adjust spacing */
 .custom-card {
@@ -202,7 +215,7 @@ watch(
 }
 
 .header-title {
-    color: #2b656f;
+    color: #2B656F;
     font-weight: bold;
 }
 
@@ -228,7 +241,7 @@ watch(
 }
 
 .custom-btn {
-    background-color: #2b656f;
+    background-color: #2B656F;
     color: #fff;
     border-radius: 10px;
     cursor: pointer;
