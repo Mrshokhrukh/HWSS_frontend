@@ -62,7 +62,7 @@ const tableFields = [
   { key: 'general_anxiety_severity', header: 'General Anxiety Severity' },
   { key: 'adverse_childhood_experience', header: 'Adverse Childhood Experience' },
   { key: 'tobacco_measurement', header: 'Tobacco Measurement' },
-  { key: 'alcoholic_beverages', header: 'Alcoholic beverages' },
+  { key: 'alcoholic_measurement', header: 'Alcoholic beverages' },
   { key: 'cannabis', header: 'Cannabis' },
   { key: 'cocaine', header: 'Cocaine' },
   { key: 'amphetamine-type_stimulants', header: 'Amphetamine-type stimulants' },

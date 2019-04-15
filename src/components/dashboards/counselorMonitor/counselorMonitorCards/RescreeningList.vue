@@ -153,6 +153,36 @@ const filteredPatients = computed(() => {
       return false;
     });
   });
+
+  // Custom sorting logic for each risk column
+  const riskColumns = [
+    'tobaccoRisk',
+    'alcoholRisk',
+    'cannabisRisk',
+    'cocaineRisk',
+    'amphetamineRisk',
+    'inhalantsRisk',
+    'sedativeRisk',
+    'hallucinogensRisk',
+    'opioidsRisk',
+    'othersRisk'
+  ];
+
+  riskColumns.forEach(column => {
+    filtered.sort((a, b) => {
+      const riskA = a[column].toLowerCase();
+      const riskB = b[column].toLowerCase();
+      
+      if (riskA === 'high risk' && riskB !== 'high risk') {
+        return -1;
+      } else if (riskA !== 'high risk' && riskB === 'high risk') {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+  });
+
   return filtered;
 });
 
@@ -256,6 +286,8 @@ onMounted(async () => {
     loadingPatients.value = false;
   }
 });
+
+//piroties
 
 </script>
 
