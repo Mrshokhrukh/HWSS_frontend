@@ -232,11 +232,11 @@
                         </div>
                     </div>
 
-                    <div class="row mb-4 card p-4">
+                    <div class="row mb-4 card p-4" :class="{ 'greyout': selectedUser.service_and_treatment_details[0].referred !== 'Not Referred' }">
                         <div class="col-md-12">
                             <h4>Referral Status</h4>
                             <div class="row">
-                                <div class="col-6">
+                                <div class="col-6" >
                                     <label for="referTo">Refer To:</label>
                                     <select class="form-control" id="referTo" v-model="selectedUser.refer_to">
                                         <option value="clinical_counselor">Clinical Counselor</option>
@@ -248,7 +248,7 @@
                                 <div class="col-6">
                                     <label for="official">Official:</label>
                                     <select class="form-control" id="official" v-model="selectedUser.official">
-                                        <option v-for="option in officialOptions" :key="option.id" :value="option.id">{{
+                                        <option v-for="option in officialOptions" :key="option.id" :value="option.id" :placeholder="option.full_name">{{
                         option.full_name }}, {{ option.active_agency }}</option>
                                     </select>
                                 </div>
@@ -260,6 +260,11 @@
                                     icon="pi pi-external-link" @click="referCase" />
                             </div>
                         </div>
+                    </div>
+                    <div class="my-4" v-if="selectedUser.service_and_treatment_details[0].referred !== 'Not Referred'">
+                        <h5 class="text-warning text-center">
+                            User Already Referred
+                        </h5>
                     </div>
 
                 </main>
@@ -368,7 +373,8 @@ const openModal = async (user) => {
             rescreening_details: user.rescreening_details,
             role: user.role,
             service_and_treatment_details: user.service_and_treatment_details,
-            substance_risk_measurement_details: user.substance_risk_measurement_details,          // Add other fields as needed
+            substance_risk_measurement_details: user.substance_risk_measurement_details,
+            user_referred: user.service_and_treatment_details.referred
         };
 
         showModal.value = true;
@@ -554,5 +560,11 @@ onMounted(getServiceList);
     position: -webkit-sticky;
     position: sticky;
     top: 0;
+}
+
+.greyout{
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 </style>
