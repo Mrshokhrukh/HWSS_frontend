@@ -29,7 +29,7 @@
           <ScreeningCurrentYearCard />
         </div>
       </div>
-      
+
       <!-- Screening Cards -->
       <div class="col-md-4 mb-4">
         <div class="h-100">
@@ -73,6 +73,11 @@
       <CounselorSetting />
     </div>
 
+    <!-- Reporting Dashboard View -->
+    <div v-if="currentRoute.includes('/counselor-dashboard/flagged-reports')" class="screening-dashboard">
+      <CounselorFlagReports :flag="flag" />
+    </div>
+
 
   </div>
 </template>
@@ -93,11 +98,13 @@ import CounselorReporting from '@/components/dashboards/counselorReporting/Couns
 import CounselorMonitor from '@/components/dashboards/counselorMonitor/CounselorMonitor.vue';
 import CounselorHelp from '@/components/dashboards/counselorHelp/CounselorHelp.vue';
 import CounselorSetting from '@/components/dashboards/counselorSetting/CounselorSetting.vue';
+import CounselorFlagReports from '@/components/dashboards/counselorReporting/CounselorFlagReports.vue';
 
 
 const route = useRoute();
 
 const currentRoute = computed(() => route.path);
+const flag = computed(() => route.query.flag);
 
 onMounted(async () => {
   // get user age group
