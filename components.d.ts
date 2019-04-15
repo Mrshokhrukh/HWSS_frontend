@@ -146,6 +146,7 @@ declare module 'vue' {
     SudSubstanceCard: typeof import('./src/components/dashboards/Adminpages/Sud/SudSubstanceCard.vue')['default']
     SudTotalScreening: typeof import('./src/components/dashboards/Adminpages/Sud/SudTotalScreening.vue')['default']
     TableTotalScreening: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/TableTotalScreening.vue')['default']
+    Tag: typeof import('primevue/tag')['default']
     TestTypeScreening: typeof import('./src/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue')['default']
     TopNavbarCard: typeof import('./src/components/navbar/TopNavbarCard.vue')['default']
     TopNavigationCards: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/TopNavigationCards.vue')['default']
