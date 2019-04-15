@@ -19,10 +19,10 @@
                             <label for="purpose" class="form-label">Purpose</label>
                             <select class="form-select hwss-primary" id="purpose" v-model="purpose" required>
                                 <option value="" disabled selected>Select Purpose</option>
-                                <option value="Assessment">Assessment</option>
-                                <option value="Intervention">Intervention</option>
-                                <option value="Follow up">Follow up</option>
-                                <option value="Termination">Termination</option>
+                                <option value="assessment">Assessment</option>
+                                <option value="intervention">Intervention</option>
+                                <option value="follow_up">Follow up</option>
+                                <option value="termination">Termination</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -299,23 +299,19 @@ const submitForm = async () => {
                 },
             };
             // Send a submit request to the endpoint
-            const response = await axios.post(endpoints.registerCounselorUser, formData);
+            const response = await axios.post(endpoints.registerCounselorCaseUser, formData);
 
-            // Handle successful submission
-            console.log('Form submitted successfully:', response.data);
             const userId = response.data.userId;
             localStorage.setItem('ClientUserIdCaseBase', userId);
-            return response.data; // Return the response data
+            return response.data;
         } else {
-            console.error('Error: User details not found in localStorage');
-            // Handle the case where user details are not found in localStorage
+            throw new Error('User details not found in localStorage');
         }
 
     } catch (error) {
         // Handle errors
         console.error('Error submitting form:', error);
 
-        // Check if the error is due to duplicate entry for CID
         if (error.response && error.response.data && error.response.data.error.includes('Duplicate entry')) {
             // Show a confirmation dialog using SweetAlert
             const confirmDuplicate = await Swal.fire({
@@ -342,12 +338,19 @@ const submitForm = async () => {
                 }
             }
         } else {
-            return error;
+            // Display error message to the user using SweetAlert
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: `Mobile number too long, please use Bhutanese standard mobile number excluding country code.`,
+            });
+
+            // Re-throw the error to be caught by the caller
+            throw error;
         }
-        console.error('Error submitting form:', error);
-        return null;
-    }
-};
+
+    };
+}
 
 const makeUserName = () => {
     return new Promise((resolve) => {

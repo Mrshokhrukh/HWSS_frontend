@@ -55,7 +55,8 @@ const endpoints = {
   getCitizenDetails: `${accessBaseUrl}/get-citizen-details/`,
   getRcscDetails: `${accessBaseUrl}/get-rcsc-details/`,
   registerUser: `${accessBaseUrl}/register-user/`,
-  registerCounselorUser: `${accessBaseUrl}/register-counselor-user/`,
+  registerCounselorCaseUser: `${accessBaseUrl}/register-counselor-case-user/`,
+  registerCounselorEventUser: `${accessBaseUrl}/register-counselor-event-user/`,
   registerAgency: `${accessBaseUrl}/register-agency/`,
   getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
   getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,
@@ -72,6 +73,8 @@ const endpoints = {
   getCSRFToken: `${accessBaseUrl}/get_csrf_token/`,
   updateUserInfo: `${accessBaseUrl}/update-user-info/`,
   changePassword: `${accessBaseUrl}/change-password/`,
+
+  fetchReferralCounselors: `${accessBaseUrl}/get-referral-counselors/`,
 
   settings: `${settingsBaseUrl}/appconfig/`,
   menuItem: `${settingsBaseUrl}/menuItem/`,
@@ -96,6 +99,7 @@ const endpoints = {
   getReferralList: `${moitoringBaseUrl}/get-referral-list/`,
   rescreenSubmission: `${moitoringBaseUrl}/submit-rescreening/`,
   getUserMonitoringDetails: `${moitoringBaseUrl}/get-user-monitoring-details/`,
+  updateServiceAndTreatment: `${moitoringBaseUrl}/update-service-and-treatment/`,
 
   // reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,
@@ -103,7 +107,6 @@ const endpoints = {
   // counselor endpoints
   createEventScreening: `${counselorScreeninggBaseUrl}/create-event-screening/`,
   getEventInfo: (counselorName) => `${counselorScreeninggBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
-  
   caseScreenSubmission: `${counselorScreeninggBaseUrl}/submit-case-screening/`,
   eventScreenSubmission: `${counselorScreeninggBaseUrl}/submit-event-screening/`,
 };

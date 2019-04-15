@@ -11,6 +11,8 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import PrimeVue from 'primevue/config';
 import 'primevue/resources/themes/aura-light-green/theme.css'
+import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -21,6 +23,8 @@ app.use(VueConfetti);
 app.use(VueChartkick);
 app.use(ElementPlus)
 app.use(PrimeVue);
+app.use(ConfirmationService);
+app.use(ToastService);
 
 const router = createAppRouter(pinia);
 app.use(router);

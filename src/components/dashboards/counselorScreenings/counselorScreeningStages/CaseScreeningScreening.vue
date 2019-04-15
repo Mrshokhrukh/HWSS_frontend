@@ -20,7 +20,7 @@
             </div>
 
             <div class="col-9">
-                <div class="card p-4">
+                <div class="card p-4 h-100">
                     <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
                         @goToNext="handleChangeComponent"></component>
                     <div v-else>
@@ -58,8 +58,8 @@ const nextMenu = ref(null);
 
 // Define component mapping
 const componentMap = {
-    'GAD': CaseScreeningGAD,
-    'PHQ': CaseScreeningPHQ,
+    'GAD7': CaseScreeningGAD,
+    'PHQ9': CaseScreeningPHQ,
     'ASSIST': CaseScreeningASSIST,
     'ACE': CaseScreeningACE,
 };
@@ -133,19 +133,17 @@ const handleChangeComponent = (nextMenuName) => {
 
 
 const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || [];
-const currentUserIdIndex = ref(0);
 
 const submitAssessments = async () => {
     console.log('Submitting assessments...');
     try {
-
         const userId = ClientUserIdCaseBase;
         const { gadData, phqData, aceData, assistRiskSeverity, schoolEnvData } = gatherAssessmentData();
         const formData = constructFormData(userId, gadData, phqData, aceData, assistRiskSeverity, schoolEnvData);
 
         const response = await submitFormData(formData);
 
-        handleSuccessResponse(response);
+        handleSuccessResponse(response); 
     } catch (error) {
         handleSubmissionError(error);
     }
@@ -233,12 +231,8 @@ const submitFormData = async (formData) => {
 };
 
 const handleSuccessResponse = (response) => {
-    ClientUserIdCaseBase.shift();
-    sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
-    currentUserIdIndex.value++;
-
-    if (response.data === 'success') {
-        clearLocalStorageData();
+    if (response.status === 200) { // Ensure the response structure is as expected
+        // clearLocalStorageData();
 
         Swal.fire({
             icon: 'success',
@@ -246,12 +240,17 @@ const handleSuccessResponse = (response) => {
             text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
+            // Assuming ClientUserIdCaseBase is defined somewhere
             if (ClientUserIdCaseBase.length > 0) {
                 window.location.reload();
             } else {
-                router.push('/counselor-dashboard');
+                // router.push('/counselor-dashboard'); 
+                console.log('No more users to assess');
             }
         });
+    } else {
+        // Handle other response scenarios if needed
+        console.error('Unexpected response:', response);
     }
 };
 

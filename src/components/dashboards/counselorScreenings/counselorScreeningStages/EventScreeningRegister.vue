@@ -56,13 +56,35 @@
                                 required>
                         </div>
                     </div>
+                    <div class="row mt-3 text-center">
+                        <h4 class="hwss-primary mb-3">Select Tools to be used</h4>
+                        <!-- radio buttons to select tools to be used -->
+                        <div class="col-md-12">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="selectedTool" id="allToolsRadio"
+                                    value="All Tools" v-model="selectedTool">
+                                <label class="form-check-label" for="allToolsRadio">All Tools (Both SUD and Mental Health Tools)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="selectedTool" id="sudToolsRadio"
+                                    value="SUD Tools (ASSIST Screening)" v-model="selectedTool">
+                                <label class="form-check-label" for="sudToolsRadio">SUD Tools (ASSIST Screening)</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="selectedTool"
+                                    id="mentalHealthToolsRadio" value="Mental Health Tools (GAD, PHQ and ACE)"
+                                    v-model="selectedTool">
+                                <label class="form-check-label" for="mentalHealthToolsRadio">Mental Health Tools (GAD, PHQ and ACE)</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </form>
+        </form> 
         <!-- Button Section -->
         <div class="d-flex justify-content-end">
             <button type="button" class="btn hwss-btn" @click="proceed">
-                Proceed to Select Tools <i class="fas fa-arrow-right"></i>
+                Register Event <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
@@ -91,6 +113,7 @@ const today = new Date().toISOString().split('T')[0];
 const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
 const counselorName = ref(`${userDetails.user.firstName} ${userDetails.user.lastName}`);
 const eventStatus = ref('');
+const selectedTool = ref('');
 
 console.log(counselorName.value);
 
@@ -104,8 +127,14 @@ const submitForm = async () => {
             end_date: endDate.value,
             duration: duration.value,
             counselor: counselorName.value,
-            total_users: totalUsers.value
+            total_users: totalUsers.value,
+            selected_tool: selectedTool.value
         };
+
+        console.log(eventData);
+
+        // stop execution of code here
+        alert('Event screening created successfully!');
 
         const createResponse = await axios.post(endpoints.createEventScreening, eventData);
 
@@ -141,19 +170,23 @@ const fetchEventStatus = async () => {
                     text: 'The admin has not yet approved your event screening request.',
                     icon: 'warning'
                 }).then(() => {
-                    router.push('/counselor-dashboard'); 
+                    router.push('/counselor-dashboard');
                 });
             } else if (eventData.approval_status === 'approved') {
+                // Save selected tools locally
+                const selectedTools = eventData.selected_tool;
+                localStorage.setItem('approvedSelectedTools', JSON.stringify(selectedTools));
+
                 Swal.fire({
-                    title: 'Event Screening Ongoing',
+                    title: 'Event Screening Approved',
                     text: 'Proceeding to tool selection.',
                     icon: 'success',
                     timer: 1000,
                     showConfirmButton: false
                 });
                 setTimeout(() => {
-                    emit('proceedToEventSelectTools');
-                }, 1000);
+                    emit('proceedToUserSelectionTools');
+                }, 500);
             } else {
                 eventStatus.value = eventData.approval_status;
             }
@@ -163,13 +196,14 @@ const fetchEventStatus = async () => {
     }
 };
 
+
 onMounted(() => {
     fetchEventStatus();
 });
 
 const proceed = async () => {
     try {
-        await submitForm(); 
+        await submitForm();
         window.location.reload();
     } catch (error) {
         console.error('Error submitting form:', error);

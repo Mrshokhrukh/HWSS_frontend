@@ -1,17 +1,49 @@
 <template>
     <div>
-        <table class="table mb-4">
+        <table class="table mb-4 table-borderless">
             <thead>
-                <tr>
+                <tr class="text-capitalize fs-6 text-dark">
                     <th>{{ PHQQuestion }}</th>
-                    <th v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
+                    <th v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center text-black">
                         {{ option.option }}
                     </th>
                 </tr>
             </thead>
             <tbody>
+                <!-- First PHQ question -->
+                <tr>
+                    <td class="text-capitalize">Little interest or pleasure in doing things</td>
+                    <td class="text-center">
+                        <input type="radio" value="0" v-model="question1" required />
+                    </td>
+                    <td class="text-center">
+                        <input type="radio" value="1" v-model="question1" required />
+                    </td>
+                    <td class="text-center">
+                        <input type="radio" value="2" v-model="question1" required />
+                    </td>
+                    <td class="text-center">
+                        <input type="radio" value="3" v-model="question1" required />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-capitalize">Feeling down, depressed or hopeless</td>
+                    <td class="text-center">
+                        <input type="radio" value="0" v-model="question2" required />
+                    </td>
+                    <td class="text-center">
+                        <input type="radio" value="1" v-model="question2" required />
+                    </td>
+                    <td class="text-center">
+                        <input type="radio" value="2" v-model="question2" required />
+                    </td>
+                    <td class="text-center">
+                        <input type="radio" value="3" v-model="question2" required />
+                    </td>
+                </tr>
+                <!-- Remaining PHQ questions -->
                 <tr v-for="text in currentQuestion" :key="text">
-                    <td class="text-capitalize">{{ text.text }}</td>
+                    <td class="text-capitalize ">{{ text.text }}</td>
                     <td v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
                         <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
                             :name="'question_' + text.id" required />
@@ -21,14 +53,13 @@
                 <tr>
                     <td class="text-capitalize"><strong>Total</strong></td>
                     <td class="text-center" colspan="5">
-                        <!-- Adjust the colspan according to the number of <td> elements in the row -->
-                        <strong>{{ totalScore }}</strong>
+                        <strong v-if="!totalScore">0</strong>
+                        <strong v-else>{{ totalScore }}</strong>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-capitalize"><strong>Interpretation</strong></td>
                     <td class="text-center" :class="interpretationClass" colspan="5">
-                        <!-- Adjust the colspan according to the number of <td> elements in the row -->
                         <strong>{{ interpretation }}</strong>
                     </td>
                 </tr>
@@ -36,55 +67,71 @@
         </table>
         <div class="footer d-flex">
             <button class="btn hwss-btn" @click="goBack">Back</button>
-            <div class="flex-grow-1"></div> <!-- This ensures the buttons span all the width -->
+            <div class="flex-grow-1"></div>
             <button class="btn hwss-btn" @click="proceed">Next</button>
         </div>
     </div>
 </template>
+
 
 <script setup>
 import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 
+// Define reactive variables for storing selected options for static questions
+const question1 = ref(null);
+const question2 = ref(null);
+
+// Compute total score based on selected options for all questions
 const totalScore = computed(() => {
     let score = 0;
+
+    // Add scores for static questions
+    score += parseInt(question1.value);
+    score += parseInt(question2.value);
+
+    // Add scores for dynamic questions
     for (const text of currentQuestion.value) {
         const selectedOption = text.selectedOption;
         if (selectedOption !== undefined) {
             score += selectedOption.points;
         }
     }
+
     return score;
 });
 
+// Handle selection of answer for dynamic questions
 const handleAnswerSelection = (option, text) => {
     text.selectedOption = option;
-}
+};
 
+// Retrieve PHQ questions from injected data
 const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
-
 const currentQuestion = ref(counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'PHQ9').questions);
 
-const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ')
+// Define PHQ question
+const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
 
-
+// Compute interpretation based on total score
 const interpretation = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4) {
+    if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
         return 'Non or Minimal';
     } else if (totalScore.value >= 5 && totalScore.value <= 9) {
         return 'Mild';
     } else if (totalScore.value >= 10 && totalScore.value <= 14) {
         return 'Moderate';
-    } else if (totalScore.value >= 15 && totalScore.value <= 19) {
+    } else if (totalScore.value >= 15 && totalScore.value <= 18) {
         return 'Moderately Severe';
     } else {
         return 'Severe';
     }
 });
 
+// Compute interpretation class based on total score
 const interpretationClass = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4) {
+    if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
         return 'bg-primary bg-opacity-50 text-primary';
     } else if (totalScore.value >= 5 && totalScore.value <= 9) {
         return 'bg-success bg-opacity-50 text-success';
@@ -97,6 +144,7 @@ const interpretationClass = computed(() => {
     }
 });
 
+// Proceed to the next step
 const proceed = () => {
     const responses = [];
     for (const text of currentQuestion.value) {
@@ -119,7 +167,6 @@ const proceed = () => {
     // Emit the goToNext event
     emit('goToNext', 'PHQ');
 };
-
 </script>
 
 <style scoped>

@@ -54,6 +54,7 @@ declare module 'vue' {
     EventScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningRegister.vue')['default']
     EventScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningScreening.vue')['default']
     EventScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningSelectTools.vue')['default']
+    EventUserRegistration: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/EventUserRegistration.vue')['default']
     ForgotPasswordForm: typeof import('./src/components/auth/ForgotPasswordForm.vue')['default']
     HelplineServices: typeof import('./src/components/dashboards/screenings/screeningCards/HelplineServices.vue')['default']
     IconCommunity: typeof import('./src/components/icons/IconCommunity.vue')['default']

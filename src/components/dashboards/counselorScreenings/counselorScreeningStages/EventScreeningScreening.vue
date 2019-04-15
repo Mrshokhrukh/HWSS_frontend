@@ -2,27 +2,31 @@
     <div>
         <div class="row p-4 bg-light">
             <div class="col-3 left-selectors">
-                <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
-                <div>
-                    <ul>
-                        <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
-                            :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
-                            <a href="#" class="p-3">
-                                <input type="checkbox" class="form-check-input" :checked="menu.completed"
-                                    :disabled="menu.completed">
-                                <span class="ms-2">{{ menu.name }}</span>
-                            </a>
-                        </li>
-                    </ul>
+                <div class="card p-4 h-100">
+                    <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
+                    <div>
+                        <ul>
+                            <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
+                                :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
+                                <a href="#" class="p-3">
+                                    <input type="checkbox" class="form-check-input" :checked="menu.completed"
+                                        :disabled="menu.completed">
+                                    <span class="ms-2">{{ menu.name }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <div class="col-9">
-                <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
-                    @goToNext="handleChangeComponent"></component>
-                <div v-else>
-                    <div class="d-flex justify-content-center">
-                        <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
+                <div class="card p-4 h-100">
+                    <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
+                        @goToNext="handleChangeComponent"></component>
+                    <div v-else>
+                        <div class="d-flex justify-content-center">
+                            <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -53,8 +57,8 @@ const nextMenu = ref(null);
 
 // Define component mapping
 const componentMap = {
-    'GAD': CaseScreeningGAD,
-    'PHQ': CaseScreeningPHQ,
+    'GAD7': CaseScreeningGAD,
+    'PHQ9': CaseScreeningPHQ,
     'ASSIST': CaseScreeningASSIST,
     'ACE': CaseScreeningACE,
 };

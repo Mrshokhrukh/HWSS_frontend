@@ -1,6 +1,6 @@
 <template>
     <div>
-        <table class="table mb-4">
+        <table class="table mb-4 table-borderless">
             <thead>
                 <tr>
                     <th>{{ GADQuestion }}</th>

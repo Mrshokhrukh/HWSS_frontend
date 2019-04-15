@@ -20,7 +20,7 @@
             </div>
 
             <div class="col-9">
-                <div class="card p-4">
+                <div class="card p-4 h-100">
                     <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
                         @goToNext="handleChangeComponent"></component>
                     <div v-else>
@@ -58,8 +58,8 @@ const nextMenu = ref(null);
 
 // Define component mapping
 const componentMap = {
-    'GAD': CaseScreeningGAD,
-    'PHQ': CaseScreeningPHQ,
+    'GAD7': CaseScreeningGAD,
+    'PHQ9': CaseScreeningPHQ,
     'ASSIST': CaseScreeningASSIST,
     'ACE': CaseScreeningACE,
 };

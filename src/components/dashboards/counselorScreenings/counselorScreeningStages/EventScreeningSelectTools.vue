@@ -63,8 +63,8 @@ const isSchoolCounselor = ref(userOriginalRole === 'school_counselor');
 
 // Define a separate array of tool objects
 const allTools = [
-    { id: 1, name: 'PHQ', icon: 'self_improvement' },
-    { id: 2, name: 'GAD', icon: 'sentiment_calm' },
+    { id: 1, name: 'PHQ9', icon: 'self_improvement' },
+    { id: 2, name: 'GAD7', icon: 'sentiment_calm' },
     { id: 3, name: 'ASSIST', icon: 'vaccines' },
     { id: 4, name: 'ACE', icon: 'family_restroom' },
     { id: 5, name: 'SCHOOL ENV', icon: 'school' }

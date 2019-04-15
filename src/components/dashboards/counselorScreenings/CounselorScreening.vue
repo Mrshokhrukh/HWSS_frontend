@@ -27,8 +27,10 @@
                         <!-- Event Based Screening tab -->
                         <div v-if="activeTab === 'event-based-screening'">
                             <component :is="currentEventComponent"
+                                @proceedToUserSelectionTools="switchEventComponent(EventUserRegistration)"
                                 @proceedToEventSelectTools="switchEventComponent(EventScreeningSelectTools)"
-                                @proceedToEventScreening="switchEventComponent(EventScreeningScreening)" @logEmit="logEmit()" />
+                                @proceedToEventScreening="switchEventComponent(EventScreeningScreening)"
+                                @logEmit="logEmit()" />
                         </div>
                     </div>
                 </div>
@@ -50,6 +52,7 @@ import CaseScreeningScreening from '@/components/dashboards/counselorScreenings/
 import EventScreeningRegister from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningRegister.vue';
 import EventScreeningSelectTools from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningSelectTools.vue';
 import EventScreeningScreening from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventScreeningScreening.vue';
+import EventUserRegistration from '@/components/dashboards/counselorScreenings/counselorScreeningStages/EventUserRegistration.vue';
 
 const counselorScreeningQuestions = ref([]);
 const isLoadingQuestions = ref(false);

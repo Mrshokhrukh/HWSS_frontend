@@ -3,8 +3,7 @@
         <div class="row">
             <div class="d-flex justify-content-end">
                 <div class="col-1 ms-auto">
-                    <Button label="Refresh List" @click="getServiceList"
-                        class="btn hwss-btn" />
+                    <Button label="Refresh List" @click="getServiceList" class="btn hwss-btn" />
                 </div>
             </div>
         </div>
@@ -37,12 +36,12 @@
         <div class="container-fluid mx-0 px-0">
             <div class="row">
                 <!-- Profile Card -->
-                <aside class="col-md-4 sticky-top">
-                    <div class="profile-card card h-100">
+                <aside class="col-4">
+                    <div class="profile-card card mt-3 w-25 pt-4" style="position: fixed; height: auto">
                         <div class="card-img-top" :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
                         </div>
                         <div class="card-body">
-                            <h5 class="card-title mb-3">{{ selectedUser.first_name }} {{ selectedUser.middle_name }} {{
+                            <h5 class="card-title mb-3 hwss-primary">{{ selectedUser.first_name }} {{ selectedUser.middle_name }} {{
                         selectedUser.last_name }}</h5>
                             <ul class="list-unstyled ">
                                 <li class="mb-3"><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
@@ -61,57 +60,59 @@
 
 
                 <!-- Main Content -->
-                <main class="col-md-8 card p-3">
-                    <div class="row mb-4">
+                <main class="col-md-8">
+                    <div class="row mb-4 card p-4">
                         <div class="col-md-12">
                             <h4>Personal Details</h4>
                             <div class="row">
                                 <div class="col-6">Mother's Name: <input type="text" class="form-control"
-                                        v-model="selectedUser.mother_name"></div>
+                                        v-model="selectedUser.mother_name" readonly disabled></div>
                                 <div class="col-6">Father's Name: <input type="text" class="form-control"
-                                        v-model="selectedUser.father_name"></div>
+                                        v-model="selectedUser.father_name" readonly disabled></div>
                                 <div class="col-6">Parents' Occupation: <input type="text" class="form-control"
-                                        v-model="selectedUser.parents_occupation"></div>
+                                        v-model="selectedUser.parents_occupation" readonly disabled></div>
                                 <div class="col-6">Parental Status: <input type="text" class="form-control"
-                                        v-model="selectedUser.parental_status"></div>
+                                        v-model="selectedUser.parental_status" readonly disabled></div>
                                 <div class="col-6">Phone: <input type="text" class="form-control"
-                                        v-model="selectedUser.phone"></div>
+                                        v-model="selectedUser.mob_number" readonly disabled></div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-4">
+                    <div class="row mb-4 card p-4">
                         <div class="col-md-12">
                             <h4>Permanent Address</h4>
                             <div class="row">
                                 <div class="col-6">Village: <input type="text" class="form-control"
-                                        v-model="selectedUser.perm_add_village"></div>
+                                        v-model="selectedUser.perm_add_village" readonly disabled></div>
                                 <div class="col-6">Gewog: <input type="text" class="form-control"
-                                        v-model="selectedUser.perm_add_gewog"></div>
+                                        v-model="selectedUser.perm_add_gewog" readonly disabled></div>
                                 <div class="col-6">Dzongkhag: <input type="text" class="form-control"
-                                        v-model="selectedUser.perm_add_dzongkhag"></div>
+                                        v-model="selectedUser.perm_add_dzongkhag" readonly disabled></div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-4">
+                    <div class="row mb-4 card p-4">
                         <div class="col-md-12">
                             <h4>Present Address</h4>
                             <div class="row">
                                 <div class="col-6">Village: <input type="text" class="form-control"
-                                        v-model="selectedUser.ps_add_village"></div>
+                                        v-model="selectedUser.ps_add_village" readonly disabled></div>
                                 <div class="col-6">Gewog: <input type="text" class="form-control"
-                                        v-model="selectedUser.ps_add_gewog"></div>
+                                        v-model="selectedUser.ps_add_gewog" readonly disabled></div>
                                 <div class="col-6">Dzongkhag: <input type="text" class="form-control"
-                                        v-model="selectedUser.ps_add_dzongkhag"></div>
+                                        v-model="selectedUser.ps_add_dzongkhag" readonly disabled></div>
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-4">
+                    <div class="row mb-4 card p-4">
                         <div class="col-md-12">
                             <h4>Case Status</h4>
                             <div class="row">
-                                <div class="col-6">
+                                <div class="col-6"
+                                    v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                                     <label for="caseStatus">Case Status:</label>
-                                    <select class="form-control" v-model="selectedUser.case_status">
+                                    <select class="form-control"
+                                        v-model="selectedUser.service_and_treatment_details[0].case_status">
                                         <option :value="null" disabled>Select Case Status</option>
                                         <option value="On Going">On Going</option>
                                         <option value="Case Closed">Case Closed</option>
@@ -122,68 +123,55 @@
                         </div>
                     </div>
 
-                    <div class="row mb-4">
+                    <div class="row mb-4 card p-4"
+                        v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0">
                         <div class="col-md-12">
                             <h4>Severity</h4>
                             <div class="row">
-                                <div class="col-4">
-                                    <h6>PHQ Severity:</h6>
-                                    <div class="pill severe">{{ selectedUser.rescreening_details[0]?.phq_interpretation
-                                        }}
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <h6>GAD Severity:</h6>
-                                    <div class="pill moderate">{{
-                        selectedUser.rescreening_details[0]?.gad_interpretation }}
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <h6>ACE Severity:</h6>
-                                    <div class="pill mild">{{ selectedUser.rescreening_details[0]?.ace_interpretation }}
-                                    </div>
-                                </div>
-                                <div class="col-12 mt-3">
-                                    <h6>Substance Severity:</h6>
-                                    <div class="row">
-                                        <div class="col-4 mb-2">
-                                            <span class="substance">Alcohol:</span>
-                                            <div class="pill severe">{{ selectedUser.alcohol_severity }}</div>
-                                        </div>
-                                        <div class="col-4 mb-2">
-                                            <span class="substance">Cannibis:</span>
-                                            <div class="pill moderate">{{ selectedUser.cannibis_severity }}</div>
-                                        </div>
-                                        <div class="col-4 mb-2">
-                                            <span class="substance">Tobacco:</span>
-                                            <div class="pill moderate">{{ selectedUser.tobacco_severity }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="my-3">
-                                    <div class="col-12 mt-3">
-                                        <h5>Non-Medical Drug use through injection: <span class="text-danger">{{
-                        selectedUser.injection_use }}</span>
-                                        </h5>
-                                    </div>
-                                    <div class="col-12 mt-3">
-                                        <h5>Past Mental Health Disorder history: <span class="text-dark">{{
-                        selectedUser.past_disorder }}</span>
-                                        </h5>
-                                    </div>
+                                <div v-for="(substance, index) in selectedUser.substance_risk_measurement_details"
+                                    :key="index" class="col-4 mb-2">
+                                    <span class="substance">{{ substance.substance_name }}:</span>
+                                    <Tag class="ms-2" :value="substance.risk_flag" rounded></Tag>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row mb-4">
+                    <div class="row mb-4 card p-4" v-else>
+                        <div class="col-md-12">
+                            <h4>Severity</h4>
+                            <div class="row">
+                                <div class="col-4 mb-2">
+                                    <span class="substance text-success">No ASSIST measurements found</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional fields -->
+                    <div class="mb-4 card p-4 mx-0" v-if="selectedUser">
+                        <div class="col-12">
+                            <h6>Non-Medical Drug use through injection: <span class="text-primary">{{
+                        selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></h6>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <h6>Past Mental Health Disorder history: <span class="text-primary">{{
+                        selectedUser.past_disorder ?
+                            selectedUser.past_disorder : 'No Disgnosis' }}</span></h6>
+                        </div>
+                    </div>
+
+
+
+                    <div class="row mb-4 card p-4"
+                        v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                         <div class="col-md-12">
                             <h4>Services and Treatment</h4>
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="assessmentStatus">Assessment Status:</label>
                                     <select class="form-control" id="assessmentStatus"
-                                        v-model="selectedUser.assessment_status">
+                                        v-model="selectedUser.service_and_treatment_details[0].assessment_status">
                                         <option value="Not Conducted">Not Conducted</option>
                                         <option value="Conducted">Conducted</option>
                                     </select>
@@ -191,7 +179,7 @@
                                 <div class="col-6 mb-3">
                                     <label for="counselingStatus">Counseling Status:</label>
                                     <select class="form-control" id="counselingStatus"
-                                        v-model="selectedUser.counseling_status">
+                                        v-model="selectedUser.service_and_treatment_details[0].counseling">
                                         <option value="Availed">Availed</option>
                                         <option value="Not Required">Not Required</option>
                                         <option value="Waiting List">Waiting List</option>
@@ -200,41 +188,79 @@
                                 <div class="col-6 mb-3">
                                     <label for="followUpStatus">Follow Up Status:</label>
                                     <select class="form-control" id="followUpStatus"
-                                        v-model="selectedUser.follow_up_status">
+                                        v-model="selectedUser.service_and_treatment_details[0].follow_up">
                                         <option value="Treatment Completed">Treatment Completed</option>
                                         <option value="Undergoing Treatment">Undergoing Treatment</option>
+                                        <option value="Completed Counselling Sessions">Completed Counselling Sessions
+                                        </option>
+                                        <option value="Unwilling to Undergo Treatment">Unwilling to Undergo Treatment
+                                        </option>
+                                        <option value="Undergone Rehabilitation">Undergone Rehabilitation</option>
+                                        <option value="Undergoing Rehabilitation">Undergoing Rehabilitation</option>
+                                        <option
+                                            value="Hospital-based Outpatient SUD Treatment and Care (Primary Phase)">
+                                            Hospital-based Outpatient SUD Treatment and Care (Primary Phase)</option>
+                                        <option
+                                            value="Hospital-based Outpatient SUD Treatment and Care (Continuing Care)">
+                                            Hospital-based Outpatient SUD Treatment and Care (Continuing Care)</option>
+                                        <option value="School-based SUD Treatment and Care">School-based SUD Treatment
+                                            and
+                                            Care</option>
+                                        <option value="Institution-based SUD Treatment and Care">Institution-based SUD
+                                            Treatment and Care</option>
+                                        <option value="Follow-up Drug Test Conducted">Follow-up Drug Test Conducted
+                                        </option>
+                                        <option value="Detention-based SUD Treatment and Care">Detention-based SUD
+                                            Treatment
+                                            and Care</option>
                                     </select>
                                 </div>
+
                                 <div class="col-12">
                                     <label for="comments">Comments:</label>
                                     <textarea class="form-control" id="comments"
-                                        v-model="selectedUser.comments"></textarea>
+                                        v-model="selectedUser.service_and_treatment_details[0].comments"></textarea>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="row d-flex mt-4 justify-content-end">
+                            <div class="ms-auto">
+                                <Button label="Save" class="p-button-rounded hwss-btn mx-2" icon="pi pi-save"
+                                    @click="saveChanges" />
                             </div>
                         </div>
                     </div>
 
-                    <div class="row mb-4">
+                    <div class="row mb-4 card p-4">
                         <div class="col-md-12">
                             <h4>Referral Status</h4>
                             <div class="row">
                                 <div class="col-6">
                                     <label for="referTo">Refer To:</label>
                                     <select class="form-control" id="referTo" v-model="selectedUser.refer_to">
-                                        <option value="Clinical Counselor">Clinical Counselor</option>
-                                        <option value="School Counselor">School Counselor</option>
-                                        <option value="Mental Health Counselor">Psychiatrist</option>
-                                        <option value="Mental Health Counselor">Medical Officer</option>
+                                        <option value="clinical_counselor">Clinical Counselor</option>
+                                        <option value="school_counselor">School Counselor</option>
+                                        <option value="mh_admin">Mental Health Counselor</option>
+                                        <option value="mh_admin">Medical Officer</option>
                                     </select>
                                 </div>
                                 <div class="col-6">
                                     <label for="official">Official:</label>
-                                    <input type="text" class="form-control" id="official"
-                                        v-model="selectedUser.official">
+                                    <select class="form-control" id="official" v-model="selectedUser.official">
+                                        <option v-for="option in officialOptions" :key="option.id" :value="option.id">{{
+                        option.full_name }}, {{ option.active_agency }}</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
+                        <div class="row d-flex justify-co mt-4">
+                            <div class=" ms-auto">
+                                <Button label="Refer Case" class="p-button-secondary p-mr-2 hwss-btn"
+                                    icon="pi pi-external-link" @click="referCase" />
+                            </div>
+                        </div>
                     </div>
+
                 </main>
             </div>
         </div>
@@ -242,23 +268,22 @@
         <!-- Foot area with cancel and save buttons -->
         <div class="mt-4 d-flex justify-content-end"> <!-- Use justify-content-end to align items to the right -->
             <div>
-                <Button label="Cancel" class="p-button-secondary p-mr-2 mx-2" @click="handleModalClose" />
-                <Button label="Save Changes" class="p-button-rounded hwss-btn mx-2" @click="saveChanges" />
+                <Button label="Close" class="p-button-secondary p-mr-2 mx-2" @click="handleModalClose" />
             </div>
         </div>
     </Dialog>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import Swal from 'sweetalert2';
 
 const showModal = ref(false);
 const selectedUser = ref(null);
-const selectedServiceAndTreatment = ref(null);
-const selectedReferral = ref(null);
+const officialOptions = ref([]);
+// const isSaveEnabled = ref(false);
 
 const rowData = ref([]);
 const searchQuery = ref('');
@@ -298,6 +323,7 @@ const getServiceList = async () => {
     try {
         const response = await axios.get(endpoints.generateServiceAndTreatment);
         if (response && response.data && Array.isArray(response.data.data)) {
+            console.log(response.data);
             rowData.value = response.data.data;
         } else {
             console.error('Invalid response format:', response);
@@ -309,22 +335,63 @@ const getServiceList = async () => {
 
 const openModal = async (user) => {
     try {
-        selectedUser.value = user;
-        if (user.service_and_treatment_details && user.service_and_treatment_details.length > 0) {
-            selectedServiceAndTreatment.value = user.service_and_treatment_details[0];
-        } else {
-            selectedServiceAndTreatment.value = null;
-        }
-        if (user.referral_details && user.referral_details.length > 0) {
-            selectedReferral.value = user.referral_details[0];
-        } else {
-            selectedReferral.value = null;
-        }
+        // Populate selectedUser with the response data
+        selectedUser.value = {
+            id: user.id,
+            username: user.username,
+            is_staff: user.is_staff,
+            is_active: user.is_active,
+            identity_number: user.identity_number,
+            nationality: user.nationality,
+            first_name: user.first_name,
+            middle_name: user.middle_name,
+            last_name: user.last_name,
+            date_of_birth: user.date_of_birth,
+            academy_code: user.academy_code,
+            access_level: user.access_level,
+            active_agency: user.active_agency,
+            date_joined: user.date_joined,
+            email: user.email,
+            father_name: user.father_name,
+            gender: user.gender,
+            mob_number: user.mob_number,
+            mother_name: user.mother_name,
+            perm_add_dzongkhag: user.perm_add_dzongkhag,
+            perm_add_gewog: user.perm_add_gewog,
+            perm_add_village: user.perm_add_village,
+            profile_picture: user.profile_picture,
+            ps_add_dzongkhag: user.ps_add_dzongkhag,
+            ps_add_gewog: user.ps_add_gewog,
+            ps_add_village: user.ps_add_village,
+            referral_details: user.referral_details,
+            rescreening_details: user.rescreening_details,
+            role: user.role,
+            service_and_treatment_details: user.service_and_treatment_details,
+            substance_risk_measurement_details: user.substance_risk_measurement_details,
+ ,           // Add other fields as needed
+        };
+
         showModal.value = true;
     } catch (error) {
         console.error('Error opening modal:', error);
     }
 };
+
+// Watch for changes in the selectedUser.refer_to and fetch official options accordingly
+watchEffect(async () => {
+    if (selectedUser.value && selectedUser.value.refer_to) {
+        try {
+            const response = await axios.get(`${endpoints.fetchReferralCounselors}?role=${selectedUser.value.refer_to}`);
+            if (response && response.data && Array.isArray(response.data.data)) {
+                officialOptions.value = response.data.data;
+            } else {
+                console.error('Invalid response format:', response);
+            }
+        } catch (error) {
+            console.error('Error fetching official options:', error);
+        }
+    }
+});
 
 
 const handleModalClose = () => {
@@ -336,9 +403,7 @@ const viewDetails = async (userData) => {
     try {
         if (userData && userData.data && userData.data.user && userData.data.user.id) {
             const userId = userData.data.user.id; // Extracting user ID
-            console.log('User ID:', userId); // Log the user ID
             const userDetails = await fetchUserDetails(userId);
-            console.log('User Details:', userDetails); // Log the user details
             await openModal(userDetails);
         } else {
             console.error('User ID is missing or invalid.');
@@ -356,18 +421,67 @@ const fetchUserDetails = async (userId) => {
 };
 
 const saveChanges = () => {
-    // Perform any necessary saving logic here
-    handleModalClose()
-    // Show success message using SweetAlert
+    // get self id from localstorage
+    const counselor = JSON.parse(localStorage.getItem('userDetailsStore'));
+    const counselorId = counselor.user.id;
+    // Get form data
+    const formData = {
+        updateData: {
+            assessment_status: selectedUser.value.service_and_treatment_details[0].assessment_status,
+            counseling: selectedUser.value.service_and_treatment_details[0].counseling,
+            follow_up: selectedUser.value.service_and_treatment_details[0].follow_up,
+            comments: selectedUser.value.service_and_treatment_details[0].comments,
+            case_status: selectedUser.value.service_and_treatment_details[0].case_status,
+            id: selectedUser.value.id,
+            updated_by: counselorId
+        }
+    };
+
+    handleModalClose();
     Swal.fire({
-        icon: 'success',
-        title: 'Changes saved successfully!',
-        showConfirmButton: false,
-        timer: 1500 // Auto close after 1.5 seconds
+        title: 'Confirm Save Changes!',
+        text: 'All Changes will be saved!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, save it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            axios.post(endpoints.updateServiceAndTreatment, JSON.stringify(formData))
+                .then(response => {
+                    if (response.status === 200) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Changes saved successfully!',
+                            showConfirmButton: false,
+                            timer: 1500 // Auto close after 1.5 seconds
+                        });
+                        window.location.reload();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Something went wrong!',
+                            footer: 'Please try again later.',
+                            confirmButtonText: 'OK'
+                        })
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Something went wrong!',
+                        footer: 'Please try again later.',
+                        confirmButtonText: 'OK'
+                    })
+                    console.error('Error saving data:', error);
+                });
+        }
     });
-}
+};
 
 onMounted(getServiceList);
+
 </script>
 
 

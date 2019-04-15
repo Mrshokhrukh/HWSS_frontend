@@ -8,9 +8,10 @@
           <div class="card-body">
             <Chart :type="chartType" :data="clusteredData" :options="donutOptions" legend="bottom" loading="Loading..." />
           </div>
-          <div class="d-flex">
+          <div class="d-flex align-items-center ">
             <p class="fs-5 fw-bold mx-auto">Male: {{ maleCount }}</p>
             <p class="fs-5 fw-bold mx-auto">Female: {{ femaleCount }}</p>
+            <p class="fs-5 fw-bold mx-auto">Total: {{ totalCount }}</p>
           </div>
         </div>
       </div>
@@ -22,9 +23,10 @@
           <div class="card-body">
             <Chart :type="chartType" :data="independentData" :options="donutOptions" />
           </div>
-          <div class="d-flex justify-content-between">
+          <div class="d-flex align-items-center">
             <p class="fs-5 fw-bold mx-auto">Male: {{ data1 }}</p>
             <p class="fs-5 fw-bold mx-auto">Female: {{ data2 }}</p>
+            <p class="fs-5 fw-bold mx-auto">Total: {{ total }}</p>  
           </div>
         </div>
       </div>
@@ -39,8 +41,10 @@ import Chart from 'primevue/chart';
 
 const maleCount = ref(200);
 const femaleCount = ref(300);
+const totalCount = ref(500);
 const data1 = ref(300);
 const data2 = ref(100);
+const total = ref(400);
 
 const clusteredData = ref([]);
 const independentData = ref([]);
@@ -58,7 +62,7 @@ const setChartData = () => {
     datasets: [
       {
         data: [maleCount.value, femaleCount.value],
-        backgroundColor: ['#242424', '#64ac99']
+        backgroundColor: ['#2c6975', '#64ac99']
       }
     ]
   };
@@ -68,7 +72,7 @@ const setChartData = () => {
     datasets: [
       {
         data: [data1.value, data2.value],
-        backgroundColor: ['#242424', '#64ac99']
+        backgroundColor: ['#2c6975', '#64ac99']
       }
     ]
   };
