@@ -33,7 +33,8 @@
         <!-- Columns -->
         <Column selectionMode="multiple" headerStyle="width: 3rem" frozen class="font-bold"></Column>
         <Column v-for="(col, index) of selectedColumns" :field="col.field" :header="col.header"
-          :key="col.field + '_' + index" :frozen="col.frozen === true ? true : false">
+          :key="col.field + '_' + index" :frozen="col.frozen === true ? true : false"
+          :sortable="true">
         </Column>
       </DataTable>
     </div>
@@ -62,6 +63,7 @@ const columns = ref([
   { header: 'Past Diagnosis', field: 'pastDiagnosis' },
   { header: 'PHQ Severity', field: 'phqSeverity' },
   { header: 'GAD Severity', field: 'gadSeverity' },
+  // { header: 'Suicidal Measurement', field: 'suicidal measurement' },
   { header: 'ACE Severity', field: 'aceSeverity' },
   { header: 'Tobacco Risk', field: 'tobaccoRisk' },
   { header: 'Alcohol Risk', field: 'alcoholRisk' },
@@ -75,6 +77,25 @@ const columns = ref([
   { header: 'Others Risk', field: 'othersRisk' },
   { header: 'Non Medical Injection Use', field: 'nonMedicalInjectionUse' },
 ]);
+// const riskLevels = ['low risk', 'moderate risk', 'high risk', 'minmal','mild','moderate','moderate severe','Severe'];
+
+// Define the sort order for different fields
+// const sortOrders = {
+//   gadSeverity: ['Severe', 'moderate severe', 'moderate', 'mild', 'minmal'],
+//   aceSeverity: ['high risk', 'intermediate risk', 'low risk'],
+//   // Add other fields with their desired sort order
+//   tobaccoRisk: ['high risk', 'moderate risk', 'low risk'],
+//   alcoholRisk: ['high risk', 'moderate risk', 'low risk'],
+//   cannabisRisk: ['high risk', 'moderate risk', 'low risk'],
+//   cocaineRisk: ['high risk', 'moderate risk', 'low risk'],
+//   amphetamineRisk: ['high risk', 'moderate risk', 'low risk'],
+//   inhalantsRisk: ['high risk', 'moderate risk', 'low risk'],
+//   sedativeRisk: ['high risk', 'moderate risk', 'low risk'],
+//   hallucinogensRisk: ['high risk', 'moderate risk', 'low risk'],
+//   opioidsRisk: ['high risk', 'moderate risk', 'low risk'],
+//   othersRisk: ['high risk', 'moderate risk', 'low risk']
+// };
+
 
 const selectedColumns = ref(columns.value);
 

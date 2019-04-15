@@ -46,23 +46,32 @@ const globalFilter = ref('');
 const filteredData = ref([]);
 // eslint-disable-next-line no-unused-vars
 const globalFilterFields = [
-  'username', 'present_dzongkhag', 'alcoholic_measurement', 'phq_measurement',
-  'assessment_status', 'counseling', 'follow_up', 'suicidal_measurement',
-  'tobacco_measurement', 'case_status', 'referral_status', 'rescreening_count'
+  'date', 'username', 'age', 'sex', 'past_mental_disorder_history',
+  'depression_severity', 'general_anxiety_severity', 'adverse_childhood_experience', 'suicidal_measurement',
+  'tobacco_measurement', 'alcoholic_beverages', 'cannabis', 'cocaine','amphetamine-type_stimulants','inhalants','sedatives_or_sleeping_pills',
+  'hallucinogens','opioids','other','injection_use'
 ];
 const tableFields = [
-  { key: 'username', header: 'Username' },
-  { key: 'present_dzongkhag', header: 'Present Dzongkhag' },
-  { key: 'alcoholic_measurement', header: 'Alcoholic Measurement' },
-  { key: 'phq_measurement', header: 'PHQ Measurement' },
-  { key: 'assessment_status', header: 'Assessment Status' },
-  { key: 'counseling', header: 'Counseling' },
-  { key: 'follow_up', header: 'Follow Up' },
+  { key: 'date', header: 'Date' },
+  { key: 'username', header: 'Name' },
+  { key: 'age', header: 'Age' },
+  { key: 'sex', header: 'Sex' },
+  { key: 'past_mental_disorder_history', header: 'Past Mental Disorder History' },
   { key: 'suicidal_measurement', header: 'Suicidal Measurement' },
+  { key: 'depression_severity', header: 'Depression Severity' },
+  { key: 'general_anxiety_severity', header: 'General Anxiety Severity' },
+  { key: 'adverse_childhood_experience', header: 'Adverse Childhood Experience' },
   { key: 'tobacco_measurement', header: 'Tobacco Measurement' },
-  { key: 'case_status', header: 'Case Status' },
-  { key: 'referral_status', header: 'Referral Status' },
-  { key: 'rescreening_count', header: 'Rescreening Count' }
+  { key: 'alcoholic_beverages', header: 'Alcoholic beverages' },
+  { key: 'cannabis', header: 'Cannabis' },
+  { key: 'cocaine', header: 'Cocaine' },
+  { key: 'amphetamine-type_stimulants', header: 'Amphetamine-type stimulants' },
+  { key: 'inhalants', header: 'Inhalants' },
+  { key: 'sedatives_or_sleeping_pills', header: 'Sedatives or Sleeping Pills' },
+  { key: 'hallucinogens', header: 'Hallucinogens' },
+  { key: 'opioids', header: 'Opioids' },
+  { key: 'other', header: 'Other' },
+  { key: 'injection_use', header: 'Have you ever used any drug by injection? (NON-MEDICAL USE ONLY)' },
 ];
 const selectedOption = ref('general Report'); // Default option
 

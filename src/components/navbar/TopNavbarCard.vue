@@ -18,21 +18,25 @@
             <router-link class="nav-link" aria-current="page" to="/"><i class="fas fa-home"></i></router-link>
           </li>
 
-          <!-- Notifications using Element UI's dropdown -->
+          <!-- Bell icon for notifications -->
           <li class="nav-item m-3 mb-1">
-            <el-dropdown @command="handleNotificationClick">
-              <span class="el-dropdown-link">
-                <i class="fas fa-bell fa-lg"></i>
-                <span class="badge" v-if="notificationsCount > 0">{{ notificationsCount }}</span>
-              </span>
-              <template v-slot:dropdown>
-                <el-dropdown-menu class="notification-dropdown">
-                  <el-dropdown-item v-for="(notification, index) in notifications" :key="index">
-                    {{ notification }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div class="notification-icon" @click="showNotifications = !showNotifications">
+              <i class="fas fa-bell fa-lg"></i>
+              <span v-if="unreadNotificationsCount > 0" class="badge">{{ unreadNotificationsCount }}</span>
+            </div>
+            <!-- Notification dropdown -->
+            <div v-show="showNotifications" class="notification-dropdown">
+              <ul>
+                <li v-for="(notification, index) in notifications" :key="index">
+                  <div class="notification-item" :class="{ 'unread': !notification.read }" @click="handleNotificationClick(notification)">
+                    <div>{{ notification.sender }} ({{ notification.senderId }})</div>
+                    <div>{{ notification.message }}</div>
+                    <div>{{ notification.timestamp }}</div>
+                    <Button v-if="!notification.read" icon="pi pi-check" class="mark-read-btn" @click.stop="markNotificationRead(index)"></Button>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </li>
 
           <!-- Profile icon -->
@@ -47,22 +51,46 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import Button from 'primevue/button';
 
 // Mock data for notifications
 const notifications = ref([
-  "Notification 1",
-  "Notification 2",
-  "Notification 3"
+  {
+    sender: 'Sender Name',
+    senderId: '123',
+    message: 'Notification 1',
+    timestamp: '2024-04-14 10:00:00',
+    read: false
+  },
+  {
+    sender: 'Another Sender',
+    senderId: '456',
+    message: 'Notification 2',
+    timestamp: '2024-04-14 11:00:00',
+    read: false
+  }
 ]);
 
-// Compute notifications count
-const notificationsCount = computed(() => notifications.value.length);
+// Compute unread notifications count
+const unreadNotificationsCount = computed(() => notifications.value.filter(notification => !notification.read).length);
+
+// Show/hide notification dropdown
+const showNotifications = ref(false);
+
+// Mark notification as read
+const markNotificationRead = (index) => {
+  notifications.value[index].read = true;
+}
 
 // Handle notification click
-const handleNotificationClick = (command) => {
-  // Handle notification click action here
-  console.log("Notification clicked:", command);
+const handleNotificationClick = (notification) => {
+  if (!notification.read) {
+    markNotificationRead(notifications.value.indexOf(notification));
+  }
+  // Additional actions can be performed here, such as displaying the full message
+  alert(notification.message);
 }
+
 </script>
 
 <style scoped>
@@ -84,19 +112,57 @@ const handleNotificationClick = (command) => {
   background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3e%3cpath stroke='rgba(0, 0, 0, 0.5)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
+.notification-icon {
+  position: relative;
+  cursor: pointer;
+}
+
 .badge {
   position: absolute;
   top: -10px;
-  right: -20px;
-  background-color: #ff4c4c;
-  color: #fff;
-  border-radius: 50px;
-  padding: 5px 7px;
-  font-size: 0.8rem;
+  right: -10px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 5px;
 }
 
 .notification-dropdown {
-  min-width: 200px;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  display: none;
+  min-width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notification-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.notification-item.unread {
+  background-color: #f0f0f0;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.mark-read-btn {
+  margin-left: 1rem;
 }
 
 .navbar {
