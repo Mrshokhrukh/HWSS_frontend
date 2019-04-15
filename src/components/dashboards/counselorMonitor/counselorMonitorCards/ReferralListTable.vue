@@ -32,9 +32,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { DataTable, Column } from 'primevue/datatable';
-import { Button } from 'primevue/button';
-import { InputText } from 'primevue/inputtext';
 import endpoints from '@/api';
 
 const referrals = ref([]);

@@ -62,7 +62,7 @@
 
                 <!-- Main Content -->
                 <main class="col-md-8">
-                    <div class="row mb-4 card p-4">
+                    <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
                             <h4>Personal Details</h4>
                             <div class="row">
@@ -79,7 +79,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-4 card p-4">
+                    <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
                             <h4>Permanent Address</h4>
                             <div class="row">
@@ -92,7 +92,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-4 card p-4">
+                    <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
                             <h4>Present Address</h4>
                             <div class="row">
@@ -105,7 +105,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-4 card p-4">
+                    <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
                             <h4>Case Status</h4>
                             <div class="row">
@@ -113,7 +113,7 @@
                                     v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                                     <label for="caseStatus">Case Status:</label>
                                     <select class="form-control"
-                                        v-model="selectedUser.service_and_treatment_details[0].case_status">
+                                        v-model="selectedUser.service_and_treatment_details[0].case_status" :disabled="selfRole === 'school_counselor'">
                                         <option :value="null" disabled>Select Case Status</option>
                                         <option value="On Going">On Going</option>
                                         <option value="Case Closed">Case Closed</option>
@@ -124,7 +124,7 @@
                         </div>
                     </div>
 
-                    <div class="row mb-4 card p-4"
+                    <div class="row mb-4 card p-4 bg-white"
                         v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0">
                         <div class="col-md-12">
                             <h4>Severity</h4>
@@ -150,7 +150,7 @@
                     </div>
 
                     <!-- Additional fields -->
-                    <div class="mb-4 card p-4 mx-0" v-if="selectedUser">
+                    <div class="mb-4 card p-4 mx-0 bg-white" v-if="selectedUser">
                         <div class="col-12">
                             <h6>Non-Medical Drug use through injection: <span class="text-primary">{{
                         selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></h6>
@@ -163,8 +163,7 @@
                     </div>
 
 
-
-                    <div class="row mb-4 card p-4"
+                    <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'school_counselor' }"
                         v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                         <div class="col-md-12">
                             <h4>Services and Treatment</h4>
@@ -290,6 +289,7 @@ const showModal = ref(false);
 const selectedUser = ref(null);
 const officialOptions = ref([]);
 // const isSaveEnabled = ref(false);
+const selfRole = ref('');
 
 const rowData = ref([]);
 const searchQuery = ref('');
@@ -551,6 +551,13 @@ const referCase = async () => {
 };
 
 onMounted(getServiceList);
+
+onMounted(() => {
+    const self = JSON.parse(localStorage.getItem('userDetailsStore'));
+    if (self) {
+        selfRole.value = self.user.role;
+    }
+});
 
 </script>
 

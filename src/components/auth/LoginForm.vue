@@ -140,10 +140,9 @@ const fetchUserAndAgencyDetails = async (userRole) => {
                 text: 'Your data has been successfully retrieved.',
                 icon: 'success',
                 showConfirmButton: false,
-                timer: 1200
+                timer: 1500
             });
 
-            // Redirect to the appropriate dashboard
             redirectToDashboard(userRole);
         } else {
             // Show error message based on the response message

@@ -1,74 +1,74 @@
 <template>
-    <div class="row">
-      <div class="col-4">
-        <div class="card bg-light h-100">
-          <div class="card-header">
-            <h4 class="text-center">Assists</h4>
-          </div>
-          <div class="card-body">
-            <button class="btn btn-primary btn-block mb-3" @click="handleLifetimeUserClick">
-              <h1>{{ totalLifetimeUsers }}</h1>
-              <p class="mb-0">Life Time User</p>
-            </button>
-  
-            <button class="btn btn-primary btn-block mb-3" @click="handleDailyUsersClick">
-              <h1>{{totalDailySubstanceUsers }}</h1>
-              <p class="mb-0">Daily Substance Users</p>
-            </button>
-  
-            <button class="btn btn-primary btn-block mb-3" @click="handleSubstanceSeverityClick">
-            
-              Each Substance Severity
-            </button>
-          </div>
+  <div class="row">
+    <div class="col-4">
+      <div class="card bg-light h-100">
+        <div class="card-header">
+          <h4 class="text-center">Assists</h4>
         </div>
-      </div>
-  
-      <div class="col-8">
-        <div class="card w-100 h-100" >
-          <div class="card-header text-center">
-            <h4 class="graph-title">Assist Graph</h4>
-          </div>
-          <div class="card-body d-flex justify-content-center align-items-center w-100 h-50">
-      <canvas id="myChart"></canvas>
-    </div>
+        <div class="card-body">
+          <button class="btn btn-primary btn-block mb-3" @click="handleLifetimeUserClick">
+            <h1>{{ totalLifetimeUsers }}</h1>
+            <p class="mb-0">Life Time User</p>
+          </button>
+
+          <button class="btn btn-primary btn-block mb-3" @click="handleDailyUsersClick">
+            <h1>{{ totalDailySubstanceUsers }}</h1>
+            <p class="mb-0">Daily Substance Users</p>
+          </button>
+
+          <button class="btn btn-primary btn-block mb-3" @click="handleSubstanceSeverityClick">
+
+            Each Substance Severity
+          </button>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import {computed } from 'vue';
-  import Chart from 'chart.js/auto';
-  
-  const substanceData = [
-   
-    { "substance": "Tobacco", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Tobacco", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Tobacco", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Tobacco", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Alcohol", "gender": "female", "risk": "high risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Alcohol", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Cannabis", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Cannabis", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
-    
-    { "substance": "Cocaine", "gender": "female", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Cocaine", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Amphetamine-type stimulants", "gender": "male", "risk": "high risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Amphetamine-type stimulants", "gender": "female", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Inhalant", "gender": "female", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Inhalant", "gender": "male", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Sedative", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Sedative", "gender": "male", "risk": "high low", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Hallucinate", "gender": "female", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Hallucinate", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Hallucinate", "gender": "female", "risk": "high risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Opioids", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Tobacco", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
-    { "substance": "Tobacco", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Sedative", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
-    { "substance": "Sedative", "gender": "male", "risk": "high low", "daily_use": "no", "life_time_use": "yes" }
-  ];
+
+    <div class="col-8">
+      <div class="card w-100 h-100">
+        <div class="card-header text-center">
+          <h4 class="graph-title">Assist Graph</h4>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center w-100 h-50">
+          <canvas id="myChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+import Chart from 'chart.js/auto';
+
+const substanceData = [
+
+  { "substance": "Tobacco", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Tobacco", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Tobacco", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Tobacco", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Alcohol", "gender": "female", "risk": "high risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Alcohol", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Cannabis", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Cannabis", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
+
+  { "substance": "Cocaine", "gender": "female", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Cocaine", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Amphetamine-type stimulants", "gender": "male", "risk": "high risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Amphetamine-type stimulants", "gender": "female", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Inhalant", "gender": "female", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Inhalant", "gender": "male", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Sedative", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Sedative", "gender": "male", "risk": "high low", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Hallucinate", "gender": "female", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Hallucinate", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Hallucinate", "gender": "female", "risk": "high risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Opioids", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Tobacco", "gender": "female", "risk": "low risk", "daily_use": "no", "life_time_use": "yes" },
+  { "substance": "Tobacco", "gender": "male", "risk": "low risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Sedative", "gender": "male", "risk": "high risk", "daily_use": "yes", "life_time_use": "yes" },
+  { "substance": "Sedative", "gender": "male", "risk": "high low", "daily_use": "no", "life_time_use": "yes" }
+];
 // Computed property to calculate total lifetime users
 const totalLifetimeUsers = computed(() => {
   return substanceData.filter(item => item.life_time_use === 'yes').length;
@@ -79,8 +79,8 @@ const totalDailySubstanceUsers = computed(() => {
   return substanceData.filter(item => item.daily_use === 'yes').length;
 });
 
-  //graph
-  let myChart = null;
+//graph
+let myChart = null;
 
 const handleLifetimeUserClick = () => {
   const lifetimeUsersData = substanceData.filter(item => item.life_time_use === "yes");
@@ -209,5 +209,4 @@ const updateChart = (chartTitle, labels, data) => {
 };
 
 
-  </script>
-  
+</script>
