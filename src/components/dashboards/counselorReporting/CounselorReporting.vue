@@ -46,9 +46,9 @@ const globalFilter = ref('');
 const filteredData = ref([]);
 // eslint-disable-next-line no-unused-vars
 const globalFilterFields = [
-  'date', 'username', 'age', 'sex', 'past_mental_disorder_history',
-  'depression_severity', 'general_anxiety_severity', 'adverse_childhood_experience', 'suicidal_measurement',
-  'tobacco_measurement', 'alcoholic_beverages', 'cannabis', 'cocaine','amphetamine-type_stimulants','inhalants','sedatives_or_sleeping_pills',
+  'date', 'username', 'age', 'sex', 'past_diagnosis',
+  'gad_measurement', 'phq_measurement', 'ace_measurement', 'suicidal_measurement',
+  'tobacco_measurement', 'alcoholic_measurement', 'cannabis', 'cocaine','amphetamine-type_stimulants','inhalants','sedatives_or_sleeping_pills',
   'hallucinogens','opioids','other','injection_use'
 ];
 const tableFields = [
@@ -56,22 +56,22 @@ const tableFields = [
   { key: 'username', header: 'Name' },
   { key: 'age', header: 'Age' },
   { key: 'sex', header: 'Sex' },
-  { key: 'past_mental_disorder_history', header: 'Past Mental Disorder History' },
+  { key: 'past_diagnosis', header: 'Past Mental Disorder History' },
   { key: 'suicidal_measurement', header: 'Suicidal Measurement' },
-  { key: 'depression_severity', header: 'Depression Severity' },
-  { key: 'general_anxiety_severity', header: 'General Anxiety Severity' },
-  { key: 'adverse_childhood_experience', header: 'Adverse Childhood Experience' },
+  { key: 'gad_measurement', header: 'Depression Severity' },
+  { key: 'phq_measurement', header: 'General Anxiety Severity' },
+  { key: 'ace_measurement', header: 'Adverse Childhood Experience' },
   { key: 'tobacco_measurement', header: 'Tobacco Measurement' },
   { key: 'alcoholic_measurement', header: 'Alcoholic beverages' },
-  { key: 'cannabis', header: 'Cannabis' },
-  { key: 'cocaine', header: 'Cocaine' },
-  { key: 'amphetamine-type_stimulants', header: 'Amphetamine-type stimulants' },
-  { key: 'inhalants', header: 'Inhalants' },
-  { key: 'sedatives_or_sleeping_pills', header: 'Sedatives or Sleeping Pills' },
-  { key: 'hallucinogens', header: 'Hallucinogens' },
-  { key: 'opioids', header: 'Opioids' },
-  { key: 'other', header: 'Other' },
-  { key: 'injection_use', header: 'Have you ever used any drug by injection? (NON-MEDICAL USE ONLY)' },
+  { key: 'cannabis_measurement', header: 'Cannabis' },
+  { key: 'cocaine_measurement', header: 'Cocaine' },
+  { key: 'amphetamine_measurement', header: 'Amphetamine-type stimulants' },
+  { key: 'inhalants_measurement', header: 'Inhalants' },
+  { key: 'sedatives_measurement', header: 'Sedatives or Sleeping Pills' },
+  { key: 'hallucinogens_measurement', header: 'Hallucinogens' },
+  { key: 'opioids_measurement', header: 'Opioids' },
+  { key: 'other_measurement', header: 'Other' },
+  { key: 'injection_measurement', header: 'Have you ever used any drug by injection? (NON-MEDICAL USE ONLY)' },
 ];
 const selectedOption = ref('general Report'); // Default option
 

@@ -35,7 +35,7 @@
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
-        </template>
+        </template>  
       </Column>
       <!-- Substance Risk -->
       <Column header="Alcohol" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
