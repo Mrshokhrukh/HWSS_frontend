@@ -100,6 +100,7 @@ const endpoints = {
   rescreenSubmission: `${moitoringBaseUrl}/submit-rescreening/`,
   getUserMonitoringDetails: `${moitoringBaseUrl}/get-user-monitoring-details/`,
   updateServiceAndTreatment: `${moitoringBaseUrl}/update-service-and-treatment/`,
+  updateReferralStatus: `${moitoringBaseUrl}/update-referral-status/`,
 
   // reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,

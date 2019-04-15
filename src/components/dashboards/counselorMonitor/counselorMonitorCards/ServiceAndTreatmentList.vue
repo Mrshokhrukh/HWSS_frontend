@@ -41,7 +41,8 @@
                         <div class="card-img-top" :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
                         </div>
                         <div class="card-body">
-                            <h5 class="card-title mb-3 hwss-primary">{{ selectedUser.first_name }} {{ selectedUser.middle_name }} {{
+                            <h5 class="card-title mb-3 hwss-primary">{{ selectedUser.first_name }} {{
+                        selectedUser.middle_name }} {{
                         selectedUser.last_name }}</h5>
                             <ul class="list-unstyled ">
                                 <li class="mb-3"><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
@@ -453,7 +454,71 @@ const saveChanges = () => {
                             icon: 'success',
                             title: 'Changes saved successfully!',
                             showConfirmButton: false,
-                            timer: 1500 // Auto close after 1.5 seconds
+                            timer: 1500, // Auto close after 1.5 seconds
+                        });
+                        window.location.reload();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Something went wrong!',
+                            footer: 'Please try again later.',
+                            confirmButtonText: 'OK'
+                        })
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Something went wrong!',
+                        footer: 'Please try again later.',
+                        confirmButtonText: 'OK'
+                    })
+                    console.error('Error saving data:', error);
+                });
+        }
+    });
+};
+
+const referCase = async () => {
+    if (!selectedUser.value) {
+        console.error('Selected user is missing.');
+        return;
+    }
+    // Get self id from localstorage
+    const counselor = JSON.parse(localStorage.getItem('userDetailsStore'));
+    const counselorId = counselor.user.id;
+    const selectedUserData = selectedUser.value;
+    const referredToName = selectedUserData.official;
+
+    // Get form data
+    const formData = {
+        referData: {
+            referred_by: counselorId,
+            referred_to_name: referredToName,
+            user: selectedUserData.id,
+        },
+    };
+
+    console.log(formData);
+    handleModalClose();
+    Swal.fire({
+        title: 'Confirm Save Changes!',
+        text: 'All Changes will be saved!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, save it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            axios.post(endpoints.updateReferralStatus, JSON.stringify(formData))
+                .then(response => {
+                    if (response.status === 200) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Referral saved successfully!',
+                            showConfirmButton: false,
+                            timer: 1500
                         });
                         window.location.reload();
                     } else {
