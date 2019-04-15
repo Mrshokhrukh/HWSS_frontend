@@ -1,9 +1,8 @@
 <template>
     <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
         <!-- This container centers its children -->
-        <div class="container my-auto">
-            <div class="container authbg cust-margin">
-                <div class="card shadow-card my-5  shadow-lg bg-body rounded">
+            <div class="authbg cust-margin w-50">
+                <div class="card shadow-card my-5 shadow-lg bg-body rounded">
                     <div class="row g-0 loginbg">
                         <div class="col-md-7">
                             <div class="card-body d-flex flex-column justify-content-center align-items-center"
@@ -76,7 +75,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </template>
 

@@ -1,8 +1,8 @@
 <template>
     <div class="vh-100 d-flex justify-content-center align-items-center authbg cust-margin">
-        <div class="card shadow-card my-5 shadow-lg bg-body rounded w-75">
+        <div class="card shadow-card my-5 shadow-lg bg-body w-50">
             <div class="row g-0 loginbg">
-                <div class="col-md-7 d-flex align-items-center">
+                <div class="col-7 d-flex align-items-center">
                     <div class="card-body">
                         <div class="auth-form text-center">
                             <h1 class="text-center my-3 bold" style="color: #2B656F;">Sign In</h1>

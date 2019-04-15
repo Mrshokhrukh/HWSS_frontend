@@ -75,8 +75,6 @@ const showModal = ref(false);
 const loading = ref(true);
 const clusterTestStatus = ref("");
 
-const cacheDuration = 5 * 60 * 1000;
-
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
 	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
@@ -95,35 +93,11 @@ async function fetchAppName() {
 
 async function navigateToScreening() {
     loading.value = true;
-    const cacheKey = "clusterTestStatus";
-    const cachedData = localStorage.getItem(cacheKey);
-    const now = new Date();
-
-    if (cachedData) {
-        const { expiry, data } = JSON.parse(cachedData);
-        if (now.getTime() - expiry < cacheDuration) {
-            // Use cached data if not expired
-            clusterTestStatus.value = data; // Set clusterTestStatus value here
-            loading.value = false;
-            if (data === "active") {
-                showModalBasedOnStatus("active"); // Show modal or redirect based on status
-            } else {
-                showModalBasedOnStatus("inactive"); // Show modal for 'inactive' or 'disabled'
-            }
-            return;
-        }
-    }
-
-    // Fetch new data if cache is empty or expired
     try {
         const response = await axios.get(endpoints.ScreeningPreTests);
         const clusterTest = response.data.find((test) => test.name === "Cluster Screening");
         if (clusterTest) {
             clusterTestStatus.value = clusterTest.status;
-            localStorage.setItem(
-                cacheKey,
-                JSON.stringify({ expiry: now.getTime(), data: clusterTest.status })
-            );
             showModalBasedOnStatus(clusterTest.status);
         } else {
             console.error("Cluster test not found");
