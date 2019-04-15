@@ -56,23 +56,45 @@ const tableFields = [
   { key: 'username', header: 'Name' },
   { key: 'age', header: 'Age' },
   { key: 'sex', header: 'Sex' },
-  { key: 'past_diagnosis', header: 'Past Mental Disorder History' },
+  { key: 'present_dzongkhag', header: 'Present Dzongkhag' },
+  { key: 'present_gewog', header: 'Present Gewog' },
+  { key: 'present_village', header: 'Present Village' },
+  { key: 'user_code', header: 'User Code' },
+  { key: 'parent_occupation', header: 'Parent Occupation' },
+  { key: 'guardian_name', header: 'Guardian Name' },
+  { key: 'guardian_occupation', header: 'Guardian Occupation' },
+  { key: 'parent_status', header: 'Parent Status' },
+  { key: 'current_living_with', header: 'Current Living With' },
+  { key: 'user_role_agency', header: 'User Role Agency' },
+  { key: 'user_class', header: 'User Class' },
+  { key: 'user_stream', header: 'User Stream' },
+  { key: 'user_sub_class', header: 'User Sub Class' },
+  { key: 'past_diagnosis', header: 'Past Diagnosis' },
+  { key: 'gad_measurement', header: 'GAD Measurement' },
+  { key: 'phq_measurement', header: 'PHQ Measurement' },
   { key: 'suicidal_measurement', header: 'Suicidal Measurement' },
-  { key: 'gad_measurement', header: 'Depression Severity' },
-  { key: 'phq_measurement', header: 'General Anxiety Severity' },
-  { key: 'ace_measurement', header: 'Adverse Childhood Experience' },
+  { key: 'ace_measurement', header: 'ACE Measurement' },
+  { key: 'alcoholic_measurement', header: 'Alcoholic Measurement' },
   { key: 'tobacco_measurement', header: 'Tobacco Measurement' },
-  { key: 'alcoholic_measurement', header: 'Alcoholic beverages' },
-  { key: 'cannabis_measurement', header: 'Cannabis' },
-  { key: 'cocaine_measurement', header: 'Cocaine' },
-  { key: 'amphetamine_measurement', header: 'Amphetamine-type stimulants' },
-  { key: 'inhalants_measurement', header: 'Inhalants' },
-  { key: 'sedatives_measurement', header: 'Sedatives or Sleeping Pills' },
-  { key: 'hallucinogens_measurement', header: 'Hallucinogens' },
-  { key: 'opioids_measurement', header: 'Opioids' },
-  { key: 'other_measurement', header: 'Other' },
-  { key: 'injection_measurement', header: 'Have you ever used any drug by injection? (NON-MEDICAL USE ONLY)' },
+  { key: 'cannabis_measurement', header: 'Cannabis Measurement' },
+  { key: 'cocaine_measurement', header: 'Cocaine Measurement' },
+  { key: 'amphetamine_measurement', header: 'Amphetamine Measurement' },
+  { key: 'inhalants_measurement', header: 'Inhalants Measurement' },
+  { key: 'sedatives_measurement', header: 'Sedatives Measurement' },
+  { key: 'hallucinogens_measurement', header: 'Hallucinogens Measurement' },
+  { key: 'opioids_measurement', header: 'Opioids Measurement' },
+  { key: 'injection_measurement', header: 'Injection Measurement' },
+  { key: 'other_measurement', header: 'Other Measurement' },
+  { key: 'other_name', header: 'Other Name' },
+  { key: 'assessment_status', header: 'Assessment Status' },
+  { key: 'case_status', header: 'Case Status' },
+  { key: 'counseling', header: 'Counseling' },
+  { key: 'follow_up', header: 'Follow Up' },
+  { key: 'comments', header: 'Comments' },
+  { key: 'referral_status', header: 'Referral Status' },
+  { key: 'referral_remarks', header: 'Referral Remarks' },
 ];
+
 const selectedOption = ref('general Report'); // Default option
 
 const options = [
@@ -89,7 +111,6 @@ const isSchoolCounselor = computed(() => {
 const fetchReportData = async () => {
   try {
     const response = await axios.get(endpoints.generateReport);
-    console.log('Report data:', response.data);
     if (response.data && Array.isArray(response.data)) {
       reportData.value = response.data;
       filteredData.value = response.data;

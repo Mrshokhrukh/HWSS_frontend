@@ -7,7 +7,9 @@
       <div class="row">
         <div :class="columnClass" v-for="(buttonRow, index) in buttonRows" :key="index">
           <div v-for="(data, dataIndex) in buttonRow" :key="dataIndex" class="my-3">
-            <router-link :to="`/counselor-dashboard/flagged-reports?flag=${data.text.toLowerCase()}`" class="card bg-hwss" @click="handleButtonClick(data)">
+            <router-link
+              :to="`/counselor-dashboard/flagged-reports?flag=${data.text.toLowerCase()}&measurement=${selectedMeasurement}`"
+              class="card bg-hwss" @click="handleButtonClick(data)">
               <div class="card-body d-flex align-items-center justify-content-center p-3">
                 <div class="color-dot" :style="{ background: determineFlag(data.flag) }"></div>
                 <h5 class="card-title mx-2 text-capitalize">{{ data.text }}</h5>
@@ -23,13 +25,13 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, inject } from 'vue';
 
 const measurementData = ref(inject('measurementData'));
 const measuremenAssisttData = ref(inject('measuremenAssisttData'));
 const maxButtonsInRow = 3;
+const selectedMeasurement = ref('');
 
 const buttonData = computed(() => {
   const cardTitle = props.cardTitle.toLowerCase();
@@ -146,8 +148,33 @@ const selectedButtonData = ref(null);
 
 const handleButtonClick = (data) => {
   selectedButtonData.value = data;
-  // Show your modal here
+  selectedMeasurement.value = determineMeasurement(props.cardTitle);
 };
+
+const determineMeasurement = (cardTitle) => {
+  console.log('Card Title:', cardTitle);
+  let measurement = '';
+  switch (cardTitle.toLowerCase()) {
+    case 'suicidal behavior':
+      measurement = 'suicidal_measurement';
+      break;
+    case 'depression':
+      measurement = 'phq_measurement';
+      break;
+    case 'anxiety':
+      measurement = 'gad_measurement';
+      break;
+    case 'ace':
+      measurement = 'ace_measurement';
+      break;
+    default:
+      console.warn('No matching measurement found for card title:', cardTitle);
+      break;
+  }
+  console.log('Measurement:', measurement);
+  return measurement;
+};
+
 </script>
 
 <style scoped>
