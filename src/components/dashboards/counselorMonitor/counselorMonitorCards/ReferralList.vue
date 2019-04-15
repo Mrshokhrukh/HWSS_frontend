@@ -19,9 +19,6 @@
             <!-- <h5 class="card-title">{{ selectedValue }}</h5> -->
             <component :is="selectedTable" :referrals="referrals"></component>
         </div>
-        <div class="row mt-4 d-flex justify-content-end">
-            <button class="btn hwss-btn col-1" @click="saveChanges">Save Changes</button>
-        </div>
     </div>
 </template>
   
@@ -37,9 +34,6 @@ const selectedValue = ref('referralList');
 
 const selectedTable = ref(ReferralListTable);
 
-const saveChanges = async () => {
-    // Implement saveChanges logic
-};
 
 
 watchEffect(() => {

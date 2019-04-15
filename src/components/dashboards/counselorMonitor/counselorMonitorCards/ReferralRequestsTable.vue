@@ -1,159 +1,194 @@
 <template>
-    <DataTable v-model:filters="filters" :value="filteredReferrals" paginator showGridlines :rows="10" dataKey="id"
-               filterDisplay="menu" :globalFilterFields="['name', 'age', 'gender', 'class', 'section_stream', 'school_name', 'dzongkhag', 'parental_status', 'assessment_status', 'counseling', 'follow_up', 'comments', 'referred_by']">
-      <template #header>
-        <div class="flex justify-content-between">
-          <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter()" />
-        </div>
+  <DataTable v-model:filters="filters" :value="rowData" :paginator="true" :rows="10" :dataKey="'id'" filterMode="menu"
+    :filters="{ 'global': { matchMode: 'contains' } }" :emptyMessage="'No referral requests found.'"
+    :loading="rowData.length === 0">
+    <template #header>
+      <div class="flex justify-content-between">
+        <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter()" />
+      </div>
+    </template>
+    <template #empty> No referral requests found. </template>
+    <template #loading> Loading referral requests data. Please wait. </template>
+    <Column field="date" header="Date" :filterMatchMode="'startsWith'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ formatDate(data.date) }}
       </template>
-      <template #empty> No referrals found. </template>
-      <template #loading> Loading referrals data. Please wait. </template>
-      <Column field="name" header="Name" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by name" />
-        </template>
-      </Column>
-      <Column field="age" header="Age" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by age" />
-        </template>
-      </Column>
-      <Column field="gender" header="Gender" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="genderOptions" optionLabel="gender" placeholder="Search by gender" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="class" header="Class" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="classOptions" optionLabel="class" placeholder="Search by class" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="section_stream" header="Section/Stream" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="sectionStreamOptions" optionLabel="sectionStream" placeholder="Search by section/stream" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="school_name" header="School Name" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="schoolNameOptions" optionLabel="schoolName" placeholder="Search by school name" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="dzongkhag" header="Dzongkhag (of the school)" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="dzongkhagOptions" optionLabel="dzongkhag" placeholder="Search by dzongkhag" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="parental_status" header="Parental Status" style="min-width: 10rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="parentalStatusOptions" optionLabel="parentalStatus" placeholder="Search by parental status" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="assessment_status" header="Assessment Status" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="assessmentStatusOptions" optionLabel="assessmentStatus" placeholder="Search by assessment status" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="counseling" header="Counseling" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="counselingOptions" optionLabel="counseling" placeholder="Search by counseling" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="follow_up" header="Follow-up" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="followUpOptions" optionLabel="followUp" placeholder="Search by follow-up" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="comments" header="Comments" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="commentsOptions" optionLabel="comments" placeholder="Search by comments" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="referred_by" header="Referred by" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="referredByOptions" optionLabel="referredBy" placeholder="Search by referred by" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column header="Action" style="min-width: 10rem">
-        <template #body="{ data }">
-          <Button type="button" icon="pi pi-check" class="p-button-success" @click="acceptAction(data)" />
-          <Button type="button" icon="pi pi-times" class="p-button-danger" @click="rejectAction(data)" />
-        </template>
-      </Column>
-    </DataTable>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted } from 'vue';
-  import axios from 'axios';
-  import endpoints from '@/api';
-  import { FilterMatchMode } from 'primevue/api';
-  
-  const referrals = ref([]);
-  const rowData = ref([]);
-  const filters = ref();
-  const genderOptions = ref([]);
-  const classOptions = ref([]);
-  const sectionStreamOptions = ref([]);
-  const schoolNameOptions = ref([]);
-  const dzongkhagOptions = ref([]);
-  const parentalStatusOptions = ref([]);
-  const assessmentStatusOptions = ref([]);
-  const counselingOptions = ref([]);
-  const followUpOptions = ref([]);
-  const commentsOptions = ref([]);
-  const referredByOptions = ref([]);
-  
-  const initFilters = () => {
-    filters.value = {
-      global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-      name: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-      age: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }] },
-      gender: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      class: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      section_stream: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      school_name: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      dzongkhag: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      parental_status: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      assessment_status: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      counseling: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      follow_up: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      comments: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-      referred_by: { operator: FilterMatchMode.AND, constraints: [{ value: null, matchMode: FilterMatchMode.IN }] },
-    };
-  };
-  
-  initFilters();
-  
-  const clearFilter = () => {
-    initFilters();
-    applyFilters();
-  };
-  
-  const applyFilters = () => {
-    // Apply filters logic based on the selected filter values
-  };
-  
-  const loadData = async () => {
-    try {
-      const response = await axios.get(endpoints.getReferralList);
-      referrals.value = response.data.referral_list;
-      applyFilters();
-      // Extract unique options for filters if needed
-    } catch (error) {
-      console.error('Error loading data:', error);
+      <template #filter="{ filterModel }">
+        <InputText v-model="filterModel['date']" type="text" class="p-column-filter" placeholder="Search by date" />
+      </template>
+    </Column>
+    <Column field="user_data.name" header="Name" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.user_data.name }}
+      </template>
+      <template #filter="{ filterModel }">
+        <InputText v-model="filterModel['user_data.name']" type="text" class="p-column-filter"
+          placeholder="Search by name" />
+      </template>
+    </Column>
+    <!-- Include additional columns -->
+
+    <Column field="user_data.age" header="Age" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '8rem' }" />
+    <Column field="user_data.gender" header="Gender" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '8rem' }" />
+    <Column field="referred_to.name" header="Referred To" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }" />
+    <Column field="referred_by.username" header="Referred By" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }" />
+    <Column field="referral_status" header="Referral Status" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '10rem' }" />
+    <Column field="assessment_status" header="Assessment Status" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '12rem' }" />
+    <Column field="counseling_status" header="Counseling Status" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '12rem' }" />
+    <Column field="follow_up" header="Follow Up" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '12rem' }" />
+    <Column field="comments" header="Comments" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }" />
+
+    <Column :style="{ 'min-width': '8rem' }" header="Actions">
+      <template #body="{ rowData }">
+        <Button type="button" icon="pi pi-pencil" label="View" class="btn hwss-btn"
+          @click="showCustomConfirmDialog(rowData)" />
+      </template>
+    </Column>
+
+  </DataTable>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+import Swal from 'sweetalert2';
+
+const referrals = ref([]);
+const rowData = ref([]);
+const filters = ref({});
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return ''; // Return empty string if the date is invalid
+  } else {
+    return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+  }
+};
+
+const loadData = async () => {
+  const counselor_id = JSON.parse(localStorage.getItem('userDetailsStore'));
+  console.log(counselor_id.user.id);
+  try {
+    const response = await axios.get(endpoints.getReferralList);
+    referrals.value = response.data.referral_list.filter(referral => referral.referred_to.user_id === counselor_id.user.id);
+    rowData.value = referrals.value;
+    console.log('the rowData is:', rowData.value); //added this console log to check the rowData
+  } catch (error) {
+    console.error('Error loading data:', error);
+  }
+};
+
+const clearFilter = () => {
+  filters.value = {};
+};
+
+const showCustomConfirmDialog = async () => {
+  await loadData(); // Wait for data to be loaded
+  Swal.fire({
+    title: 'Confirm Action',
+    text: 'Do you want to accept or reject this referral?',
+    icon: false,
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Accept',
+    cancelButtonText: 'Reject'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      acceptReferral(rowData.value[0]); // Pass the first element of rowData
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+      showRejectReasonDialog(rowData.value[0]);
     }
-  };
-  
-  const acceptAction = (data) => {
-    // Logic for accepting referral
-  };
-  
-  const rejectAction = (data) => {
-    // Logic for rejecting referral
-  };
-  
-  onMounted(async () => {
-    await loadData();
   });
-  </script>
-  
+};
+
+
+const showRejectReasonDialog = (referral) => {
+  Swal.fire({
+    title: 'Reject Reason',
+    input: 'text',
+    inputLabel: 'Please provide a reason for rejection',
+    inputPlaceholder: 'Reason...',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'Submit',
+    cancelButtonText: 'Cancel',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'You need to provide a reason!';
+      }
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      rejectReferral(referral, result.value);
+    }
+  });
+};
+
+const acceptReferral = async (referral) => {
+  console.log('Referral:', referral); 
+  try {
+    const referredToUserId = referral.referred_to.user_id;
+    const patientId = referral.user_data.patient_id;
+
+    const response = await axios.post(endpoints.acceptReferral, { referredToUserId, patientId });
+    // Optionally, you can reload data or show a success message
+    console.log('Referral accepted:', referral);
+    Swal.fire({
+      icon: 'success',
+      title: 'Referral Accepted',
+      text: response.data.message,
+      timer: 1500
+    });
+    window.location.reload();
+  } catch (error) {
+    console.error('Error accepting referral:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'An error occurred while accepting the referral.'
+    });
+  }
+};
+
+
+const rejectReferral = async (referral, reason) => {
+  try {
+    const referredToUserId = referral.referred_to.user_id;
+    const patientId = referral.user_data.patient_id;
+
+    const response = await axios.post(endpoints.rejectReferral, { referredToUserId, patientId, reason });
+    // Optionally, you can reload data or show a success message
+    console.log('Referral rejected with reason:', referral, reason);
+    Swal.fire({
+      icon: 'success',
+      title: 'Referral Rejected', 
+      text: response.data.message
+    });
+  } catch (error) {
+    console.error('Error rejecting referral:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'An error occurred while rejecting the referral.'
+    });
+  }
+};
+
+onMounted(async () => {
+  await loadData();
+});
+</script>

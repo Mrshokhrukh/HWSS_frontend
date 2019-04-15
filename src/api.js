@@ -101,6 +101,8 @@ const endpoints = {
   getUserMonitoringDetails: `${moitoringBaseUrl}/get-user-monitoring-details/`,
   updateServiceAndTreatment: `${moitoringBaseUrl}/update-service-and-treatment/`,
   updateReferralStatus: `${moitoringBaseUrl}/update-referral-status/`,
+  rejectReferral: `${moitoringBaseUrl}/reject-referral/`,
+  acceptReferral: `${moitoringBaseUrl}/accept-referral/`,
 
   // reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,
