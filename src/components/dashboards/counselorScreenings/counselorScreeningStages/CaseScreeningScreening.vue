@@ -244,7 +244,8 @@ const handleSuccessResponse = (response) => {
             if (ClientUserIdCaseBase.length > 0) {
                 window.location.reload();
             } else {
-                // router.push('/counselor-dashboard'); 
+                clearLocalStorageData
+                router.push('/counselor-dashboard'); 
                 console.log('No more users to assess');
             }
         });

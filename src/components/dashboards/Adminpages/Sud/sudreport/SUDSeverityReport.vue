@@ -30,13 +30,71 @@
         </template>
       </Column>
       <!-- Substance -->
-      <Column header="Substance" field="substanceWise" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Tobacco" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
         <template #body="{ data }">
-          {{ data.substanceWise }}
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
         </template>
       </Column>
       <!-- Substance Risk -->
-      <Column header="Substance Risk" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Alcohol" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Cannabis" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Cocaine" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Amphetamine-type stimulants" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Inhalant" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Sedative" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Hallucinate" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Opioids" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Others" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}

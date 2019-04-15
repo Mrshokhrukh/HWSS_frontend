@@ -27,6 +27,7 @@
     "sweetalert2": "^11.10.5",
     "unplugin-auto-import": "^0.17.5",
     "unplugin-vue-components": "^0.26.0",
+    "video.js": "^8.10.0",
     "vue": "^3.3.11",
     "vue-chartkick": "^1.1.0",
     "vue-confetti": "^2.3.0",
