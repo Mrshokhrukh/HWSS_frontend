@@ -1,12 +1,10 @@
 <template>
   <div class="card l">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
-      filterDisplay="row" :loading="loading"
-      :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
+    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
+               :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
-            @click="clearFilter()" />
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
             <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
@@ -17,7 +15,21 @@
       <template #loading> Loading data. Please wait. </template>
 
       <!-- Severity Report -->
-
+      <Column header="Depression" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          {{ data.lifetimeUse }}
+        </template>
+      </Column>
+      <Column header="Anxiety" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          {{ data.lifetimeUse }}
+        </template>
+      </Column>
+      <Column header="ACE" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          {{ data.lifetimeUse }}
+        </template>
+      </Column>
 
       <!-- Lifetime Use -->
       <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem">
@@ -32,16 +44,73 @@
         </template>
       </Column>
       <!-- Substance -->
-      <Column header="Substance" field="substanceWise" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Tobacco" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
         <template #body="{ data }">
-          {{ data.substanceWise }}
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
         </template>
       </Column>
       <!-- Substance Risk -->
-      <Column header="Substance Risk" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Alcohol" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
         <template #body="{ data }">
-          <span
-            :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Cannabis" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Cocaine" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Amphetamine-type stimulants" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Inhalant" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Sedative" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Hallucinate" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Opioids" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
+            {{ data.substanceRisk }}
+          </span>
+        </template>
+      </Column>
+      <Column header="Others" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+        <template #body="{ data }">
+          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
@@ -123,8 +192,8 @@ const filteredData = computed(() => {
 onMounted(() => {
   // Dummy Data
   monitorData.value = [
-    { id: 1, depression: 'Mild', anxiety: 'Moderate', ace: 'High', suicidalBehaviours: 'Low', lifetimeUse: 'No', currentUse: 'Yes', substanceWise: 'Alcohol', substanceRisk: 'Moderate', year: '2022', gender: 'Male', dzongkha: 'Yes', location: 'Agency 1', age: '30', class: '10', employmentHistory: 'Working' },
-    { id: 2, depression: 'Moderate', anxiety: 'Mild', ace: 'Low', suicidalBehaviours: 'Moderate', lifetimeUse: 'Yes', currentUse: 'No', substanceWise: 'Tobacco', substanceRisk: 'High', year: '2023', gender: 'Female', dzongkha: 'No', location: 'Agency 2', age: '25', class: '12', employmentHistory: 'Not working' },
+    { id: 1, depression: 'Mild', anxiety: 'Moderate', ace: 'High', suicidalBehaviours: 'Low', lifetimeUse: 'No', currentUse: 'Yes', substanceWise: 'Alcohol',substanceRisk: 'Moderate', year: '2022', gender: 'Male', dzongkha: 'Yes', location: 'Agency 1', age: '30', class: '10', employmentHistory: 'Working' },
+    { id: 2, depression: 'Moderate', anxiety: 'Mild', ace: 'Low', suicidalBehaviours: 'Moderate', lifetimeUse: 'Yes', currentUse: 'No', substanceWise: 'Tobacco',substanceRisk: 'High', year: '2023', gender: 'Female', dzongkha: 'No', location: 'Agency 2', age: '25', class: '12', employmentHistory: 'Not working' },
     // Add more dummy data as needed
   ];
   loading.value = false;

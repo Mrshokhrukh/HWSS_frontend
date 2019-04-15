@@ -13,7 +13,7 @@
           <div class="card-body p-1 h-100">
               <!-- Example content -->
               <div class="col-md-12 mb-3">
-                  <label>Full Name</label>
+                  <label>User name</label>
                   <input type="text" class="form-control input-noneditable" readonly disabled
                       v-model="userDetailsStore.user.username">
               </div>
@@ -23,15 +23,11 @@
                       v-model="userDetailsStore.user.gender">
               </div>
               <div class="col-md-12 mb-3">
-                  <label>Date of Birth</label>
+                  <label>Employee ID</label>
                   <input type="text" class="form-control input-noneditable" readonly disabled
-                      v-model="userDetailsStore.user.dateOfBirth">
+                      v-model="userDetailsStore.userAgency.userCode">
               </div>
-              <div class="col-md-12 mb-3">
-                  <label>Role</label>
-                  <input type="text" class="form-control input-noneditable" readonly disabled
-                      v-model="userDetailsStore.user.role">
-              </div>
+              
               <div class="col-md-12 mb-3">
                   <label>School/Agency/Gyalsung Academy</label>
                   <input type="text" class="form-control input-noneditable" readonly disabled
