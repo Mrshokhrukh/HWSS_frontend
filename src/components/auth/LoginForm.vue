@@ -168,6 +168,7 @@ const redirectToDashboard = (userRole) => {
         school_counselor: 'counselor-dashboard',
         gyalsung_counselor: 'counselor-dashboard',
         clinical_counselor: 'counselor-dashboard',
+        trained_professional: 'counselor-dashboard',
         mh_admin: 'admin-dashboard',
         rd_admin: 'admin-dashboard',
         sud_admin: 'admin-dashboard',

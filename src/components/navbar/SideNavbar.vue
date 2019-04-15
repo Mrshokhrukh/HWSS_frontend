@@ -78,6 +78,8 @@ const userType = computed(() => {
 		return "admin";
 	} else if (role.includes("counselor")) {
 		return "counselor";
+	} else if (role.includes("professional")) {
+		return "counselor";
 	} else if (role === "student") {
 		return "student";
 	} else {

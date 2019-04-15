@@ -32,7 +32,7 @@
         </div>
     </div>
     <Dialog v-model:visible="showModal" maximizable modal header="User Details" @hide="handleModalClose"
-        :style="{ width: '100rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+        :style="{ width: '100rem', minHeight: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
         <div class="container-fluid mx-0 px-0">
             <div class="row">
                 <!-- Profile Card -->
@@ -113,7 +113,7 @@
                                     v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                                     <label for="caseStatus">Case Status:</label>
                                     <select class="form-control"
-                                        v-model="selectedUser.service_and_treatment_details[0].case_status" :disabled="selfRole === 'school_counselor'">
+                                        v-model="selectedUser.service_and_treatment_details[0].case_status" :disabled="selfRole === 'trained_professional'">
                                         <option :value="null" disabled>Select Case Status</option>
                                         <option value="On Going">On Going</option>
                                         <option value="Case Closed">Case Closed</option>
@@ -163,7 +163,7 @@
                     </div>
 
 
-                    <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'school_counselor' }"
+                    <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'trained_professional' }"
                         v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                         <div class="col-md-12">
                             <h4>Services and Treatment</h4>

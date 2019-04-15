@@ -55,6 +55,8 @@ const currentComponent = computed(() => {
       return CounsellorDashboard;
     case 'clinical_counselor':
       return CounsellorDashboard;
+    case 'trained_professional':
+      return CounsellorDashboard;
     case 'mh_admin':
       return AdminDashboard;
     case 'sud_admin':
