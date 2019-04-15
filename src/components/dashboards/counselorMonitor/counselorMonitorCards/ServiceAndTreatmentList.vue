@@ -368,7 +368,7 @@ const openModal = async (user) => {
             role: user.role,
             service_and_treatment_details: user.service_and_treatment_details,
             substance_risk_measurement_details: user.substance_risk_measurement_details,
- ,           // Add other fields as needed
+            // Add other fields as needed
         };
 
         showModal.value = true;
