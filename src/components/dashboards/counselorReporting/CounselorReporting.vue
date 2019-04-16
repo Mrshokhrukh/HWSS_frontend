@@ -14,7 +14,7 @@
 
     <!-- General Report Table -->
     <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
-      <DataTable :value="filteredData" :paginator="true" :rows="10">
+      <DataTable :value="filteredPatients" :paginator="true" :rows="10">
         <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
           :sortable="true">
           <template #body="{ data }">
@@ -48,8 +48,8 @@ const filteredData = ref([]);
 const globalFilterFields = [
   'date', 'username', 'age', 'sex', 'past_diagnosis',
   'gad_measurement', 'phq_measurement', 'ace_measurement', 'suicidal_measurement',
-  'tobacco_measurement', 'alcoholic_measurement', 'cannabis', 'cocaine','amphetamine-type_stimulants','inhalants','sedatives_or_sleeping_pills',
-  'hallucinogens','opioids','other','injection_use'
+  'tobacco_measurement', 'alcoholic_measurement', 'cannabis_measurement', 'cocaine_measurement','amphetamine_measurement','inhalants_measurement','sedatives_measurement',
+  'hallucinogens_measurement','opioids_measurement','other_measurement','injection_measurement'
 ];
 const tableFields = [
   { key: 'date', header: 'Date' },
@@ -125,6 +125,55 @@ const filterData = () => {
   });
   filteredData.value = filtered;
 }
+const filteredPatients = computed(() => {
+  let filtered = filteredData.value.filter(user => {
+    return Object.values(user).some(val => {
+      if (typeof val === 'string') {
+        return val.toLowerCase().includes(globalFilter.value.toLowerCase());
+      }
+      return false;
+    });
+  });
+
+  const riskColumns = [
+    'tobacco_measurement',
+    'alcoholic_measurement',
+    'cannabis_measurement',
+    'cocaine_measurement',
+    'amphetamine_measurement',
+    'inhalants_measurement',
+    'sedatives_measurement',
+    'hallucinogens_measurement',
+    'opioids_measurement',
+    'other_measurement'
+  ];
+
+  filtered.sort((a, b) => {
+    // Compare the risk levels based on the desired order
+    const riskOrder = ['high risk', 'moderate risk', 'low risk','no risk'];
+    const getRiskIndex = (risk) => riskOrder.indexOf(risk.toLowerCase());
+
+    const aRiskValues = riskColumns.map(column => a[column].toLowerCase());
+    const bRiskValues = riskColumns.map(column => b[column].toLowerCase());
+
+    for (let i = 0; i < riskColumns.length; i++) {
+      const aIndex = getRiskIndex(aRiskValues[i]);
+      const bIndex = getRiskIndex(bRiskValues[i]);
+
+      if (aIndex < bIndex) {
+        return -1;
+      } else if (aIndex > bIndex) {
+        return 1;
+      }
+    }
+
+    return 0;
+  });
+
+  return filtered;
+});
+
+
 
 // Watch for changes in global filter
 watch(globalFilter, filterData);

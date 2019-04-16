@@ -7,20 +7,20 @@
     <div class="row d-flex align-items-center mb-4">
       <div class="col-5">
         <!-- Search Input -->
-        <InputText v-model="tableSearch" placeholder="Search in table" class="hwss-searchbox w-100"></InputText>
+        <InputText v-model="tableSearch" placeholder="Search in table" class="w-100"></InputText>
       </div>
       <div class="col-5">
         <!-- Multiselect -->
         <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
-          display="chip" placeholder="Select Columns" class="custom-multiselect w-100" />
+          display="chip" placeholder="Select Columns" class="w-100" />
       </div>
       <div class="col-1">
         <!-- Rescreen Button -->
-        <Button class="btn hwss-btn w-100" @click="handleRescreen">Rescreen</Button>
+        <Button class="btn w-100" @click="handleRescreen">Rescreen</Button>
       </div>
       <div class="col-1">
         <!-- Export Button -->
-        <Button icon="pi pi-external-link" label="Export" @click="exportCSV($event)" class="btn hwss-btn" />
+        <Button icon="pi pi-external-link" label="Export" @click="exportCSV($event)" class="btn" />
       </div>
     </div>
 
@@ -29,13 +29,33 @@
       <DataTable v-model:selection="selectedUsers" :value="filteredPatients" :loading="loadingPatients"
         :paginator="true" :rows="10" resizableColumns size="large" columnResizeMode="expand"
         :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="multiple" :selection="selectedUsers"
-        @selectionChange="handleSelectionChange">
+        @selectionChange="handleSelectionChange" >
         <!-- Columns -->
         <Column selectionMode="multiple" headerStyle="width: 3rem" frozen class="font-bold"></Column>
-        <Column v-for="(col, index) of selectedColumns" :field="col.field" :header="col.header"
-          :key="col.field + '_' + index" :frozen="col.frozen === true ? true : false"
-          :sortable="true">
+        <Column field="date" header="Date" frozen sortable></Column>
+        <Column field="name" header="Name" frozen sortable></Column>
+        <Column field="age" header="Age" sortable></Column>
+        <Column field="sex" header="Sex" sortable></Column>
+        <Column field="pastDiagnosis" header="Past Diagnosis" sortable></Column>
+        <Column field="phqSeverity" header="PHQ Severity" sortable></Column>
+        <Column field="gadSeverity" header="GAD Severity" sortable></Column>
+        <Column field="aceSeverity" header="ACE Severity" sortable></Column>
+        <Column field="tobaccoRisk" header="Tobacco Risk" sortable>
+          <template #body="slotProps">
+            <Tag :value="slotProps.data.tobaccoRisk" :severity="getSeverity(slotProps.data.tobaccoRisk)" />
+          </template>
         </Column>
+        <Column field="alcoholRisk" header="Alcohol Risk" sortable>
+        </Column>
+        <Column field="cannabisRisk" header="Cannabis Risk" sortable></Column>
+        <Column field="cocaineRisk" header="Cocaine Risk" sortable></Column>
+        <Column field="amphetamineRisk" header="Amphetamine Risk" sortable></Column>
+        <Column field="inhalantsRisk" header="Inhalants Risk" sortable></Column>
+        <Column field="sedativeRisk" header="Sedative Risk" sortable></Column>
+        <Column field="hallucinogensRisk" header="Hallucinogens Risk" sortable></Column>
+        <Column field="opioidsRisk" header="Opioids Risk" sortable></Column>
+        <Column field="othersRisk" header="Others Risk" sortable></Column>
+        <Column field="nonMedicalInjectionUse" header="Non Medical Injection Use" sortable></Column>
       </DataTable>
     </div>
   </div>
@@ -63,7 +83,6 @@ const columns = ref([
   { header: 'Past Diagnosis', field: 'pastDiagnosis' },
   { header: 'PHQ Severity', field: 'phqSeverity' },
   { header: 'GAD Severity', field: 'gadSeverity' },
-  // { header: 'Suicidal Measurement', field: 'suicidal measurement' },
   { header: 'ACE Severity', field: 'aceSeverity' },
   { header: 'Tobacco Risk', field: 'tobaccoRisk' },
   { header: 'Alcohol Risk', field: 'alcoholRisk' },
@@ -77,25 +96,6 @@ const columns = ref([
   { header: 'Others Risk', field: 'othersRisk' },
   { header: 'Non Medical Injection Use', field: 'nonMedicalInjectionUse' },
 ]);
-// const riskLevels = ['low risk', 'moderate risk', 'high risk', 'minmal','mild','moderate','moderate severe','Severe'];
-
-// Define the sort order for different fields
-// const sortOrders = {
-//   gadSeverity: ['Severe', 'moderate severe', 'moderate', 'mild', 'minmal'],
-//   aceSeverity: ['high risk', 'intermediate risk', 'low risk'],
-//   // Add other fields with their desired sort order
-//   tobaccoRisk: ['high risk', 'moderate risk', 'low risk'],
-//   alcoholRisk: ['high risk', 'moderate risk', 'low risk'],
-//   cannabisRisk: ['high risk', 'moderate risk', 'low risk'],
-//   cocaineRisk: ['high risk', 'moderate risk', 'low risk'],
-//   amphetamineRisk: ['high risk', 'moderate risk', 'low risk'],
-//   inhalantsRisk: ['high risk', 'moderate risk', 'low risk'],
-//   sedativeRisk: ['high risk', 'moderate risk', 'low risk'],
-//   hallucinogensRisk: ['high risk', 'moderate risk', 'low risk'],
-//   opioidsRisk: ['high risk', 'moderate risk', 'low risk'],
-//   othersRisk: ['high risk', 'moderate risk', 'low risk']
-// };
-
 
 const selectedColumns = ref(columns.value);
 
@@ -106,8 +106,6 @@ const exportCSV = () => {
 const onToggle = (val) => {
   selectedColumns.value = columns.value.filter(col => val.includes(col));
 };
-
-
 
 const handleRescreen = () => {
   if (selectedUsers.value.length === 0) {
@@ -137,9 +135,6 @@ const handleRescreen = () => {
   });
 };
 
-
-
-// eslint-disable-next-line no-unused-vars
 const handleSelectionChange = (selected) => {
   selectedUsers.value = selected;
 };
@@ -154,7 +149,6 @@ const filteredPatients = computed(() => {
     });
   });
 
-  // Custom sorting logic for each risk column
   const riskColumns = [
     'tobaccoRisk',
     'alcoholRisk',
@@ -168,57 +162,34 @@ const filteredPatients = computed(() => {
     'othersRisk'
   ];
 
-  riskColumns.forEach(column => {
-    filtered.sort((a, b) => {
-      const riskA = a[column].toLowerCase();
-      const riskB = b[column].toLowerCase();
-      
-      if (riskA === 'high risk' && riskB !== 'high risk') {
+  filtered.sort((a, b) => {
+    const riskOrder = ['high risk', 'moderate risk', 'low risk', 'no risk'];
+    const getRiskIndex = (risk) => riskOrder.indexOf(risk.toLowerCase());
+
+    const aRiskValues = riskColumns.map(column => a[column].toLowerCase());
+    const bRiskValues = riskColumns.map(column => b[column].toLowerCase());
+
+    for (let i = 0; i < riskColumns.length; i++) {
+      const aIndex = getRiskIndex(aRiskValues[i]);
+      const bIndex = getRiskIndex(bRiskValues[i]);
+
+      if (aIndex < bIndex) {
         return -1;
-      } else if (riskA !== 'high risk' && riskB === 'high risk') {
+      } else if (aIndex > bIndex) {
         return 1;
-      } else {
-        return 0;
       }
-    });
+    }
+
+    return 0;
   });
 
   return filtered;
 });
 
-
-const getCellClass = (cellValue) => {
-  if (!cellValue) return 'severity-none';
-
-  let severityClass = '';
-  switch (cellValue.trim().toLowerCase()) {
-    case 'high risk':
-      severityClass = 'severity-severe';
-      break;
-    case 'moderately severe':
-      severityClass = 'severity-moderate-severe';
-      break;
-    case 'moderate risk':
-    case 'moderate':
-      severityClass = 'severity-moderate';
-      break;
-    case 'low risk':
-    case 'mild':
-      severityClass = 'severity-mild';
-      break;
-    default:
-      severityClass = 'severity-none';
-      break;
-  }
-
-  return severityClass;
-};
-
 onMounted(async () => {
   try {
     loadingPatients.value = true;
     const response = await axios.get(endpoints.getRescreeningList);
-    // console.log('Rescreening List:', response.data);
     if (response && response.data && Array.isArray(response.data['Rescreening List'])) {
       const mappedUsers = response.data['Rescreening List'].map(submissionData => {
         const user_details = submissionData.user_details;
@@ -226,7 +197,6 @@ onMounted(async () => {
         const measurementAssistData = submissionData.measurement_assist_data;
         const flags = submissionData.flags;
 
-        // Check if created_at property exists in submissionData
         const date = submissionData.created_at ? submissionData.created_at.split('T')[0] : '';
 
         return {
@@ -250,33 +220,10 @@ onMounted(async () => {
           opioidsRisk: measurementAssistData.opioids_measurement || 'none',
           othersRisk: measurementAssistData.other_measurement || 'none',
           nonMedicalInjectionUse: measurementAssistData.injection_measurement || 'none',
-          flags: flags  // Add the flags object to the mapped data
+          flags: flags
         };
       });
       users.value = mappedUsers;
-
-      // Apply cell classes simultaneously as the table is getting populated
-      const table = document.querySelector('.main-container table');
-      if (table) {
-        const rows = table.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-          const cells = row.querySelectorAll('td');
-          cells.forEach(cell => {
-            const cellText = cell.textContent.trim();
-            const cellClass = getCellClass(cellText);
-
-            // Create a span element
-            const span = document.createElement('span');
-            span.classList.add(cellClass); // Apply the class to the span
-            span.innerHTML = `<i class="fas fa-flag"></i> ${cellText}`; // Add the icon and cell text to the span
-
-            // Clear the cell content and append the span
-            cell.innerHTML = '';
-            cell.appendChild(span);
-          });
-        });
-      }
-
     } else {
       console.error("Invalid response data format");
     }
@@ -287,108 +234,37 @@ onMounted(async () => {
   }
 });
 
-//piroties
+const getSeverity = (alcoholRisk) => {
+  switch (alcoholRisk.toLowerCase()) {
+    case 'high risk':
+      return 'custom-severe';
+    case 'moderate risk':
+      return 'custom-moderate';
+    case 'low risk':
+      return 'custom-low';
+    case 'no risk':
+      return 'custom-none';
+    default:
+      return '';
+  }
+};
 
 </script>
 
-
-<style scoped>
-table {
-  border-collapse: separate;
-  border-spacing: 0 10px;
-  table-layout: auto;
-  width: 100%;
+<style>
+.custom-severe {
+  color: #E6142D;
 }
 
-tbody {
-  border: 1px solid black;
+.custom-moderate {
+  color: #FFE500;
 }
 
-.main-container {
-  overflow: scroll;
+.custom-low {
+  color: #0BE61E;
 }
 
-.shadow-row {
-  border-bottom: 1px solid #d8e2e588;
-  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.15);
-  background-color: #d8e2e5;
-  border-radius: 20px !important;
+.custom-none {
+  color: #000;
 }
-
-.shadow-row td {
-  background: transparent;
-}
-
-table th,
-table td {
-  width: 20rem;
-}
-
-.severity-severe {
-  color: #c40000 !important;
-  background: #a800003a !important;
-  padding: 0.5rem 1rem;
-  border: 2px solid #c40000;
-  border-radius: 50px;
-  line-height: 5rem;
-}
-
-.severity-moderate-severe {
-  color: #dc6503 !important;
-  background: #b563003a !important;
-  padding: 0.5rem 1rem;
-  border: 2px solid #dc6503;
-  border-radius: 50px;
-  line-height: 5rem;
-}
-
-.severity-moderate {
-  color: #e39700, !important;
-  background: #c8aa003a !important;
-  padding: 0.5rem 1rem;
-  border: 2px solid #e39700;
-  border-radius: 50px;
-  line-height: 5rem;
-}
-
-.severity-mild {
-  color: #008300 !important;
-  background: #0083003a !important;
-  padding: 0.5rem 1rem;
-  border: 2px solid #008300;
-  border-radius: 50px;
-  line-height: 5rem;
-}
-
-.severity-none {
-  line-height: 5rem;
-}
-
-.ag-cell .ag-react-container .ag-value-wrapper .ag-group-value,
-.ag-cell .ag-react-container .ag-value-wrapper span {
-  border: 2px solid;
-  border-radius: 50px;
-  padding: 0.5rem 1rem;
-}
-
-thead tr td {
-  color: green !important;
-}
-
-.me-2 {
-  display: flex;
-  widows: 50rem;
-}
-
-i.fas {
-  margin-right: 0.5rem;
-}
-
-.el-table .cell {
-  height: 2rem !important;
-}
-
-/* .custom-multiselect {
-  max-width: 500px;
-} */
 </style>
