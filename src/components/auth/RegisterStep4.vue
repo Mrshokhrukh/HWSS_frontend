@@ -368,30 +368,14 @@ const createUser = async () => {
                     createUser();
                 }
             } else if (errorDetail.includes('access_customuser.identity_number')) {
-                const confirmNewIdentity = await Swal.fire({
+                Swal.fire({
                     title: 'CID/Identity number already exists!',
                     text: `The CID/Identity number ${userData.identity} is already registered. Enter a new CID/Identity number:`,
                     input: 'text',
                     showCancelButton: true,
                     confirmButtonText: 'Use New CID/Identity',
                     cancelButtonText: 'Cancel',
-                    showLoaderOnConfirm: true,
-                    preConfirm: (newIdentity) => {
-                        return new Promise((resolve) => {
-                            if (!newIdentity) {
-                                Swal.showValidationMessage('Please enter a new CID/Identity number');
-                            } else {
-                                resolve();
-                            }
-                        });
-                    }
                 });
-
-                if (confirmNewIdentity.isConfirmed) {
-                    userData.identity_number = confirmNewIdentity.value;
-                    sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    createUser();
-                }
             } else {
                 errorMessage.value = 'Error creating user. Please try again.';
             }

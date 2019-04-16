@@ -31,7 +31,7 @@
 
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import PublicDashboard from '@/components/dashboards/PublicDashboard.vue';
@@ -39,6 +39,8 @@ import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue';
+import axios from 'axios';
+import endpoints from '@/api';
 
 const sidebarOpen = ref(false);
 
@@ -74,6 +76,21 @@ const currentComponent = computed(() => {
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
+
+onMounted(async () => {
+  try {
+    const response = await axios.get(endpoints.getAllUserData);
+
+    if (response.data && Array.isArray(response.data)) {
+      sessionStorage.setItem('userReportingUserDetails', JSON.stringify(response.data));
+    } else {
+      console.error('Invalid response data:', response.data);
+    }
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+  }
+});
+
 </script>
 
 

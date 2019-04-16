@@ -106,6 +106,7 @@ const endpoints = {
 
   // reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,
+  getAllUserData: `${reportingBaseUrl}/get-all-user-data/`,
 
   // counselor endpoints
   createEventScreening: `${counselorScreeninggBaseUrl}/create-event-screening/`,

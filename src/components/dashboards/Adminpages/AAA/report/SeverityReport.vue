@@ -1,6 +1,7 @@
 <template>
   <div class="card l">
     <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
+    sortField="substanceRisk" :sortOrder="1"
                :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
@@ -15,22 +16,42 @@
       <template #loading> Loading data. Please wait. </template>
 
       <!-- Severity Report -->
-
+      <!--Mental health data-->
+      <Column header="Depression" field="depression" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+        <template #body="{ data }">
+          {{ data.depression }}
+        </template>
+      </Column>
+      <Column header="Anxiety" field="anxiety" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+        <template #body="{ data }">
+          {{ data.anxiety }}
+        </template>
+      </Column>
+      <Column header="ACE" field="ace" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+        <template #body="{ data }">
+          {{ data.ace }}
+        </template>
+      </Column>
+      <Column header="Suicidal Behaviours" field="suicidalBehaviours" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+        <template #body="{ data }">
+          {{ data.suicidalBehaviours }}
+        </template>
+      </Column>
 
       <!-- Lifetime Use -->
-      <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.lifetimeUse }}
         </template>
       </Column>
       <!-- Current Use -->
-      <Column header="Current Use" field="currentUse" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Current Use" field="currentUse" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.currentUse }}
         </template>
       </Column>
       <!-- Substance -->
-      <Column header="Tobacco" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Tobacco" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
@@ -38,63 +59,63 @@
         </template>  
       </Column>
       <!-- Substance Risk -->
-      <Column header="Alcohol" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Alcohol" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Cannabis" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Cannabis" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Cocaine" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Cocaine" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Amphetamine-type stimulants" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Amphetamine-type stimulants" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Inhalant" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Inhalant" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Sedative" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Sedative" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Hallucinate" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Hallucinate" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Opioids" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Opioids" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
           </span>
         </template>
       </Column>
-      <Column header="Others" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Others" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
             {{ data.substanceRisk }}
@@ -103,37 +124,37 @@
       </Column>
 
       <!-- Additional Headers -->
-      <Column header="Year" field="year" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Year" field="year" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.year }}
         </template>
       </Column>
-      <Column header="Gender" field="gender" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Gender" field="gender" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.gender }}
         </template>
       </Column>
-      <Column header="Dzongkha" field="dzongkha" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Dzongkha" field="dzongkha" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.dzongkha }}
         </template>
       </Column>
-      <Column header="Location" field="location" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Location" field="location" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.location }}
         </template>
       </Column>
-      <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.age }}
         </template>
       </Column>
-      <Column header="Class" field="class" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Class" field="class" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.class }}
         </template>
       </Column>
-      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem">
+      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
           {{ data.employmentHistory }}
         </template>

@@ -92,6 +92,14 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Settings`, requiresAuth: true }
     },
+    {
+      path: `/${userType}-dashboard/flagged-reports`,
+      name: `${userType}-flagged-reports`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Flagged Reports`, requiresAuth: true },
+      props: (route) => ({ flag: route.query.flag }) // Pass query parameter as prop to the component
+    },
+    
 
     // -------------------------- Admin specific routes ---------------------------------------------------
     {
