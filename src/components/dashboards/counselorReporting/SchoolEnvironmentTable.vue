@@ -1,6 +1,6 @@
 <template>
   <div class="school-environment-table">
-    <DataTable :value="filteredData" :paginator="true" :rows="10" :globalFilterFields="globalFilterFields">
+    <DataTable :value="filteredData" :paginator="true" :rows="10" :globalFilterFields="globalFilterFields" resizableColumns columnResizeMode="fit">
       <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true">
         <template #body="{ data }">
           <span>{{ data[field.key] }}</span>

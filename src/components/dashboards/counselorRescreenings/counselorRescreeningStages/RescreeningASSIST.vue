@@ -123,7 +123,7 @@ const handleAnswerSelection = (option, substance) => {
 }
 
 const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
-const questionsWithIndex = counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'ASSIST').questions.map((question, index) => ({
+const questionsWithIndex = counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'CNE ASSIST').questions.map((question, index) => ({
     ...question,
     index: index + 1
 }));

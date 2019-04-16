@@ -28,6 +28,11 @@
 				</router-link>
 			</nav>
 		</div>
+		<!-- <div>
+			<nav class="menu-items">
+				<Button label="Get" class="side-btn" @click="populateReportsModel"/>
+			</nav>
+		</div> -->
 
 		<!-- Logout and Toggle Icon -->
 		<div class="logout mt-auto p-0">
@@ -205,6 +210,20 @@ const logout = async () => {
 onMounted(() => {
 	fetchMenuItems();
 });
+
+const populateReportsModel = async () => {
+	const response = await axios.get(endpoints.updateUserArchive);
+
+	if (response && response.data) {
+		if (response.data.message === "User archive updated successfully") {
+			console.log("User archive updated successfully");
+		} else {
+			console.error("User archive update failed:", response.data.message);
+		}
+	}
+  
+};
+
 </script>
 
 <style scoped>
