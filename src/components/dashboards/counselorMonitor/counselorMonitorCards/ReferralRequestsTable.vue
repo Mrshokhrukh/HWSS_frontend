@@ -72,7 +72,7 @@ const filters = ref({});
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
-    return ''; // Return empty string if the date is invalid
+    return ''; 
   } else {
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
@@ -83,9 +83,9 @@ const loadData = async () => {
   console.log(counselor_id.user.id);
   try {
     const response = await axios.get(endpoints.getReferralList);
+    console.log(response.data)
     referrals.value = response.data.referral_list.filter(referral => referral.referred_to.user_id === counselor_id.user.id);
     rowData.value = referrals.value;
-    console.log('the rowData is:', rowData.value); //added this console log to check the rowData
   } catch (error) {
     console.error('Error loading data:', error);
   }
@@ -145,7 +145,6 @@ const acceptReferral = async (referral) => {
     const patientId = referral.user_data.patient_id;
 
     const response = await axios.post(endpoints.acceptReferral, { referredToUserId, patientId });
-    // Optionally, you can reload data or show a success message
     console.log('Referral accepted:', referral);
     Swal.fire({
       icon: 'success',

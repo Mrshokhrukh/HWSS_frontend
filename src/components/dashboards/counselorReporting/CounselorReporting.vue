@@ -16,7 +16,7 @@
     <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
       <DataTable :value="filteredData" :paginator="true" :rows="10">
         <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
-          :sortable="true">
+          :sortable="true" :style="field.width ? { width: field.width } : {}">
           <template #body="{ data }">
             <span :class="severityClass(data[field.key])">{{ data[field.key] }}</span>
           </template>
