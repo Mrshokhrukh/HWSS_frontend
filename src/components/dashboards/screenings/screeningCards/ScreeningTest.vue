@@ -323,7 +323,7 @@ watch(allSubstancesNo, (allNo) => {
 watch(currentQuestionIndex, (newIndex) => {
     if (currentQuestionSetName.value === "ASSIST") {
         const currentQuestion = questions.value[newIndex];
-        if (currentQuestion && (currentQuestion.id === 29 || currentQuestion.id === 30)) {
+        if (currentQuestion && (currentQuestion.id === 68 || currentQuestion.id === 69)) {
             const ageGroupTags = currentQuestion.age_group_tags;
             const includeUserAgeGroup = isUserAgeGroupIncluded(ageGroupTags);
             if (!includeUserAgeGroup) {
