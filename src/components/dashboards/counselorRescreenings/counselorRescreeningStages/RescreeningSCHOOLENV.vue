@@ -130,4 +130,8 @@ const proceed = () => {
 .text-m-severe {
     color: tomato !important;
 }
+
+input[type="radio"] {
+    scale: 1.5;
+}
 </style>

@@ -1,9 +1,9 @@
 <template>
     <div>
         <table class="table mb-4 table-borderless">
-            <thead>
-                <tr>
-                    <th>{{ currentQuestion.text }}</th>
+            <thead class="border-bottom align-middle">
+                <tr class="text-capitalize">
+                    <th class="text-capitalize fs-6 text-black">{{ currentQuestion.text }}</th>
                     <th v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
                         {{ option.option }}
                     </th>

@@ -19,7 +19,7 @@
       <div class="row mt-3">
         <div class="card col-md-12 text-center top-component-card">
           <div class="rounded p-2">
-            <h1 class="fw-bold mb-0 display-3 hwss-primary">Screening for Health & Well Being</h1>
+            <h1 class="fw-bold mb-0 display-3 hwss-primary">Screening for Health & Wellbeing</h1>
           </div>
         </div>
       </div>

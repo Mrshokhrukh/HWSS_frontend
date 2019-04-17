@@ -83,6 +83,7 @@ declare module 'vue' {
     ProfileCard: typeof import('./src/components/dashboards/dashboardCard/ProfileCard.vue')['default']
     PublicDashboard: typeof import('./src/components/dashboards/PublicDashboard.vue')['default']
     QuickToolCard: typeof import('./src/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue')['default']
+    RadioButton: typeof import('primevue/radiobutton')['default']
     RecordsOfApproval: typeof import('./src/components/dashboards/Adminpages/Approval/RecordsOfApproval.vue')['default']
     ReferralAcceptedTable: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/ReferralAcceptedTable.vue')['default']
     ReferralList: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/ReferralList.vue')['default']

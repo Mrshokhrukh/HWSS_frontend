@@ -211,18 +211,18 @@ onMounted(() => {
 	fetchMenuItems();
 });
 
-const populateReportsModel = async () => {
-	const response = await axios.get(endpoints.updateUserArchive);
+// const populateReportsModel = async () => {
+// 	const response = await axios.get(endpoints.updateUserArchive);
 
-	if (response && response.data) {
-		if (response.data.message === "User archive updated successfully") {
-			console.log("User archive updated successfully");
-		} else {
-			console.error("User archive update failed:", response.data.message);
-		}
-	}
+// 	if (response && response.data) {
+// 		if (response.data.message === "User archive updated successfully") {
+// 			console.log("User archive updated successfully");
+// 		} else {
+// 			console.error("User archive update failed:", response.data.message);
+// 		}
+// 	}
   
-};
+// };
 
 </script>
 

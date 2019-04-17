@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import endpoints from '@/api';
@@ -245,24 +245,6 @@ const incrementUserScreenedToday = () => {
     }
 };
 
-// Watch for changes in reactive variables
-watchEffect(() => {
-    console.log('Current State:', {
-        caseName: caseName.value,
-        purpose: purpose.value,
-        dzongkhag: dzongkhag.value,
-        userScreenedToday: userScreenedToday.value,
-        CID: CID.value,
-        nationality: 'Bhutanese',
-        clientFullName: clientFullName.value,
-        DOB: DOB.value,
-        gender: gender.value,
-        parentalStatus: parentalStatus.value,
-        currentAddress: currentAddress.value,
-        phoneNumber: phoneNumber.value,
-        email: email.value
-    });
-});
 
 const submitForm = async () => {
     try {

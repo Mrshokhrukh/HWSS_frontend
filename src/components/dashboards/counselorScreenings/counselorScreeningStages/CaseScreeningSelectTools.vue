@@ -56,7 +56,6 @@ const emit = defineEmits(['proceedToScreening', 'goBack']);
 // Retrieve userOriginalRole from local storage
 const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
 const userOriginalRole = userDetailsStore.user.role;
-console.log(userOriginalRole);
 
 // Check if the user is a school counselor
 const isSchoolCounselor = ref(userOriginalRole === 'school_counselor');
@@ -110,9 +109,16 @@ const toggleSelection = (tool) => {
         // Add the tool if it's not selected
         selectedTools.value.push({ id: tool.id, name: tool.name });
     }
+    
+    // Reorder the selected tools array based on the order in allTools array
+    selectedTools.value.sort((a, b) => {
+        return allTools.findIndex(tool => tool.id === a.id) - allTools.findIndex(tool => tool.id === b.id);
+    });
+
     // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
+
 
 const goBack = () => {
     // Implement go back logic
@@ -126,7 +132,6 @@ const selectAll = () => {
     } else {
         selectedTools.value = selectedMenu.value.tools.map(tool => ({ id: tool.id, name: tool.name }));
     }
-    // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
 

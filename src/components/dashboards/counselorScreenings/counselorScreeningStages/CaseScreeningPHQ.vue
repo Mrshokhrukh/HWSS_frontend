@@ -1,9 +1,9 @@
 <template>
     <div>
         <table class="table mb-4 table-borderless">
-            <thead>
-                <tr class="text-capitalize fs-6 text-dark">
-                    <th>{{ PHQQuestion }}</th>
+            <thead class="border-bottom align-middle">
+                <tr class="text-capitalize">
+                    <th class="text-capitalize fs-6 text-black">{{ PHQQuestion }}</th>
                     <th v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center text-black">
                         {{ option.option }}
                     </th>
@@ -176,5 +176,9 @@ const proceed = () => {
 
 .text-m-severe {
     color: tomato !important;
+}
+
+input[type="radio"] {
+    scale: 1.5;
 }
 </style>
