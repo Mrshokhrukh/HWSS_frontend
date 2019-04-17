@@ -18,17 +18,17 @@
       <!-- Severity Report -->
       <Column header="Depression" field="depression" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
-         <tag rounded :value='data.depression.toLowerCase()' :severity="getSeverity(data.depression)" />
+         <tag rounded :value='data.depression' :severity="getSeverity(data.depression)" />
         </template>
       </Column>
       <Column header="Anxiety" field="anxiety" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
-          <tag rounded :value="data.anxiety.toLowerCase()" :severity="getphqSeverity(data.anxiety)" />
+          <tag rounded :value="data.anxiety" :severity="getSeverity(data.anxiety)" />
         </template>
       </Column>
       <Column header="ACE" field="ace" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
-          <tag rounded :value="data.ace.toLowerCase()" :severity="getSeverity(data.ace)" />
+          <tag rounded :value="data.ace" :severity="getSeverity(data.ace)" />
         </template>
       </Column>
 
@@ -197,8 +197,8 @@ const filteredData = computed(() => {
   return filtered;
 });
 
-const getSeverity = (depression) => {
-    switch (depression) {
+const getSeverity = (values) => {
+    switch (values) {
         case 'Severe':
             return 'danger';
 
@@ -209,41 +209,31 @@ const getSeverity = (depression) => {
             return 'info';
 
         case 'Mild':
-            return 'secondary';
+            return 'success';
 
-        case 'minimal':
-          return 'custom-minimal';
+        case 'Minimal':
+          return 'primary';
+        
+        case 'High Risk':
+          return 'danger';
+        
+        case 'Low Risk':
+          return 'secondary';
+
     }
 }
 
-const getphqSeverity = (anxiety) => {
-    switch (anxiety) {
-        case 'Severe':
-            return 'danger';
 
-        case 'Moderate severe':
-            return 'warning';
-
-        case 'Moderate':
-            return 'info';
-
-        case 'Mild':
-            return 'secondary';
-
-        case 'minimal':
-          return 'custom-minimal';
-    }
-}
 
 
 onMounted(() => {
   // Dummy Data
   monitorData.value = [
-  { id: 1, depression: 'Mild', anxiety: 'Moderate', ace: 'High', suicidalBehaviours: 'Low', lifetimeUse: 'No', currentUse: 'Yes', substanceWise: 'Alcohol', substanceRisk: 'Moderate', year: '2022', gender: 'Male', dzongkha: 'Yes', location: 'Agency 1', age: '30', class: '10', employmentHistory: 'Working' },
-  { id: 2, depression: 'Moderate', anxiety: 'Mild', ace: 'Low', suicidalBehaviours: 'Moderate', lifetimeUse: 'Yes', currentUse: 'No', substanceWise: 'Tobacco', substanceRisk: 'High', year: '2023', gender: 'Female', dzongkha: 'No', location: 'Agency 2', age: '25', class: '12', employmentHistory: 'Not working' },
-  { id: 3, depression: 'Severe', anxiety: 'High', ace: 'Moderate', suicidalBehaviours: 'High', lifetimeUse: 'Yes', currentUse: 'Yes', substanceWise: 'Cannabis', substanceRisk: 'Severe', year: '2021', gender: 'Male', dzongkha: 'Yes', location: 'Agency 3', age: '35', class: '8', employmentHistory: 'Working' },
+  { id: 1, depression: 'Mild', anxiety: 'Moderate', ace: 'High Risk', suicidalBehaviours: 'Low', lifetimeUse: 'No', currentUse: 'Yes', substanceWise: 'Alcohol', substanceRisk: 'Moderate', year: '2022', gender: 'Male', dzongkha: 'Yes', location: 'Agency 1', age: '30', class: '10', employmentHistory: 'Working' },
+  { id: 2, depression: 'Moderate', anxiety: 'Mild', ace: 'Low Risk', suicidalBehaviours: 'Moderate', lifetimeUse: 'Yes', currentUse: 'No', substanceWise: 'Tobacco', substanceRisk: 'High', year: '2023', gender: 'Female', dzongkha: 'No', location: 'Agency 2', age: '25', class: '12', employmentHistory: 'Not working' },
+  { id: 3, depression: 'Severe', anxiety: 'Low', ace: 'Intermediate Risk', suicidalBehaviours: 'High', lifetimeUse: 'Yes', currentUse: 'Yes', substanceWise: 'Cannabis', substanceRisk: 'Severe', year: '2021', gender: 'Male', dzongkha: 'Yes', location: 'Agency 3', age: '35', class: '8', employmentHistory: 'Working' },
   { id: 4, depression: 'Moderate severe', anxiety: 'High', ace: 'Moderate', suicidalBehaviours: 'Severe', lifetimeUse: 'Yes', currentUse: 'Yes', substanceWise: 'Opioids', substanceRisk: 'High', year: '2024', gender: 'Female', dzongkha: 'No', location: 'Agency 4', age: '40', class: '11', employmentHistory: 'Not working' },
-  { id: 5, depression: 'Minimal', anxiety: 'Minimal', ace: 'Minimal', suicidalBehaviours: 'Minimal', lifetimeUse: 'No', currentUse: 'No', substanceWise: 'None', substanceRisk: 'No risk', year: '2025', gender: 'Male', dzongkha: 'Yes', location: 'Agency 5', age: '45', class: '9', employmentHistory: 'Working' },
+  { id: 5, depression: 'Minimal', anxiety: 'Minimal', ace: 'Low Risk', suicidalBehaviours: 'Minimal', lifetimeUse: 'No', currentUse: 'No', substanceWise: 'None', substanceRisk: 'No risk', year: '2025', gender: 'Male', dzongkha: 'Yes', location: 'Agency 5', age: '45', class: '9', employmentHistory: 'Working' },
   // Add more dummy data as needed
 ];
 
@@ -257,24 +247,3 @@ const clearFilter = () => {
   }
 };
 </script>
-
-<style scoped>
-.custom-severe{
-  color:#E6142D;
-}
-
-.custom-Moderatesevere{
-  color:#E9760C;
-}
-
-.custom-moderate{
-  color:#FFE500;
-}
-
-.custom-mild{
-  color:#72BECB;
-}
-.custom-minimal{
-  color:#72BECB;
-}
-</style>
