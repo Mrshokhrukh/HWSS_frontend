@@ -12,7 +12,8 @@
                 <h5 class="card-title">Service and Treatment List</h5>
             </div>
             <DataTable :value="filteredRows" :paginator="true" :rows="10" :paginatorTemplate="paginatorTemplate"
-                :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange">
+                :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
+                columnResizeMode="fit">
                 <Column field="date" header="Date" sortable :body="formatDate"></Column>
                 <Column field="user.full_name" header="Name" sortable></Column>
                 <Column field="user.age" header="Age" sortable></Column>
@@ -31,19 +32,19 @@
 
         </div>
     </div>
-    <Dialog v-model:visible="showModal" maximizable modal header="User Details" @hide="handleModalClose"
-        :style="{ width: '100rem', minHeight: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+    <Dialog v-model:visible="showModal" maximizable modal header="User Records" @hide="handleModalClose"
+        :style="{ width: '80rem', minHeight: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
         <div class="container-fluid mx-0 px-0">
             <div class="row">
                 <!-- Profile Card -->
                 <aside class="col-4">
-                    <div class="profile-card card mt-3 w-25 pt-4" style="position: fixed; height: auto">
+                    <div class="profile-card card mt-3 pt-4 h-full" style="position: fixed; height: auto">
                         <div class="card-img-top" :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
                         </div>
                         <div class="card-body">
                             <h5 class="card-title mb-3 hwss-primary">{{ selectedUser.first_name }} {{
-                        selectedUser.middle_name }} {{
-                        selectedUser.last_name }}</h5>
+                                selectedUser.middle_name }} {{
+                                    selectedUser.last_name }}</h5>
                             <ul class="list-unstyled ">
                                 <li class="mb-3"><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
                                 <li class="mb-3"><strong>Sex:</strong> {{ selectedUser.gender }}</li>
@@ -59,12 +60,11 @@
                     </div>
                 </aside>
 
-
                 <!-- Main Content -->
                 <main class="col-md-8">
                     <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
-                            <h4>Personal Details</h4>
+                            <h4 class="hwss-primary">Personal Details</h4>
                             <div class="row">
                                 <div class="col-6">Mother's Name: <input type="text" class="form-control"
                                         v-model="selectedUser.mother_name" readonly disabled></div>
@@ -81,7 +81,7 @@
                     </div>
                     <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
-                            <h4>Permanent Address</h4>
+                            <h4 class="hwss-primary">Permanent Address</h4>
                             <div class="row">
                                 <div class="col-6">Village: <input type="text" class="form-control"
                                         v-model="selectedUser.perm_add_village" readonly disabled></div>
@@ -94,7 +94,7 @@
                     </div>
                     <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
-                            <h4>Present Address</h4>
+                            <h4 class="hwss-primary">Present Address</h4>
                             <div class="row">
                                 <div class="col-6">Village: <input type="text" class="form-control"
                                         v-model="selectedUser.ps_add_village" readonly disabled></div>
@@ -107,13 +107,14 @@
                     </div>
                     <div class="row mb-4 card p-4 bg-white">
                         <div class="col-md-12">
-                            <h4>Case Status</h4>
+                            <h4 class="hwss-primary">Case Status</h4>
                             <div class="row">
                                 <div class="col-6"
                                     v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                                     <label for="caseStatus">Case Status:</label>
                                     <select class="form-control"
-                                        v-model="selectedUser.service_and_treatment_details[0].case_status" :disabled="selfRole === 'trained_professional'">
+                                        v-model="selectedUser.service_and_treatment_details[0].case_status"
+                                        :disabled="selfRole === 'trained_professional'">
                                         <option :value="null" disabled>Select Case Status</option>
                                         <option value="On Going">On Going</option>
                                         <option value="Case Closed">Case Closed</option>
@@ -127,20 +128,25 @@
                     <div class="row mb-4 card p-4 bg-white"
                         v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0">
                         <div class="col-md-12">
-                            <h4>Severity</h4>
+                            <h4 class="hwss-primary">Severity</h4>
                             <div class="row">
-                                <div v-for="(substance, index) in selectedUser.substance_risk_measurement_details"
-                                    :key="index" class="col-4 mb-2">
-                                    <span class="substance">{{ substance.substance_name }}:</span>
-                                    <Tag class="ms-2" :value="substance.risk_flag" rounded></Tag>
-                                </div>
+                                <template v-for="(substance, index) in selectedUser.substance_risk_measurement_details"
+                                    :key="index">
+                                    <div v-if="substance.risk_flag !== 'none'" class="col-4 mb-2">
+                                        <span class="substance">{{ substance.substance_name.split('(')[0].trim()
+                                            }}:</span>
+                                        <Tag class="ms-2 px-2 py-1" :value="substance.risk_flag"
+                                            :style="getSeverityStyles(substance.risk_flag)" rounded></Tag>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
 
+
                     <div class="row mb-4 card p-4" v-else>
                         <div class="col-md-12">
-                            <h4>Severity</h4>
+                            <h4 class="hwss-primary">Severity</h4>
                             <div class="row">
                                 <div class="col-4 mb-2">
                                     <span class="substance text-success">No ASSIST measurements found</span>
@@ -153,12 +159,12 @@
                     <div class="mb-4 card p-4 mx-0 bg-white" v-if="selectedUser">
                         <div class="col-12">
                             <h6>Non-Medical Drug use through injection: <span class="text-primary">{{
-                        selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></h6>
+                                selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></h6>
                         </div>
                         <div class="col-12 mt-3">
                             <h6>Past Mental Health Disorder history: <span class="text-primary">{{
-                        selectedUser.past_disorder ?
-                            selectedUser.past_disorder : 'No Disgnosis' }}</span></h6>
+                                selectedUser.past_disorder ?
+                                    selectedUser.past_disorder : 'No Diagnosis' }}</span></h6>
                         </div>
                     </div>
 
@@ -166,7 +172,7 @@
                     <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'trained_professional' }"
                         v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                         <div class="col-md-12">
-                            <h4>Services and Treatment</h4>
+                            <h4 class="hwss-primary">Services and Treatment</h4>
                             <div class="row">
                                 <div class="col-6 mb-3">
                                     <label for="assessmentStatus">Assessment Status:</label>
@@ -231,11 +237,12 @@
                         </div>
                     </div>
 
-                    <div class="row mb-4 card p-4" :class="{ 'greyout': selectedUser.service_and_treatment_details[0].referred !== 'Not Referred' }">
+                    <div class="row mb-4 card p-4"
+                        :class="{ 'greyout': selectedUser.service_and_treatment_details[0].referred !== 'Not Referred' }">
                         <div class="col-md-12">
-                            <h4>Referral Status</h4>
+                            <h4 class="hwss-primary">Referral Status</h4>
                             <div class="row">
-                                <div class="col-6" >
+                                <div class="col-6">
                                     <label for="referTo">Refer To:</label>
                                     <select class="form-control" id="referTo" v-model="selectedUser.refer_to">
                                         <option value="clinical_counselor">Clinical Counselor</option>
@@ -247,8 +254,9 @@
                                 <div class="col-6">
                                     <label for="official">Official:</label>
                                     <select class="form-control" id="official" v-model="selectedUser.official">
-                                        <option v-for="option in officialOptions" :key="option.id" :value="option.id" :placeholder="option.full_name">{{
-                        option.full_name }}, {{ option.active_agency }}</option>
+                                        <option v-for="option in officialOptions" :key="option.id" :value="option.id"
+                                            :placeholder="option.full_name">{{
+                                                option.full_name }}, {{ option.active_agency }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -270,8 +278,7 @@
             </div>
         </div>
 
-        <!-- Foot area with cancel and save buttons -->
-        <div class="mt-4 d-flex justify-content-end"> <!-- Use justify-content-end to align items to the right -->
+        <div class="mt-4 d-flex justify-content-end"> 
             <div>
                 <Button label="Close" class="p-button-secondary p-mr-2 mx-2" @click="handleModalClose" />
             </div>
@@ -288,7 +295,6 @@ import Swal from 'sweetalert2';
 const showModal = ref(false);
 const selectedUser = ref(null);
 const officialOptions = ref([]);
-// const isSaveEnabled = ref(false);
 const selfRole = ref('');
 
 const rowData = ref([]);
@@ -329,7 +335,7 @@ const getServiceList = async () => {
     try {
         const response = await axios.get(endpoints.generateServiceAndTreatment);
         if (response && response.data && Array.isArray(response.data.data)) {
-            console.log(response.data);
+            // console.log(response.data);
             rowData.value = response.data.data;
         } else {
             console.error('Invalid response format:', response);
@@ -341,7 +347,6 @@ const getServiceList = async () => {
 
 const openModal = async (user) => {
     try {
-        // Populate selectedUser with the response data
         selectedUser.value = {
             id: user.id,
             username: user.username,
@@ -383,7 +388,21 @@ const openModal = async (user) => {
     }
 };
 
-// Watch for changes in the selectedUser.refer_to and fetch official options accordingly
+const getSeverityStyles = (riskFlag) => {
+    switch (riskFlag.toLowerCase()) {
+        case 'severe':
+            return { color: 'red', backgroundColor: 'pink' };
+        case 'moderate':
+            return { color: 'orange', backgroundColor: 'lightyellow' };
+        case 'mild':
+            return { color: 'green', backgroundColor: 'lightgreen' };
+        case 'no risk':
+            return { color: 'blue', backgroundColor: 'lightblue' };
+        default:
+            return {};
+    }
+};
+
 watchEffect(async () => {
     if (selectedUser.value && selectedUser.value.refer_to) {
         try {
@@ -422,7 +441,7 @@ const viewDetails = async (userData) => {
 // Function to fetch user details from the server
 const fetchUserDetails = async (userId) => {
     const response = await axios.get(`${endpoints.getUserMonitoringDetails}?user_id=${userId}`);
-    console.log(response.data);
+    // console.log(response.data);
     return response.data;
 };
 
@@ -459,7 +478,7 @@ const saveChanges = () => {
                             icon: 'success',
                             title: 'Changes saved successfully!',
                             showConfirmButton: false,
-                            timer: 1500, // Auto close after 1.5 seconds
+                            timer: 1500,
                         });
                         window.location.reload();
                     } else {
@@ -506,7 +525,7 @@ const referCase = async () => {
         },
     };
 
-    console.log(formData);
+    // console.log(formData);
     handleModalClose();
     Swal.fire({
         title: 'Confirm Save Changes!',
@@ -569,7 +588,7 @@ onMounted(() => {
     top: 0;
 }
 
-.greyout{
+.greyout {
     opacity: 0.5;
     cursor: not-allowed;
     pointer-events: none;

@@ -1,31 +1,34 @@
 <template>
   <div class="card p-4">
-    <div class="p-field p-grid">
-      <div class="p-col-12 p-md-4">
+    <div class="p-field p-grid row">
+      <div class="col-5 p-md-4">
         <span class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <InputText v-model="globalFilter" placeholder="Global Search" class="ms-2 w-25" />
+          <InputText v-model="globalFilter" placeholder="earch Reports..." class="ms-2  w-100" icon="pi pi-search" />
         </span>
       </div>
-      <div v-if="isSchoolCounselor" class="p-col-12 p-md-4">
-        <Dropdown v-model="selectedOption" :options="options" placeholder="Select Report Type" class="ms-2" />
+      <div v-if="isSchoolCounselor" class="col-5 p-md-4">
+        <Dropdown v-model="selectedOption" :options="options" placeholder="Select Report Type" class="ms-2 w-100" />
+      </div>
+
+      <div class="col-2 p-md-4">
+        <Button label="Bulk Download All" @click="bulkDownload" class="btn hwss-btn" icon="pi pi-download" />
       </div>
     </div>
 
     <!-- General Report Table -->
     <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
       <DataTable :value="filteredPatients" :paginator="true" :rows="10">
-        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
-          :sortable="true" :style="field.width ? { width: field.width } : {}">
+        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
+          :style="field.width ? { width: field.width } : {}">
           <template #body="{ data }">
             <span :class="severityClass(data[field.key])">{{ data[field.key] }}</span>
           </template>
         </Column>
-        <Column>
+        <!-- <Column>
           <template #body="rowData">
-            <Button label="Download" @click="downloadReport(rowData)" />
-          </template>
-        </Column>
+          <Button label="Download" @click="downloadReport(rowData)" />
+        </template>
+        </Column> -->
       </DataTable>
     </div>
 
@@ -44,12 +47,14 @@ import SchoolEnvironmentTable from "./SchoolEnvironmentTable.vue"
 const reportData = ref([]);
 const globalFilter = ref('');
 const filteredData = ref([]);
+import { saveAs } from 'file-saver';
+
 // eslint-disable-next-line no-unused-vars
 const globalFilterFields = [
   'date', 'username', 'age', 'sex', 'past_diagnosis',
   'gad_measurement', 'phq_measurement', 'ace_measurement', 'suicidal_measurement',
-  'tobacco_measurement', 'alcoholic_measurement', 'cannabis_measurement', 'cocaine_measurement','amphetamine_measurement','inhalants_measurement','sedatives_measurement',
-  'hallucinogens_measurement','opioids_measurement','other_measurement','injection_measurement'
+  'tobacco_measurement', 'alcoholic_measurement', 'cannabis_measurement', 'cocaine_measurement', 'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement',
+  'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'
 ];
 const tableFields = [
   { key: 'date', header: 'Date' },
@@ -129,11 +134,42 @@ const handleFetchError = () => {
   // Handle error
 }
 
-// Download report for a specific row
-const downloadReport = (row) => {
-  console.log('Downloading report for:', row);
-  // Implement download logic
-}
+// Function to convert data to CSV format
+const convertToCSV = (data) => {
+  const header = Object.keys(data[0]);
+  const csv = [
+    header.join(','),
+    ...data.map(row => header.map(fieldName => JSON.stringify(row[fieldName])).join(','))
+  ].join('\n');
+  return csv;
+};
+
+// Function to trigger CSV download
+const downloadCSV = (csvData, fileName) => {
+  const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
+  saveAs(blob, fileName);
+};
+
+// Function to handle bulk download
+const bulkDownload = () => {
+  const csvData = convertToCSV(filteredData.value);
+  downloadCSV(csvData, 'reports.csv');
+};
+
+// Function to handle individual download
+// const downloadReport = (row) => {
+//   const rowDataCopy = { ...row };
+
+//   for (const key in rowDataCopy) {
+//     if (typeof rowDataCopy[key] === 'object' && rowDataCopy[key] !== null) {
+//       delete rowDataCopy[key];
+//     }
+//   }
+
+//   const csvData = convertToCSV([rowDataCopy]);
+
+//   downloadCSV(csvData, `${row.username}_report.csv`);
+// };
 
 // Filter data based on global filter
 const filterData = () => {
@@ -171,7 +207,7 @@ const filteredPatients = computed(() => {
 
   filtered.sort((a, b) => {
     // Compare the risk levels based on the desired order
-    const riskOrder = ['high risk', 'moderate risk', 'low risk','no risk'];
+    const riskOrder = ['high risk', 'moderate risk', 'low risk', 'no risk'];
     const getRiskIndex = (risk) => riskOrder.indexOf(risk.toLowerCase());
 
     const aRiskValues = riskColumns.map(column => a[column].toLowerCase());

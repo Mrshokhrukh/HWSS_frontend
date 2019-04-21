@@ -4,8 +4,8 @@
             <div class="col-md-6">
                 <div class="input-group rounded">
                     <select class="form-select" v-model="selectedValue">
-                        <option value="referralList">Referral List</option>
                         <option value="referralRequests">Referral Requests</option>
+                        <option value="referralList">Referral List</option>
                         <option value="referralAccepted">Referral Accepted</option>
                     </select>
                     <input type="text" class="form-control p-4" placeholder="Search Name">
@@ -29,23 +29,23 @@ import ReferralListTable from './ReferralListTable.vue';
 import ReferralRequestsTable from './ReferralRequestsTable.vue';
 import ReferralAcceptedTable from './ReferralAcceptedTable.vue';
 
-const referrals = ref([]);
-const selectedValue = ref('referralList');
+const referrals = ref([]);  
+const selectedValue = ref('referralRequests');
 
-const selectedTable = ref(ReferralListTable);
+const selectedTable = ref(ReferralRequestsTable);
 
 
 
 watchEffect(() => {
     switch (selectedValue.value) {
-        case 'referralRequests':
-            selectedTable.value = ReferralRequestsTable;
+        case 'referralList':
+            selectedTable.value = ReferralListTable;
             break;
         case 'referralAccepted':
             selectedTable.value = ReferralAcceptedTable;
             break;
         default:
-            selectedTable.value = ReferralListTable;
+            selectedTable.value = ReferralRequestsTable;
     }
 });
 </script>

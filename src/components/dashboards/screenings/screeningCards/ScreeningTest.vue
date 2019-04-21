@@ -15,7 +15,7 @@
                 </div>
 
                 <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'
-            ">
+                ">
                     <!-- Existing layout for other question sets -->
                     <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
                         <h4>
@@ -99,8 +99,8 @@
                                         <input type="radio" :id="`question-${question.id}-answer-${option.id}`"
                                             :name="`question-${question.id}`" :value="option.option"
                                             v-model="answers[question.id]" @change="
-            handleRadioClick(question.text, question.id, option.option)
-            " />
+                                                handleRadioClick(question.text, question.id, option.option)
+                                                " required/>
 
                                         <label :for="`question-${question.id}-answer-${option.id}`"></label>
                                     </td>
@@ -108,12 +108,12 @@
                                         <input type="text" class="form-control" v-model="textResponses[question.id]"
                                             :required="requiresTextInput(question.id)" placeholder="Please Specify"
                                             @change="
-            logQuestionAndResponseSchoolEnv(
-                question.text,
-                $event.target.value,
-                question.id
-            )
-            " />
+                                                logQuestionAndResponseSchoolEnv(
+                                                    question.text,
+                                                    $event.target.value,
+                                                    question.id
+                                                )
+                                                " />
                                     </td>
                                 </template>
 
@@ -121,20 +121,20 @@
                                     <td colspan="6">
                                         <input type="text" class="form-control mb-3" placeholder="Answer 1"
                                             v-model="textResponses[question.id + '_1']" required @change="
-            logQuestionAndResponseSchoolEnv(
-                question.text,
-                $event.target.value,
-                question.id + '_1'
-            )
-            " />
+                                                logQuestionAndResponseSchoolEnv(
+                                                    question.text,
+                                                    $event.target.value,
+                                                    question.id + '_1'
+                                                )
+                                                " />
                                         <input type="text" class="form-control" placeholder="Answer 2"
                                             v-model="textResponses[question.id + '_2']" required @change="
-            logQuestionAndResponseSchoolEnv(
-                question.text,
-                $event.target.value,
-                question.id + '_2'
-            )
-            " />
+                                                logQuestionAndResponseSchoolEnv(
+                                                    question.text,
+                                                    $event.target.value,
+                                                    question.id + '_2'
+                                                )
+                                                " />
                                     </td>
                                 </template>
                             </tr>
@@ -721,7 +721,9 @@ const checkInvalidInputs = () => {
             title: "Incomplete Form",
             text: "Please fill in all required fields before proceeding.",
         });
+        return true;
     }
+    return false;
 };
 
 function requiresTextInput(questionId) {

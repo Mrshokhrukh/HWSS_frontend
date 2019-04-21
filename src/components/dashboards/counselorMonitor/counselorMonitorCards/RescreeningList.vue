@@ -15,8 +15,8 @@
           display="chip" placeholder="Select Columns" class="w-100" />
       </div>
       <div class="col-2">
-        <!-- Export Button -->
-        <Button icon="pi pi-external-link" label="Export" @click="exportCSV($event)" class="btn w-100 hwss-btn" />
+        <!-- Rescreen Button -->
+        <Button class="btn w-100 hwss-btn" @click="handleRescreen" icon="pi pi-user-edit" label="Rescreen" />
       </div>
     </div>
 
@@ -25,35 +25,88 @@
       <DataTable v-model:selection="selectedUsers" :value="filteredPatients" :loading="loadingPatients"
         :paginator="true" :rows="10" resizableColumns size="large" columnResizeMode="expand"
         :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="multiple" :selection="selectedUsers"
-        @selectionChange="handleSelectionChange" >
+        @selectionChange="handleSelectionChange">
         <!-- Columns -->
+        <Column selectionMode="multiple" headerStyle="width: 3rem" frozen class="font-bold"></Column>
         <Column field="date" header="Date" frozen sortable></Column>
         <Column field="name" header="Name" frozen sortable></Column>
         <Column field="age" header="Age" sortable></Column>
         <Column field="sex" header="Sex" sortable></Column>
         <Column field="pastDiagnosis" header="Past Diagnosis" sortable></Column>
-        <Column field="phqSeverity" header="PHQ Severity" sortable></Column>
-        <Column field="gadSeverity" header="GAD Severity" sortable></Column>
-        <Column field="aceSeverity" header="ACE Severity" sortable></Column>
-        <Column field="tobaccoRisk" header="Tobacco Risk" sortable>
-          <template #body="slotProps">
-            <Tag :value="slotProps.data.tobaccoRisk" :severity="getSeverity(slotProps.data.tobaccoRisk)" />
+        <Column field="phqSeverity" header="PHQ Severity" sortable class="text-center">
+          <template #body="slotProps" >
+            <Tag rounded :value="slotProps.data.phqSeverity" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.phqSeverity)" />
           </template>
         </Column>
-        <Column field="alcoholRisk" header="Alcohol Risk" sortable>
+        <Column field="gadSeverity" header="GAD Severity" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.gadSeverity" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.alcoholRisk)" />
+          </template>
         </Column>
-        <Column field="cannabisRisk" header="Cannabis Risk" sortable></Column>
-        <Column field="cocaineRisk" header="Cocaine Risk" sortable></Column>
-        <Column field="amphetamineRisk" header="Amphetamine Risk" sortable></Column>
-        <Column field="inhalantsRisk" header="Inhalants Risk" sortable></Column>
-        <Column field="sedativeRisk" header="Sedative Risk" sortable></Column>
-        <Column field="hallucinogensRisk" header="Hallucinogens Risk" sortable></Column>
-        <Column field="opioidsRisk" header="Opioids Risk" sortable></Column>
-        <Column field="othersRisk" header="Others Risk" sortable></Column>
-        <Column field="nonMedicalInjectionUse" header="Non Medical Injection Use" sortable></Column>
+        <Column field="aceSeverity" header="ACE Severity" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.aceSeverity" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.aceSeverity)" />
+          </template>
+        </Column>
+        <Column field="tobaccoRisk" header="Tobacco Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.tobaccoRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.tobaccoRisk)" />
+          </template>
+        </Column>
+        <Column field="alcoholRisk" header="Alcohol Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.alcoholRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.alcoholRisk)" />
+          </template>
+        </Column>
+        <Column field="cannabisRisk" header="Cannabis Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.cannabisRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.cannabisRisk)" />
+          </template>
+        </Column>
+        <Column field="cocaineRisk" header="Cocaine Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.cocaineRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.cocaineRisk)" />
+          </template>
+        </Column>
+        <Column field="amphetamineRisk" header="Amphetamine Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.amphetamineRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.amphetamineRisk)" />
+          </template>
+        </Column>
+        <Column field="inhalantsRisk" header="Inhalants Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.inhalantsRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.inhalantsRisk)" />
+          </template>
+        </Column>
+        <Column field="sedativeRisk" header="Sedative Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.sedativeRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.sedativeRisk)" />
+          </template>
+        </Column>
+        <Column field="hallucinogensRisk" header="Hallucinogens Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.hallucinogensRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.hallucinogensRisk)" />
+          </template>
+        </Column>
+        <Column field="opioidsRisk" header="Opioids Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.opioidsRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.opioidsRisk)" />
+          </template>
+        </Column>
+        <Column field="othersRisk" header="Others Risk" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.othersRisk" class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.othersRisk)" />
+          </template>
+        </Column>
+        <Column field="nonMedicalInjectionUse" header="Non Medical Injection Use" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.nonMedicalInjectionUse"
+              class="w-50 text-capitalize" :severity="getSeverity(slotProps.data.nonMedicalInjectionUse)"/>
+          </template>
+        </Column>
         <Column field="Action" header="Action" sortable>
           <template #body="slotProps">
-            <Button class="btn w-100 hwss-btn" @click="handleRescreen(slotProps)">Rescreen</Button>
+            <Button icon="pi pi-check-circle" label="Mark As Safe" @click="markAsSafe(slotProps)" class="btn w-100 hwss-btn" />
           </template>
         </Column>
       </DataTable>
@@ -73,7 +126,6 @@ const users = ref([]);
 const tableSearch = ref('');
 const loadingPatients = ref(false);
 const selectedUsers = ref([]);
-const dt = ref();
 
 const columns = ref([
   { header: 'Date', field: 'date', frozen: true },
@@ -99,16 +151,15 @@ const columns = ref([
 
 const selectedColumns = ref(columns.value);
 
-const exportCSV = () => {
-  dt.value.exportCSV();
-};
-
 const onToggle = (val) => {
-  selectedColumns.value = columns.value.filter(col => val.includes(col));
+  selectedColumns.value = columns.value.filter(col => val.includes(col.header));
 };
 
-const handleRescreen = (selectedUser) => {
-  if (selectedUser.value.length === 0) {
+const handleRescreen = (user) => {
+  selectedUsers.value = [user];
+
+  // Proceed with the rescreening action
+  if (selectedUsers.value.length === 0) {
     Swal.fire({
       icon: 'error',
       title: 'No users selected',
@@ -159,7 +210,8 @@ const filteredPatients = computed(() => {
     'sedativeRisk',
     'hallucinogensRisk',
     'opioidsRisk',
-    'othersRisk'
+    'othersRisk',
+    'nonMedicalInjectionUse'
   ];
 
   filtered.sort((a, b) => {

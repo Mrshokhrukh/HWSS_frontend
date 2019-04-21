@@ -11,7 +11,7 @@
                     <h4 class="mb-3">Case Details</h4>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="caseName" class="form-label">Case Name</label>
+                            <label for="caseName" class="form-label">Case Name (Presenting Issue)</label>
                             <input type="text" class="form-control hwss-primary w-50" id="caseName" v-model="caseName"
                                 required>
                         </div>
@@ -44,11 +44,11 @@
                 </div>
                 <!-- Client Details Section -->
                 <div class="mb-4 p-3">
-                    <h4 class="mb-3">Client Details</h4>
+                    <h4 class="mb-3">Client Details (Ensure all details are correct)</h4>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="CID" class="form-label">CID</label>
-                            <input type="number" class="form-control hwss-primary" id="CID" v-model="CID" required
+                            <label for="CID" class="form-label">CID / Student Code / Work Permit / etc...</label>
+                            <input type="text" class="form-control hwss-primary" id="CID" v-model="CID" required
                                 min="11">
                         </div>
                         <div class="col-md-4 mb-3">

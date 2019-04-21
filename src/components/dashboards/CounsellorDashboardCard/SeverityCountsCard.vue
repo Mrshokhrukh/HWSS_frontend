@@ -7,7 +7,7 @@
         <div @click="setActiveIndex(index)" :class="[isActive(index) ? 'active-card' : 'card text-secondary', 'h-100']">
           <div class="card-body d-flex flex-column align-items-center justify-content-center">
             <h1>{{ item.count }}</h1>
-            <h6 class="mt-auto">{{ item.title }}</h6>
+            <h6 class="mt-auto text-uppercase">{{ item.title }}</h6>
           </div>
         </div>
       </div>
