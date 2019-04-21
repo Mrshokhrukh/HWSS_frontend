@@ -22,26 +22,26 @@
                         <div>
                             <button class="btn hwss-btn2 me-3" @click="selectAll"
                                 :disabled="selectedMenu.value === 0">{{
-                            selectAllText }}</button>
+                                    selectAllText }}</button>
                             <button class="btn hwss-btn" @click="proceed"
                                 :disabled="selectedTools.length === 0">Proceed</button>
                         </div>
                     </div>
                 </div>
                 <div class="row">
-                    
-                <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
-                    <div class="selectable-card card py-5"
-                        :class="{ 'disabled': !isSchoolCounselor && tool.name === 'SCHOOL ENV' }"
-                        @click="toggleSelection(tool)">
-                        <div class="tick-area">
-                            <input class="form-check-input" type="checkbox" :checked="isSelected(tool)"
-                                :disabled="!isSchoolCounselor && tool.name === 'SCHOOL ENV'">
+
+                    <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
+                        <div class="selectable-card card py-5"
+                            :class="{ 'disabled': !isSchoolCounselor && tool.name === 'SCHOOL ENV' }"
+                            @click="toggleSelection(tool)">
+                            <div class="tick-area">
+                                <input class="form-check-input" type="checkbox" :checked="isSelected(tool)"
+                                    :disabled="!isSchoolCounselor && tool.name === 'SCHOOL ENV'">
+                            </div>
+                            <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
+                            <p>{{ tool.name }}</p>
                         </div>
-                        <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
-                        <p>{{ tool.name }}</p>
                     </div>
-                </div>
                 </div>
             </div>
         </div>
@@ -109,7 +109,7 @@ const toggleSelection = (tool) => {
         // Add the tool if it's not selected
         selectedTools.value.push({ id: tool.id, name: tool.name });
     }
-    
+
     // Reorder the selected tools array based on the order in allTools array
     selectedTools.value.sort((a, b) => {
         return allTools.findIndex(tool => tool.id === a.id) - allTools.findIndex(tool => tool.id === b.id);
@@ -118,7 +118,6 @@ const toggleSelection = (tool) => {
     // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
-
 
 const goBack = () => {
     // Implement go back logic
@@ -132,6 +131,7 @@ const selectAll = () => {
     } else {
         selectedTools.value = selectedMenu.value.tools.map(tool => ({ id: tool.id, name: tool.name }));
     }
+    // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
 
@@ -195,6 +195,7 @@ onMounted(() => {
     color: #5d5d5d;
     font-weight: 500;
     position: relative;
+    /* Add relative positioning */
 }
 
 .left-selectors ul li.active a {
@@ -203,32 +204,40 @@ onMounted(() => {
     font-weight: 600;
 }
 
+/* Hover effect */
 .left-selectors ul li a::after {
     content: "";
     position: absolute;
     left: 0;
     bottom: -2px;
     width: 100%;
+    /* Start with full width */
     height: 2px;
     background-color: #2B656F;
     transition: width 0.3s ease, left 0.3s ease;
+    /* Add transition for width and left */
     transform: scaleX(0);
+    /* Initially scale the width to 0 */
     transform-origin: center;
+    /* Set the transform origin to the center */
 }
 
 .left-selectors ul li a:hover::after {
     left: 0;
+    /* Start from left edge */
     width: 100%;
+    /* Expand width to 100% on hover */
     transform: scaleX(1);
+    /* Scale width to 1 */
 }
 
-.disabled{
+.disabled {
     cursor: not-allowed;
     pointer-events: none;
     opacity: 0.5;
 }
 
-.disabled span{
+.disabled span {
     color: #353535
 }
 </style>

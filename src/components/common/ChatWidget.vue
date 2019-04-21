@@ -1,5 +1,5 @@
 <template>
-    <div class="chat-widget card" v-if="isOpen">
+    <div v-if="isOpen" class="chat-widget card">
         <div class="chat-header">
             <span>Chat Widget</span>
             <div class="header-icons">
@@ -7,44 +7,37 @@
             </div>
         </div>
         <div class="chat-messages p-4">
-            <!-- Initial info message for user to input alias -->
-            <div class="message received" v-if="!aliasInput">
-                <p>Hi There, Please input a nick name for the other person to call you.</p>
+            <div v-if="!aliasInput" class="message received">
+                <p>Hi there! Please input a nickname for the other person to call you.</p>
             </div>
-            <!-- Thank you message after alias is input -->
-            <div class="message received" v-if="aliasInput && !agentJoined">
+            <div v-else-if="!agentJoined" class="message received">
                 <p>Thank you! Please wait until one of our agents joins in to start the conversation with you...</p>
             </div>
-            <!-- Agent joined message -->
-            <div class="message received" v-if="agentJoined && !defaultMessageShown">
+            <div v-else-if="agentJoined && !defaultMessageShown" class="message received">
                 <p>{{ agentName }} has joined the chat.</p>
             </div>
-            <!-- Display typing indicator when agent is typing -->
             <div v-if="showTypingIndicator" class="typing-indicator">{{ agentName }} is typing...</div>
-            <!-- Default welcome message after agent joins -->
-            <div class="message received" v-if="defaultMessageShown">
+            <div v-else-if="defaultMessageShown" class="message received">
                 <p>Hi {{ userAlias }}, welcome to HWSS chat. How can I help?</p>
             </div>
-            <!-- Display messages -->
-            <div v-for="(message, index) in messages" :key="index"
-                :class="{ 'message': true, 'sent': message.sentByUser, 'received': !message.sentByUser }">
+            <div v-for="(message, index) in messages" :key="index" :class="getMessageClass(message)">
                 <p>{{ message.text }}</p>
             </div>
         </div>
-        <!-- Input field and send button -->
         <div class="chat-footer">
-            <input type="text" v-model="newMessage" placeholder="Type your message here..." @keyup.enter="sendMessage" />
+            <input type="text" v-model="newMessage" placeholder="Type your message here..."
+                @keyup.enter="sendMessage" />
             <button @click="sendMessage"><img :src="sendIcon" alt="Send" /></button>
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref } from 'vue'
 import sendIcon from '@/assets/images/send.png'
 
-const emit = defineEmits(['minimize', 'close'])
 const { isOpen } = defineProps(['isOpen'])
+const emit = defineEmits(['minimize', 'close'])
 
 const messages = ref([])
 const newMessage = ref('')
@@ -55,7 +48,6 @@ const defaultMessageShown = ref(false)
 const agentName = ref('')
 const userAlias = ref('')
 
-// Improved responsesDictionary with some phrases
 const responsesDictionary = {
     "hi": "Hello! How can I assist you today?",
     "hello": "Hi there! How can I help you?",
@@ -65,8 +57,14 @@ const responsesDictionary = {
     "?": "That's an interesting question! Let me know if you need assistance with anything else."
 }
 
-const minimizeChat = () => {
-    emit('minimize')
+const minimizeChat = () => emit('minimize')
+
+const getMessageClass = (message) => {
+    return {
+        'message': true,
+        'sent': message.sentByUser,
+        'received': !message.sentByUser
+    }
 }
 
 const sendMessage = () => {
@@ -75,18 +73,20 @@ const sendMessage = () => {
         aliasInput.value = true;
         newMessage.value = '';
     } else {
-        if (newMessage.value.trim() !== '') {
-            messages.value.push({ text: newMessage.value, sentByUser: true });
+        const trimmedMessage = newMessage.value.trim();
+        if (trimmedMessage !== '') {
+            messages.value.push({ text: trimmedMessage, sentByUser: true });
             showTypingIndicator.value = true;
-            simulateResponse();
+            simulateResponse(trimmedMessage);
             newMessage.value = '';
         }
     }
 }
 
-const simulateResponse = () => {
+const simulateResponse = (userMessage) => {
     setTimeout(() => {
         if (!aliasInput.value) return;
+
         if (!agentJoined.value) {
             agentJoined.value = true;
             simulateAgentJoin();
@@ -94,26 +94,25 @@ const simulateResponse = () => {
             defaultMessageShown.value = true;
         }
 
-        const userMessage = newMessage.value.toLowerCase();
-        let response = responsesDictionary[userMessage] || "I'm still learning to respond to that.";
+        let response = responsesDictionary[userMessage.toLowerCase()] || "I'm still learning to respond to that.";
 
-        // Check if user's message contains a question mark
         if (userMessage.includes("?")) {
             response = responsesDictionary["?"] || response;
         }
 
         messages.value.push({ text: response, sentByUser: false });
         showTypingIndicator.value = false;
-    }, 3000);
+    }, 2000);
 }
 
 const simulateAgentJoin = () => {
-    agentName.value = 'Noko';
+    const agents = ['Noko', 'Tenzin', 'Pema'];
+    agentName.value = agents[Math.floor(Math.random() * agents.length)];
 }
-
 </script>
-  
-  
+
+
+
 <style scoped>
 .typing-indicator {
     text-align: center;
@@ -217,4 +216,3 @@ const simulateAgentJoin = () => {
     width: 100%;
 }
 </style>
-  

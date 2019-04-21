@@ -21,7 +21,7 @@ import eventScreeningImg from '@/assets/images/eventscreening.png';
 
 const quickTools = [
   { title: 'Case Screening', image: caseScreeningImg, textColor: '#2B656F', link: 'case-screening' },
-  { title: 'Event Base Screening', image: eventScreeningImg, textColor: '#2B656F', link: 'event-based-screening' }
+  { title: 'Event Based Screening', image: eventScreeningImg, textColor: '#2B656F', link: 'event-based-screening' }
 ];
 </script>
 

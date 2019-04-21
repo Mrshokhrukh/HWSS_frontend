@@ -152,7 +152,9 @@ const acceptReferral = async (referral) => {
       text: response.data.message,
       timer: 1500
     });
-    window.location.reload();
+    setTimeout(() => {
+      window.location.reload();
+    },2000)
   } catch (error) {
     console.error('Error accepting referral:', error);
     Swal.fire({

@@ -114,7 +114,7 @@ const handleAnswerSelection = (option, substance) => {
         console.error('ASSIST: Null pointer exception in handleAnswerSelection. option is null');
         return;
     }
-    if (!substance && currentQuestionSetName.value === 'CNE ASSIST') {
+    if (!substance && currentQuestionSetName.value === 'ASSIST') {
         console.error('ASSIST: Null pointer exception in handleAnswerSelection. substance is null');
         return;
     }
@@ -123,15 +123,10 @@ const handleAnswerSelection = (option, substance) => {
 }
 
 const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
-
-
-
 const questionsWithIndex = counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'CNE ASSIST').questions.map((question, index) => ({
     ...question,
     index: index + 1
 }));
-
-console.log('ASSIST questions: ', questionsWithIndex);
 
 const currentQuestion = computed(() => {
     return questionsWithIndex.find(question => question.index === currentQuestionIndex.value);
@@ -208,7 +203,7 @@ function logQuestionAndResponse(option, substance) {
     const answer = response.trim();
 
     // Check if the question is from the ASSIST set
-    if (questionSetName === 'CNE ASSIST') {
+    if (questionSetName === 'ASSIST') {
         // Store the response to question 1 in question1Responses object
         if (currentQuestionIndex.value === 1) {
             // Initialize question1Responses if not already initialized
@@ -237,12 +232,12 @@ function logQuestionAndResponse(option, substance) {
     // Update or add the log entry to testResponses.responses array
     const index = findLoggedQuestionIndex(questionText, substance);
     if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
-        // console.log('Log Entry Replacing (same substance):', logEntry);
+        console.log('Log Entry Replacing (same substance):', logEntry);
         testResponses.responses[index] = logEntry;
     } else {
-        // console.log('Log Entry:', logEntry);
+        console.log('Log Entry:', logEntry);
         // Log even if substance is different
-        // console.log('(Substance different from existing entry)');
+        console.log('(Substance different from existing entry)');
         if (!testResponses.responses) {
             console.error('ASSIST: Null pointer exception in logQuestionAndResponse. testResponses.responses is null');
             return;
@@ -253,7 +248,7 @@ function logQuestionAndResponse(option, substance) {
 
 const proceed = () => {
     localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
-    emit('goToNext', 'CNE ASSIST');
+    emit('goToNext', 'ASSIST');
 };
 
 
@@ -316,7 +311,7 @@ const jumpToNextQuestion = () => {
         if (!checkInvalidInputs()) {
             const allSubstancesNo = Object.values(substanceAnswered).every(answer => answer === 'No' || answer === 'Yes');
             if (allSubstancesNo) {
-                jumpToNextRelevantSet('CNE ASSIST');
+                jumpToNextRelevantSet('ASSIST');
             }
             currentQuestionIndex.value++;
         }

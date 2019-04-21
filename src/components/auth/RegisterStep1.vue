@@ -20,11 +20,11 @@
                         <h2 class="text-center mt-5 mb-4" style="color: #2B656F; font-weight: bold">Sign Up</h2>
                         <p class="text-center text-capitalize" style="color: #2B656F; font-weight: bold">Select type
                             of user</p>
-                        <div class="row justify-content-center">
+                        <div class="row justify-content-center align-items-center">
                             <div :class="['card', 'reg-card', { 'active': selectedOption === 'pre-recorded' }]"
                                 @click="updateSelectedUserType('pre-recorded')">
-                                <div class="card-body p-2">
-                                    <img src="@/assets/images/pre-recorded-icon.png" alt="" class="img-fluid">
+                                <div class="card-body d-flex align-items-center flex-column">
+                                    <img src="@/assets/images/pre-recorded-icon.png" alt="" class="img-fluid mb-2">
                                     <br />
                                     <h6 class="card-text" style="color: #2B656F;">Pre Recorded User</h6>
                                 </div>
@@ -32,9 +32,9 @@
 
                             <div :class="['card', 'reg-card', { 'active': selectedOption === 'new-user' }]"
                                 @click="updateSelectedUserType('new-user')">
-                                <div class="card-body p-2">
+                                <div class="card-body d-flex align-items-center flex-column">
                                     <!-- <i class="fas fa-user" style="color: #2B656F;"></i> -->
-                                    <img src="@/assets/images/agency-based-icon.png" alt="" class="img-fluid">
+                                    <img src="@/assets/images/agency-based-icon.png" alt="" class="img-fluid mb-2">
                                     <br />
                                     <h6 class="card-text" style="color: #2B656F;">Agency Based User</h6>
                                 </div>

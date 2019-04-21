@@ -2,7 +2,7 @@
   <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
     <div class="col-md-8">
       <div class="card shadow">
-        <div class="logo-container">
+        <div class="logo-container card d-flex flex-row justify-content-center align-items-center">
           <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
           <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
         </div>
@@ -11,28 +11,29 @@
           <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
           <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
         </div>
-        <div class="container p-4">
-          <div class="card-body text-start form">
-            <h5 class="card-title cust-text bold h2">User Details</h5>
+        <div class="p-4">
+          <div class="card p-4 text-start form">
+            <h4 class="card-title cust-text bold  text-center">User Details</h4>
             <p class="card-text cust-text bold">Please kindly enter your details below to check if you are prerecorded
               or not</p>
             <form @submit.prevent="verifyUser">
               <div class="mb-3">
-                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID / Casefile no / Any Other Any other identity Number</label>
+                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID / Casefile no / Student Code /
+                  Any other identity Number</label>
                 <input type="text" class="form-control" id="cid" v-model="cid" required>
               </div>
               <div class="row g-3">
-                <p class="cust-text bold">What’s your date of birth?</p>
+                <p class="cust-text mb-1 bold">What’s your date of birth?</p>
                 <div class="col-md-4">
-                  <label for="day" class="form-label text-success">Day:</label>
+                  <label for="day" class="form-label hwss-primary">Day:</label>
                   <input type="number" id="day" v-model="day" min="1" max="31" class="form-control" required>
                 </div>
                 <div class="col-md-4">
-                  <label for="month" class="form-label text-success">Month:</label>
+                  <label for="month" class="form-label hwss-primary">Month:</label>
                   <input type="number" id="month" v-model="month" min="1" max="12" class="form-control" required>
                 </div>
                 <div class="col-md-4">
-                  <label for="year" class="form-label text-success">Year:</label>
+                  <label for="year" class="form-label hwss-primary">Year:</label>
                   <input type="number" id="year" v-model="year" min="1900" max="2100" class="form-control" required>
                 </div>
               </div>
@@ -43,7 +44,7 @@
         </div>
         <div class="card-footer text-muted text-center">
           Already have an Account?
-          <router-link to="/login" class="text-primary">Sign In</router-link>
+          <router-link to="/login" class="hwss-primary bold">Sign In</router-link>
         </div>
       </div>
     </div>

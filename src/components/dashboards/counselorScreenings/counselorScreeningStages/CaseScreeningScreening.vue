@@ -50,7 +50,6 @@ const router = useRouter();
 const emit = defineEmits(['goBackToSelectTools', 'goToNext']);
 
 // Define reactive variables
-// Define reactive variables
 const currentScreeningComponent = ref(null);
 const selectedMenu = ref(null);
 const menus = ref([]);
@@ -132,31 +131,33 @@ const handleChangeComponent = (nextMenuName) => {
 };
 
 
-const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || [];
+const ClientUserIdCaseBase = JSON.parse(sessionStorage.getItem('ClientUserIdCaseBase')) || [];
+const currentUserIdIndex = ref(0);
 
 const submitAssessments = async () => {
-    console.log('Submitting assessments...');
-    try {
-        const userId = ClientUserIdCaseBase;
-        const { gadData, phqData, aceData, assistRiskSeverity, schoolEnvData } = gatherAssessmentData();
-        const formData = constructFormData(userId, gadData, phqData, aceData, assistRiskSeverity, schoolEnvData);
-
-        const response = await submitFormData(formData);
-
-        handleSuccessResponse(response); 
-    } catch (error) {
-        handleSubmissionError(error);
+    if (currentUserIdIndex.value >= ClientUserIdCaseBase.length) {
+        // All users' assessments have been submitted
+        Swal.fire({
+            icon: 'success',
+            title: 'All Assessments Submitted Successfully',
+            text: 'Thank you for submitting all assessments.',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            router.push('/counselor-dashboard');
+        });
+        return;
     }
-};
 
-const gatherAssessmentData = () => {
+    const userId = ClientUserIdCaseBase[currentUserIdIndex.value];
+
+    // Gather data from localStorage
     const getDataFromLocalStorage = (key) => {
         try {
             const data = localStorage.getItem(`${key}_set_counselor_screening`);
-            return data ? JSON.parse(data) : {};
+            return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
         } catch (error) {
             console.error(`Error parsing ${key} data:`, error);
-            return {};
+            return {}; // Return an empty object if parsing fails
         }
     };
 
@@ -166,118 +167,115 @@ const gatherAssessmentData = () => {
     const assistData = getDataFromLocalStorage('ASSIST');
     const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
 
-    let assistRiskSeverity = null;
+    // Function to calculate risk severity for each substance
+    let assistRiskSeverity = {}; // Move the declaration outside the block
     if (assistData !== null && assistData.length > 0) {
+        const calculateRiskSeverity = (assistData) => {
+            const substanceScores = {};
+            // Loop through ASSIST data and calculate scores for each substance
+            assistData.forEach(entry => {
+                const substanceName = entry.substance;
+                const point = entry.point;
+                // Add point to the substance's total score
+                substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+            });
+
+            // Define threshold values for risk severity
+            const thresholds = {
+                mild: 3,
+                moderate: 5,
+                moderatelySevere: 8,
+                severe: 11
+            };
+
+            // Determine risk severity for each substance
+            const substanceRiskSeverity = {};
+            for (const substanceName in substanceScores) {
+                const score = substanceScores[substanceName];
+                if (score >= thresholds.severe) {
+                    substanceRiskSeverity[substanceName] = 'severe';
+                } else if (score >= thresholds.moderatelySevere) {
+                    substanceRiskSeverity[substanceName] = 'moderately severe';
+                } else if (score >= thresholds.moderate) {
+                    substanceRiskSeverity[substanceName] = 'moderate';
+                } else if (score >= thresholds.mild) {
+                    substanceRiskSeverity[substanceName] = 'mild';
+                } else {
+                    substanceRiskSeverity[substanceName] = 'none';
+                }
+                // Append the total score to the substance's risk severity
+                substanceRiskSeverity[substanceName] += ` (${score})`; // Use the total score directly
+            }
+
+            return substanceRiskSeverity;
+        };
+
+        // Calculate risk severity for ASSIST data
         assistRiskSeverity = calculateRiskSeverity(assistData);
+        console.log('Assist Risk Severity:', assistRiskSeverity);
     }
 
-    return { gadData, phqData, aceData, assistRiskSeverity, schoolEnvData };
-};
-
-
-const calculateRiskSeverity = (assistData) => {
-    const thresholds = {
-        mild: 3,
-        moderate: 5,
-        moderatelySevere: 8,
-        severe: 11
-    };
-
-    const substanceScores = {};
-    assistData.forEach(entry => {
-        const substanceName = entry.substance;
-        const point = entry.point;
-        substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
-    });
-
-    const substanceRiskSeverity = {};
-    for (const substanceName in substanceScores) {
-        const score = substanceScores[substanceName];
-        substanceRiskSeverity[substanceName] = calculateSeverityLevel(score, thresholds);
-    }
-
-    return substanceRiskSeverity;
-};
-
-const calculateSeverityLevel = (score, thresholds) => {
-    if (score >= thresholds.severe) {
-        return 'severe';
-    } else if (score >= thresholds.moderatelySevere) {
-        return 'moderately severe';
-    } else if (score >= thresholds.moderate) {
-        return 'moderate';
-    } else if (score >= thresholds.mild) {
-        return 'mild';
-    } else {
-        return 'none';
-    }
-};
-
-const constructFormData = (userId, gadData, phqData, aceData, assistRiskSeverity, schoolEnvData) => {
+    // Construct form data
     const formData = new FormData();
     formData.append('userId', userId);
     formData.append('gadData', JSON.stringify(gadData));
     formData.append('phqData', JSON.stringify(phqData));
     formData.append('aceData', JSON.stringify(aceData));
+    // Include the filtered and processed ASSIST data
     formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
     formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
 
-    return formData;
-};
+    console.log('Form data:', formData);
 
-const submitFormData = async (formData) => {
-    console.log('Submitting form data:', formData);
-    return await axios.post(endpoints.caseScreenSubmission, formData);
-};
+    try {
+        // Submit data to endpoint
+        const response = await axios.post(endpoints.caseScreenSubmission, formData);
+        console.log('Response:', response);
 
-const handleSuccessResponse = (response) => {
-    if (response.status === 200) { // Ensure the response structure is as expected
-        // clearLocalStorageData();
+        // Remove user ID from rescreening list
+        ClientUserIdCaseBase.shift();
+        // Update sessionStorage
+        sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
+        // Increment index for next user
+        currentUserIdIndex.value++;
 
+        // Clear localStorage data for assessments
+        ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
+            localStorage.removeItem(`${key}_set_counselor_screening`);
+        });
+        localStorage.removeItem('answeredSubstances');
+        localStorage.removeItem('selectedMenu');
+        localStorage.removeItem('selectedTools');
+
+        // Show success message
         Swal.fire({
             icon: 'success',
             title: 'Assessments Submitted Successfully',
             text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            // Assuming ClientUserIdCaseBase is defined somewhere
+            // Check if there are remaining user IDs
             if (ClientUserIdCaseBase.length > 0) {
+                // Stay on rescreening route
                 window.location.reload();
             } else {
-                clearLocalStorageData
-                router.push('/counselor-dashboard'); 
-                console.log('No more users to assess');
+                // All assessments submitted, redirect to counselor dashboard
+                router.push('/counselor-dashboard');
             }
         });
-    } else {
-        // Handle other response scenarios if needed
-        console.error('Unexpected response:', response);
+    } catch (error) {
+        console.error('Error submitting assessments:', error);
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to submit assessments. Please try again later.',
+            confirmButtonText: 'OK'
+        });
     }
 };
 
-const clearLocalStorageData = () => {
-    ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
-        localStorage.removeItem(`${key}_set_counselor_screening`);
-    });
-    localStorage.removeItem('answeredSubstances');
-    localStorage.removeItem('selectedMenu');
-    localStorage.removeItem('selectedTools');
-};
-
-const handleSubmissionError = (error) => {
-    console.error('Error submitting assessments:', error);
-    Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to submit assessments. Please try again later.',
-        confirmButtonText: 'OK'
-    });
-};
-
 </script>
-
-
-
 
 <style scoped>
 .hwss-icon {

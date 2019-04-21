@@ -14,13 +14,9 @@
         <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
           display="chip" placeholder="Select Columns" class="w-100" />
       </div>
-      <div class="col-1">
-        <!-- Rescreen Button -->
-        <Button class="btn w-100" @click="handleRescreen">Rescreen</Button>
-      </div>
-      <div class="col-1">
+      <div class="col-2">
         <!-- Export Button -->
-        <Button icon="pi pi-external-link" label="Export" @click="exportCSV($event)" class="btn" />
+        <Button icon="pi pi-external-link" label="Export" @click="exportCSV($event)" class="btn w-100 hwss-btn" />
       </div>
     </div>
 
@@ -31,7 +27,6 @@
         :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="multiple" :selection="selectedUsers"
         @selectionChange="handleSelectionChange" >
         <!-- Columns -->
-        <Column selectionMode="multiple" headerStyle="width: 3rem" frozen class="font-bold"></Column>
         <Column field="date" header="Date" frozen sortable></Column>
         <Column field="name" header="Name" frozen sortable></Column>
         <Column field="age" header="Age" sortable></Column>
@@ -56,6 +51,11 @@
         <Column field="opioidsRisk" header="Opioids Risk" sortable></Column>
         <Column field="othersRisk" header="Others Risk" sortable></Column>
         <Column field="nonMedicalInjectionUse" header="Non Medical Injection Use" sortable></Column>
+        <Column field="Action" header="Action" sortable>
+          <template #body="slotProps">
+            <Button class="btn w-100 hwss-btn" @click="handleRescreen(slotProps)">Rescreen</Button>
+          </template>
+        </Column>
       </DataTable>
     </div>
   </div>
@@ -107,8 +107,8 @@ const onToggle = (val) => {
   selectedColumns.value = columns.value.filter(col => val.includes(col));
 };
 
-const handleRescreen = () => {
-  if (selectedUsers.value.length === 0) {
+const handleRescreen = (selectedUser) => {
+  if (selectedUser.value.length === 0) {
     Swal.fire({
       icon: 'error',
       title: 'No users selected',
