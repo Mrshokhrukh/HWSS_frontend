@@ -5,7 +5,7 @@
         <div class="col-md-6 d-flex align-items-center justify-content-start">
           <a href="#" class="helpline-link bold">
             <i class="bi bi-telephone-fill me-2"></i>
-            Call 1010 or 112 For The PEMA Helpline Services
+            Call 1010 or 113 For The PEMA Helpline Services
           </a>
         </div>
         <div class="col-md-6 d-flex align-items-center justify-content-end">
@@ -51,6 +51,5 @@
 
 .top-component-card {
   width: 80vw;
-  box-shadow: 4px 8px 4px rgba(0, 0, 0, 0.2);
 }
 </style>

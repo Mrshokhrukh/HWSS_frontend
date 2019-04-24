@@ -7,14 +7,19 @@
       </aside>
 
       <!-- Main Content with Top Navbar -->
-      <main class="col-lg-10 col-md-10 col-sm-12">
+      <main class="col-10">
         <!-- Top Navbar -->
         <div class="container-fluid">
           <div class="row">
-            <div class="col-md-12 mb-4 mt-3 card bg-light"
+            <div class="col-12 mb-4 mt-3 card bg-light"
               v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard">
               <TopNavbarCard />
             </div>
+            <div class="col-12 mb-4" 
+            v-if="currentComponent === StudentDashboard || currentComponent === PublicDashboard">
+              <HelplineServices />
+            </div>
+
           </div>
         </div>
 
@@ -39,6 +44,7 @@ import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue';
+import HelplineServices from "@/components/dashboards/screenings/screeningCards/HelplineServices.vue";
 
 const sidebarOpen = ref(false);
 

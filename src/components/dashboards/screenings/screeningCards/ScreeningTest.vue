@@ -100,7 +100,7 @@
                                             :name="`question-${question.id}`" :value="option.option"
                                             v-model="answers[question.id]" @change="
                                                 handleRadioClick(question.text, question.id, option.option)
-                                                " required/>
+                                                " required />
 
                                         <label :for="`question-${question.id}-answer-${option.id}`"></label>
                                     </td>
@@ -794,9 +794,9 @@ const jumpToNextQuestion = () => {
                 jumpToNextRelevantSet("ASSIST");
                 return;
             }
+        } else {
+            return;
         }
-    } else {
-        currentQuestionIndex.value++;
     }
 
     currentQuestionIndex.value++;
