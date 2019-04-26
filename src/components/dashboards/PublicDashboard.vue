@@ -44,6 +44,12 @@
 		<div v-if="currentRoute === '/public-dashboard/profile'" class="screening-dashboard">
 			<StudentProfile />
 		</div>
+
+		<footer class="footer">
+			<div class="container text-center my-4">
+				<p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+			</div>
+		</footer>
 	</div>
 </template>
 
@@ -62,6 +68,26 @@ const userName = ref("");
 const route = useRoute();
 
 const currentRoute = computed(() => route.path);
+
+// Dynamically get the current year
+const currentYear = new Date().getFullYear();
+
+// Dynamically populate website name
+const websiteName = "The PEMA HWSS";
 </script>
 
-<style scoped></style>
+<style scoped>
+.container-fluid {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.header {
+	height: 8rem;
+}
+
+.footer {
+	margin-top: auto;
+}
+</style>

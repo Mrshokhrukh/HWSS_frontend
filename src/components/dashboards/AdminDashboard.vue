@@ -14,24 +14,24 @@
                 <MentalhealthHelp />
             </div>
 
-            
+
             <div v-else-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-settings">
-                <MentalhealthcardSetting/>
+                <MentalhealthcardSetting />
             </div>
 
-            
+
             <div v-else-if="currentRoute === '/admin-dashboard/admin-chart-maker'" class="admin-report">
                 <ChartMakerAdmin />
             </div>
-            
-            
+
+
             <div v-else>
                 <DashboardCurrentStatus />
                 <div class="row mt-5">
                     <div class="col-md-12">
                         <TableTotalScreening />
                     </div>
-                </div>  
+                </div>
                 <ChartCard />
             </div>
         </div>
@@ -99,6 +99,11 @@
             </div>
         </div>
     </div>
+    <footer class="footer">
+        <div class="container text-center my-4">
+            <p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+        </div>
+    </footer>
 
 </template>
 
@@ -137,10 +142,24 @@ const userRole = computed(() => {
     return savedUserRole.user.role;
 });
 
+// Dynamically get the current year
+const currentYear = new Date().getFullYear();
+
+// Dynamically populate website name
+const websiteName = "The PEMA HWSS";
+
 </script>
 
 <style>
 .admin-card {
     background-color: #d3e2e4;
+}
+
+.header {
+	height: 8rem;
+}
+
+.footer {
+	margin-top: auto;
 }
 </style>

@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import { ref, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 
@@ -99,7 +98,7 @@ const generateDashboardRoutes = (userType) => {
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Flagged Reports`, requiresAuth: true },
       props: (route) => ({ flag: route.query.flag }) // Pass query parameter as prop to the component
     },
-    
+
 
     // -------------------------- Admin specific routes ---------------------------------------------------
     {
@@ -176,43 +175,48 @@ const createAppRouter = () => {
   });
 
   router.beforeEach(async (to, from, next) => {
-    const isAuthenticated = localStorage.getItem('authToken') !== null;
+    const authToken = localStorage.getItem('authToken');
+    const isAuthenticated = authToken !== null;
 
+    if (isAuthenticated) {
+      const userType = localStorage.getItem('userType');
+
+      // If the user is authenticated and trying to access non-authenticated pages
+      if (!to.matched.some(record => record.meta.requiresAuth)) {
+        // Redirect the user to their respective dashboard based on their user type
+        next({ name: `${userType}-dashboard` });
+        return;
+      }
+    }
+
+    // If the route requires authentication, proceed with authentication logic
     if (to.matched.some(record => record.meta.requiresAuth)) {
       if (!isAuthenticated) {
-        next({ name: 'login' }); // Redirect to login page if not authenticated
+        next({ name: 'login' });
       } else {
-        // Validate token
         try {
-          const authToken = localStorage.getItem('authToken');
           const response = await axios.post(endpoints.authenticateToken, null, {
-            headers: {
-              'Authorization': `Token ${authToken}`
-            }
+            headers: { 'Authorization': `Token ${authToken}` }
           });
+
           if (response.data.valid) {
-            // Your code to execute after user login goes here
             const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
-            const userType = ref([]);
 
-            if (userDetailsStore) {
-              userType.value = computed(() => {
-                const role = userDetailsStore.user.role?.toLowerCase();
-                if (!role) return "public";
-
-                if (role.includes("admin")) {
-                  return "admin";
-                } else if (role.includes("_counselor")) {
-                  return "counselor";
-                } else if (role === "student") {
-                  return "student";
-                } else {
-                  return "public";
-                }
-              });
+            // Set user type only if it's not already set
+            if (!localStorage.getItem('userType')) {
+              const role = userDetailsStore?.user?.role?.toLowerCase() || "public";
+              let userType;
+              if (role.includes("admin")) {
+                userType = "admin";
+              } else if (role.includes("_counselor")) {
+                userType = "counselor";
+              } else if (role === "student") {
+                userType = "student";
+              } else {
+                userType = "public";
+              }
+              localStorage.setItem('userType', userType);
             }
-
-            localStorage.setItem('userType', userType.value.value);
 
             next(); // User is authenticated, allow access
           } else {
@@ -228,7 +232,6 @@ const createAppRouter = () => {
       next(); // Allow access to other routes
     }
   });
-
   return router;
 };
 

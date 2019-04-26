@@ -54,10 +54,10 @@
 		</div>
 
 		<footer class="footer">
-      <div class="container text-center my-4">
-        <p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
-      </div>
-    </footer>
+			<div class="container text-center my-4">
+				<p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+			</div>
+		</footer>
 	</div>
 </template>
 
@@ -81,14 +81,14 @@ const currentRoute = computed(() => route.path);
 const currentYear = new Date().getFullYear();
 
 // Dynamically populate website name
-const websiteName = "The PEMA HWSS"; // Replace with your actual website name
+const websiteName = "The PEMA HWSS";
 </script>
 
 <style scoped>
 .container-fluid {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
 }
 
 .header {
@@ -96,6 +96,6 @@ const websiteName = "The PEMA HWSS"; // Replace with your actual website name
 }
 
 .footer {
-  margin-top: auto; 
+	margin-top: auto;
 }
 </style>

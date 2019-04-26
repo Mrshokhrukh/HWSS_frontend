@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import endpoints from '@/api';
@@ -132,22 +132,6 @@ const isProceedButtonActive = computed(() => {
     );
 });
 
-// Watch for changes in reactive variables
-watchEffect(() => {
-    console.log('Current State:', {
-        CID: CID.value,
-        nationality: 'Bhutanese',
-        clientFullName: clientFullName.value,
-        dzongkhag: dzongkhag.value,
-        DOB: DOB.value,
-        gender: gender.value,
-        parentalStatus: parentalStatus.value,
-        currentAddress: currentAddress.value,
-        phoneNumber: phoneNumber.value,
-        email: email.value
-    });
-});
-
 const submitForm = async () => {
     try {
         // Await the username generation
@@ -182,7 +166,7 @@ const submitForm = async () => {
             const response = await axios.post(endpoints.registerCounselorEventUser, formData);
 
             const userId = response.data.userId;
-            localStorage.setItem('ClientUserIdCaseBase', userId);
+            localStorage.setItem('ClientUserIdEventBase', userId);
             return response.data; // Return the response data
         } else {
             throw new Error('User details not found in localStorage');
@@ -207,7 +191,6 @@ const submitForm = async () => {
                 try {
                     const response = await axios.post(endpoints.registerCounselorUser, this.formData);
 
-                    console.log('Form submitted successfully:', response.data);
                     const userId = response.data.userId;
                     localStorage.setItem('ClientUserIdCaseBase', userId);
                     return response.data; // Return the response data

@@ -133,9 +133,6 @@ const submitForm = async () => {
 
         console.log(eventData);
 
-        // stop execution of code here
-        alert('Event screening created successfully!');
-
         const createResponse = await axios.post(endpoints.createEventScreening, eventData);
 
         // Handle successful response
@@ -164,6 +161,14 @@ const fetchEventStatus = async () => {
 
         if (response.status === 200) {
             const eventData = response.data;
+            
+            // Check if eventId is already saved in localStorage
+            const savedEventId = localStorage.getItem('eventId');
+            if (!savedEventId || savedEventId !== eventData.eventId.toString()) {
+                // Save eventId to localStorage
+                localStorage.setItem('eventId', eventData.eventId);
+            }
+
             if (eventData.approval_status === 'pending') {
                 Swal.fire({
                     title: 'Event Screening Pending',
@@ -195,6 +200,7 @@ const fetchEventStatus = async () => {
         console.error('Error:', error);
     }
 };
+
 
 
 onMounted(() => {

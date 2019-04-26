@@ -36,10 +36,10 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import CaseScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningGAD.vue';
-import CaseScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningPHQ.vue';
-import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningASSIST.vue';
-import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
+import ScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningGAD.vue';
+import ScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningPHQ.vue';
+import ScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningASSIST.vue';
+import ScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningACE.vue';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -57,10 +57,10 @@ const nextMenu = ref(null);
 
 // Define component mapping
 const componentMap = {
-    'GAD7': CaseScreeningGAD,
-    'PHQ9': CaseScreeningPHQ,
-    'ASSIST': CaseScreeningASSIST,
-    'ACE': CaseScreeningACE,
+    'GAD7': ScreeningGAD,
+    'PHQ9': ScreeningPHQ,
+    'ASSIST': ScreeningASSIST,
+    'ACE': ScreeningACE,
 };
 
 // Method to select menu
@@ -85,7 +85,7 @@ onMounted(() => {
 
 // Watch for changes in selected menu and save to local storage
 watch(selectedMenu, (newValue) => {
-    localStorage.setItem('selectedMenu', JSON.stringify([newValue])); // Store selected menu as an array
+    localStorage.setItem('selectedMenu', JSON.stringify([newValue]));
 });
 
 const handleChangeComponent = (nextMenuName) => {
@@ -107,6 +107,7 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
+                console.log('this function is read');
                 submitAssessments();
             }
         });
@@ -131,121 +132,57 @@ const handleChangeComponent = (nextMenuName) => {
 };
 
 
-const ClientUserIdCaseBase = JSON.parse(sessionStorage.getItem('ClientUserIdCaseBase')) || [];
-const currentUserIdIndex = ref(0);
+const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || [];
 
 const submitAssessments = async () => {
-    if (currentUserIdIndex.value >= ClientUserIdCaseBase.length) {
-        // All users' assessments have been submitted
-        Swal.fire({
-            icon: 'success',
-            title: 'All Assessments Submitted Successfully',
-            text: 'Thank you for submitting all assessments.',
-            confirmButtonText: 'OK'
-        }).then(() => {
-            router.push('/counselor-dashboard');
-        });
-        return;
-    }
+    try {
 
-    const userId = ClientUserIdCaseBase[currentUserIdIndex.value];
+        const userId = ClientUserIdCaseBase;
 
-    // Gather data from localStorage
-    const getDataFromLocalStorage = (key) => {
-        try {
-            const data = localStorage.getItem(`${key}_set_counselor_screening`);
-            return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
-        } catch (error) {
-            console.error(`Error parsing ${key} data:`, error);
-            return {}; // Return an empty object if parsing fails
-        }
-    };
-
-    const gadData = getDataFromLocalStorage('GAD');
-    const phqData = getDataFromLocalStorage('PHQ');
-    const aceData = getDataFromLocalStorage('ACE');
-    const assistData = getDataFromLocalStorage('ASSIST');
-    const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
-
-    // Function to calculate risk severity for each substance
-    let assistRiskSeverity = {}; // Move the declaration outside the block
-    if (assistData !== null && assistData.length > 0) {
-        const calculateRiskSeverity = (assistData) => {
-            const substanceScores = {};
-            // Loop through ASSIST data and calculate scores for each substance
-            assistData.forEach(entry => {
-                const substanceName = entry.substance;
-                const point = entry.point;
-                // Add point to the substance's total score
-                substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
-            });
-
-            // Define threshold values for risk severity
-            const thresholds = {
-                mild: 3,
-                moderate: 5,
-                moderatelySevere: 8,
-                severe: 11
-            };
-
-            // Determine risk severity for each substance
-            const substanceRiskSeverity = {};
-            for (const substanceName in substanceScores) {
-                const score = substanceScores[substanceName];
-                if (score >= thresholds.severe) {
-                    substanceRiskSeverity[substanceName] = 'severe';
-                } else if (score >= thresholds.moderatelySevere) {
-                    substanceRiskSeverity[substanceName] = 'moderately severe';
-                } else if (score >= thresholds.moderate) {
-                    substanceRiskSeverity[substanceName] = 'moderate';
-                } else if (score >= thresholds.mild) {
-                    substanceRiskSeverity[substanceName] = 'mild';
-                } else {
-                    substanceRiskSeverity[substanceName] = 'none';
-                }
-                // Append the total score to the substance's risk severity
-                substanceRiskSeverity[substanceName] += ` (${score})`; // Use the total score directly
+        // Gather data from localStorage
+        const getDataFromLocalStorage = (key) => {
+            try {
+                const data = localStorage.getItem(`${key}_set_counselor_screening`);
+                return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
+            } catch (error) {
+                console.error(`Error parsing ${key} data:`, error);
+                return {}; // Return an empty object if parsing fails
             }
-
-            return substanceRiskSeverity;
         };
 
-        // Calculate risk severity for ASSIST data
-        assistRiskSeverity = calculateRiskSeverity(assistData);
-        console.log('Assist Risk Severity:', assistRiskSeverity);
-    }
+        const gadData = getDataFromLocalStorage('GAD');
+        const phqData = getDataFromLocalStorage('PHQ');
+        const aceData = getDataFromLocalStorage('ACE');
+        const assistData = getDataFromLocalStorage('ASSIST');
+        const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
 
-    // Construct form data
-    const formData = new FormData();
-    formData.append('userId', userId);
-    formData.append('gadData', JSON.stringify(gadData));
-    formData.append('phqData', JSON.stringify(phqData));
-    formData.append('aceData', JSON.stringify(aceData));
-    // Include the filtered and processed ASSIST data
-    formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
-    formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+        // Construct form data
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('gadData', JSON.stringify(gadData));
+        formData.append('phqData', JSON.stringify(phqData));
+        formData.append('aceData', JSON.stringify(aceData));
 
-    console.log('Form data:', formData);
+        // Calculate risk severity for ASSIST data if available
+        if (assistData && assistData.length > 0) {
+            const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
+            formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
+        }
 
-    try {
+        formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+
+        console.log('Submitting assessments for user:', userId);
+
         // Submit data to endpoint
+        console.log('Form Data:', formData);
         const response = await axios.post(endpoints.caseScreenSubmission, formData);
         console.log('Response:', response);
 
-        // Remove user ID from rescreening list
-        ClientUserIdCaseBase.shift();
         // Update sessionStorage
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
-        // Increment index for next user
-        currentUserIdIndex.value++;
 
         // Clear localStorage data for assessments
-        ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
-            localStorage.removeItem(`${key}_set_counselor_screening`);
-        });
-        localStorage.removeItem('answeredSubstances');
-        localStorage.removeItem('selectedMenu');
-        localStorage.removeItem('selectedTools');
+        clearLocalStorageData();
 
         // Show success message
         Swal.fire({
@@ -275,6 +212,58 @@ const submitAssessments = async () => {
     }
 };
 
+// Function to calculate risk severity for ASSIST data
+const calculateAssistRiskSeverity = (assistData) => {
+    const substanceScores = {};
+    // Loop through ASSIST data and calculate scores for each substance
+    assistData.forEach(entry => {
+        const substanceName = entry.substance;
+        const point = entry.point;
+        // Add point to the substance's total score
+        substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+    });
+
+    // Define threshold values for risk severity
+    const thresholds = {
+        mild: 3,
+        moderate: 5,
+        moderatelySevere: 8,
+        severe: 11
+    };
+
+    // Determine risk severity for each substance
+    const assistRiskSeverity = {};
+    for (const substanceName in substanceScores) {
+        const score = substanceScores[substanceName];
+        if (score >= thresholds.severe) {
+            assistRiskSeverity[substanceName] = 'severe';
+        } else if (score >= thresholds.moderatelySevere) {
+            assistRiskSeverity[substanceName] = 'moderately severe';
+        } else if (score >= thresholds.moderate) {
+            assistRiskSeverity[substanceName] = 'moderate';
+        } else if (score >= thresholds.mild) {
+            assistRiskSeverity[substanceName] = 'mild';
+        } else {
+            assistRiskSeverity[substanceName] = 'none';
+        }
+        // Append the total score to the substance's risk severity
+        assistRiskSeverity[substanceName] += ` (${score})`;
+    }
+
+    console.log('Assist Risk Severity:', assistRiskSeverity);
+
+    return assistRiskSeverity;
+};
+
+// Function to clear localStorage data for assessments
+const clearLocalStorageData = () => {
+    ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
+        localStorage.removeItem(`${key}_set_counselor_screening`);
+    });
+    localStorage.removeItem('answeredSubstances');
+    localStorage.removeItem('selectedMenu');
+    localStorage.removeItem('selectedTools');
+};
 </script>
 
 <style scoped>

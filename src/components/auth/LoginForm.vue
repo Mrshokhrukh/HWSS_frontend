@@ -1,6 +1,6 @@
 <template>
     <div class="vh-100 d-flex justify-content-center align-items-center authbg cust-margin">
-        <div class="card shadow-card my-5 shadow-lg bg-body" style="width: 7    0vw;">
+        <div class="card shadow-card my-5 shadow-lg bg-body" style="width: 60vw;">
             <div class="row g-0 loginbg">
                 <div class="col-7 d-flex align-items-center">
                     <div class="card-body">

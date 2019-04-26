@@ -36,10 +36,10 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import CaseScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningGAD.vue';
-import CaseScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningPHQ.vue';
-import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningASSIST.vue';
-import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
+import ScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningGAD.vue';
+import ScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningPHQ.vue';
+import ScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningASSIST.vue';
+import ScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningACE.vue';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -58,10 +58,10 @@ const nextMenu = ref(null);
 
 // Define component mapping
 const componentMap = {
-    'GAD7': CaseScreeningGAD,
-    'PHQ9': CaseScreeningPHQ,
-    'ASSIST': CaseScreeningASSIST,
-    'ACE': CaseScreeningACE,
+    'GAD7': ScreeningGAD,
+    'PHQ9': ScreeningPHQ,
+    'ASSIST': ScreeningASSIST,
+    'ACE': ScreeningACE,
 };
 
 // Method to select menu

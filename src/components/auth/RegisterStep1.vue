@@ -1,6 +1,6 @@
 <template>
     <div class="vh-100 d-flex justify-content-center align-items-center authbg cust-margin">
-        <div class="card my-5 shadow-lg bg-body rounded card-reg mx-auto w-100">
+        <div class="card my-5 shadow-lg bg-body rounded card-reg mx-auto" style="width: 60vw;">
             <div class="row g-0 loginbg">
                 <div
                     class="col-md-5 d-flex flex-column align-items-center justify-content-center position-relative left-card-side">

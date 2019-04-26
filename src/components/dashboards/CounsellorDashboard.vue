@@ -78,6 +78,11 @@
       <CounselorFlagReports :flag="flag" />
     </div>
 
+    <footer class="footer">
+			<div class="container text-center my-4">
+				<p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+			</div>
+		</footer>
 
   </div>
 </template>
@@ -105,6 +110,12 @@ const route = useRoute();
 
 const currentRoute = computed(() => route.path);
 const flag = computed(() => route.query.flag);
+
+// Dynamically get the current year
+const currentYear = new Date().getFullYear();
+
+// Dynamically populate website name
+const websiteName = "The PEMA HWSS";
 
 onMounted(async () => {
   // get user age group
@@ -135,5 +146,14 @@ onMounted(async () => {
 
 .nav-link.active {
   border-color: #2B656F;
+}
+
+
+.header {
+	height: 8rem;
+}
+
+.footer {
+	margin-top: auto;
 }
 </style>
