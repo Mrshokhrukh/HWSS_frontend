@@ -79,17 +79,17 @@
     </div>
 
     <footer class="footer">
-			<div class="container text-center my-4">
-				<p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
-			</div>
-		</footer>
+      <div class="container text-center my-4">
+        <p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+      </div>
+    </footer>
 
   </div>
 </template>
 
 
 <script setup>
-import { computed, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import endpoints from "@/api";
@@ -116,24 +116,41 @@ const currentYear = new Date().getFullYear();
 
 // Dynamically populate website name
 const websiteName = "The PEMA HWSS";
-
+const sudData = ref(null);
+const reportData = ref(null);
+    
 onMounted(async () => {
-  // get user age group
-  const response = await axios.get(endpoints.getSUDData);
-  // if response positive then jsonify and save to local as SUD Data
-  if (response.data.success) {
-    localStorage.setItem('SUDData', JSON.stringify(response.data.data));
-  }
+    try {
+        const sudResponse = await axios.get(endpoints.getSUDData);
+        if (sudResponse.data.success) {
+            localStorage.setItem('SUDData', JSON.stringify(sudResponse.data.data));
+            sudData.value = sudResponse.data.data;
+        }
+
+        const reportResponse = await axios.get(endpoints.getReport);
+        console.log('making retReport request to:', endpoints.getReport)
+        if (reportResponse.data) {
+            console.log(reportResponse.data);
+            const formattedReportData = formatReportData(reportResponse.data);
+            reportData.value = formattedReportData;
+        }
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
 });
 
-onMounted(async () => {
-  // get user age group
-  const response = await axios.get(endpoints.getSUDData);
-  if (response.data) {
-    console.log(response.data);
-    localStorage.setItem('SUDData', JSON.stringify(response.data));
-  }
-});
+// Function to format report data in human-readable format
+const formatReportData = (reportData) => {
+    // Assuming reportData is an array of objects
+    return reportData.map(report => {
+        return {
+            Title: report.title,
+            Date: new Date(report.date).toLocaleDateString(),
+            Description: report.description,
+            // Add more fields as needed
+        };
+    });
+};
 
 </script>
 
@@ -150,10 +167,10 @@ onMounted(async () => {
 
 
 .header {
-	height: 8rem;
+  height: 8rem;
 }
 
 .footer {
-	margin-top: auto;
+  margin-top: auto;
 }
 </style>

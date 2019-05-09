@@ -131,8 +131,6 @@ const submitForm = async () => {
             selected_tool: selectedTool.value
         };
 
-        console.log(eventData);
-
         const createResponse = await axios.post(endpoints.createEventScreening, eventData);
 
         // Handle successful response
@@ -201,8 +199,6 @@ const fetchEventStatus = async () => {
     }
 };
 
-
-
 onMounted(() => {
     fetchEventStatus();
 });
@@ -210,9 +206,23 @@ onMounted(() => {
 const proceed = async () => {
     try {
         await submitForm();
-        window.location.reload();
+        Swal.fire({
+            title: 'Event Screening Created',
+            text: 'Proceeding to tool selection.',
+            icon: 'success',
+            showConfirmButton: true // Set to true to show the "OK" button
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.push('/counselor-dashboard'); // Redirect to counselor-dashboard
+            }
+        });
     } catch (error) {
         console.error('Error submitting form:', error);
+        Swal.fire({
+            title: 'Error',
+            text: 'Failed to create event screening.',
+            icon: 'error'
+        });
     }
 };
 

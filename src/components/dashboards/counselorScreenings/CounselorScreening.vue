@@ -97,7 +97,7 @@ function activateTab(tabName) {
 async function fetchCounselorScreeningQuestions() {
     try {
         isLoadingQuestions.value = true;
-        const response = await axios.get(`${endpoints.ScreeningPreTests}?name=Case Screening`);
+        const response = await axios.get(`${endpoints.screeningPreTests}?name=Case Screening`);
         counselorScreeningQuestions.value = response.data;
         sessionStorage.setItem('counselorScreeningQuestions', JSON.stringify(counselorScreeningQuestions.value));
     } catch (error) {

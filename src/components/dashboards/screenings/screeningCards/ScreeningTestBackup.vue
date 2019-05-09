@@ -180,7 +180,7 @@ onMounted(async () => {
 
 	let storedQuestions = JSON.parse(sessionStorage.getItem('questions'));
 	if (!storedQuestions) {
-		const response = await axios.get(`${endpoints.ScreeningPreTests}?name=Cluster Screening`);
+		const response = await axios.get(`${endpoints.screeningPreTests}?name=Cluster Screening`);
 		storedQuestions = response.data;
 		sessionStorage.setItem('questions', JSON.stringify(storedQuestions));
 	}

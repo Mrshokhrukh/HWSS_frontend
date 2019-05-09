@@ -33,7 +33,8 @@
 								</a>
 							</li>
 							<li>
-								<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
+								<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders"
+									target="_blank">Anxiety
 									Disorders <i class="fas fa-external-link-alt"></i></a>
 							</li>
 							<li>
@@ -42,7 +43,8 @@
 									<i class="fas fa-external-link-alt"></i></a>
 							</li>
 							<li>
-								<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
+								<a href="https://www.mentalhealth.gov/basics/what-is-mental-health"
+									target="_blank">Mental
 									Health and Wellness <i class="fas fa-external-link-alt"></i></a>
 							</li>
 						</ul>
@@ -97,7 +99,7 @@ async function checkClusterTestStatus() {
 	}
 
 	try {
-		const response = await axios.get(endpoints.ScreeningPreTests);
+		const response = await axios.get(endpoints.screeningPreTests);
 		const clusterTest = response.data.find((test) => test.name === "Cluster Screening");
 		if (clusterTest) {
 			clusterTestStatus.value = clusterTest.status;

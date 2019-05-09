@@ -276,7 +276,7 @@ onMounted(async () => {
     let storedQuestions = JSON.parse(sessionStorage.getItem("questions"));
     if (!storedQuestions) {
         const response = await axios.get(
-            `${endpoints.ScreeningPreTests}?name=Cluster Screening`
+            `${endpoints.screeningPreTests}?name=Cluster Screening`
         );
         storedQuestions = response.data;
         sessionStorage.setItem("questions", JSON.stringify(storedQuestions));
@@ -613,7 +613,7 @@ const iconURL = computed(() => {
     if (iconPath) {
         return location.hostname === "localhost"
             ? `http://localhost:8080${iconPath}`
-            : `http://172.30.3.16${iconPath}`;
+            : `https://qbs.thepemasystem.gov.bt${iconPath}`;
     } else {
         return fallbackIcon;
     }

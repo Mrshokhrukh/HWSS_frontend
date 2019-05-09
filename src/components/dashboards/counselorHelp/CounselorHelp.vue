@@ -49,7 +49,7 @@ onMounted(async () => {
 
 const getVideoUrl = (videoSrc) => {
   const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
-  const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5'; // Adjust the condition as needed
+  const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'https://app.thepemasystem.gov.bt'; // Adjust the condition as needed
   return baseUrl + videoSrc;
 };
 

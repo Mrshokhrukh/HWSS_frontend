@@ -32,7 +32,8 @@
 					</div>
 					<div class="modal-body text-start">
 						<p v-if="clusterTestStatus === 'inactive'">
-							Currently, there are no tests available. In the mean time, consider reading these articles for
+							Currently, there are no tests available. In the mean time, consider reading these articles
+							for
 							mental health awareness:
 						</p>
 						<p v-if="clusterTestStatus === 'disabled'">
@@ -40,14 +41,17 @@
 						</p>
 						<ul>
 							<li><a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-									target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i></a>
+									target="_blank">Understanding Depression <i
+										class="fas fa-external-link-alt"></i></a>
 							</li>
-							<li><a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
+							<li><a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders"
+									target="_blank">Anxiety
 									Disorders <i class="fas fa-external-link-alt"></i></a></li>
 							<li><a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
 									target="_blank">Coping with Drug Use and Addiction <i
 										class="fas fa-external-link-alt"></i></a></li>
-							<li><a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
+							<li><a href="https://www.mentalhealth.gov/basics/what-is-mental-health"
+									target="_blank">Mental
 									Health and Wellness <i class="fas fa-external-link-alt"></i></a></li>
 						</ul>
 					</div>
@@ -59,7 +63,7 @@
 		</div>
 	</div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
@@ -92,21 +96,21 @@ async function fetchAppName() {
 }
 
 async function navigateToScreening() {
-    loading.value = true;
-    try {
-        const response = await axios.get(endpoints.ScreeningPreTests);
-        const clusterTest = response.data.find((test) => test.name === "Cluster Screening");
-        if (clusterTest) {
-            clusterTestStatus.value = clusterTest.status;
-            showModalBasedOnStatus(clusterTest.status);
-        } else {
-            console.error("Cluster test not found");
-        }
-    } catch (error) {
-        console.error("Error fetching cluster test status:", error);
-    } finally {
-        loading.value = false;
-    }
+	loading.value = true;
+	try {
+		const response = await axios.get(endpoints.screeningPreTests);
+		const clusterTest = response.data.find((test) => test.name === "Cluster Screening");
+		if (clusterTest) {
+			clusterTestStatus.value = clusterTest.status;
+			showModalBasedOnStatus(clusterTest.status);
+		} else {
+			console.error("Cluster test not found");
+		}
+	} catch (error) {
+		console.error("Error fetching cluster test status:", error);
+	} finally {
+		loading.value = false;
+	}
 }
 
 
@@ -124,7 +128,7 @@ onMounted(async () => {
 	await fetchAppName();
 });
 </script>
-  
+
 <style scoped>
 .custom-modal-content {
 	border: 1px solid #ccc;
@@ -317,4 +321,3 @@ ul li a:hover {
 	margin-bottom: 20px;
 }
 </style>
-  

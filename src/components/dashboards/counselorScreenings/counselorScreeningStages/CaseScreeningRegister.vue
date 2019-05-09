@@ -261,7 +261,6 @@ const submitForm = async () => {
                     dzongkhag: dzongkhag.value,
                     userScreenedToday: userScreenedToday.value,
                     username: username,
-                    // user related fields
                     CID: CID.value,
                     clientFullName: clientFullName.value,
                     DOB: DOB.value,

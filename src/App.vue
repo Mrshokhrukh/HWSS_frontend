@@ -57,7 +57,18 @@ const handleNewMessage = (message) => {
 }
 
 onMounted(async () => {
-  // Fetch CSRF token
+  // Check if mobile device
+  isMobileDevice.value = window.innerWidth <= 768;
+
+  // Redirect if mobile
+  if (isMobileDevice.value) {
+    alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
+
+    setTimeout(() => {
+      window.location.href = "https://www.google.com";
+    }, 500);
+  }
+
   try {
     const csrfResponse = await axios.get(endpoints.getCSRFToken)
     if (csrfResponse.data && csrfResponse.data.csrf_token) {
@@ -68,7 +79,6 @@ onMounted(async () => {
     console.error('Error fetching CSRF token:', error)
   }
 
-  // Fetch copyright message
   try {
     const response = await axios.get(endpoints.settings)
     if (response.data && response.data.length > 0 && response.data[0].copyright_message) {
@@ -80,17 +90,6 @@ onMounted(async () => {
     console.error('Error fetching copyright message:', error)
   }
 
-  // Check if mobile device
-  isMobileDevice.value = window.innerWidth <= 768;
-
-  // Redirect if mobile
-  if (isMobileDevice.value) {
-    alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
-
-    setTimeout(() => {
-      window.location.href = "https://www.google.com";
-    }, 5000);
-  }
 })
 </script>
 

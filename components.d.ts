@@ -16,7 +16,6 @@ declare module 'vue' {
     AssistSeverityAndGraph: typeof import('./src/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue')['default']
     Button: typeof import('primevue/button')['default']
     CaseScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningRegister.vue')['default']
-    CaseScreeningSCHOOLENV: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSCHOOLENV.vue')['default']
     CaseScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningScreening.vue')['default']
     CaseScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSelectTools.vue')['default']
     CaseStatusReport: typeof import('./src/components/dashboards/Adminpages/AAA/report/CaseStatusReport.vue')['default']

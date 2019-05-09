@@ -10,10 +10,10 @@
 		</div>
 
 		<!-- Menu Items -->
-		<div v-if="isRNDAdmin.value==='rd_admin'">
+		<div v-if="isRNDAdmin.value === 'rd_admin'">
 			<nav class="menu-items">
-				<router-link class="side-btn"
-					:class="{ active: $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
+				<router-link class="side-btn" :class="{ active: $route.path === menu.route }"
+					v-b-tooltip.hover.bottom="menu.text">
 					<i :class="menu.iconClass" class="link-icon"></i>
 					<span class="link-text" v-if="sidebarStore.isOpen">RD Admin Test</span>
 				</router-link>
@@ -105,25 +105,25 @@ const profilePicClass = computed(() => {
 });
 
 const menus = computed(() => {
-    const baseRoute = `/${userType.value}-dashboard`;
-    
-    const staticMenuItems = [
-        { text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
-    ];
+	const baseRoute = `/${userType.value}-dashboard`;
 
-    const role = userType.value;
+	const staticMenuItems = [
+		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
+	];
 
-    const dynamicMenuItems = fetchedMenus.value
-        .filter((menu) => {
-            return menu.roles.some((r) => r.name === role);
-        })
-        .map((menu) => ({
-            text: menu.name,
-            route: menu.route,
-            iconClass: menu.icon_class,
-        })); // Log dynamic menu items for debugging
-    
-    return [...staticMenuItems, ...dynamicMenuItems];
+	const role = userType.value;
+
+	const dynamicMenuItems = fetchedMenus.value
+		.filter((menu) => {
+			return menu.roles.some((r) => r.name === role);
+		})
+		.map((menu) => ({
+			text: menu.name,
+			route: menu.route,
+			iconClass: menu.icon_class,
+		})); // Log dynamic menu items for debugging
+
+	return [...staticMenuItems, ...dynamicMenuItems];
 });
 
 // Function to fetch menu items from the API
@@ -140,7 +140,7 @@ const profilePictureUrl = computed(() => {
 	const baseUrl =
 		window.location.hostname === "localhost" && window.location.port === "5173"
 			? "http://localhost:8000"
-			: "http://172.30.3.5";
+			: "https://app.thepemasystem.gov.bt";
 	return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 

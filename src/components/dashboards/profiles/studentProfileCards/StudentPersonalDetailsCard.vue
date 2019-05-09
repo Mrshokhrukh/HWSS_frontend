@@ -28,15 +28,15 @@
         <div class="col-md-12 mb-3">
           <label>Gender</label>
           <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.gender">
+            v-model="userDetailsStore.user.gender">
         </div>
         <div class="col-md-12 mb-3">
-                    <label>School/Agency/Gyalsung Academy</label>
-                    <input type="text" class="form-control input-noneditable" readonly disabled
-                        v-model="userDetailsStore.agency.agencyName">
-                </div>
-       
-      
+          <label>School/Agency/Gyalsung Academy</label>
+          <input type="text" class="form-control input-noneditable" readonly disabled
+            v-model="userDetailsStore.agency.agencyName">
+        </div>
+
+
       </div>
     </div>
   </div>
@@ -56,7 +56,7 @@ const profilePictureUrl = computed(() => {
   const baseUrl =
     window.location.hostname === "localhost" && window.location.port === "5173"
       ? "http://localhost:8000"
-      : "http://172.30.3.5";
+      : "https://app.thepemasystem.gov.bt";
   return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 

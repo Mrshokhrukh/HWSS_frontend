@@ -1,40 +1,40 @@
 <template>
   <div class="card p-3">
-          <div class="card-header">
-              <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
-          </div>
-          <div class="user-profile text-center">
-              <img :src="profilePictureUrl" alt="User" class="profile-pic" />
-              <button class="edit-button" @click="openFileSelection">
-                  <i class="fas fa-edit"></i>
-              </button>
-          </div>
+    <div class="card-header">
+      <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
+    </div>
+    <div class="user-profile text-center">
+      <img :src="profilePictureUrl" alt="User" class="profile-pic" />
+      <button class="edit-button" @click="openFileSelection">
+        <i class="fas fa-edit"></i>
+      </button>
+    </div>
 
-          <div class="card-body p-1 h-100">
-              <!-- Example content -->
-              <div class="col-md-12 mb-3">
-                  <label>User name</label>
-                  <input type="text" class="form-control input-noneditable" readonly disabled
-                      v-model="userDetailsStore.user.username">
-              </div>
-              <div class="col-md-12 mb-3">
-                  <label>Gender</label>
-                  <input type="text" class="form-control input-noneditable" readonly disabled
-                      v-model="userDetailsStore.user.gender">
-              </div>
-              <div class="col-md-12 mb-3">
-                  <label>Employee ID</label>
-                  <input type="text" class="form-control input-noneditable" readonly disabled
-                      v-model="userDetailsStore.userAgency.userCode">
-              </div>
-              
-              <div class="col-md-12 mb-3">
-                  <label>School/Agency/Gyalsung Academy</label>
-                  <input type="text" class="form-control input-noneditable" readonly disabled
-                      v-model="userDetailsStore.agency.agencyName">
-              </div>
-          </div>
+    <div class="card-body p-1 h-100">
+      <!-- Example content -->
+      <div class="col-md-12 mb-3">
+        <label>User name</label>
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.username">
       </div>
+      <div class="col-md-12 mb-3">
+        <label>Gender</label>
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.user.gender">
+      </div>
+      <div class="col-md-12 mb-3">
+        <label>Employee ID</label>
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.userAgency.userCode">
+      </div>
+
+      <div class="col-md-12 mb-3">
+        <label>School/Agency/Gyalsung Academy</label>
+        <input type="text" class="form-control input-noneditable" readonly disabled
+          v-model="userDetailsStore.agency.agencyName">
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -48,9 +48,9 @@ const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const profilePictureUrl = computed(() => {
   const baseUrl =
-      window.location.hostname === "localhost" && window.location.port === "5173"
-          ? "http://localhost:8000"
-          : "http://172.30.3.5";
+    window.location.hostname === "localhost" && window.location.port === "5173"
+      ? "http://localhost:8000"
+      : "https://app.thepemasystem.gov.bt";
   return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 
@@ -62,7 +62,7 @@ const userAge = computed(() => {
   let age = today.getFullYear() - dobDate.getFullYear();
   const monthDiff = today.getMonth() - dobDate.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
-      age--;
+    age--;
   }
   return age;
 });
@@ -70,11 +70,11 @@ const userAge = computed(() => {
 const userAgeGroup = computed(() => {
   const age = parseInt(userAge.value);
   if (age < 14) {
-      return 'Below 14';
+    return 'Below 14';
   } else if (age >= 15 && age <= 17) {
-      return '15 to 17';
+    return '15 to 17';
   } else {
-      return '18 and above';
+    return '18 and above';
   }
 });
 
