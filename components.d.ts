@@ -27,7 +27,6 @@ declare module 'vue' {
     ChatWidget: typeof import('./src/components/common/ChatWidget.vue')['default']
     Column: typeof import('primevue/column')['default']
     ContactDetailCard: typeof import('./src/components/dashboards/dashboardCard/ContactDetailCard.vue')['default']
-    copy: typeof import('./src/components/dashboards/Adminpages/report/CSR_TotalCaseDiscontinued copy.vue')['default']
     CounsellorDashboard: typeof import('./src/components/dashboards/CounsellorDashboard.vue')['default']
     CounselorChangePasswordCard: typeof import('./src/components/dashboards/counselorSetting/counselorProfileCard/CounselorChangePasswordCard.vue')['default']
     CounselorDetailsCard: typeof import('./src/components/dashboards/counselorSetting/counselorProfileCard/CounselorDetailsCard.vue')['default']
