@@ -15,29 +15,68 @@
       <template #empty> No data found. </template>
       <template #loading> Loading data. Please wait. </template>
 
-      <!-- Severity Report -->
-      <!--Mental health data-->
-      <Column header="Depression" field="depression" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+        <!-- Additional Headers -->
+     
+        <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
-          {{ data.depression }}
+          {{ data.date }}
         </template>
       </Column>
-      <Column header="Anxiety" field="anxiety" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Gender" field="sex" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
-          {{ data.anxiety }}
+          {{ data.sex }}
         </template>
       </Column>
-      <Column header="ACE" field="ace" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
-          {{ data.ace }}
+          {{ data.present_dzongkhag }}
         </template>
       </Column>
-      <Column header="Suicidal Behaviours" field="suicidalBehaviours" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
         <template #body="{ data }">
-          {{ data.suicidalBehaviours }}
+          {{ data.age }}
         </template>
       </Column>
+      <Column header="Class" field="user_class" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
+        <template #body="{ data }">
+          {{ data.user_class }}
+        </template>
+      </Column>
+      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+        <template #body="{ data }">
+          {{ data.employmentHistory }}
+        </template>
+      </Column> 
 
+      <!-- Severity Report -->
+      <Column field="gad_measurement" header="Depression Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.gad_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.gad_measurement)"
+              :style="{ color: getSeverity(slotProps.data.gad_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.gad_measurement).bgColor }" />
+          </template>
+      </Column>
+      <Column field="phq_measurement" header="phq_measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.phq_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.phq_measurement)"
+              :style="{ color: getSeverity(slotProps.data.phq_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.phq_measurement).bgColor }" />
+          </template>
+      </Column>
+      <Column field="suicidal_measurement" header="suicidal_measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.suicidal_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.suicidal_measurement)"
+              :style="{ color: getSeverity(slotProps.data.suicidal_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.suicidal_measurement).bgColor }" />
+          </template>
+      </Column>
+      <Column field="ace_measurement" header="ace_measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.ace_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.ace_measurement)"
+              :style="{ color: getSeverity(slotProps.data.ace_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.ace_measurement).bgColor }" />
+          </template>
+      </Column>
       <!-- Lifetime Use -->
       <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
         <template #body="{ data }">
@@ -50,115 +89,80 @@
           {{ data.currentUse }}
         </template>
       </Column>
+      
       <!-- Substance -->
-      <Column header="Tobacco" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>  
+      <Column field="alcoholic_measurement" header="Alcoholic measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.alcoholic_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.alcoholic_measurement)"
+              :style="{ color: getSeverity(slotProps.data.alcoholic_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.alcoholic_measurement).bgColor }" />
+          </template>
       </Column>
-      <!-- Substance Risk -->
-      <Column header="Alcohol" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+        
+      <Column field="tobacco_measurement" header="Tobacco Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.tobacco_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.tobacco_measurement)"
+              :style="{ color: getSeverity(slotProps.data.tobacco_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.tobacco_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Cannabis" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="cannabis_measurement" header="Cannabis Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.cannabis_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.cannabis_measurement)"
+              :style="{ color: getSeverity(slotProps.data.cannabis_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.cannabis_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Cocaine" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="amphetamine_measurement" header="Amphetamine Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.amphetamine_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.amphetamine_measurement)"
+              :style="{ color: getSeverity(slotProps.data.amphetamine_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.amphetamine_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Amphetamine-type stimulants" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="inhalants_measurement" header="Amphetamine Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.inhalants_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.inhalants_measurement)"
+              :style="{ color: getSeverity(slotProps.data.inhalants_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.inhalants_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Inhalant" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="sedatives_measurement" header="Sedatives Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.sedatives_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.sedatives_measurement)"
+              :style="{ color: getSeverity(slotProps.data.sedatives_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.sedatives_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Sedative" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="hallucinogens_measurement" header="Hallucinogens Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.hallucinogens_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.hallucinogens_measurement)"
+              :style="{ color: getSeverity(slotProps.data.hallucinogens_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.hallucinogens_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Hallucinate" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="opioids_measurement" header="Opioids Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.opioids_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.opioids_measurement)"
+              :style="{ color: getSeverity(slotProps.data.opioids_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.opioids_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Opioids" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="injection_measurement" header="Injection Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.injection_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.injection_measurement)"
+              :style="{ color: getSeverity(slotProps.data.injection_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.injection_measurement).bgColor }" />
+          </template>
       </Column>
-      <Column header="Others" field="substanceRisk" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          <span :style="{ color: data.substanceRisk === 'Moderate' ? 'orange' : data.substanceRisk === 'High' ? 'red' : '' }">
-            {{ data.substanceRisk }}
-          </span>
-        </template>
+      <Column field="other_measurement" header="Other Measurement" sortable class="text-center">
+          <template #body="slotProps">
+            <Tag rounded :value="slotProps.data.other_measurement" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data.other_measurement)"
+              :style="{ color: getSeverity(slotProps.data.other_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.other_measurement).bgColor }" />
+          </template>
       </Column>
-
-      <!-- Additional Headers -->
-      <Column header="Year" field="year" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.year }}
-        </template>
-      </Column>
-      <Column header="Gender" field="gender" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.gender }}
-        </template>
-      </Column>
-      <Column header="Dzongkha" field="dzongkha" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.dzongkha }}
-        </template>
-      </Column>
-      <Column header="Location" field="location" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.location }}
-        </template>
-      </Column>
-      <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.age }}
-        </template>
-      </Column>
-      <Column header="Class" field="class" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.class }}
-        </template>
-      </Column>
-      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.employmentHistory }}
-        </template>
-      </Column>
+        
     </DataTable>
   </div>
 </template>
@@ -170,8 +174,10 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
+import axios from 'axios';
+import endpoints from '@/api';
+// import Badge from 'primevue/badge';
 
-const monitorData = ref();
 const filters = ref({
   global: { value: [], matchMode: FilterMatchMode.CONTAINS },
   year: { value: [], matchMode: FilterMatchMode.IN },
@@ -183,10 +189,10 @@ const filters = ref({
   employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
 });
 
-const loading = ref(true);
+// const loading = ref(true);
 
 const filteredData = computed(() => {
-  let filtered = monitorData.value;
+  let filtered = reportData.value;
   // Apply filters based on the selected values
   for (const key in filters.value) {
     if (filters.value[key].value.length > 0) {
@@ -196,15 +202,66 @@ const filteredData = computed(() => {
   return filtered;
 });
 
+const reportData = ref([]);
+
+const fetchReportData = async () => {
+  try {
+    const response = await axios.get(endpoints.generateReport);
+    if (response.data && Array.isArray(response.data)) {
+      reportData.value = response.data;
+      // filteredData.value = response.data;
+    } else {
+      handleFetchError();
+    }
+  } catch (error) {
+    handleFetchError();
+  }
+};
+
+const handleFetchError = () => {
+  reportData.value = [];
+  // Handle error
+};
+
 onMounted(() => {
-  // Dummy Data
-  monitorData.value = [
-    { id: 1, depression: 'Mild', anxiety: 'Moderate', ace: 'High', suicidalBehaviours: 'Low', lifetimeUse: 'No', currentUse: 'Yes', substanceWise: 'Alcohol',substanceRisk: 'Moderate', year: '2022', gender: 'Male', dzongkha: 'Yes', location: 'Agency 1', age: '30', class: '10', employmentHistory: 'Working' },
-    { id: 2, depression: 'Moderate', anxiety: 'Mild', ace: 'Low', suicidalBehaviours: 'Moderate', lifetimeUse: 'Yes', currentUse: 'No', substanceWise: 'Tobacco',substanceRisk: 'High', year: '2023', gender: 'Female', dzongkha: 'No', location: 'Agency 2', age: '25', class: '12', employmentHistory: 'Not working' },
-    // Add more dummy data as needed
-  ];
-  loading.value = false;
+  fetchReportData();
 });
+
+
+const getSeverity = (severity) => {
+  let colorCode;
+  let bgColor;
+  switch (severity.toLowerCase()) {
+    case 'severe':
+    case 'high risk':
+    case 'nearly everyday':
+      colorCode = 'rgba(230, 20, 45, 0.75)'; // Wine Red
+      bgColor = 'rgba(230, 20, 45, 0.25)';
+      break;
+    case 'moderately-severe':
+      colorCode = 'rgba(255, 69, 0, 0.75)'; // Red-Orange
+      bgColor = 'rgba(255, 69, 0, 0.25)';
+      break;
+    case 'moderate risk':
+    case 'moderate':
+    case 'more than half the days':
+      colorCode = 'rgba(255, 165, 0, 0.75)'; // Orange
+      bgColor = 'rgba(255, 165, 0, 0.25)';
+      break;
+    case 'minimal':
+    case 'low risk':
+    case 'several days':
+
+      colorCode = 'rgba(0, 100, 0, 0.75)'; // Darker Green (More towards Blue)
+      bgColor = 'rgba(0, 100, 0, 0.25)';
+      break;
+    default:
+      colorCode = 'rgba(52, 52, 52, 0.75)'; // Slate Grey
+      bgColor = 'rgba(52, 52, 52, 0.25)';
+  }
+  return { severity, colorCode, bgColor };
+};
+
 
 // Function to clear filters
 const clearFilter = () => {
@@ -213,3 +270,8 @@ const clearFilter = () => {
   }
 };
 </script>
+<style scope>
+.gray{
+  color: antiquewhite;
+}
+</style>

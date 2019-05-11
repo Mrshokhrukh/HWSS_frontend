@@ -1,5 +1,5 @@
 <template>
-    <h2 class="text-center bold hwss-primary">Total Case Ongoing</h2>
+    <h2 class="text-center bold hwss-primary">Total Case Discontinued</h2>
       <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
       sortField="substanceRisk" :sortOrder="1"
                  :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
