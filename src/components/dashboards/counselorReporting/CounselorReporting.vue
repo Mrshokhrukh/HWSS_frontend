@@ -17,11 +17,12 @@
 
     <!-- General Report Table -->
     <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
-      <DataTable :value="filteredPatients" :paginator="true" :rows="10">
-        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
+      <DataTable :value="filteredPatients" :paginator="true" :rows="10" :resizableColumns="true" sortField="suicidal_measurement" :sortOrder="-1" >
+        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true" 
           :style="field.width ? { width: field.width } : {}">
           <template #body="{ data }">
-            <span :class="severityClass(data[field.key])">{{ data[field.key] }}</span>
+            <Tag v-if="field.taggable" :value="data[field.key]" :severity="severityClass(data[field.key])" />
+            <span v-else>{{ data[field.key] }}</span>
           </template>
         </Column>
         <!-- <Column>
@@ -57,7 +58,7 @@ const globalFilterFields = [
   'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'
 ];
 const tableFields = [
-  { key: 'date', header: 'Date' },
+  { key: 'date', header: 'Date'  },
   { key: 'username', header: 'Name' },
   { key: 'age', header: 'Age' },
   { key: 'sex', header: 'Sex' },
@@ -75,21 +76,21 @@ const tableFields = [
   { key: 'user_stream', header: 'User Stream' },
   { key: 'user_sub_class', header: 'User Sub Class' },
   { key: 'past_diagnosis', header: 'Past Diagnosis' },
-  { key: 'gad_measurement', header: 'GAD Measurement' },
-  { key: 'phq_measurement', header: 'PHQ Measurement' },
-  { key: 'suicidal_measurement', header: 'Suicidal Measurement' },
-  { key: 'ace_measurement', header: 'ACE Measurement' },
-  { key: 'alcoholic_measurement', header: 'Alcoholic Measurement' },
-  { key: 'tobacco_measurement', header: 'Tobacco Measurement' },
-  { key: 'cannabis_measurement', header: 'Cannabis Measurement' },
-  { key: 'cocaine_measurement', header: 'Cocaine Measurement' },
-  { key: 'amphetamine_measurement', header: 'Amphetamine Measurement' },
-  { key: 'inhalants_measurement', header: 'Inhalants Measurement' },
-  { key: 'sedatives_measurement', header: 'Sedatives Measurement' },
-  { key: 'hallucinogens_measurement', header: 'Hallucinogens Measurement' },
-  { key: 'opioids_measurement', header: 'Opioids Measurement' },
-  { key: 'injection_measurement', header: 'Injection Measurement' },
-  { key: 'other_measurement', header: 'Other Measurement' },
+  { key: 'suicidal_measurement', header: 'Suicidal Measurement', taggable: true },
+  { key: 'gad_measurement', header: 'GAD Measurement', taggable: true },
+  { key: 'phq_measurement', header: 'PHQ Measurement', taggable: true },
+  { key: 'ace_measurement', header: 'ACE Measurement', taggable: true },
+  { key: 'alcoholic_measurement', header: 'Alcoholic Measurement', taggable: true },
+  { key: 'tobacco_measurement', header: 'Tobacco Measurement', taggable: true },
+  { key: 'cannabis_measurement', header: 'Cannabis Measurement', taggable: true },
+  { key: 'cocaine_measurement', header: 'Cocaine Measurement', taggable: true },
+  { key: 'amphetamine_measurement', header: 'Amphetamine Measurement', taggable: true },
+  { key: 'inhalants_measurement', header: 'Inhalants Measurement', taggable: true },
+  { key: 'sedatives_measurement', header: 'Sedatives Measurement', taggable: true },
+  { key: 'hallucinogens_measurement', header: 'Hallucinogens Measurement', taggable: true },
+  { key: 'opioids_measurement', header: 'Opioids Measurement', taggable: true },
+  { key: 'injection_measurement', header: 'Injection Measurement', taggable: true },
+  { key: 'other_measurement', header: 'Other Measurement', taggable: true },
   { key: 'other_name', header: 'Other Name' },
   { key: 'assessment_status', header: 'Assessment Status' },
   { key: 'case_status', header: 'Case Status' },
@@ -237,12 +238,25 @@ watch(globalFilter, filterData);
 
 // Function to determine severity class
 const severityClass = (value) => {
-  if (value === 'High' || value === 'Severe') {
-    return 'severity-high';
-  } else if (value === 'Moderate') {
-    return 'severity-moderate';
-  } else {
-    return 'severity-low';
+  switch (value.toLowerCase()) {
+    case 'severe':
+    case 'high risk':
+    case 'nearly everyday':
+      return 'danger'; // Wine Red
+    case 'moderately-severe':
+      return 'warning'; // Red-Orange
+    case 'moderate risk':
+    case 'moderate':
+    case 'more than half the days':
+      return 'warning'; // Orange
+    case 'minimal':
+    case 'low risk':
+    case 'several days':
+      return 'success'; // Darker Green (More towards Blue)
+    case 'no risk':
+      return 'success'; // Green
+    default:
+      return 'info'; // Slate Grey
   }
 }
 
@@ -252,5 +266,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Add scoped styles here if needed */
+.danger{
+  background-color: #e6142d40;
+  color: #e6142d40;
+}
 </style>
