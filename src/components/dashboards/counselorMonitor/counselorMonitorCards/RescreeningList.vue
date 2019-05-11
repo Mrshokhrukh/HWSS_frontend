@@ -18,7 +18,6 @@
         <!-- Rescreen Button -->
         <Button class="btn w-100 hwss-btn" @click="handleRescreen(selectedUsers.value)" icon="pi pi-user-edit"
           label="Rescreen" />
-
       </div>
     </div>
 
@@ -26,10 +25,10 @@
     <div class="main-container mt-2">
       <DataTable v-model:selection="selectedUsers" :value="filteredPatients" :loading="loadingPatients"
         :paginator="true" :rows="10" resizableColumns size="large" columnResizeMode="expand"
-        :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="multiple" :selection="selectedUsers"
+        :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="single" :selection="selectedUsers"
         @selectionChange="handleSelectionChange">
         <!-- Columns -->
-        <Column selectionMode="multiple" headerStyle="width: 3rem" frozen class="font-bold"></Column>
+        <Column selectionMode="single" headerStyle="width: 3rem" frozen class="font-bold"></Column>
         <Column field="date" header="Date" frozen sortable></Column>
         <Column field="name" header="Name" frozen sortable></Column>
         <Column field="age" header="Age" sortable></Column>
@@ -134,8 +133,8 @@
           </template>
         </Column>
         <Column field="Action" header="Action" sortable>
-          <template #body="{ rowData }">
-            <Button icon="pi pi-check-circle" label="Mark As Safe" @click="markAsSafe(rowData)"
+          <template #body="slotProps">
+            <Button icon="pi pi-check-circle" label="Mark As Safe" @click="handleMarkAsSafe(slotProps)"
               class="btn w-100 hwss-btn" />
           </template>
         </Column>
@@ -186,18 +185,16 @@ const onToggle = (val) => {
 };
 
 const handleRescreen = () => {
-  // Ensure selectedUsers is defined before accessing its value property
-  if (!selectedUsers.value || selectedUsers.value.length === 0) {
+  if (!selectedUsers.value) {
     Swal.fire({
       icon: 'error',
-      title: 'No users selected',
-      text: 'Please select at least one user to perform rescreening.',
+      title: 'No user selected',
+      text: 'Please select a user to perform rescreening.',
     });
     return;
   }
 
-  const plural = selectedUsers.value.length > 1 ? 's' : '';
-  const message = selectedUsers.value.length === 1 ? `Do you wish to rescreen ${selectedUsers.value[0].name}?` : `Do you wish to rescreen these ${selectedUsers.value.length} user${plural}?`;
+  const message = `Do you wish to rescreen ${selectedUsers.value.name}?`;
 
   Swal.fire({
     icon: 'question',
@@ -207,12 +204,13 @@ const handleRescreen = () => {
     cancelButtonText: 'Cancel',
   }).then((result) => {
     if (result.isConfirmed) {
-      const userIds = selectedUsers.value.map(user => user.id);
-      sessionStorage.setItem('RescreeningUserIDs', JSON.stringify(userIds));
+      const userId = selectedUsers.value.id;
+      sessionStorage.setItem('RescreeningUserID', JSON.stringify(userId));
       router.push('/counselor-dashboard/counselor-rescreening');
     }
   });
 };
+
 
 
 const handleSelectionChange = (selected) => {
@@ -346,10 +344,25 @@ const getSeverity = (severity) => {
 };
 
 
+const handleMarkAsSafe = (rowData) => {
+  if (!rowData) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Row data is undefined',
+    });
+    return;
+  }
 
-const markAsSafe = (userData) => {
-  const userId = userData.id;
-  console.log('this function is read and user id is ' + userId);
+  handleSelectionChange([rowData]);
+
+  const userId = rowData.data.id;
+  markAsSafe(userId);
+};
+
+
+const markAsSafe = (userId) => {
+  console.log('Marking user as safe:', userId);
   axios.post('/mark-user-as-safe', { userId })
     .then(response => {
       console.log('User marked as safe successfully:', response.data);
