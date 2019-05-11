@@ -174,32 +174,40 @@ const createAppRouter = () => {
     ],
   });
 
+  // Define constants for route names
+  const ROUTE_LOGIN = 'login';
+
   router.beforeEach(async (to, from, next) => {
-    const authToken = localStorage.getItem('authToken');
-    const isAuthenticated = authToken !== null;
+    try {
+      // Retrieve authentication token from local storage
+      const authToken = localStorage.getItem('authToken');
+      const isAuthenticated = authToken !== null;
 
-    if (isAuthenticated) {
-      const userType = localStorage.getItem('userType');
+      if (isAuthenticated) {
+        // Retrieve user type from local storage
+        const userType = localStorage.getItem('userType');
 
-      // If the user is authenticated and trying to access non-authenticated pages
-      if (!to.matched.some(record => record.meta.requiresAuth)) {
-        // Redirect the user to their respective dashboard based on their user type
-        next({ name: `${userType}-dashboard` });
-        return;
+        // If the user is authenticated and trying to access non-authenticated pages
+        if (!to.matched.some(record => record.meta.requiresAuth)) {
+          // Redirect the user to their respective dashboard based on their user type
+          next({ name: `${userType}-dashboard` });
+          return;
+        }
       }
-    }
 
-    // If the route requires authentication, proceed with authentication logic
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-      if (!isAuthenticated) {
-        next({ name: 'login' });
-      } else {
-        try {
+      // If the route requires authentication, proceed with authentication logic
+      if (to.matched.some(record => record.meta.requiresAuth)) {
+        if (!isAuthenticated) {
+          // Redirect to login page if the user is not authenticated
+          next({ name: ROUTE_LOGIN });
+        } else {
+          // Validate authentication token
           const response = await axios.post(endpoints.authenticateToken, null, {
             headers: { 'Authorization': `Token ${authToken}` }
           });
 
           if (response.data.valid) {
+            // Retrieve user details from local storage
             const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
 
             // Set user type only if it's not already set
@@ -218,20 +226,27 @@ const createAppRouter = () => {
               localStorage.setItem('userType', userType);
             }
 
-            next(); // User is authenticated, allow access
+            // User is authenticated, allow access
+            next();
           } else {
-            localStorage.removeItem('authToken'); // Remove invalid token from local storage
-            next({ name: 'login' }); // Redirect to login page if token is invalid
+            // Remove invalid token from local storage
+            localStorage.removeItem('authToken');
+            // Redirect to login page if token is invalid
+            next({ name: ROUTE_LOGIN });
           }
-        } catch (error) {
-          console.error('Error validating token:', error);
-          next({ name: 'login' }); // Redirect to login page if there's an error validating token
         }
+      } else {
+        // Allow access to other routes
+        next();
       }
-    } else {
-      next(); // Allow access to other routes
+    } catch (error) {
+      // Handle errors
+      console.error('Error validating token:', error);
+      // Redirect to login page if there's an error validating token
+      next({ name: ROUTE_LOGIN });
     }
   });
+
   return router;
 };
 
