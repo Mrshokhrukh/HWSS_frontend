@@ -118,19 +118,15 @@ onMounted(() => {
             if (userData.ageGroup !== undefined) {
                 userAgeGroup.value = userData.ageGroup;
             } else {
-                console.log('Error: ageGroup not found in userAgeData');
+                console.error('Error: ageGroup not found in userAgeData');
             }
         } else {
-            console.log('Error: userAgeData not found in session storage');
+            console.error('Error: userAgeData not found in session storage');
         }
     } catch (error) {
-        console.log('Error parsing userAgeData:', error);
+        console.error('Error parsing userAgeData:', error);
     }
 });
-
-function logEmit() {
-    console.log('detected emit from Event Registration Component');
-}
 
 
 provide('counselorScreeningQuestions', counselorScreeningQuestions);

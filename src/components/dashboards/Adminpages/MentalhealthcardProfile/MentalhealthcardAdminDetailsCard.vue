@@ -119,7 +119,7 @@ const enableEdit = () => {
 }
 
 const saveChanges = async () => {
-    console.log('click detected')
+    // console.log('click detected')
     try {
         const authToken = localStorage.getItem('authToken')
         const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {

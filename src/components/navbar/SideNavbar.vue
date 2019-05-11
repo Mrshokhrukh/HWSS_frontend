@@ -147,7 +147,7 @@ const profilePictureUrl = computed(() => {
 
 const adminRole = JSON.parse(localStorage.getItem('userDetailsStore'));
 const userOriginalRole = adminRole.user.role;
-console.log(userOriginalRole);
+// console.log(userOriginalRole);
 
 // Check if the user is a school counselor
 const isRNDAdmin = ref(userOriginalRole === 'rd_admin');

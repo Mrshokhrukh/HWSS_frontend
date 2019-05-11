@@ -308,7 +308,7 @@ const submitForm = async () => {
                 try {
                     const response = await axios.post(endpoints.registerCounselorUser, this.formData);
 
-                    console.log('Form submitted successfully:', response.data);
+                    // console.log('Form submitted successfully:', response.data);
                     const userId = response.data.userId;
                     localStorage.setItem('ClientUserIdCaseBase', userId);
                     return response.data; // Return the response data

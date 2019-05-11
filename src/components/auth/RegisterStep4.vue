@@ -223,7 +223,7 @@ const createUser = async () => {
 
         const userSubmissionData = { userData, agencyData, userAgencyData };
 
-        console.log(userSubmissionData);
+        // console.log(userSubmissionData);
 
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)?.[1];
         if (!csrftoken) {

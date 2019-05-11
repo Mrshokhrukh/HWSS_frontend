@@ -193,7 +193,7 @@ function closePopup() {
 
 function rejectEvent() {
   // Perform reject event logic here
-  console.log('Event rejected with comment:', rejectComment.value);
+  // console.log('Event rejected with comment:', rejectComment.value);
   closePopup();
 }
 </script>

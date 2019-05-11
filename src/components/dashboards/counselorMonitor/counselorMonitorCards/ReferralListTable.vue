@@ -103,7 +103,7 @@ const formatDate = (timestamp) => {
 const loadData = async () => {
   try {
     const response = await axios.get(endpoints.getReferralList);
-    console.log(response.data.referral_list);
+    // console.log(response.data.referral_list);
     rowData.value = response.data.referral_list;
   } catch (error) {
     console.error('Error loading data:', error);

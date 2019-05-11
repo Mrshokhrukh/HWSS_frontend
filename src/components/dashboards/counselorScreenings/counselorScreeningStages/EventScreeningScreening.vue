@@ -79,7 +79,7 @@ onMounted(() => {
         menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
     } else {
-        console.log('No menu saved');
+        // console.log('No menu saved');
     }
 });
 
@@ -173,10 +173,11 @@ const submitAssessments = async () => {
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
 
-        console.log('Form Data:', formData);
+        // console.log('Form Data:', formData);
 
+        // eslint-disable-next-line no-unused-vars
         const response = await axios.post(endpoints.eventScreenSubmission, formData);
-        console.log('Response:', response);
+        // console.log('Response:', response);
 
         // Update sessionStorage
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
@@ -250,7 +251,7 @@ const calculateAssistRiskSeverity = (assistData) => {
         assistRiskSeverity[substanceName] += ` (${score})`;
     }
 
-    console.log('Assist Risk Severity:', assistRiskSeverity);
+    // console.log('Assist Risk Severity:', assistRiskSeverity);
 
     return assistRiskSeverity;
 };

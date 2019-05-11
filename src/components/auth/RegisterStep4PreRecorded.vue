@@ -161,7 +161,7 @@ const createUser = async () => {
       userAgencyData
     };
 
-    console.log(userSubmissionData);
+    // console.log(userSubmissionData);
 
     const response = await axios.post(endpoints.registerPreRecordedUser, userSubmissionData);
 

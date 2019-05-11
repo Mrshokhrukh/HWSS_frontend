@@ -80,7 +80,7 @@ onMounted(() => {
         menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
     } else {
-        console.log('No menu saved');
+        console.error('No menu saved');
     }
 });
 
@@ -213,7 +213,7 @@ const submitAssessments = async () => {
 
         // Calculate risk severity for ASSIST data
         assistRiskSeverity = calculateRiskSeverity(assistData);
-        console.log('Assist Risk Severity:', assistRiskSeverity);
+        // console.log('Assist Risk Severity:', assistRiskSeverity);
     }
 
     // Construct form data
@@ -226,12 +226,13 @@ const submitAssessments = async () => {
     formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
     formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
 
-    console.log('Form data:', formData);
+    // console.log('Form data:', formData);
 
     try {
         // Submit data to endpoint
+        // eslint-disable-next-line no-unused-vars
         const response = await axios.post(endpoints.rescreenSubmission, formData);
-        console.log('Response:', response);
+        // console.log('Response:', response);
 
         // Remove user ID from rescreening list
         rescreeningUserIDs.shift();

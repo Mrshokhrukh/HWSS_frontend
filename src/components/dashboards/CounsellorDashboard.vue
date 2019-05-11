@@ -128,9 +128,8 @@ onMounted(async () => {
         }
 
         const reportResponse = await axios.get(endpoints.getReport);
-        console.log('making retReport request to:', endpoints.getReport)
         if (reportResponse.data) {
-            console.log(reportResponse.data);
+            // console.log('is this the one?',reportResponse.data);
             const formattedReportData = formatReportData(reportResponse.data);
             reportData.value = formattedReportData;
         }

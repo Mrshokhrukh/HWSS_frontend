@@ -69,7 +69,7 @@ onMounted(() => {
 // Method to handle edit button click
 const editDetails = () => {
     // Add your edit functionality here
-    console.log('Edit button clicked');
+    // console.log('Edit button clicked');
 };
 </script>
   

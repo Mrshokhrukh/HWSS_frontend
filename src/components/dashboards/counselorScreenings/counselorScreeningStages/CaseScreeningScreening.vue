@@ -79,7 +79,7 @@ onMounted(() => {
         menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
     } else {
-        console.log('No menu saved');
+        // console.log('No menu saved');
     }
 });
 
@@ -107,7 +107,7 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
-                console.log('this function is read');
+                // console.log('this function is read');
                 submitAssessments();
             }
         });
@@ -171,12 +171,13 @@ const submitAssessments = async () => {
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
 
-        console.log('Submitting assessments for user:', userId);
+        // console.log('Submitting assessments for user:', userId);
 
         // Submit data to endpoint
-        console.log('Form Data:', formData);
+        // console.log('Form Data:', formData);
+        // eslint-disable-next-line no-unused-vars
         const response = await axios.post(endpoints.caseScreenSubmission, formData);
-        console.log('Response:', response);
+        // console.log('Response:', response);
 
         // Update sessionStorage
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
@@ -250,7 +251,7 @@ const calculateAssistRiskSeverity = (assistData) => {
         assistRiskSeverity[substanceName] += ` (${score})`;
     }
 
-    console.log('Assist Risk Severity:', assistRiskSeverity);
+    // console.log('Assist Risk Severity:', assistRiskSeverity);
 
     return assistRiskSeverity;
 };

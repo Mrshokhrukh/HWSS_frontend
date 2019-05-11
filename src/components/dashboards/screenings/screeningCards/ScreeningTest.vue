@@ -888,7 +888,7 @@ const submitFormData = async () => {
             );
         }
 
-        console.log("Submitting form data:", submissionData); // Log the submission data
+        // console.log("Submitting form data:", submissionData); // Log the submission data
 
         const response = await axios.post(endpoints.submitCluster, submissionData);
         console.error("Server response:", response.data);

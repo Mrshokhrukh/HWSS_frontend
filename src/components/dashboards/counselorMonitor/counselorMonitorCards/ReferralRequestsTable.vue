@@ -80,10 +80,10 @@ const formatDate = (dateString) => {
 
 const loadData = async () => {
   const counselor_id = JSON.parse(localStorage.getItem('userDetailsStore'));
-  console.log(counselor_id.user.id);
+  // console.log(counselor_id.user.id);
   try {
     const response = await axios.get(endpoints.getReferralList);
-    console.log(response.data)
+    // console.log(response.data)
     referrals.value = response.data.referral_list.filter(referral => referral.referred_to.user_id === counselor_id.user.id);
     rowData.value = referrals.value;
   } catch (error) {
@@ -139,13 +139,13 @@ const showRejectReasonDialog = (referral) => {
 };
 
 const acceptReferral = async (referral) => {
-  console.log('Referral:', referral); 
+  // console.log('Referral:', referral); 
   try {
     const referredToUserId = referral.referred_to.user_id;
     const patientId = referral.user_data.patient_id;
 
     const response = await axios.post(endpoints.acceptReferral, { referredToUserId, patientId });
-    console.log('Referral accepted:', referral);
+    // console.log('Referral accepted:', referral);
     Swal.fire({
       icon: 'success',
       title: 'Referral Accepted',
@@ -173,7 +173,7 @@ const rejectReferral = async (referral, reason) => {
 
     const response = await axios.post(endpoints.rejectReferral, { referredToUserId, patientId, reason });
     // Optionally, you can reload data or show a success message
-    console.log('Referral rejected with reason:', referral, reason);
+    // console.log('Referral rejected with reason:', referral, reason);
     Swal.fire({
       icon: 'success',
       title: 'Referral Rejected', 

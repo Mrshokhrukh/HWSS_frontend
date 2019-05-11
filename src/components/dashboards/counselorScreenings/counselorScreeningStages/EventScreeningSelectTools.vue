@@ -121,7 +121,7 @@ const toggleSelection = (tool) => {
 
 const goBack = () => {
     // Implement go back logic
-    console.log('Go back clicked');
+    // console.log('Go back clicked');
     emit('goBackToRegister');
 };
 

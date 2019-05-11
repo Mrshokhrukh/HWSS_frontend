@@ -51,7 +51,7 @@ const fetchReportData = async () => {
   try {
     const response = await axios.get(endpoints.getSchoolEnvData);
     if (response.data) {
-      console.log('Report data:', response.data);
+      // console.log('Report data:', response.data);
       // Restructure the data into an array of objects
       const restructuredData = Object.entries(response.data).flatMap(([key, value]) => {
         return value.map(item => ({
@@ -73,12 +73,6 @@ const fetchReportData = async () => {
 const handleFetchError = () => {
   reportData.value = [];
   filteredData.value = [];
-}
-
-// Download report for a specific row
-const downloadReport = (row) => {
-  console.log('Downloading report for:', row);
-  // Implement download logic
 }
 
 // Filter data based on global filter

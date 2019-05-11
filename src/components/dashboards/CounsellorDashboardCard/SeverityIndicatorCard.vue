@@ -152,7 +152,7 @@ const handleButtonClick = (data) => {
 };
 
 const determineMeasurement = (cardTitle) => {
-  console.log('Card Title:', cardTitle);
+  // console.log('Card Title:', cardTitle);
   let measurement = '';
   switch (cardTitle.toLowerCase()) {
     case 'suicidal behavior':
@@ -171,7 +171,7 @@ const determineMeasurement = (cardTitle) => {
       console.warn('No matching measurement found for card title:', cardTitle);
       break;
   }
-  console.log('Measurement:', measurement);
+  // console.log('Measurement:', measurement);
   return measurement;
 };
 

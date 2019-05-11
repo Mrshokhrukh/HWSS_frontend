@@ -26,11 +26,12 @@ import StudentDetailsCard from './studentProfileCards/StudentDetailsCard.vue';
 import PersonalDetailsCard from './studentProfileCards/StudentPersonalDetailsCard.vue';
 import ChangePasswordCard from './studentProfileCards/StudentChangePasswordCard.vue';
 
+// eslint-disable-next-line no-unused-vars
 const userDetailsStore = useUserDetailsStore();
 const userDetails = ref({});
 
 onMounted(() => {
-    console.log(userDetailsStore.$state);
+    // console.log(userDetailsStore.$state);
 });
 </script>
 

@@ -115,7 +115,7 @@ const counselorName = ref(`${userDetails.user.firstName} ${userDetails.user.last
 const eventStatus = ref('');
 const selectedTool = ref('');
 
-console.log(counselorName.value);
+// console.log(counselorName.value);
 
 const submitForm = async () => {
     try {

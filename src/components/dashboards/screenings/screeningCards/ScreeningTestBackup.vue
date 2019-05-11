@@ -276,7 +276,7 @@ async function handleAnswerSelection(option, substance) {
 			const allAnswered = Object.keys(substanceAnswered).length === currentQuestion.value.substances.length &&
 				Object.values(substanceAnswered).every(answer => answer !== undefined); // Check for not undefined to ensure an answer was provided
 
-			console.log(`All answered? ${allAnswered}`);
+			// console.log(`All answered? ${allAnswered}`);
 
 			if (allAnswered) {
 				console.table(toRaw(substanceAnswered));

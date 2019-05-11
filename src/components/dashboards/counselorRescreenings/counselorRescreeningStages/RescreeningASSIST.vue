@@ -232,12 +232,12 @@ function logQuestionAndResponse(option, substance) {
     // Update or add the log entry to testResponses.responses array
     const index = findLoggedQuestionIndex(questionText, substance);
     if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
-        console.log('Log Entry Replacing (same substance):', logEntry);
+        // console.log('Log Entry Replacing (same substance):', logEntry);
         testResponses.responses[index] = logEntry;
     } else {
-        console.log('Log Entry:', logEntry);
+        // console.log('Log Entry:', logEntry);
         // Log even if substance is different
-        console.log('(Substance different from existing entry)');
+        // console.log('(Substance different from existing entry)');
         if (!testResponses.responses) {
             console.error('ASSIST: Null pointer exception in logQuestionAndResponse. testResponses.responses is null');
             return;
