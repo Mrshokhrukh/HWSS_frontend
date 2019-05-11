@@ -188,12 +188,11 @@ const onToggle = (val) => {
 const handleRescreen = () => {
   // Ensure selectedUsers is defined before accessing its value property
   if (!selectedUsers.value || selectedUsers.value.length === 0) {
-    // Swal.fire({
-    //   icon: 'error',
-    //   title: 'No users selected',
-    //   text: 'Please select at least one user to perform rescreening.',
-    // });
-    alert('no user selected')
+    Swal.fire({
+      icon: 'error',
+      title: 'No users selected',
+      text: 'Please select at least one user to perform rescreening.',
+    });
     return;
   }
 
