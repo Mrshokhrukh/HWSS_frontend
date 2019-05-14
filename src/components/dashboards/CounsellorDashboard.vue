@@ -117,7 +117,6 @@ const currentYear = new Date().getFullYear();
 // Dynamically populate website name
 const websiteName = "The PEMA HWSS";
 const sudData = ref(null);
-const reportData = ref(null);
     
 onMounted(async () => {
     try {
@@ -126,30 +125,10 @@ onMounted(async () => {
             localStorage.setItem('SUDData', JSON.stringify(sudResponse.data.data));
             sudData.value = sudResponse.data.data;
         }
-
-        const reportResponse = await axios.get(endpoints.getReport);
-        if (reportResponse.data) {
-            // console.log('is this the one?',reportResponse.data);
-            const formattedReportData = formatReportData(reportResponse.data);
-            reportData.value = formattedReportData;
-        }
     } catch (error) {
         console.error("Error fetching data:", error);
     }
 });
-
-// Function to format report data in human-readable format
-const formatReportData = (reportData) => {
-    // Assuming reportData is an array of objects
-    return reportData.map(report => {
-        return {
-            Title: report.title,
-            Date: new Date(report.date).toLocaleDateString(),
-            Description: report.description,
-            // Add more fields as needed
-        };
-    });
-};
 
 </script>
 

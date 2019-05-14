@@ -15,8 +15,8 @@
               v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard">
               <TopNavbarCard />
             </div>
-            <div class="col-12 mb-4" 
-            v-if="currentComponent === StudentDashboard || currentComponent === PublicDashboard">
+            <div class="col-12 mb-4"
+              v-if="currentComponent === StudentDashboard || currentComponent === PublicDashboard">
               <HelplineServices />
             </div>
 
@@ -36,21 +36,28 @@
 
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
+import { useUserDetailsStore } from '@/stores/userDetails';
+
+// Components
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import PublicDashboard from '@/components/dashboards/PublicDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
 import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
-import { useUserDetailsStore } from '@/stores/userDetails';
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue';
 import HelplineServices from "@/components/dashboards/screenings/screeningCards/HelplineServices.vue";
 
+// Refs
 const sidebarOpen = ref(false);
+const reportData = ref([]);
 
-
+// Store
 const userDetailsStore = useUserDetailsStore();
 
+// Computed
 const currentComponent = computed(() => {
   const role = userDetailsStore.user.role.toLowerCase().replace(/\s+/g, '-');
 
@@ -58,17 +65,12 @@ const currentComponent = computed(() => {
     case 'student':
       return StudentDashboard;
     case 'school_counselor':
-      return CounsellorDashboard;
     case 'clinical_counselor':
-      return CounsellorDashboard;
     case 'trained_professional':
       return CounsellorDashboard;
     case 'mh_admin':
-      return AdminDashboard;
     case 'sud_admin':
-      return AdminDashboard;
     case 'aaa_admin':
-      return AdminDashboard;
     case 'rd_admin':
       return AdminDashboard;
     default:
@@ -76,15 +78,45 @@ const currentComponent = computed(() => {
   }
 });
 
-
+// Methods
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
+const fetchReportData = async () => {
+  try {
+    const storedData = sessionStorage.getItem('reportData');
+    const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
+    const currentTime = new Date().getTime();
+
+    if (storedData && storedTimestamp) {
+      const dataAge = currentTime - parseInt(storedTimestamp);
+      const maxDataAge = 600000; // 10 minutes
+
+      if (dataAge < maxDataAge) {
+        reportData.value = JSON.parse(storedData);
+        return;
+      }
+    }
+
+    const reportResponse = await axios.get(endpoints.getReport);
+    if (reportResponse.data) {
+      const sanitizedReportData = reportResponse.data.map(user => {
+        // eslint-disable-next-line no-unused-vars
+        const { password, ...rest } = user;
+        return rest;
+      });
+
+      reportData.value = sanitizedReportData;
+      sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
+      sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
+    }
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    
+  }
+};
+
+// Lifecycle hook
+onMounted(fetchReportData);
 </script>
-
-
-
-<style scoped>
-/* exampe css */
-</style>

@@ -14,6 +14,8 @@ dist-ssr
 coverage
 *.local
 
+/src/router/index.js
+
 /cypress/videos/
 /cypress/screenshots/
 

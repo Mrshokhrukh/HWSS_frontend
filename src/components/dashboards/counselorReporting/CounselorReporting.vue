@@ -49,6 +49,8 @@ const reportData = ref([]);
 const globalFilter = ref('');
 const filteredData = ref([]);
 import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
+
 
 // eslint-disable-next-line no-unused-vars
 const globalFilterFields = [
@@ -146,31 +148,39 @@ const convertToCSV = (data) => {
 };
 
 // Function to trigger CSV download
-const downloadCSV = (csvData, fileName) => {
-  const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
-  saveAs(blob, fileName);
-};
+// const downloadCSV = (csvData, fileName) => {
+//   const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
+//   saveAs(blob, fileName);
+// };
 
 // Function to handle bulk download
 const bulkDownload = () => {
   const csvData = convertToCSV(filteredData.value);
-  downloadCSV(csvData, 'reports.csv');
+  const zip = new JSZip();
+  const zipFolder = zip.folder('reports');
+
+  // Add the CSV file to the ZIP folder
+  zipFolder.file('reports.csv', csvData);
+
+  // Generate password based on user's username and current year
+  const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+  const username = userDetails ? userDetails.user.username : 'defaultUser';
+  const currentYear = new Date().getFullYear();
+  const password = `${username}@${currentYear}#`;
+
+  console.log(password);
+  // Generate the password-protected ZIP file
+  zip.generateAsync({ type: 'blob', compression: 'DEFLATE', password: 'password' })
+    .then(function (blob) {
+      // Trigger download
+      saveAs(blob, 'reports.zip');
+    })
+    .catch(function (error) {
+      console.error('Error generating ZIP file:', error);
+    });
 };
 
-// Function to handle individual download
-// const downloadReport = (row) => {
-//   const rowDataCopy = { ...row };
 
-//   for (const key in rowDataCopy) {
-//     if (typeof rowDataCopy[key] === 'object' && rowDataCopy[key] !== null) {
-//       delete rowDataCopy[key];
-//     }
-//   }
-
-//   const csvData = convertToCSV([rowDataCopy]);
-
-//   downloadCSV(csvData, `${row.username}_report.csv`);
-// };
 
 // Filter data based on global filter
 const filterData = () => {

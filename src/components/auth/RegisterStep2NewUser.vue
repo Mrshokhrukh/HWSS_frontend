@@ -122,6 +122,8 @@
                                                     <div><i class="fas fa-check-circle text-success"></i> Date of Birth
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Sex</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Email Address (If Any)
+                                                    </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Mobile Number
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Permanent
@@ -130,6 +132,8 @@
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Current School or 
                                                         Working Agency
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Current Class and Section (If Student)
                                                     </div>
                                                 </div>
                                             </div>

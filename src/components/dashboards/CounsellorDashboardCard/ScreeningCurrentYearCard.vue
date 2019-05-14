@@ -5,7 +5,9 @@
         </div>
         <div class="card-body">
             <template v-if="!isDataEmpty()">
-                <pie-chart :donut="true" :data="chartData" :colors="chartColors" legend="bottom" loading="Loading..." />
+                <!-- Ensure correct data format -->
+                <pie-chart :donut="true" :data="chartDataFormatted" :colors="chartColors" legend="bottom"
+                    loading="Loading..." />
             </template>
             <template v-else>
                 <div class="pseudo-chart">
@@ -14,23 +16,23 @@
             </template>
         </div>
         <div class="card-footer">
+            <!-- Use correct data access syntax -->
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': chartColors[0] }"></span> Male ({{ chartData.Male
-                }})
+                <span class="legend-color" :style="{ 'background-color': chartColors[0] }"></span> Male ({{
+                chartData.Male }})
             </span>
             <span class="legend-item">
                 <span class="legend-color" :style="{ 'background-color': chartColors[1] }"></span> Female ({{
-                    chartData.Female }})
+                chartData.Female
+                }})
             </span>
             <span><strong>Total: {{ getTotalCount }}</strong></span>
         </div>
     </div>
 </template>
-  
+
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, watchEffect } from 'vue';
 
 const chartData = ref({
     'Male': 0,
@@ -43,52 +45,74 @@ const getCurrentYear = () => {
     return new Date().getFullYear();
 };
 
-const getTotalCount = computed(() => {
-    return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
-});
+const getTotalCount = ref(0);
 
 const isDataEmpty = () => {
+    // Check if both Male and Female counts are zero
     return chartData.value.Male === 0 && chartData.value.Female === 0;
 };
 
-onMounted(async () => {
+// Format data for pie chart component
+const chartDataFormatted = ref([]);
+
+watchEffect(() => {
     try {
-        const response = await axios.get(endpoints.getSubmissionData);
-        if (response && response.data) {
-            const currentYear = new Date().getFullYear();
+        const storedReportData = sessionStorage.getItem('reportData');
+        if (storedReportData) {
+            const reportData = JSON.parse(storedReportData);
 
-            // Filter user submissions for the current year
-            const userSubmissions = response.data.user_submissions.filter(submission => {
-                return new Date(submission.created_at).getFullYear() === currentYear;
-            });
-
+            // Initialize counts for Male and Female
             let maleCount = 0;
             let femaleCount = 0;
 
-            // Loop through filtered user submissions to count male and female
-            userSubmissions.forEach(submission => {
-                const userId = submission.user;
-                const userDetails = response.data.user_details.find(user => user.id === userId);
-                if (userDetails && userDetails.gender === 'Male') {
-                    maleCount++;
-                } else if (userDetails && userDetails.gender === 'Female') {
-                    femaleCount++;
+            // Iterate over reportData and count genders
+            reportData.forEach((item, index) => {
+                try {
+                    const users = JSON.parse(item.user);
+                    users.forEach((user, userIndex) => {
+                        try {
+                            const fields = user.fields;
+                            const gender = fields.gender;
+                            if (gender) {
+                                if (gender === 'Male') {
+                                    maleCount++;
+                                } else if (gender === 'Female') {
+                                    femaleCount++;
+                                }
+
+                            } else {
+                                console.error(`Gender not found for user ${userIndex} in item ${index}`);
+                            }
+                        } catch (fieldsError) {
+                            console.error(`Error processing fields for user ${userIndex} in item ${index}:`, fieldsError);
+                        }
+                    });
+
+                } catch (userError) {
+                    console.error(`Error processing users for item ${index}:`, userError);
                 }
             });
 
-            // Update chartData with the counts
-            chartData.value = {
-                'Male': maleCount,
-                'Female': femaleCount
-            };
+            // Update chart data
+            chartData.value.Male = maleCount;
+            chartData.value.Female = femaleCount;
+
+            // Update total count
+            getTotalCount.value = maleCount + femaleCount;
+
+            // Update formatted data for pie chart
+            chartDataFormatted.value = [
+                { label: 'Male', value: maleCount },
+                { label: 'Female', value: femaleCount }
+            ];
         }
     } catch (error) {
-        console.error('Error fetching details:', error);
+        console.error('Error fetching report data:', error);
     }
 });
-
 </script>
-  
+
+
 <style scoped>
 .container {
     display: flex;
