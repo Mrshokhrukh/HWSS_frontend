@@ -34,7 +34,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
@@ -83,6 +82,13 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
+const userDetailsInLocal = () => {
+  const currentUserAgencyName =  JSON.parse(localStorage.getItem('userDetailsStore'));
+  return currentUserAgencyName ? currentUserAgencyName.agency.agencyName : null;
+}
+
+console.log(userDetailsInLocal())
+
 const fetchReportData = async () => {
   try {
     const storedData = sessionStorage.getItem('reportData');
@@ -99,23 +105,44 @@ const fetchReportData = async () => {
       }
     }
 
-    const reportResponse = await axios.get(endpoints.getReport);
-    if (reportResponse.data) {
-      const sanitizedReportData = reportResponse.data.map(user => {
-        // eslint-disable-next-line no-unused-vars
-        const { password, ...rest } = user;
-        return rest;
-      });
+    const userDetails = userDetailsInLocal();
+    if (userDetails) {
+      const userAgencyName = userDetails.toLowerCase();
 
-      reportData.value = sanitizedReportData;
-      sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
-      sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
+      const reportResponse = await axios.get(endpoints.getReport);
+      if (reportResponse.data) {
+        // Find the first item in the response data based on agency_name
+        const foundItem = reportResponse.data.find(item => {
+          // Access agency_name directly if it exists
+          if (item.agency_name && typeof item.agency_name === 'string') {
+            return item.agency_name.toLowerCase() === userAgencyName;
+          }
+          for (const key in item) {
+            if (
+              typeof item[key] === 'object' &&
+              item[key].agency_name &&
+              typeof item[key].agency_name === 'string'
+            ) {
+              return item[key].agency_name.toLowerCase() === userAgencyName;
+            }
+          }
+          return false;
+        });
+
+      
+        if (foundItem) {
+          // Set the found item to reportData
+          reportData.value = [foundItem];
+          sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
+          sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
+        }
+      }
     }
   } catch (error) {
-    console.error("Error fetching data:", error);
-    
+    console.error(error);
   }
 };
+
 
 // Lifecycle hook
 onMounted(fetchReportData);

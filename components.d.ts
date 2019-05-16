@@ -20,6 +20,7 @@ declare module 'vue' {
     CaseScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSelectTools.vue')['default']
     CaseStatusReport: typeof import('./src/components/dashboards/Adminpages/AAA/report/CaseStatusReport.vue')['default']
     ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/ChangePasswordCard.vue')['default']
+    Chart: typeof import('primevue/chart')['default']
     ChartCard: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue')['default']
     ChartConfiguration: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartConfiguration.vue')['default']
     ChartMakerAdmin: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue')['default']
