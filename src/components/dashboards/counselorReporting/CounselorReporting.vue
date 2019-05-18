@@ -18,10 +18,10 @@
     <!-- General Report Table -->
     <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
       <DataTable :value="filteredPatients" :paginator="true" :rows="10" :resizableColumns="true" sortField="suicidal_measurement" :sortOrder="-1" >
-        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true" 
+        <Column  v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true" 
           :style="field.width ? { width: field.width } : {}">
           <template #body="{ data }">
-            <Tag v-if="field.taggable" :value="data[field.key]" :severity="severityClass(data[field.key])" />
+            <Tag class="w-100" v-if="field.taggable" :value="data[field.key]" :severity="severityClass(data[field.key])" />
             <span v-else>{{ data[field.key] }}</span>
           </template>
         </Column>
