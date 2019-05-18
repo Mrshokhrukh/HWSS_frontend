@@ -19,7 +19,6 @@
               v-if="currentComponent === StudentDashboard || currentComponent === PublicDashboard">
               <HelplineServices />
             </div>
-
           </div>
         </div>
 
