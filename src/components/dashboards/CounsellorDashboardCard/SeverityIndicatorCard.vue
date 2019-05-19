@@ -8,7 +8,7 @@
         <div :class="columnClass" v-for="(buttonRow, index) in buttonRows" :key="index">
           <div v-for="(data, dataIndex) in buttonRow" :key="dataIndex" class="my-3">
             <router-link
-              :to="`/counselor-dashboard/flagged-reports?flag=${data.text.toLowerCase()}&measurement=${selectedMeasurement}`"
+              :to="`/counselor-dashboard/counselor-reports?flag=${data.text.toLowerCase()}&measurement=${selectedMeasurement}`"
               class="card bg-hwss" @click="handleButtonClick(data)">
               <div class="card-body d-flex align-items-center justify-content-center p-3">
                 <div class="color-dot" :style="{ background: determineFlag(data.flag) }"></div>

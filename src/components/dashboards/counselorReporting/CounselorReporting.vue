@@ -3,7 +3,7 @@
     <div class="p-field p-grid row">
       <div class="col-5 p-md-4">
         <span class="p-input-icon-left">
-          <InputText v-model="globalFilter" placeholder="earch Reports..." class="ms-2  w-100" icon="pi pi-search" />
+          <InputText v-model="globalFilter" placeholder="Search Reports..." class="ms-2  w-100" icon="pi pi-search" />
         </span>
       </div>
       <div v-if="isSchoolCounselor" class="col-5 p-md-4">

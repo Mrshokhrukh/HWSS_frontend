@@ -86,14 +86,13 @@ const userDetailsInLocal = () => {
   return currentUserAgencyName ? currentUserAgencyName.agency.agencyName : null;
 }
 
-console.log(userDetailsInLocal())
+console.log('user aency name in local:', userDetailsInLocal())
 
 const fetchReportData = async () => {
   try {
     const storedData = sessionStorage.getItem('reportData');
     const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
     const currentTime = new Date().getTime();
-
     if (storedData && storedTimestamp) {
       const dataAge = currentTime - parseInt(storedTimestamp);
       const maxDataAge = 600000; // 10 minutes
@@ -110,10 +109,13 @@ const fetchReportData = async () => {
 
       const reportResponse = await axios.get(endpoints.getReport);
       if (reportResponse.data) {
+        // alert('response received')
+        console.log(reportResponse.data)
         // Find the first item in the response data based on agency_name
         const foundItem = reportResponse.data.find(item => {
           // Access agency_name directly if it exists
-          if (item.agency_name && typeof item.agency_name === 'string') {
+          if (item.agency_name) {
+            console.log(item.agency_name)
             return item.agency_name.toLowerCase() === userAgencyName;
           }
           for (const key in item) {
@@ -127,8 +129,7 @@ const fetchReportData = async () => {
           }
           return false;
         });
-
-      
+        
         if (foundItem) {
           // Set the found item to reportData
           reportData.value = [foundItem];
@@ -145,4 +146,5 @@ const fetchReportData = async () => {
 
 // Lifecycle hook
 onMounted(fetchReportData);
+
 </script>
