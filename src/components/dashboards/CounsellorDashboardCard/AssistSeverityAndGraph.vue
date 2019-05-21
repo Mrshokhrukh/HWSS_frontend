@@ -1,117 +1,202 @@
-// src/components/ChartComponent.vue
-
 <template>
-  <div>
-    <canvas ref="chart"></canvas>
-  </div>
-</template>
-
-<script setup>
-import { ref, onMounted } from 'vue';
-import { Chart } from 'chart.js/auto';
-
-// Reference to the chart element
-const chartRef = ref(null);
-
-// Retrieve and parse report data from session storage
-const reportData = JSON.parse(sessionStorage.getItem('reportData'));
-
-// Function to extract measurement data
-const extractMeasurementData = (data) => {
-  return data.flatMap(entry => {
-    return JSON.parse(entry.measurement_assist).map(measurement => measurement.fields);
+    <div class="row">
+      <div class="col-4">
+        <div class="card bg-light h-100">
+          <div class="card-header">
+            <h4 class="text-center">Assists</h4>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleLifetimeUserClick">
+              <h1>{{ totalLifetimeUsers }}</h1>
+              <p class="mb-0">Life Time User</p>
+            </button>
+  
+            <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleDailyUsersClick">
+              <h1>{{ totalDailySubstanceUsers }}</h1>
+              <p class="mb-0">Daily Substance Users</p>
+            </button>
+  
+            <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleSubstanceSeverityClick">
+              Each Substance Severity
+            </button>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-8">
+        <div class="card w-100 h-100">
+          <div class="card-header text-center">
+            <h4 class="graph-title">Assist Graph</h4>
+          </div>
+          <div class="card-body d-flex justify-content-center align-items-center w-100 h-50">
+            <canvas id="myChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+  
+  <script setup>
+  import { computed, onMounted, ref } from 'vue';
+  import Chart from 'chart.js/auto';
+  
+  // Fetching data from session storage
+  const reportData = JSON.parse(sessionStorage.getItem('reportData'));
+  
+  // Computed properties to calculate totals
+  const totalLifetimeUsers = computed(() => {
+    return reportData.filter(item => item.life_time_use === 'yes').length;
   });
-};
-
-// Extracted measurement data
-const measurementData = extractMeasurementData(reportData);
-
-// Function to count occurrences of each measurement
-const countMeasurements = (data, key) => {
-  return data.reduce((acc, entry) => {
-    const value = entry[key];
-    if (value) {
-      acc[value] = (acc[value] || 0) + 1;
-    }
-    return acc;
-  }, {});
-};
-
-// List of measurement keys to extract
-const measurementKeys = [
-  'alcoholic_measurement',
-  'tobacco_measurement',
-  'cannabis_measurement',
-  'cocaine_measurement',
-  'amphetamine_measurement',
-  'inhalants_measurement',
-  'sedatives_measurement',
-  'hallucinogens_measurement',
-  'opioids_measurement',
-  'injection_measurement',
-  'other_measurement'
-];
-
-// Count occurrences for each measurement
-const aggregatedData = measurementKeys.map(key => {
-  return {
-    label: key.replace('_measurement', '').replace('_', ' ').toUpperCase(),
-    data: countMeasurements(measurementData, key)
+  
+  const totalDailySubstanceUsers = computed(() => {
+    return reportData.filter(item => item.daily_use === 'yes').length;
+  });
+  
+  let myChart = ref(null);
+  
+  const handleLifetimeUserClick = () => {
+    const lifetimeUsersData = reportData.filter(item => item.life_time_use === "yes");
+    const groupedData = groupDataBySubstanceAndGender(lifetimeUsersData);
+    const totals = calculateTotals(groupedData);
+  
+    updateChart('Lifetime Users', Object.keys(totals), Object.values(totals));
   };
-});
-
-// Prepare labels and datasets for Chart.js
-const labels = Array.from(new Set(measurementData.map(data => new Date(data.created_at).toLocaleDateString())));
-const datasets = aggregatedData.map(substance => ({
-  label: substance.label,
-  data: labels.map(label => substance.data[label] || 0),
-  borderColor: getRandomColor(),
-  borderWidth: 1,
-}));
-
-// Function to generate random colors for the chart lines
-function getRandomColor() {
-  const letters = '0123456789ABCDEF';
-  let color = '#';
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
-
-// Initialize the chart on component mount
-onMounted(() => {
-  const ctx = chartRef.value.getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: datasets,
-    },
-    options: {
-      scales: {
-        x: {
-          type: 'time',
-          time: {
-            unit: 'day',
+  
+  const handleDailyUsersClick = () => {
+    const dailyUsersData = reportData.filter(item => item.daily_use === "yes");
+    const groupedData = groupDataBySubstanceAndGender(dailyUsersData);
+    const totals = calculateTotals(groupedData);
+  
+    updateChart('Daily Users', Object.keys(totals), Object.values(totals));
+  };
+  
+  const handleSubstanceSeverityClick = () => {
+    const groupedData = groupDataBySubstanceAndRisk(reportData);
+    const totals = calculateSeverityTotals(groupedData);
+  
+    updateChart('Substance Severity', Object.keys(totals), Object.values(totals));
+  };
+  
+  const groupDataBySubstanceAndGender = (data) => {
+    return data.reduce((acc, item) => {
+      const substance = item.substance;
+      acc[substance] = acc[substance] || { male: 0, female: 0 };
+      acc[substance][item.gender]++;
+      return acc;
+    }, {});
+  };
+  
+  const calculateTotals = (groupedData) => {
+    return Object.keys(groupedData).reduce((acc, substance) => {
+      acc[substance] = {
+        male: groupedData[substance].male || 0,
+        female: groupedData[substance].female || 0
+      };
+      return acc;
+    }, {});
+  };
+  
+  const groupDataBySubstanceAndRisk = (data) => {
+    return data.reduce((acc, item) => {
+      const substance = item.substance;
+      acc[substance] = acc[substance] || { high: 0, low: 0 };
+      if (item.risk === "high risk") {
+        acc[substance].high++;
+      } else if (item.risk === "low risk") {
+        acc[substance].low++;
+      }
+      return acc;
+    }, {});
+  };
+  
+  const calculateSeverityTotals = (groupedData) => {
+    return Object.keys(groupedData).reduce((acc, substance) => {
+      acc[substance] = {
+        high: groupedData[substance].high || 0,
+        low: groupedData[substance].low || 0
+      };
+      return acc;
+    }, {});
+  };
+  
+  const updateChart = (chartTitle, labels, data) => {
+    if (myChart.value) {
+      myChart.value.destroy();
+    }
+  
+    const ctx = document.getElementById('myChart').getContext('2d');
+    myChart.value = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Male',
+            data: data.map(item => item.male),
+            backgroundColor: '#64AC99',
+            borderColor: '#64AC99',
+            borderWidth: 1
           },
-        },
+          {
+            label: 'Female',
+            data: data.map(item => item.female),
+            backgroundColor: '#2B656F',
+            borderColor: '#2B656F',
+            borderWidth: 1
+          },
+          {
+            label: 'High Risk',
+            data: data.map(item => item.high),
+            backgroundColor: '#E6142D',
+            borderColor: '#E6142D',
+            borderWidth: 1
+          },
+          {
+            label: 'Low Risk',
+            data: data.map(item => item.low),
+            backgroundColor: '#E6EA0F',
+            borderColor: '#E6EA0F',
+            borderWidth: 1
+          }
+        ]
       },
-    },
+      options: {
+        scales: {
+          x: {
+            beginAtZero: false,
+            stepSize: 1 // Set the step size to 1 to display integer values on the x-axis
+          },
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: chartTitle
+          }
+        }
+      }
+    });
+  };
+  
+  onMounted(() => {
+    // Initial chart rendering
+    handleLifetimeUserClick();
   });
-});
-
-console.log('Report Data:', reportData);
-console.log('Extracted Measurement Data:', measurementData);
-console.log('Aggregated Data:', aggregatedData);
-console.log('Labels:', labels);
-console.log('Datasets:', datasets);
-
-</script>
-
-<style scoped>
-canvas {
-  width: 100%;
-  height: 400px;
-}
-</style>
+  </script>
+  
+  <style scoped>
+  .card-body.d-flex {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .btn-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+  }
+  </style>
+  
