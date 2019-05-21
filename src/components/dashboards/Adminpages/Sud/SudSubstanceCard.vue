@@ -199,13 +199,13 @@ const dummyData = {
     'Moderate-risk total female': Female_tobacco_measurement_MR
   },
   Alcohol: {
-    'High-risk total male': 250,
-    'High-risk total female': 290,
+    'High-risk total male': 0,
+    'High-risk total female': 0,
     'Moderate-risk total male': 150,
     'Moderate-risk total female': 150
   },
   Cannabis: {
-    'High-risk total male': 180,
+    'High-risk total male': 1801,
     'High-risk total female': 120,
     'Moderate-risk total male': 90,
     'Moderate-risk total female': 110
