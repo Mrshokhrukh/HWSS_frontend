@@ -34,22 +34,20 @@ const formatNumber = (num) => {
   return num;
 };
 
-// Function to count case statuses
+// Function to count case statuses using caseStatus
 const countCaseStatuses = (data) => {
   let ongoingCount = 0;
   let discontinuedCount = 0;
   let closedCount = 0;
 
   data.forEach(entry => {
-    const rescreened = entry.rescreened;
-    // Assuming discontinued flag is stored in rescreening_data
-    const discontinued = entry.rescreening_data && JSON.parse(entry.rescreening_data).some(r => r.fields.discontinued);
+    const caseStatus = entry.caseStatus;
 
-    if (!rescreened) {
+    if (caseStatus === 'ongoing') {
       ongoingCount++;
-    } else if (discontinued) {
+    } else if (caseStatus === 'discontinued') {
       discontinuedCount++;
-    } else {
+    } else if (caseStatus === 'closed') {
       closedCount++;
     }
   });

@@ -23,33 +23,31 @@ const statuses = ref([
 // Method to format numbers with K, M, B
 const formatNumber = (num) => {
   if (num >= 1000000000) {
-    return (num / 1000000000).toFixed(2) + 'B';
+    return (num / 1000000000).toFixed(2) + 'B'
   }
   if (num >= 1000000) {
-    return (num / 1000000).toFixed(2) + 'M';
+    return (num / 1000000).toFixed(2) + 'M'
   }
   if (num >= 1000) {
-    return (num / 1000).toFixed(2) + 'K';
+    return (num / 1000).toFixed(2) + 'K'
   }
   return num;
 };
 
-// Function to count case statuses
+// Function to count case statuses using caseStatus
 const countCaseStatuses = (data) => {
   let ongoingCount = 0;
   let discontinuedCount = 0;
   let closedCount = 0;
 
   data.forEach(entry => {
-    const rescreened = entry.rescreened;
-    // Assuming discontinued flag is stored in rescreening_data
-    const discontinued = entry.rescreening_data && JSON.parse(entry.rescreening_data).some(r => r.fields.discontinued);
+    const caseStatus = entry.caseStatus;
 
-    if (!rescreened) {
+    if (caseStatus === 'ongoing') {
       ongoingCount++;
-    } else if (discontinued) {
+    } else if (caseStatus === 'discontinued') {
       discontinuedCount++;
-    } else {
+    } else if (caseStatus === 'closed') {
       closedCount++;
     }
   });
