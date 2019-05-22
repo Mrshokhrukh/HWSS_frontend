@@ -82,11 +82,14 @@ const toggleSidebar = () => {
 };
 
 const userDetailsInLocal = () => {
-  const currentUserAgencyName =  JSON.parse(localStorage.getItem('userDetailsStore'));
-  return currentUserAgencyName ? currentUserAgencyName.agency.agencyName : null;
+  const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+  if (userDetails) {
+    const role = userDetails.user.role;
+    const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
+    return { role, agencyName };
+  }
+  return null;
 }
-
-console.log('user aency name in local:', userDetailsInLocal())
 
 const fetchReportData = async () => {
   try {
@@ -105,34 +108,35 @@ const fetchReportData = async () => {
 
     const userDetails = userDetailsInLocal();
     if (userDetails) {
-      const userAgencyName = userDetails.toLowerCase();
+      const userRole = userDetails.role.toLowerCase();
+      const userAgencyName = userDetails.agencyName ? userDetails.agencyName.toLowerCase() : null;
 
       const reportResponse = await axios.get(endpoints.getReport);
       if (reportResponse.data) {
-        // alert('response received')
-        console.log(reportResponse.data)
-        // Find the first item in the response data based on agency_name
-        const foundItem = reportResponse.data.find(item => {
-          // Access agency_name directly if it exists
-          if (item.agency_name) {
-            console.log(item.agency_name)
-            return item.agency_name.toLowerCase() === userAgencyName;
-          }
-          for (const key in item) {
-            if (
-              typeof item[key] === 'object' &&
-              item[key].agency_name &&
-              typeof item[key].agency_name === 'string'
-            ) {
-              return item[key].agency_name.toLowerCase() === userAgencyName;
+        let reportItems = reportResponse.data;
+
+        if (userRole.includes('counselor') && userAgencyName) {
+          // Find the first item in the response data based on agency_name
+          reportItems = reportItems.filter(item => {
+            if (item.agency_name) {
+              return item.agency_name.toLowerCase() === userAgencyName;
             }
-          }
-          return false;
-        });
-        
-        if (foundItem) {
-          // Set the found item to reportData
-          reportData.value = [foundItem];
+            for (const key in item) {
+              if (
+                typeof item[key] === 'object' &&
+                item[key].agency_name &&
+                typeof item[key].agency_name === 'string'
+              ) {
+                return item[key].agency_name.toLowerCase() === userAgencyName;
+              }
+            }
+            return false;
+          });
+        }
+
+        if (reportItems.length > 0) {
+          // Set the found items to reportData
+          reportData.value = reportItems;
           sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
           sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
         }

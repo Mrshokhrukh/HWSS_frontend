@@ -46,8 +46,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
-import Chart from 'chart.js/auto';
+import { ref, onMounted } from 'vue';
 import axios from 'axios'
 import endpoints from '@/api'
 

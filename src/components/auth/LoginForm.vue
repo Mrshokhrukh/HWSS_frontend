@@ -108,7 +108,7 @@ const loginUser = async () => {
         });
 
         localStorage.setItem('authToken', response.data.token);
-        await fetchUserAndAgencyDetails(response.data.user_role);
+        await fetchUserAndAgencyDetails(response.data.user_role, response.data.token);
     } catch (error) {
         handleLoginError(error);
     } finally {
@@ -116,11 +116,11 @@ const loginUser = async () => {
     }
 };
 
-const fetchUserAndAgencyDetails = async (userRole) => {
+const fetchUserAndAgencyDetails = async (userRole, authToken) => {
     try {
         // Fetch user details from the API
         const response = await axios.get(endpoints.getUserDetails, {
-            headers: { Authorization: `Token ${localStorage.getItem('authToken')}` },
+            headers: { Authorization: `Token ${authToken}` },
         });
 
         // Destructure the response data
@@ -135,15 +135,15 @@ const fetchUserAndAgencyDetails = async (userRole) => {
 
         // Handle the response from the store
         if (storeResponse.status === 'success') {
-            await Swal.fire({
+            Swal.fire({
                 title: 'Login Successful!',
                 text: 'Your data has been successfully retrieved.',
                 icon: 'success',
                 showConfirmButton: false,
                 timer: 1500
+            }).then(() => {
+                redirectToDashboard(userRole); 
             });
-
-            redirectToDashboard(userRole);
         } else {
             // Show error message based on the response message
             if (storeResponse.message.includes('Invalid Credentials')) {
@@ -159,7 +159,6 @@ const fetchUserAndAgencyDetails = async (userRole) => {
         Swal.fire('Error', 'Failed to fetch user details.', 'error');
     }
 };
-
 
 
 const redirectToDashboard = (userRole) => {
