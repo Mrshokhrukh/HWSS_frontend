@@ -118,52 +118,100 @@ const currentYear = new Date().getFullYear();
 const websiteName = "The PEMA HWSS";
 const sudData = ref(null);
 
+const reportData = ref([])
+
 const userDetailsInLocal = () => {
   const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
   if (userDetails) {
     const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
-    return agencyName;
+    const roleName = userDetails.user ? userDetails.user.role : null;
+    console.log('agency name and role', agencyName, roleName);
+    return { agencyName, roleName };
   }
-  return null;
+  return { agencyName: null, roleName: null };
 }
 
 const fetchReportData = async () => {
   try {
-    console.log('function is triggered from counselor dashboard😊')
+    console.log('function is triggered from counselor dashboard😊');
+
+    // Check if report data exists in sessionStorage and is recent
     const storedData = sessionStorage.getItem('reportData');
     const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
     const currentTime = new Date().getTime();
+
     if (storedData && storedTimestamp) {
       const dataAge = currentTime - parseInt(storedTimestamp);
-      const maxDataAge = 600000; // 10 minutes
-
+      const maxDataAge = 600000;
       if (dataAge < maxDataAge) {
         reportData.value = JSON.parse(storedData);
         return;
       }
     }
 
-    const userDetails = userDetailsInLocal();
-    if (userDetails) {
-      const userAgencyName = userDetails.agencyName ? userDetails.agencyName : null;
+    // Get current user's agency name and role from localStorage
+    const { agencyName: userAgencyName, roleName: userRole } = userDetailsInLocal();
 
+    if (userAgencyName && userRole) {
       const reportResponse = await axios.get(endpoints.getReport);
+      console.log('report response 🎉', reportResponse);
       if (reportResponse.data) {
-        let reportItems = reportResponse.data;
+        let reportItems = reportResponse.data.reporting_model_data;
+        const gyalsungUserProfiles = reportResponse.data.gyalsung_user_profiles;
 
-        if (userAgencyName) {
-          // Find the first item in the response data based on agency_name
+        // Logic based on user role
+        if (userRole === 'clinical_counselor') {
+          // Set agencies to "Case Base Clients" and "Event Base Clients"
+          const agencyToFilter1 = 'Case Base Clients'.toLowerCase();
+          const agencyToFilter2 = 'Event Base Clients'.toLowerCase();
           reportItems = reportItems.filter(item => {
-            if (item.agency_name) {
-              return item.agency_name.toLowerCase() === userAgencyName;
+            const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+            if (itemAgencyName === agencyToFilter1 || itemAgencyName === agencyToFilter2) {
+              return true;
             }
             for (const key in item) {
-              if (
-                typeof item[key] === 'object' &&
-                item[key].agency_name &&
-                typeof item[key].agency_name === 'string'
-              ) {
-                return item[key].agency_name.toLowerCase() === userAgencyName;
+              if (item[key] && typeof item[key] === 'object' && item[key].agency_name) {
+                const nestedAgencyName = item[key].agency_name.toLowerCase();
+                if (nestedAgencyName === agencyToFilter1 || nestedAgencyName === agencyToFilter2) {
+                  return true;
+                }
+              }
+            }
+            return false;
+          });
+        } else if (userRole === 'gyalsung_counselor') {
+          // Filter by user agency
+          reportItems = reportItems.filter(item => {
+            const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+            if (itemAgencyName === userAgencyName.toLowerCase()) {
+              return true;
+            }
+            for (const key in item) {
+              if (item[key] && typeof item[key] === 'object' && item[key].agency_name) {
+                const nestedAgencyName = item[key].agency_name.toLowerCase();
+                if (nestedAgencyName === userAgencyName.toLowerCase()) {
+                  return true;
+                }
+              }
+            }
+            return false;
+          });
+
+          // Save GyalsungUserProfiles in sessionStorage
+          sessionStorage.setItem('gyalsungUserProfiles', JSON.stringify(gyalsungUserProfiles));
+        } else if (userRole === 'school_counselor' || userRole === 'trained_professional') {
+          // Existing filtering logic
+          reportItems = reportItems.filter(item => {
+            const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+            if (itemAgencyName === userAgencyName.toLowerCase()) {
+              return true;
+            }
+            for (const key in item) {
+              if (item[key] && typeof item[key] === 'object' && item[key].agency_name) {
+                const nestedAgencyName = item[key].agency_name.toLowerCase();
+                if (nestedAgencyName === userAgencyName.toLowerCase()) {
+                  return true;
+                }
               }
             }
             return false;
@@ -171,7 +219,7 @@ const fetchReportData = async () => {
         }
 
         if (reportItems.length > 0) {
-          // Set the found items to reportData
+          // Set the filtered items to reportData
           reportData.value = reportItems;
           sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
           sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
@@ -183,20 +231,18 @@ const fetchReportData = async () => {
   }
 };
 
-    
+fetchReportData();
+
 onMounted(async () => {
-
-  fetchReportData;
-
-    try {
-        const sudResponse = await axios.get(endpoints.getSUDData);
-        if (sudResponse.data.success) {
-            localStorage.setItem('SUDData', JSON.stringify(sudResponse.data.data));
-            sudData.value = sudResponse.data.data;
-        }
-    } catch (error) {
-        console.error("Error fetching data:", error);
+  try {
+    const sudResponse = await axios.get(endpoints.getSUDData);
+    if (sudResponse.data.success) {
+      localStorage.setItem('SUDData', JSON.stringify(sudResponse.data.data));
+      sudData.value = sudResponse.data.data;
     }
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
 });
 
 </script>

@@ -34,9 +34,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, computed } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
 
 // Components
@@ -50,8 +48,6 @@ import HelplineServices from "@/components/dashboards/screenings/screeningCards/
 
 // Refs
 const sidebarOpen = ref(false);
-const reportData = ref([]);
-
 // Store
 const userDetailsStore = useUserDetailsStore();
 
@@ -64,6 +60,7 @@ const currentComponent = computed(() => {
       return StudentDashboard;
     case 'school_counselor':
     case 'clinical_counselor':
+    case 'gyalsung_counselor':
     case 'trained_professional':
       return CounsellorDashboard;
     case 'mh_admin':

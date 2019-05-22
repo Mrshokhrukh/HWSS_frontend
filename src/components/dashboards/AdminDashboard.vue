@@ -185,7 +185,6 @@ const fetchReportData = async () => {
     }
 };
 
-// Lifecycle hook
 fetchReportData();
 
 </script>
