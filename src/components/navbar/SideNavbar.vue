@@ -183,11 +183,11 @@ const logout = async () => {
 						icon: 'success',
 						showConfirmButton: false,
 						timer: 1200
-					});
+					}).then(() => {
+							router.push("/login");
+					})
 
-					if (router) {
-						router.push("/login");
-					}
+
 				} else {
 					console.error("Logout failed:", response.data.message);
 				}

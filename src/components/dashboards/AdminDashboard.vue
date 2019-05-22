@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import MentalhealthApproval from "@/components/dashboards/Adminpages/Approval/MentalhealthApproval.vue"
 import MentalhealthReport from "@/components/dashboards/Adminpages/report/MentalhealthReport.vue"
 import MentalhealthHelp from "@/components/dashboards/Adminpages/MentalhealthHelp/MentalhealthHelp.vue"
@@ -131,7 +131,11 @@ import RnDDashboard from "@/components/dashboards/Adminpages/R&D/RnDDashboard.vu
 import RndHelp from "@/components/dashboards/Adminpages/R&D/RndHelp.vue"
 import RnDSetting from "@/components/dashboards/Adminpages/R&D/RnDProfile/RnDSetting.vue"
 import ChartMakerAdmin from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue"
+import axios from 'axios';
+import endpoints from '@/api';
 import { useRoute } from 'vue-router';
+
+const reportData = ref([])
 
 const route = useRoute();
 
@@ -148,6 +152,42 @@ const currentYear = new Date().getFullYear();
 // Dynamically populate website name
 const websiteName = "The PEMA HWSS";
 
+const fetchReportData = async () => {
+    try {
+        console.log('function is triggered from admin dashboard 😊')
+        const storedData = sessionStorage.getItem('reportData');
+        const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
+        const currentTime = new Date().getTime();
+        if (storedData && storedTimestamp) {
+            const dataAge = currentTime - parseInt(storedTimestamp);
+            const maxDataAge = 600000;
+
+            if (dataAge < maxDataAge) {
+                reportData.value = JSON.parse(storedData);
+                return;
+            }
+        }
+
+        const reportResponse = await axios.get(endpoints.getReport);
+        console.log(reportResponse.data)
+        if (reportResponse.data) {
+            let reportItems = reportResponse.data;
+
+            if (reportItems.length > 0) {
+                // Set the found items to reportData
+                reportData.value = reportItems;
+                sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
+                sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
+            }
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+// Lifecycle hook
+fetchReportData();
+
 </script>
 
 <style>
@@ -156,10 +196,10 @@ const websiteName = "The PEMA HWSS";
 }
 
 .header {
-	height: 8rem;
+    height: 8rem;
 }
 
 .footer {
-	margin-top: auto;
+    margin-top: auto;
 }
 </style>

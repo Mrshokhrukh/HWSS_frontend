@@ -117,8 +117,77 @@ const currentYear = new Date().getFullYear();
 // Dynamically populate website name
 const websiteName = "The PEMA HWSS";
 const sudData = ref(null);
+
+const userDetailsInLocal = () => {
+  const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+  if (userDetails) {
+    const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
+    return agencyName;
+  }
+  return null;
+}
+
+const fetchReportData = async () => {
+  try {
+    console.log('function is triggered from counselor dashboard😊')
+    const storedData = sessionStorage.getItem('reportData');
+    const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
+    const currentTime = new Date().getTime();
+    if (storedData && storedTimestamp) {
+      const dataAge = currentTime - parseInt(storedTimestamp);
+      const maxDataAge = 600000; // 10 minutes
+
+      if (dataAge < maxDataAge) {
+        reportData.value = JSON.parse(storedData);
+        return;
+      }
+    }
+
+    const userDetails = userDetailsInLocal();
+    if (userDetails) {
+      const userAgencyName = userDetails.agencyName ? userDetails.agencyName : null;
+
+      const reportResponse = await axios.get(endpoints.getReport);
+      if (reportResponse.data) {
+        let reportItems = reportResponse.data;
+
+        if (userAgencyName) {
+          // Find the first item in the response data based on agency_name
+          reportItems = reportItems.filter(item => {
+            if (item.agency_name) {
+              return item.agency_name.toLowerCase() === userAgencyName;
+            }
+            for (const key in item) {
+              if (
+                typeof item[key] === 'object' &&
+                item[key].agency_name &&
+                typeof item[key].agency_name === 'string'
+              ) {
+                return item[key].agency_name.toLowerCase() === userAgencyName;
+              }
+            }
+            return false;
+          });
+        }
+
+        if (reportItems.length > 0) {
+          // Set the found items to reportData
+          reportData.value = reportItems;
+          sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
+          sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
     
 onMounted(async () => {
+
+  fetchReportData;
+
     try {
         const sudResponse = await axios.get(endpoints.getSUDData);
         if (sudResponse.data.success) {
