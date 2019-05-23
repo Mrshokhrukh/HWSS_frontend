@@ -47,28 +47,21 @@ const tableFields = [
 ];
 
 // Fetch report data from API
-const fetchReportData = async () => {
+const fetchReportData = () => {
   try {
-    const response = await axios.get(endpoints.getSchoolEnvData);
-    if (response.data) {
-      // console.log('Report data:', response.data);
-      // Restructure the data into an array of objects
-      const restructuredData = Object.entries(response.data).flatMap(([key, value]) => {
-        return value.map(item => ({
-          username: key,
-          ...item
-        }));
-      });
-      reportData.value = restructuredData;
-      filteredData.value = restructuredData;
+    const storedReportData = JSON.parse(sessionStorage.getItem('reportData'));
+    if (storedReportData) {
+      reportData.value = storedReportData;
+      filteredData.value = storedReportData;
     } else {
-      handleFetchError();
+      handleFetchError("No data found in sessionStorage.");
     }
   } catch (error) {
-    handleFetchError();
+    handleFetchError("Error parsing or retrieving data from sessionStorage:", error);
   }
 }
 
+console.log(reportData)
 // Handle fetch error
 const handleFetchError = () => {
   reportData.value = [];

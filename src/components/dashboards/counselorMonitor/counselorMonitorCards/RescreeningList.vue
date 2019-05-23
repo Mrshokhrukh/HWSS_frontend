@@ -265,46 +265,61 @@ const filteredPatients = computed(() => {
   return filtered;
 });
 
-onMounted(async () => {
+onMounted(() => {
   try {
     loadingPatients.value = true;
-    const response = await axios.get(endpoints.getRescreeningList);
-    if (response && response.data && Array.isArray(response.data['Rescreening List'])) {
-      const mappedUsers = response.data['Rescreening List'].map(submissionData => {
-        const user_details = submissionData.user_details;
-        const measurementData = submissionData.measurement_data;
-        const measurementAssistData = submissionData.measurement_assist_data;
-        const flags = submissionData.flags;
 
-        const date = submissionData.created_at ? submissionData.created_at.split('T')[0] : '';
+    // Retrieve the data from session storage
+    const reportData = sessionStorage.getItem('reportData');
+  
+    if (reportData) {
+      const response = JSON.parse(reportData);
+      console.log("Parsed response:", response); // Log the parsed response
 
-        return {
-          id: user_details.user_id,
-          date: date,
-          name: user_details.full_name,
-          age: user_details.age,
-          sex: user_details.sex,
-          pastDiagnosis: submissionData.diagnosis || 'none',
-          phqSeverity: measurementData.phq_measurement || 'none',
-          gadSeverity: measurementData.gad_measurement || 'none',
-          aceSeverity: measurementData.ace_measurement || 'none',
-          tobaccoRisk: measurementAssistData.tobacco_measurement || 'none',
-          alcoholRisk: measurementAssistData.alcoholic_measurement || 'none',
-          cannabisRisk: measurementAssistData.cannabis_measurement || 'none',
-          cocaineRisk: measurementAssistData.cocaine_measurement || 'none',
-          amphetamineRisk: measurementAssistData.amphetamine_measurement || 'none',
-          inhalantsRisk: measurementAssistData.inhalants_measurement || 'none',
-          sedativeRisk: measurementAssistData.sedatives_measurement || 'none',
-          hallucinogensRisk: measurementAssistData.hallucinogens_measurement || 'none',
-          opioidsRisk: measurementAssistData.opioids_measurement || 'none',
-          othersRisk: measurementAssistData.other_measurement || 'none',
-          nonMedicalInjectionUse: measurementAssistData.injection_measurement || 'none',
-          flags: flags
-        };
-      });
-      users.value = mappedUsers;
+      if (Array.isArray(response)) {
+        const mappedUsers = response.map(data => {
+          const user = data.user?.fields || {};
+          const measurement = data.measurement?.fields || {};
+          const measurementAssist = data.measurement_assist?.fields || {};
+          const serviceAndTreatment = data.service_and_treatment || {};
+
+          // Add logs to debug field mappings
+          console.log("Measurement fields:", measurement);
+          console.log("Measurement Assist fields:", measurementAssist);
+
+          const date = data.rescreening_data?.fields?.submission_date?.split('T')[0] || '';
+
+          return {
+            id: data.userId,
+            date: date,
+            name: `${user.first_name || ''} ${user.middle_name || ''} ${user.last_name || ''}`.trim(),
+            age: user.date_of_birth ? new Date().getFullYear() - new Date(user.date_of_birth).getFullYear() : 'N/A',
+            sex: user.gender || 'N/A',
+            pastDiagnosis: serviceAndTreatment.case_status || 'none',
+            phqSeverity: measurement.phq_measurement || 'none',
+            gadSeverity: measurement.gad_measurement || 'none',
+            aceSeverity: measurement.ace_measurement || 'none',
+            tobaccoRisk: measurementAssist.tobacco_measurement || 'none',
+            alcoholRisk: measurementAssist.alcoholic_measurement || 'none',
+            cannabisRisk: measurementAssist.cannabis_measurement || 'none',
+            cocaineRisk: measurementAssist.cocaine_measurement || 'none',
+            amphetamineRisk: measurementAssist.amphetamine_measurement || 'none',
+            inhalantsRisk: measurementAssist.inhalants_measurement || 'none',
+            sedativeRisk: measurementAssist.sedatives_measurement || 'none',
+            hallucinogensRisk: measurementAssist.hallucinogens_measurement || 'none',
+            opioidsRisk: measurementAssist.opioids_measurement || 'none',
+            othersRisk: measurementAssist.other_measurement || 'none',
+            nonMedicalInjectionUse: measurementAssist.injection_measurement || 'none',
+            flags: measurement.overall_flag || 'none',
+          };
+        });
+        users.value = mappedUsers;
+        console.log("Mapped users:", mappedUsers); // Log the mapped users
+      } else {
+        console.error("Invalid response data format");
+      }
     } else {
-      console.error("Invalid response data format");
+      console.error("No data found in session storage");
     }
   } catch (error) {
     console.error(error);
@@ -312,6 +327,11 @@ onMounted(async () => {
     loadingPatients.value = false;
   }
 });
+
+
+
+
+
 
 const getSeverity = (severity) => {
   let colorCode;
