@@ -1,7 +1,8 @@
 <template>
   <h3 class="text-center fw-bold my-4 hwss-primary">Current Status in Bhutan</h3>
   <div class="row d-flex justify-content-center">
-    <div v-for="(status, index) in statuses" :key="index" class="card col-3 bg-light mx-auto h-100" style="border-radius: 15px;">
+    <div v-for="(status, index) in statuses" :key="index" class="card col-3 bg-light mx-auto h-100"
+      style="border-radius: 15px;">
       <h4 class="card-title text-center fw-bold mt-3">{{ status.title }}</h4>
       <div class="card-body text-center d-flex align-items-center justify-content-center">
         <span class="material-symbols-outlined hwss-primary display-3">{{ status.iconClass }}</span>
@@ -23,13 +24,13 @@ const statuses = ref([
 // Method to format numbers with K, M, B
 const formatNumber = (num) => {
   if (num >= 1000000000) {
-    return (num / 1000000000).toFixed(2) + 'B'
+    return (num / 1000000000).toFixed(2) + 'B';
   }
   if (num >= 1000000) {
-    return (num / 1000000).toFixed(2) + 'M'
+    return (num / 1000000).toFixed(2) + 'M';
   }
   if (num >= 1000) {
-    return (num / 1000).toFixed(2) + 'K'
+    return (num / 1000).toFixed(2) + 'K';
   }
   return num;
 };
@@ -41,13 +42,13 @@ const countCaseStatuses = (data) => {
   let closedCount = 0;
 
   data.forEach(entry => {
-    const caseStatus = entry.caseStatus;
+    const caseStatus = entry.service_and_treatment?.case_status; // Accessing case_status from service_and_treatment
 
-    if (caseStatus === 'ongoing') {
+    if (caseStatus === 'Case Open') { // Adjusted status values according to the JSON structure
       ongoingCount++;
-    } else if (caseStatus === 'discontinued') {
+    } else if (caseStatus === 'Case Discontinued') {
       discontinuedCount++;
-    } else if (caseStatus === 'closed') {
+    } else if (caseStatus === 'Case Closed') {
       closedCount++;
     }
   });
@@ -56,10 +57,25 @@ const countCaseStatuses = (data) => {
 };
 
 // Retrieve and parse report data from session storage
-const reportData = JSON.parse(sessionStorage.getItem('reportData'));
+const getReportData = () => {
+  try {
+    const storedData = sessionStorage.getItem('reportData');
+    if (storedData) {
+      return JSON.parse(storedData).reporting_model_data; // Accessing reporting_model_data from the parsed JSON
+    } else {
+      console.warn('No report data found in session storage');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error parsing report data from session storage:', error);
+    return [];
+  }
+};
 
 // On component mount, count the case statuses
 onMounted(() => {
+  const reportData = getReportData();
+
   const { ongoingCount, discontinuedCount, closedCount } = countCaseStatuses(reportData);
 
   statuses.value[0].count = ongoingCount;

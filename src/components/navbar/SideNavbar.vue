@@ -184,7 +184,7 @@ const logout = async () => {
 						showConfirmButton: false,
 						timer: 1200
 					}).then(() => {
-							router.push("/login");
+						router.push("/login");
 					})
 
 

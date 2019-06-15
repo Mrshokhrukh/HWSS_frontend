@@ -1,33 +1,47 @@
 <template>
     <div class="card w-100">
         <div class="card-header">
-            <h4 class="text-center">Total screened for the year: {{ getPreviousYear() }}</h4>
+            <h4 class="text-center text-capitalize">Total screened for the year: {{ getPreviousYear() }}</h4>
         </div>
         <div class="card-body">
-            <template v-if="!isDataEmpty()">
-                <pie-chart :donut="true" :data="chartData" :colors="chartColors" legend="bottom" loading="Loading..." />
+            <template v-if="dataLoaded">
+                <template v-if="!isDataEmpty()">
+                    <!-- Pass colors array directly to the chart component -->
+                    <Chart type="doughnut" :data="chartData" :options="chartOptions" class="w-75 mx-auto" />
+                    <div class="mt-4 text-center">
+                        <div class="hwss-primary text-capitalize font-italic"> {{ agencyName }}</div>
+                    </div>
+                </template>
+                <template v-else>
+                    <div class="pseudo-chart">
+                        <p>Loading Data...</p>
+                    </div>
+                </template>
             </template>
             <template v-else>
-                <pie-chart :donut="true" :data="chartPseudoData" :colors="chartPseudoColors" legend="bottom"
-                    loading="Loading..." />
+                <div class="pseudo-chart">
+                    <p>Loading Data...</p>
+                </div>
             </template>
         </div>
         <div class="card-footer">
+            <!-- Use correct data access syntax -->
             <span class="legend-item">
-                <span class="legend-color" style="background-color: #2c6975;"></span> Male ({{ chartData.Male }})
+                <span class="legend-color" :style="{ 'background-color': chartColors[0] }"></span> Male ({{
+                    chartData.Male }})
             </span>
             <span class="legend-item">
-                <span class="legend-color" style="background-color: #64ac99;"></span> Female ({{ chartData.Female }})
+                <span class="legend-color" :style="{ 'background-color': chartColors[1] }"></span> Female ({{
+                    chartData.Female
+                }})
             </span>
             <span><strong>Total: {{ getTotalCount }}</strong></span>
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
 
 const chartPseudoData = ref({
     'Male': 1,
@@ -56,48 +70,58 @@ const isDataEmpty = () => {
     return chartData.value.Male === 0 && chartData.value.Female === 0;
 };
 
-onMounted(async () => {
-    try {
-        const response = await axios.get(endpoints.getSubmissionData);
-        if (response && response.data) {
-            const previousYear = () => {
-                const currentYear = new Date().getFullYear();
-                return currentYear - 1;
-            };
+const agencyName = ref('');
+const dataLoaded = ref(false);
 
-            // Filter user submissions for the current year
-            const userSubmissions = response.data.user_submissions.filter(submission => {
-                return new Date(submission.created_at).getFullYear() === previousYear;
-            });
+onMounted(() => {
+    const fetchData = async () => {
+        try {
+            const storedReportData = sessionStorage.getItem('reportData');
+            const storedUserDetails = localStorage.getItem('userDetailsStore');
 
-            let maleCount = 0;
-            let femaleCount = 0;
+            if (storedReportData && storedUserDetails) {
+                const reportData = JSON.parse(storedReportData);
+                const userDetails = JSON.parse(storedUserDetails);
+                agencyName.value = userDetails.agency.agencyName;
 
-            // Loop through filtered user submissions to count male and female
-            userSubmissions.forEach(submission => {
-                const userId = submission.user;
-                const userDetails = response.data.user_details.find(user => user.id === userId);
-                if (userDetails && userDetails.gender === 'Male') {
-                    maleCount++;
-                } else if (userDetails && userDetails.gender === 'Female') {
-                    femaleCount++;
-                }
-            });
+                const previousYear = getPreviousYear();
 
-            // Update chartData with the counts
-            chartData.value = {
-                'Male': maleCount,
-                'Female': femaleCount
-            };
+                // Filter user submissions for the previous year
+                const userSubmissions = reportData.filter(submission => {
+                    return new Date(submission.original_submission_date).getFullYear() === previousYear;
+                });
+
+                let maleCount = 0;
+                let femaleCount = 0;
+
+                // Loop through filtered user submissions to count male and female
+                userSubmissions.forEach(submission => {
+                    const gender = submission.user.fields.gender;
+                    if (gender === 'Male') {
+                        maleCount++;
+                    } else if (gender === 'Female') {
+                        femaleCount++;
+                    }
+                });
+
+                // Update chartData with the counts
+                chartData.value = {
+                    'Male': maleCount,
+                    'Female': femaleCount
+                };
+
+                dataLoaded.value = true;
+            }
+        } catch (error) {
+            console.error('Error fetching report data:', error);
         }
-    } catch (error) {
-        console.error('Error fetching details:', error);
-    }
+    };
+
+    fetchData();
 });
 
-
 </script>
-  
+
 <style scoped>
 .container {
     display: flex;
@@ -145,4 +169,3 @@ onMounted(async () => {
     border: 1px solid #ddd;
 }
 </style>
-  

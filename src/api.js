@@ -14,7 +14,7 @@ function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
 
 // Define base URLs
 const baseUrl = getBaseUrl();
-const baseScreeningUrl = getBaseUrl() === `${protocol}//localhost:8000` ? `${protocol}//localhost:8080` : `${protocol}//qbs.thepemasystem.gov.bt`;
+const baseScreeningUrl = getBaseUrl() === `${protocol}//localhost:8000` ? `${protocol}//localhost:8686` : `${protocol}//qbs.thepemasystem.gov.bt`;
 
 // Define middle params
 const accessMiddleParams = 'access';

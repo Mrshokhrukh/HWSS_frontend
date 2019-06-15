@@ -1,11 +1,12 @@
 <template>
   <div class="card l">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
-    sortField="substanceRisk" :sortOrder="1"
-               :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
+    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
+      filterDisplay="row" :loading="loading" sortField="substanceRisk" :sortOrder="1"
+      :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined @click="clearFilter()" />
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
+            @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
             <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
@@ -15,34 +16,39 @@
       <template #empty> No data found. </template>
       <template #loading> Loading data. Please wait. </template>
 
-        <!-- Additional Headers -->
-        <Column header="rescreening_count" field="rescreening_count" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <!-- Additional Headers -->
+      <Column header="rescreening_count" field="rescreening_count" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.rescreening_count }}
         </template>
       </Column>
-      <Column header="counseling" field="counseling" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="counseling" field="counseling" :showFilterMenu="false" style="min-width: 10rem" :sortable="true"
+        class="text-center">
         <template #body="{ data }">
           {{ data.counseling }}
         </template>
       </Column>
-      <Column header="Assessment status" field="assessment_status" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="Assessment status" field="assessment_status" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.assessment_status }}
         </template>
       </Column>
-      <Column header="follow_up status" field="follow_up" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="follow_up status" field="follow_up" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.follow_up }}
         </template>
       </Column>
-      <Column header="referral status" field="referral_status" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="referral status" field="referral_status" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.referral_status }}
         </template>
       </Column>
-     
-        <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+
+      <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
           {{ data.date }}
         </template>
@@ -52,7 +58,8 @@
           {{ data.sex }}
         </template>
       </Column>
-      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true">
         <template #body="{ data }">
           {{ data.present_dzongkhag }}
         </template>
@@ -67,11 +74,12 @@
           {{ data.user_class }}
         </template>
       </Column>
-      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem"
+        :sortable="true">
         <template #body="{ data }">
           {{ data.employmentHistory }}
         </template>
-      </Column> 
+      </Column>
 
     </DataTable>
   </div>
@@ -84,8 +92,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import axios from 'axios';
-import endpoints from '@/api';
 // import Badge from 'primevue/badge';
 
 const filters = ref({
@@ -101,41 +107,61 @@ const filters = ref({
 
 // const loading = ref(true);
 
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+console.log("this is spartan", reportData)
+
+
+// Computed property to filter and map reportData for DataTable
 const filteredData = computed(() => {
-  let filtered = reportData.value;
-  // Apply filters based on the selected values
-  for (const key in filters.value) {
-    if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter(item => filters.value[key].value.includes(item[key]));
-    }
+  // Check if reportData has been fetched and contains data
+  if (!reportData.value || !reportData.value.length) {
+    console.log('reportData is empty or undefined');
+    return [];
   }
-  return filtered;
+
+  // Map reportData to include only the required fields
+  const transformedData = reportData.value.map(item => {
+
+    // Extract nested data
+    const user = item.user?.fields || {};
+    const serviceAndTreatment = item.service_and_treatment || {};
+    const measurementAssist = item.measurement_assist?.fields || {};
+
+    // Create a new object with the included fields
+    const transformedItem = {
+      rescreening_count: serviceAndTreatment?.rescreening_data?.rescreening_count || 'NA',
+      counseling: serviceAndTreatment?.counseling || 'NA',
+      assessment_status: serviceAndTreatment?.assessment_status || 'NA',
+      follow_up: serviceAndTreatment?.follow_up || 'NA',
+      referral_status: item.referral_status || 'NA',
+      date: serviceAndTreatment?.date || 'NA',
+      sex: user.gender || 'NA',
+      present_dzongkhag: user.perm_add_dzongkhag || 'NA',
+      age: calculateAge(user.date_of_birth) || 'NA',
+      user_class: item.user_agency?.fields?.user_class || 'NA',
+      employmentHistory: user.employmentHistory || 'NA',
+    };
+
+
+    return transformedItem;
+  });
+  return transformedData;
 });
 
-const reportData = ref([]);
 
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.generateReport);
-    if (response.data && Array.isArray(response.data)) {
-      reportData.value = response.data;
-      // filteredData.value = response.data;
-    } else {
-      handleFetchError();
-    }
-  } catch (error) {
-    handleFetchError();
+// Function to calculate age based on date of birth
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
-};
-
-const handleFetchError = () => {
-  reportData.value = [];
-  // Handle error
-};
-
-onMounted(() => {
-  fetchReportData();
-});
+  return age;
+}
+console.log("filter", filteredData)
 
 
 
@@ -146,6 +172,4 @@ const clearFilter = () => {
   }
 };
 </script>
-<style scope>
-
-</style>
+<style scope></style>

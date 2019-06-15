@@ -7,7 +7,7 @@
             </div>
 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-                <MentalhealthReport />
+                <MentalhealthReport :reportData="reportItems" />
             </div>
 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import MentalhealthApproval from "@/components/dashboards/Adminpages/Approval/MentalhealthApproval.vue"
 import MentalhealthReport from "@/components/dashboards/Adminpages/report/MentalhealthReport.vue"
 import MentalhealthHelp from "@/components/dashboards/Adminpages/MentalhealthHelp/MentalhealthHelp.vue"
@@ -154,38 +154,41 @@ const websiteName = "The PEMA HWSS";
 
 const fetchReportData = async () => {
     try {
-        console.log('function is triggered from admin dashboard 😊')
+        console.log('Function is triggered from admin dashboard 😊');
         const storedData = sessionStorage.getItem('reportData');
         const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
         const currentTime = new Date().getTime();
+
         if (storedData && storedTimestamp) {
             const dataAge = currentTime - parseInt(storedTimestamp);
             const maxDataAge = 600000;
 
             if (dataAge < maxDataAge) {
                 reportData.value = JSON.parse(storedData);
+                console.log('Using stored data:', reportData.value);
                 return;
             }
         }
 
         const reportResponse = await axios.get(endpoints.getReport);
-        console.log(reportResponse.data)
+        console.log('Fetched data:', reportResponse.data);
         if (reportResponse.data) {
-            let reportItems = reportResponse.data;
-
-            if (reportItems.length > 0) {
-                // Set the found items to reportData
+            const reportItems = reportResponse.data.reporting_model_data; // Ensure this matches your actual API response structure
+            if (reportItems && reportItems.length > 0) {
                 reportData.value = reportItems;
                 sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
                 sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
+                console.log('Stored data in session storage:', reportData.value);
             }
         }
     } catch (error) {
-        console.error(error);
+        console.error(error); 
     }
 };
 
-fetchReportData();
+onMounted(() => {
+    fetchReportData();
+});
 
 </script>
 

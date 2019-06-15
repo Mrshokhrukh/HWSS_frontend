@@ -1,11 +1,12 @@
 <template>
   <div class="card l">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
-    sortField="substanceRisk" :sortOrder="1"
-               :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
+    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
+      filterDisplay="row" :loading="loading" sortField="substanceRisk" :sortOrder="1"
+      :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined @click="clearFilter()" />
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
+            @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
             <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
@@ -15,34 +16,39 @@
       <template #empty> No data found. </template>
       <template #loading> Loading data. Please wait. </template>
 
-        <!-- Additional Headers -->
-        <Column header="rescreening_count" field="rescreening_count" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <!-- Additional Headers -->
+      <Column header="rescreening_count" field="rescreening_count" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
-          {{ data.rescreening_count }}
+          {{ data.agency_name }}
         </template>
       </Column>
-      <Column header="counseling" field="counseling" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="counseling" field="counseling" :showFilterMenu="false" style="min-width: 10rem" :sortable="true"
+        class="text-center">
         <template #body="{ data }">
           {{ data.counseling }}
         </template>
       </Column>
-      <Column header="Assessment status" field="assessment_status" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="Assessment status" field="assessment_status" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.assessment_status }}
         </template>
       </Column>
-      <Column header="follow_up status" field="follow_up" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="follow_up status" field="follow_up" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.follow_up }}
         </template>
       </Column>
-      <Column header="referral status" field="referral_status" :showFilterMenu="false" style="min-width: 10rem" :sortable="true" class="text-center">
+      <Column header="referral status" field="referral_status" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true" class="text-center">
         <template #body="{ data }">
           {{ data.referral_status }}
         </template>
       </Column>
-     
-        <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+
+      <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
           {{ data.date }}
         </template>
@@ -52,7 +58,8 @@
           {{ data.sex }}
         </template>
       </Column>
-      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true">
         <template #body="{ data }">
           {{ data.present_dzongkhag }}
         </template>
@@ -67,11 +74,12 @@
           {{ data.user_class }}
         </template>
       </Column>
-      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem"
+        :sortable="true">
         <template #body="{ data }">
           {{ data.employmentHistory }}
         </template>
-      </Column> 
+      </Column>
 
     </DataTable>
   </div>
@@ -80,13 +88,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import axios from 'axios';
-import endpoints from '@/api';
-// import Badge from 'primevue/badge';
+
 
 const filters = ref({
   global: { value: [], matchMode: FilterMatchMode.CONTAINS },
@@ -99,7 +101,41 @@ const filters = ref({
   employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
 });
 
-// const loading = ref(true);
+const reportData = ref([]);
+
+// Fetch data from sessionStorage
+const fetchReportData = async () => {
+  try {
+    const data = sessionStorage.getItem('reportData');
+    if (data) {
+      console.log('Raw data from sessionStorage:', data);  // Log raw data
+      const parsedData = JSON.parse(data);
+      console.log('Parsed data:', parsedData);  // Log parsed data
+      if (Array.isArray(parsedData)) {
+        reportData.value = parsedData;
+        console.log('Data successfully fetched and assigned to reportData:', reportData.value);
+      } else {
+        handleFetchError();
+      }
+    } else {
+      handleFetchError();
+    }
+  } catch (error) {
+    handleFetchError();
+  }
+};
+
+const handleFetchError = () => {
+  reportData.value = [];
+  console.error('Failed to fetch or parse report data');
+};
+
+// Function to clear filters
+const clearFilter = () => {
+  for (const key in filters.value) {
+    filters.value[key].value = [];
+  }
+};
 
 const filteredData = computed(() => {
   let filtered = reportData.value;
@@ -111,41 +147,12 @@ const filteredData = computed(() => {
   }
   return filtered;
 });
-
-const reportData = ref([]);
-
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.generateReport);
-    if (response.data && Array.isArray(response.data)) {
-      reportData.value = response.data;
-      // filteredData.value = response.data;
-    } else {
-      handleFetchError();
-    }
-  } catch (error) {
-    handleFetchError();
-  }
-};
-
-const handleFetchError = () => {
-  reportData.value = [];
-  // Handle error
-};
-
+console.log("filter man", filteredData)
+// Fetch data on component mount
 onMounted(() => {
   fetchReportData();
 });
 
-
-
-// Function to clear filters
-const clearFilter = () => {
-  for (const key in filters.value) {
-    filters.value[key].value = [];
-  }
-};
 </script>
-<style scope>
 
-</style>
+<style scope></style>

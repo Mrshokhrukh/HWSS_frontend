@@ -17,11 +17,13 @@
 
     <!-- General Report Table -->
     <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
-      <DataTable :value="filteredPatients" :paginator="true" :rows="10" :resizableColumns="true" sortField="suicidal_measurement" :sortOrder="-1" >
-        <Column  v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true" 
+      <DataTable :value="filteredPatients" :paginator="true" :rows="10" :resizableColumns="true"
+        sortField="suicidal_measurement" :sortOrder="-1">
+        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
           :style="field.width ? { width: field.width } : {}">
           <template #body="{ data }">
-            <Tag class="w-100" v-if="field.taggable" :value="data[field.key]" :severity="severityClass(data[field.key])" />
+            <Tag class="w-100" v-if="field.taggable" :value="data[field.key]"
+              :severity="severityClass(data[field.key])" />
             <span v-else>{{ data[field.key] }}</span>
           </template>
         </Column>
@@ -60,7 +62,7 @@ const globalFilterFields = [
   'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'
 ];
 const tableFields = [
-  { key: 'date', header: 'Date'  },
+  { key: 'date', header: 'Date' },
   { key: 'username', header: 'Name' },
   { key: 'age', header: 'Age' },
   { key: 'sex', header: 'Sex' },
@@ -129,6 +131,21 @@ const fetchReportData = async () => {
     handleFetchError();
   }
 };
+// Fetch report data from session storage
+// const fetchReportData = () => {
+//   try {
+//     const storedReportData = sessionStorage.getItem('reportData');
+//     if (storedReportData) {
+//       reportData.value = JSON.parse(storedReportData);
+//       filteredData.value = JSON.parse(storedReportData);
+//     } else {
+//       handleFetchError();
+//     }
+//   } catch (error) {
+//     handleFetchError();
+//   }
+// };
+
 
 // Handle fetch error
 const handleFetchError = () => {
@@ -276,7 +293,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.danger{
+.danger {
   background-color: #e6142d40;
   color: #e6142d40;
 }
