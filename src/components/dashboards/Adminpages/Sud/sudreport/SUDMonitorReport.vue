@@ -108,7 +108,6 @@ const filters = ref({
 // const loading = ref(true);
 
 const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
-console.log("this is spartan", reportData)
 
 
 // Computed property to filter and map reportData for DataTable
