@@ -13,13 +13,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
-const statuses = ref([
-  { title: 'Total Case Ongoing', iconClass: 'description', count: 0 },
-  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: 0 },
-  { title: 'Total Case Closed', iconClass: 'fact_check', count: 0 }
-]);
 
 // Method to format numbers with K, M, B
 const formatNumber = (num) => {
@@ -35,51 +30,21 @@ const formatNumber = (num) => {
   return num;
 };
 
-// Function to count case statuses using caseStatus
-const countCaseStatuses = (data) => {
-  let ongoingCount = 0;
-  let discontinuedCount = 0;
-  let closedCount = 0;
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
-  data.forEach(entry => {
-    const caseStatus = entry.service_and_treatment?.case_status; // Accessing case_status from service_and_treatment
+// Filter reportData based on case_status
+const Ongoing_Case = reportData.value.filter(item => item.service_and_treatment?.case_status === "On Going");
+const total_Ongoing_Case = Ongoing_Case.length;
 
-    if (caseStatus === 'Case Open') { // Adjusted status values according to the JSON structure
-      ongoingCount++;
-    } else if (caseStatus === 'Case Discontinued') {
-      discontinuedCount++;
-    } else if (caseStatus === 'Case Closed') {
-      closedCount++;
-    }
-  });
+const Closed_Case = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Closed");
+const total_Closed_Case = Closed_Case.length;
 
-  return { ongoingCount, discontinuedCount, closedCount };
-};
+const Discontinue_Case = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Discontinue");
+const total_Discontinue_Case = Discontinue_Case.length;
 
-// Retrieve and parse report data from session storage
-const getReportData = () => {
-  try {
-    const storedData = sessionStorage.getItem('reportData');
-    if (storedData) {
-      return JSON.parse(storedData).reporting_model_data; // Accessing reporting_model_data from the parsed JSON
-    } else {
-      console.warn('No report data found in session storage');
-      return [];
-    }
-  } catch (error) {
-    console.error('Error parsing report data from session storage:', error);
-    return [];
-  }
-};
-
-// On component mount, count the case statuses
-onMounted(() => {
-  const reportData = getReportData();
-
-  const { ongoingCount, discontinuedCount, closedCount } = countCaseStatuses(reportData);
-
-  statuses.value[0].count = ongoingCount;
-  statuses.value[1].count = discontinuedCount;
-  statuses.value[2].count = closedCount;
-});
+const statuses = ref([
+  { title: 'Total Case Ongoing', iconClass: 'description', count: total_Ongoing_Case },
+  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: total_Discontinue_Case },
+  { title: 'Total Case Closed', iconClass: 'fact_check', count: total_Closed_Case }
+]);
 </script>
