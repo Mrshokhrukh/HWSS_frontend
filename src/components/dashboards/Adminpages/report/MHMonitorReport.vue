@@ -20,7 +20,7 @@
       <Column header="rescreening_count" field="rescreening_count" :showFilterMenu="false" style="min-width: 10rem"
         :sortable="true" class="text-center">
         <template #body="{ data }">
-          {{ data.agency_name }}
+          {{ data.rescreening_count }}
         </template>
       </Column>
       <Column header="counseling" field="counseling" :showFilterMenu="false" style="min-width: 10rem" :sortable="true"
@@ -101,34 +101,9 @@ const filters = ref({
   employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
 });
 
-const reportData = ref([]);
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
-// Fetch data from sessionStorage
-const fetchReportData = async () => {
-  try {
-    const data = sessionStorage.getItem('reportData');
-    if (data) {
-      console.log('Raw data from sessionStorage:', data);  // Log raw data
-      const parsedData = JSON.parse(data);
-      console.log('Parsed data:', parsedData);  // Log parsed data
-      if (Array.isArray(parsedData)) {
-        reportData.value = parsedData;
-        console.log('Data successfully fetched and assigned to reportData:', reportData.value);
-      } else {
-        handleFetchError();
-      }
-    } else {
-      handleFetchError();
-    }
-  } catch (error) {
-    handleFetchError();
-  }
-};
 
-const handleFetchError = () => {
-  reportData.value = [];
-  console.error('Failed to fetch or parse report data');
-};
 
 // Function to clear filters
 const clearFilter = () => {
@@ -137,21 +112,54 @@ const clearFilter = () => {
   }
 };
 
+// Computed property to filter and map reportData for DataTable
 const filteredData = computed(() => {
-  let filtered = reportData.value;
-  // Apply filters based on the selected values
-  for (const key in filters.value) {
-    if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter(item => filters.value[key].value.includes(item[key]));
-    }
+  // Check if reportData has been fetched and contains data
+  if (!reportData.value || !reportData.value.length) {
+    console.log('reportData is empty or undefined');
+    return [];
   }
-  return filtered;
+
+  // Map reportData to include only the required fields
+  const transformedData = reportData.value.map(item => {
+
+    // Extract nested data
+    const user = item.user?.fields || {};
+    const serviceAndTreatment = item.service_and_treatment || {};
+    const measurementAssist = item.measurement_assist?.fields || {};
+
+    // Create a new object with the included fields
+    const transformedItem = {
+      rescreening_count: serviceAndTreatment?.rescreening_data?.rescreening_count || 'NA',
+      counseling: serviceAndTreatment?.counseling || 'NA',
+      assessment_status: serviceAndTreatment?.assessment_status || 'NA',
+      follow_up: serviceAndTreatment?.follow_up || 'NA',
+      referral_status: item.referral_status || 'NA',
+      date: serviceAndTreatment?.date || 'NA',
+      sex: user.gender || 'NA',
+      present_dzongkhag: user.perm_add_dzongkhag || 'NA',
+      age: calculateAge(user.date_of_birth) || 'NA',
+      user_class: item.user_agency?.fields?.user_class || 'NA',
+      employmentHistory: user.employmentHistory || 'NA',
+    };
+
+
+    return transformedItem;
+  });
+  return transformedData;
 });
-console.log("filter man", filteredData)
-// Fetch data on component mount
-onMounted(() => {
-  fetchReportData();
-});
+
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
 
 </script>
 

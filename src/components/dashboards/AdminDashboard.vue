@@ -152,12 +152,25 @@ const currentYear = new Date().getFullYear();
 // Dynamically populate website name
 const websiteName = "The PEMA HWSS";
 
+const userDetailsInLocal = () => {
+  const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+  if (userDetails) {
+    const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
+    const roleName = userDetails.user ? userDetails.user.role : null;
+    console.log('agency name and role', agencyName, roleName);
+    return { agencyName, roleName };
+  }
+  return { agencyName: null, roleName: null };
+}
+
 const fetchReportData = async () => {
     try {
         console.log('Function is triggered from admin dashboard 😊');
         const storedData = sessionStorage.getItem('reportData');
         const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
         const currentTime = new Date().getTime();
+
+        const { agencyName: userAgencyName, roleName: userRole } = userDetailsInLocal();
 
         if (storedData && storedTimestamp) {
             const dataAge = currentTime - parseInt(storedTimestamp);
@@ -173,7 +186,16 @@ const fetchReportData = async () => {
         const reportResponse = await axios.get(endpoints.getReport);
         console.log('Fetched data:', reportResponse.data);
         if (reportResponse.data) {
-            const reportItems = reportResponse.data.reporting_model_data; // Ensure this matches your actual API response structure
+            let reportItems = reportResponse.data.reporting_model_data; 
+
+            // Apply filtering only if userRole is 'aaa_admin'
+            if (userRole === 'aaa_admin') {
+                reportItems = reportItems.filter(item => {
+                    const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+                    return itemAgencyName === userAgencyName.toLowerCase();
+                });
+            }
+
             if (reportItems && reportItems.length > 0) {
                 reportData.value = reportItems;
                 sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
@@ -182,9 +204,10 @@ const fetchReportData = async () => {
             }
         }
     } catch (error) {
-        console.error(error); 
+        console.error(error);
     }
 };
+
 
 onMounted(() => {
     fetchReportData();

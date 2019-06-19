@@ -13,48 +13,45 @@
         </div>
       </div>
     </template>
-    <template #empty>No data found.</template>
-    <template #loading>Loading data. Please wait.</template>
+    <template #empty> No data found. </template>
+    <template #loading> Loading data. Please wait. </template>
 
     <!-- Additional Headers -->
 
-    <Column header="Date" field="service_and_treatment.date" :showFilterMenu="false" style="min-width: 10rem"
+    <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+      <template #body="{ data }">
+        {{ data.date }}
+      </template>
+    </Column>
+    <Column header="Gender" field="sex" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+      <template #body="{ data }">
+        {{ data.gender }}
+      </template>
+    </Column>
+    <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
       :sortable="true">
       <template #body="{ data }">
-        {{ data.service_and_treatment.date }}
+        {{ data.dzongkha }}
       </template>
     </Column>
-    <Column header="Gender" field="user.fields.gender" :showFilterMenu="false" style="min-width: 10rem"
-      :sortable="true">
+    <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
       <template #body="{ data }">
-        {{ data.user.fields.gender }}
+        {{ data.age }}
       </template>
     </Column>
-    <Column header="Dzongkha" field="user.fields.present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
-      :sortable="true">
+    <Column header="Class" field="user_class" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
       <template #body="{ data }">
-        {{ data.user.fields.present_dzongkhag }}
+        {{ data.user_class }}
       </template>
     </Column>
-    <Column header="Age" field="user.fields.age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
+    <Column header="case_status" field="case_status" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
       <template #body="{ data }">
-        {{ data.user.fields.age }}
-      </template>
-    </Column>
-    <Column header="Class" field="user.fields.user_class" :showFilterMenu="false" style="min-width: 9rem"
-      :sortable="true">
-      <template #body="{ data }">
-        {{ data.user.fields.user_class }}
-      </template>
-    </Column>
-    <Column header="Case Status" field="service_and_treatment.case_status" :showFilterMenu="false"
-      style="min-width: 14rem" :sortable="true">
-      <template #body="{ data }">
-        {{ data.service_and_treatment.case_status }}
+        {{ data.case_status }}
       </template>
     </Column>
 
   </DataTable>
+
 </template>
 
 <script setup>
@@ -64,62 +61,58 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import axios from 'axios';
-import endpoints from '@/api';
+// import Badge from 'primevue/badge';
 
 const filters = ref({
-  global: { value: '', matchMode: FilterMatchMode.CONTAINS },
-  year: { value: [], matchMode: FilterMatchMode.IN },
+  global: { value: [], matchMode: FilterMatchMode.CONTAINS },
+  date: { value: '', matchMode: FilterMatchMode.CONTAINS },
   gender: { value: [], matchMode: FilterMatchMode.IN },
   dzongkha: { value: [], matchMode: FilterMatchMode.IN },
-  location: { value: [], matchMode: FilterMatchMode.IN },
+  case_status: { value: [], matchMode: FilterMatchMode.IN },
   age: { value: [], matchMode: FilterMatchMode.IN },
   class: { value: [], matchMode: FilterMatchMode.IN },
-  employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
 });
 
-const loading = ref(true);
-
-const reportData = ref([]);
+// const loading = ref(true);
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
 const filteredData = computed(() => {
-  let filtered = reportData.value;
-  for (const key in filters.value) {
-    if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter(item => {
-        const filterValue = filters.value[key].value.toString().toLowerCase();
-        const itemValue = key.includes('.') ? key.split('.').reduce((o, i) => o[i], item) : item[key];
-        return itemValue?.toString().toLowerCase().includes(filterValue);
-      });
-    }
+  // Check if reportData has been fetched and contains data
+  if (!reportData.value || !reportData.value.length) {
+    console.log('reportData is empty or undefined');
+    return [];
   }
-  return filtered;
+
+  // Filter reportData based on case_status
+  const filteredData = reportData.value.filter(item => item.service_and_treatment?.case_status === "On Going");
+
+  // Map filtered data to extract required fields
+  const transformedData = filteredData.map(item => ({
+    date: item.service_and_treatment?.date || 'NA',
+    gender: item.user?.fields?.gender || 'NA',
+    dzongkha: item.user?.fields?.ps_add_dzongkhag || 'NA',
+    age: calculateAge(item.user?.fields?.date_of_birth) || 'NA',
+    user_class: item.user_agency?.fields?.user_class || 'NA',
+    case_status: item.service_and_treatment?.case_status || 'NA',
+  }));
+
+  return transformedData;
 });
 
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.reportData);
-    if (response.data && Array.isArray(response.data)) {
-      console.log('Fetched data:', response.data);
-      reportData.value = response.data.filter(item => item.service_and_treatment.case_status === 'On Going');
-    } else {
-      handleFetchError();
-    }
-  } catch (error) {
-    handleFetchError();
-  } finally {
-    loading.value = false;
+// Function to calculate age based on date of birth
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
-};
+  return age;
+}
 
-const handleFetchError = () => {
-  reportData.value = [];
-  // Handle error
-};
-
-onMounted(() => {
-  fetchReportData();
-});
+console.log("trans", filteredData)
 
 // Function to clear filters
 const clearFilter = () => {
@@ -128,5 +121,4 @@ const clearFilter = () => {
   }
 };
 </script>
-
-<style scoped></style>
+<style scope></style>

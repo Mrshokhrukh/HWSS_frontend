@@ -148,8 +148,6 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import axios from 'axios';
-import endpoints from '@/api';
 // import Badge from 'primevue/badge';
 
 const filters = ref({
@@ -174,6 +172,22 @@ const filteredData = computed(() => {
     console.log('reportData is empty or undefined');
     return [];
   }
+
+  // Function to set measurement values
+  const setMeasurements = (type, item) => {
+    switch (type) {
+      case 'measurement_assist':
+        return item.measurement_assist?.fields || {};
+      case 'rescreening_data':
+        return item.service_and_treatment?.rescreening_data || {};
+      case 'case_based_submissions':
+        return item.case_based_submissions || {};
+      case 'event_based_submissions':
+        return item.event_based_submissions || {};
+      default:
+        return {};
+    }
+  };
 
   // Map reportData to extract required fields
   const transformedData = reportData.value.map(item => {
@@ -208,63 +222,33 @@ const filteredData = computed(() => {
       user_class = item.user_agency.fields.user_class || 'NA';
     }
 
-    // Check for measurement_assist data
+    // Determine the type of submission and set measurements
+    let measurements = {};
     if (item.measurement_assist?.fields) {
-      // Format date from ISO 8601 to YYYY-MM-DD
-      if (item.measurement_assist.fields.created_at) {
-        const isoDate = new Date(item.measurement_assist.fields.created_at);
-        date = isoDate.toISOString().split('T')[0];
-      }
-      alcoholic_measurement = item.measurement_assist.fields.alcoholic_measurement || 'NA';
-      tobacco_measurement = item.measurement_assist.fields.tobacco_measurement || 'NA';
-      cannabis_measurement = item.measurement_assist.fields.cannabis_measurement || 'NA';
-      amphetamine_measurement = item.measurement_assist.fields.amphetamine_measurement || 'NA';
-      inhalants_measurement = item.measurement_assist.fields.inhalants_measurement || 'NA';
-      sedatives_measurement = item.measurement_assist.fields.sedatives_measurement || 'NA';
-      hallucinogens_measurement = item.measurement_assist.fields.hallucinogens_measurement || 'NA';
-      opioids_measurement = item.measurement_assist.fields.opioids_measurement || 'NA';
-      injection_measurement = item.measurement_assist.fields.injection_measurement || 'NA';
-      other_measurement = item.measurement_assist.fields.other_measurement || 'NA';
+      measurements = setMeasurements('measurement_assist', item);
+    } else if (item.service_and_treatment?.rescreening_data) {
+      measurements = setMeasurements('rescreening_data', item);
+    } else if (item.case_based_submissions) {
+      measurements = setMeasurements('case_based_submissions', item);
+    } else if (item.event_based_submissions) {
+      measurements = setMeasurements('event_based_submissions', item);
     }
-    // Check for rescreening_data and use if available
-    else if (item.service_and_treatment?.rescreening_data) {
-      alcoholic_measurement = item.service_and_treatment.rescreening_data.alcoholic_measurement || 'NA';
-      tobacco_measurement = item.service_and_treatment.rescreening_data.tobacco_measurement || 'NA';
-      cannabis_measurement = item.service_and_treatment.rescreening_data.cannabis_measurement || 'NA';
-      amphetamine_measurement = item.service_and_treatment.rescreening_data.amphetamine_measurement || 'NA';
-      inhalants_measurement = item.service_and_treatment.rescreening_data.inhalants_measurement || 'NA';
-      sedatives_measurement = item.service_and_treatment.rescreening_data.sedatives_measurement || 'NA';
-      hallucinogens_measurement = item.service_and_treatment.rescreening_data.hallucinogens_measurement || 'NA';
-      opioids_measurement = item.service_and_treatment.rescreening_data.opioids_measurement || 'NA';
-      injection_measurement = item.service_and_treatment.rescreening_data.injection_measurement || 'NA';
-      other_measurement = item.service_and_treatment.rescreening_data.other_measurement || 'NA';
+
+    // Set the measurement values
+    if (measurements.created_at) {
+      const isoDate = new Date(measurements.created_at);
+      date = isoDate.toISOString().split('T')[0];
     }
-    // Check for case_based_submissions and use if available
-    else if (item.case_based_submissions) {
-      alcoholic_measurement = item.case_based_submissions.alcoholic_measurement || 'NA';
-      tobacco_measurement = item.case_based_submissions.tobacco_measurement || 'NA';
-      cannabis_measurement = item.case_based_submissions.cannabis_measurement || 'NA';
-      amphetamine_measurement = item.case_based_submissions.amphetamine_measurement || 'NA';
-      inhalants_measurement = item.case_based_submissions.inhalants_measurement || 'NA';
-      sedatives_measurement = item.case_based_submissions.sedatives_measurement || 'NA';
-      hallucinogens_measurement = item.case_based_submissions.hallucinogens_measurement || 'NA';
-      opioids_measurement = item.case_based_submissions.opioids_measurement || 'NA';
-      injection_measurement = item.case_based_submissions.injection_measurement || 'NA';
-      other_measurement = item.case_based_submissions.other_measurement || 'NA';
-    }
-    // Check for event_based_submissions and use if available
-    else if (item.event_based_submissions) {
-      alcoholic_measurement = item.event_based_submissions.alcoholic_measurement || 'NA';
-      tobacco_measurement = item.event_based_submissions.tobacco_measurement || 'NA';
-      cannabis_measurement = item.event_based_submissions.cannabis_measurement || 'NA';
-      amphetamine_measurement = item.event_based_submissions.amphetamine_measurement || 'NA';
-      inhalants_measurement = item.event_based_submissions.inhalants_measurement || 'NA';
-      sedatives_measurement = item.event_based_submissions.sedatives_measurement || 'NA';
-      hallucinogens_measurement = item.event_based_submissions.hallucinogens_measurement || 'NA';
-      opioids_measurement = item.event_based_submissions.opioids_measurement || 'NA';
-      injection_measurement = item.event_based_submissions.injection_measurement || 'NA';
-      other_measurement = item.event_based_submissions.other_measurement || 'NA';
-    }
+    alcoholic_measurement = measurements.alcoholic_measurement || 'NA';
+    tobacco_measurement = measurements.tobacco_measurement || 'NA';
+    cannabis_measurement = measurements.cannabis_measurement || 'NA';
+    amphetamine_measurement = measurements.amphetamine_measurement || 'NA';
+    inhalants_measurement = measurements.inhalants_measurement || 'NA';
+    sedatives_measurement = measurements.sedatives_measurement || 'NA';
+    hallucinogens_measurement = measurements.hallucinogens_measurement || 'NA';
+    opioids_measurement = measurements.opioids_measurement || 'NA';
+    injection_measurement = measurements.injection_measurement || 'NA';
+    other_measurement = measurements.other_measurement || 'NA';
 
     // Return transformed item
     return {
@@ -289,6 +273,7 @@ const filteredData = computed(() => {
 
   return transformedData;
 });
+
 
 
 // Function to calculate age based on date of birth

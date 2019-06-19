@@ -1,11 +1,12 @@
 <template>
   <div class="card l">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id" filterDisplay="row" :loading="loading"
-    sortField="substanceRisk" :sortOrder="1"
-               :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
+    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
+      filterDisplay="row" :loading="loading" sortField="substanceRisk" :sortOrder="1"
+      :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined @click="clearFilter()" />
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
+            @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
             <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
@@ -15,21 +16,22 @@
       <template #empty> No data found. </template>
       <template #loading> Loading data. Please wait. </template>
 
-        <!-- Additional Headers -->
-     
-        <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+      <!-- Additional Headers -->
+
+      <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
           {{ data.date }}
         </template>
       </Column>
       <Column header="Gender" field="sex" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
         <template #body="{ data }">
-          {{ data.sex }}
+          {{ data.gender }}
         </template>
       </Column>
-      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
+      <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
+        :sortable="true">
         <template #body="{ data }">
-          {{ data.present_dzongkhag }}
+          {{ data.dzongkha }}
         </template>
       </Column>
       <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
@@ -42,43 +44,45 @@
           {{ data.user_class }}
         </template>
       </Column>
-      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem"
+        :sortable="true">
         <template #body="{ data }">
           {{ data.employmentHistory }}
         </template>
-      </Column> 
+      </Column>
 
       <!-- Severity Report -->
       <Column field="gad_measurement" header="Depression Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.gad_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.gad_measurement)"
-              :style="{ color: getSeverity(slotProps.data.gad_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.gad_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.gad_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.gad_measurement)"
+            :style="{ color: getSeverity(slotProps.data.gad_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.gad_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="phq_measurement" header="phq_measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.phq_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.phq_measurement)"
-              :style="{ color: getSeverity(slotProps.data.phq_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.phq_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.phq_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.phq_measurement)"
+            :style="{ color: getSeverity(slotProps.data.phq_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.phq_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="suicidal_measurement" header="suicidal_measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.suicidal_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.suicidal_measurement)"
-              :style="{ color: getSeverity(slotProps.data.suicidal_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.suicidal_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.suicidal_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.suicidal_measurement)"
+            :style="{ color: getSeverity(slotProps.data.suicidal_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.suicidal_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="ace_measurement" header="ace_measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.ace_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.ace_measurement)"
-              :style="{ color: getSeverity(slotProps.data.ace_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.ace_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.ace_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.ace_measurement)"
+            :style="{ color: getSeverity(slotProps.data.ace_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.ace_measurement).bgColor }" />
+        </template>
       </Column>
       <!-- Lifetime Use -->
-      <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
+      <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem"
+        :sortable="true">
         <template #body="{ data }">
           {{ data.lifetimeUse }}
         </template>
@@ -89,80 +93,80 @@
           {{ data.currentUse }}
         </template>
       </Column>
-      
+
       <!-- Substance -->
       <Column field="alcoholic_measurement" header="Alcoholic measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.alcoholic_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.alcoholic_measurement)"
-              :style="{ color: getSeverity(slotProps.data.alcoholic_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.alcoholic_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.alcoholic_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.alcoholic_measurement)"
+            :style="{ color: getSeverity(slotProps.data.alcoholic_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.alcoholic_measurement).bgColor }" />
+        </template>
       </Column>
-        
+
       <Column field="tobacco_measurement" header="Tobacco Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.tobacco_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.tobacco_measurement)"
-              :style="{ color: getSeverity(slotProps.data.tobacco_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.tobacco_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.tobacco_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.tobacco_measurement)"
+            :style="{ color: getSeverity(slotProps.data.tobacco_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.tobacco_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="cannabis_measurement" header="Cannabis Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.cannabis_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.cannabis_measurement)"
-              :style="{ color: getSeverity(slotProps.data.cannabis_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.cannabis_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.cannabis_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.cannabis_measurement)"
+            :style="{ color: getSeverity(slotProps.data.cannabis_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.cannabis_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="amphetamine_measurement" header="Amphetamine Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.amphetamine_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.amphetamine_measurement)"
-              :style="{ color: getSeverity(slotProps.data.amphetamine_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.amphetamine_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.amphetamine_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.amphetamine_measurement)"
+            :style="{ color: getSeverity(slotProps.data.amphetamine_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.amphetamine_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="inhalants_measurement" header="Amphetamine Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.inhalants_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.inhalants_measurement)"
-              :style="{ color: getSeverity(slotProps.data.inhalants_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.inhalants_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.inhalants_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.inhalants_measurement)"
+            :style="{ color: getSeverity(slotProps.data.inhalants_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.inhalants_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="sedatives_measurement" header="Sedatives Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.sedatives_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.sedatives_measurement)"
-              :style="{ color: getSeverity(slotProps.data.sedatives_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.sedatives_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.sedatives_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.sedatives_measurement)"
+            :style="{ color: getSeverity(slotProps.data.sedatives_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.sedatives_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="hallucinogens_measurement" header="Hallucinogens Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.hallucinogens_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.hallucinogens_measurement)"
-              :style="{ color: getSeverity(slotProps.data.hallucinogens_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.hallucinogens_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.hallucinogens_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.hallucinogens_measurement)"
+            :style="{ color: getSeverity(slotProps.data.hallucinogens_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.hallucinogens_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="opioids_measurement" header="Opioids Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.opioids_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.opioids_measurement)"
-              :style="{ color: getSeverity(slotProps.data.opioids_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.opioids_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.opioids_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.opioids_measurement)"
+            :style="{ color: getSeverity(slotProps.data.opioids_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.opioids_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="injection_measurement" header="Injection Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.injection_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.injection_measurement)"
-              :style="{ color: getSeverity(slotProps.data.injection_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.injection_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.injection_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.injection_measurement)"
+            :style="{ color: getSeverity(slotProps.data.injection_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.injection_measurement).bgColor }" />
+        </template>
       </Column>
       <Column field="other_measurement" header="Other Measurement" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.other_measurement" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.other_measurement)"
-              :style="{ color: getSeverity(slotProps.data.other_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.other_measurement).bgColor }" />
-          </template>
+        <template #body="slotProps">
+          <Tag rounded :value="slotProps.data.other_measurement" class="w-100 text-capitalize"
+            :severity="getSeverity(slotProps.data.other_measurement)"
+            :style="{ color: getSeverity(slotProps.data.other_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.other_measurement).bgColor }" />
+        </template>
       </Column>
-        
+
     </DataTable>
   </div>
 </template>
@@ -191,42 +195,145 @@ const filters = ref({
 
 // const loading = ref(true);
 
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+
+// Computed property to filter reportData based on case_status and transform data
 const filteredData = computed(() => {
-  let filtered = reportData.value;
-  // Apply filters based on the selected values
-  for (const key in filters.value) {
-    if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter(item => filters.value[key].value.includes(item[key]));
-    }
+  if (!reportData.value || !reportData.value.length) {
+    console.log('reportData is empty or undefined');
+    return [];
   }
-  return filtered;
+
+  const setMeasurements = (type, item) => {
+    switch (type) {
+      case 'measurement':
+        return item.measurement?.fields || {};
+      case 'measurement_assist':
+        return item.measurement_assist?.fields || {};
+      case 'rescreening_data':
+        return item.service_and_treatment?.rescreening_data || {};
+      case 'case_based_submissions':
+        return item.case_based_submissions || {};
+      case 'event_based_submissions':
+        return item.event_based_submissions || {};
+      default:
+        return {};
+    }
+  };
+
+  const transformedData = reportData.value.map(item => {
+    let date = 'NA';
+    let gender = 'NA';
+    let dzongkha = 'NA';
+    let age = 'NA';
+    let user_class = 'NA';
+    let employmentHistory = 'NA';
+    let phq_measurement = 'NA';
+    let suicidal_measurement = 'NA';
+    let ace_measurement = 'NA';
+    let gad_measurement = 'NA';
+    let lifetimeUse = 'NA';
+    let currentUse = 'NA';
+    let alcoholic_measurement = 'NA';
+    let tobacco_measurement = 'NA';
+    let cannabis_measurement = 'NA';
+    let amphetamine_measurement = 'NA';
+    let inhalants_measurement = 'NA';
+    let sedatives_measurement = 'NA';
+    let hallucinogens_measurement = 'NA';
+    let opioids_measurement = 'NA';
+    let injection_measurement = 'NA';
+    let other_measurement = 'NA';
+
+    if (item.user?.fields) {
+      gender = item.user.fields.gender || 'NA';
+      dzongkha = item.user.fields.perm_add_dzongkhag || 'NA';
+      age = calculateAge(item.user.fields.date_of_birth) || 'NA';
+      employmentHistory = item.user.fields.role || 'NA';
+    }
+
+    if (item.user_agency?.fields) {
+      user_class = item.user_agency.fields.user_class || 'NA';
+    }
+
+    let measurements = {};
+    if (item.measurement?.fields) {
+      measurements = setMeasurements('measurement', item);
+    } else if (item.measurement_assist?.fields) {
+      measurements = setMeasurements('measurement_assist', item);
+    } else if (item.service_and_treatment?.rescreening_data) {
+      measurements = setMeasurements('rescreening_data', item);
+    } else if (item.case_based_submissions) {
+      measurements = setMeasurements('case_based_submissions', item);
+    } else if (item.event_based_submissions) {
+      measurements = setMeasurements('event_based_submissions', item);
+    }
+
+    if (measurements.created_at) {
+      const isoDate = new Date(measurements.created_at);
+      date = isoDate.toISOString().split('T')[0];
+    }
+    phq_measurement = measurements.phq_measurement || 'NA';
+    suicidal_measurement = measurements.suicidal_measurement || 'NA';
+    ace_measurement = measurements.ace_measurement || 'NA';
+    gad_measurement = measurements.gad_measurement || 'NA';
+    lifetimeUse = item.lifetimeUse || 'NA';
+    currentUse = item.currentUse || 'NA';
+    alcoholic_measurement = measurements.alcoholic_measurement || 'NA';
+    tobacco_measurement = measurements.tobacco_measurement || 'NA';
+    cannabis_measurement = measurements.cannabis_measurement || 'NA';
+    amphetamine_measurement = measurements.amphetamine_measurement || 'NA';
+    inhalants_measurement = measurements.inhalants_measurement || 'NA';
+    sedatives_measurement = measurements.sedatives_measurement || 'NA';
+    hallucinogens_measurement = measurements.hallucinogens_measurement || 'NA';
+    opioids_measurement = measurements.opioids_measurement || 'NA';
+    injection_measurement = measurements.injection_measurement || 'NA';
+    other_measurement = measurements.other_measurement || 'NA';
+
+    return {
+      date,
+      gender,
+      dzongkha,
+      age,
+      user_class,
+      employmentHistory,
+      phq_measurement,
+      suicidal_measurement,
+      ace_measurement,
+      gad_measurement,
+      lifetimeUse,
+      currentUse,
+      alcoholic_measurement,
+      tobacco_measurement,
+      cannabis_measurement,
+      amphetamine_measurement,
+      inhalants_measurement,
+      sedatives_measurement,
+      hallucinogens_measurement,
+      opioids_measurement,
+      injection_measurement,
+      other_measurement
+    };
+  });
+
+  return transformedData;
 });
 
-const reportData = ref([]);
 
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.generateReport);
-    if (response.data && Array.isArray(response.data)) {
-      reportData.value = response.data;
-      // filteredData.value = response.data;
-    } else {
-      handleFetchError();
-    }
-  } catch (error) {
-    handleFetchError();
+
+
+// Function to calculate age based on date of birth
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
-};
-
-const handleFetchError = () => {
-  reportData.value = [];
-  // Handle error
-};
-
-onMounted(() => {
-  fetchReportData();
-});
-
+  return age;
+}
 
 const getSeverity = (severity) => {
   let colorCode;
@@ -262,7 +369,6 @@ const getSeverity = (severity) => {
   return { severity, colorCode, bgColor };
 };
 
-
 // Function to clear filters
 const clearFilter = () => {
   for (const key in filters.value) {
@@ -271,7 +377,7 @@ const clearFilter = () => {
 };
 </script>
 <style scope>
-.gray{
+.gray {
   color: antiquewhite;
 }
 </style>

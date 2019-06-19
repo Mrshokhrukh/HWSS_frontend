@@ -26,13 +26,14 @@
           <div class="d-flex align-items-center">
             <p class="fs-5 fw-bold mx-auto">Male: {{ independentMaleCount }}</p>
             <p class="fs-5 fw-bold mx-auto">Female: {{ independentFemaleCount }}</p>
-            <p class="fs-5 fw-bold mx-auto">Total: {{ independentTotalCount }}</p>  
+            <p class="fs-5 fw-bold mx-auto">Total: {{ independentTotalCount }}</p>
           </div>
         </div>
       </div>
-    </div> 
+    </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -62,8 +63,8 @@ onMounted(() => {
 });
 
 const processReportData = () => {
-  const clustered = reportData.filter(entry => entry.case_screenings === "[]");
-  const independent = reportData.filter(entry => entry.case_screenings !== "[]");
+  const clustered = reportData.filter(entry => Array.isArray(entry.case_screenings) && entry.case_screenings.length === 0);
+  const independent = reportData.filter(entry => Array.isArray(entry.case_screenings) && entry.case_screenings.length > 0);
 
   clusterMaleCount.value = calculateGenderCount(clustered, 'Male');
   clusterFemaleCount.value = calculateGenderCount(clustered, 'Female');
@@ -110,14 +111,15 @@ const setChartOptions = () => {
 
 const calculateGenderCount = (data, gender) => {
   return data.reduce((count, entry) => {
-    const user = JSON.parse(entry.user)[0];
-    if (user.fields.gender === gender) {
+    const user = entry.user && JSON.parse(entry.user)[0];
+    if (user?.fields?.gender === gender) {
       return count + 1;
     }
     return count;
   }, 0);
 };
 </script>
+
 
 <style scoped>
 .container {

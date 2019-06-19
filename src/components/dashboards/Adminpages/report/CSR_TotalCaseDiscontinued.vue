@@ -25,13 +25,13 @@
     </Column>
     <Column header="Gender" field="sex" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
       <template #body="{ data }">
-        {{ data.sex }}
+        {{ data.gender }}
       </template>
     </Column>
-    <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
+    <Column header="Dzongkhag" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
       :sortable="true">
       <template #body="{ data }">
-        {{ data.present_dzongkhag }}
+        {{ data.dzongkha }}
       </template>
     </Column>
     <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
@@ -76,42 +76,45 @@ const filters = ref({
   employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
 });
 
-// const loading = ref(true);
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
 const filteredData = computed(() => {
-  let filtered = reportData.value;
-  // Apply filters based on the selected values
-  for (const key in filters.value) {
-    if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter(item => filters.value[key].value.includes(item[key]));
-    }
+  // Check if reportData has been fetched and contains data
+  if (!reportData.value || !reportData.value.length) {
+    console.log('reportData is empty or undefined');
+    return [];
   }
-  return filtered;
+
+  // Filter reportData based on case_status
+  const filteredData = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Discontinued");
+
+  // Map filtered data to extract required fields
+  const transformedData = filteredData.map(item => ({
+    date: item.service_and_treatment?.date || 'NA',
+    gender: item.user?.fields?.gender || 'NA',
+    dzongkhag: item.user?.fields?.ps_add_dzongkhag || 'NA',
+    age: calculateAge(item.user?.fields?.date_of_birth) || 'NA',
+    user_class: item.user_agency?.fields?.user_class || 'NA',
+    case_status: item.service_and_treatment?.case_status || 'NA',
+  }));
+
+  return transformedData;
 });
 
-const reportData = ref([]);
-
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.reportData);
-    if (response.data && Array.isArray(response.data)) {
-      reportData.value = response.data.filter(item => item.case_status === 'NA');
-    } else {
-      handleFetchError();
-    }
-  } catch (error) {
-    handleFetchError();
+// Function to calculate age based on date of birth
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
-};
+  return age;
+}
 
-const handleFetchError = () => {
-  reportData.value = [];
-  // Handle error
-};
 
-onMounted(() => {
-  fetchReportData();
-});
 
 
 

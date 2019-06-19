@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import axios from 'axios';
 import endpoints from '@/api';
-
+import NotFoundPage from '@/views/errorpages/pagenotfound404.vue'
 // Define a reusable dashboard component
 const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
 
@@ -149,6 +149,11 @@ const createAppRouter = () => {
         meta: { title: 'Home' }
       },
       {
+        path: '/:pathMatch(.*)*',
+        redirect: { name: 'NotFound' },
+        component: NotFoundPage,
+      },
+      {
         path: '/login',
         name: 'login',
         component: () => import('@/views/auth/LoginView.vue'),
@@ -249,6 +254,4 @@ const createAppRouter = () => {
 
   return router;
 };
-
-
 export default createAppRouter;

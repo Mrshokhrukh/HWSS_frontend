@@ -139,40 +139,45 @@ const filters = ref({
 
 // const loading = ref(true);
 
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+
 const filteredData = computed(() => {
-  let filtered = reportData.value
-  // Apply filters based on the selected values
-  for (const key in filters.value) {
-    if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter((item) => filters.value[key].value.includes(item[key]))
-    }
+  // Check if reportData has been fetched and contains data
+  if (!reportData.value || !reportData.value.length) {
+    console.log('reportData is empty or undefined');
+    return [];
   }
-  return filtered
-})
 
-const reportData = ref([])
+  // Filter reportData based on case_status
+  const filteredData = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Discontinued");
 
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.generateReport)
-    if (response.data && Array.isArray(response.data)) {
-      reportData.value = response.data.filter((item) => item.case_status === 'NA')
-    } else {
-      handleFetchError()
-    }
-  } catch (error) {
-    handleFetchError()
+  // Map filtered data to extract required fields
+  const transformedData = filteredData.map(item => ({
+    date: item.service_and_treatment?.date || 'NA',
+    gender: item.user?.fields?.gender || 'NA',
+    dzongkhag: item.user?.fields?.ps_add_dzongkhag || 'NA',
+    age: calculateAge(item.user?.fields?.date_of_birth) || 'NA',
+    user_class: item.user_agency?.fields?.user_class || 'NA',
+    case_status: item.service_and_treatment?.case_status || 'NA',
+  }));
+
+  return transformedData;
+});
+
+// Function to calculate age based on date of birth
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return '';
+  const birthDate = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
+  return age;
 }
 
-const handleFetchError = () => {
-  reportData.value = []
-  // Handle error
-}
 
-onMounted(() => {
-  fetchReportData()
-})
 
 // Function to clear filters
 const clearFilter = () => {
