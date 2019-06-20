@@ -33,7 +33,7 @@
 
       <!-- New column for Approval Process -->
       <Column header="Approval Process" :showFilterMenu="false">
-        <template #body="{ }">
+        <template #body="{}">
           <Button type="button" icon="pi pi-info-circle" class="custom-button" @click="visible = true"
             label="Process for Approval" />
         </template>

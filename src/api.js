@@ -98,6 +98,8 @@ const endpoints = {
   getEventInfo: (counselorName) => `${counselorScreeningBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
   caseScreenSubmission: `${counselorScreeningBaseUrl}/submit-case-screening/`,
   eventScreenSubmission: `${counselorScreeningBaseUrl}/submit-event-screening/`,
+  getEventScreeningList: `${counselorScreeningBaseUrl}/get-event-screenings/`,
+  updateEventScreeningList: `${counselorScreeningBaseUrl}/update-event-screening/`,
 };
 
 export default endpoints;
