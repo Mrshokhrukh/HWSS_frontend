@@ -1,5 +1,5 @@
 <template>
-  <h2 class="text-center bold hwss-primary">Total Case Discontinued</h2>
+  <h2 class="text-center bold hwss-primary">Total Case Ongoing</h2>
   <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
     filterDisplay="row" :loading="loading" sortField="substanceRisk" :sortOrder="1"
     :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
@@ -28,7 +28,7 @@
         {{ data.gender }}
       </template>
     </Column>
-    <Column header="Dzongkhag" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
+    <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
       :sortable="true">
       <template #body="{ data }">
         {{ data.dzongkha }}
@@ -61,21 +61,19 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
-import axios from 'axios';
-import endpoints from '@/api';
 // import Badge from 'primevue/badge';
 
 const filters = ref({
   global: { value: [], matchMode: FilterMatchMode.CONTAINS },
-  year: { value: [], matchMode: FilterMatchMode.IN },
+  date: { value: '', matchMode: FilterMatchMode.CONTAINS },
   gender: { value: [], matchMode: FilterMatchMode.IN },
   dzongkha: { value: [], matchMode: FilterMatchMode.IN },
-  location: { value: [], matchMode: FilterMatchMode.IN },
+  case_status: { value: [], matchMode: FilterMatchMode.IN },
   age: { value: [], matchMode: FilterMatchMode.IN },
   class: { value: [], matchMode: FilterMatchMode.IN },
-  employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
 });
 
+// const loading = ref(true);
 const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
 const filteredData = computed(() => {
@@ -86,13 +84,13 @@ const filteredData = computed(() => {
   }
 
   // Filter reportData based on case_status
-  const filteredData = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Discontinued");
+  const filteredData = reportData.value.filter(item => item.service_and_treatment?.case_status === "On Going");
 
   // Map filtered data to extract required fields
   const transformedData = filteredData.map(item => ({
     date: item.service_and_treatment?.date || 'NA',
     gender: item.user?.fields?.gender || 'NA',
-    dzongkhag: item.user?.fields?.ps_add_dzongkhag || 'NA',
+    dzongkha: item.user?.fields?.ps_add_dzongkhag || 'NA',
     age: calculateAge(item.user?.fields?.date_of_birth) || 'NA',
     user_class: item.user_agency?.fields?.user_class || 'NA',
     case_status: item.service_and_treatment?.case_status || 'NA',
@@ -114,9 +112,7 @@ function calculateAge(dateOfBirth) {
   return age;
 }
 
-
-
-
+console.log("trans", filteredData)
 
 // Function to clear filters
 const clearFilter = () => {
@@ -125,4 +121,4 @@ const clearFilter = () => {
   }
 };
 </script>
-<style scope></style>
+<style scope></style> 

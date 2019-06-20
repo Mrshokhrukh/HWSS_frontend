@@ -50,9 +50,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import MonitorReport from "./MHMonitorReport.vue"
-import CaseStatusReport from "./MHCaseStatusReport.vue" // Corrected import
-import SeverityReport from "./MHSeverityReport.vue"
+import MonitorReport from "./MHMonitorReport/MHMonitorReport.vue"
+import CaseStatusReport from "./MHCaseStatusReport/MHCaseStatusReport.vue" // Corrected import
+import SeverityReport from "./MHSeverityReport/MHSeverityReport.vue"
 import Quaryfilter from './Quaryfilter.vue'
 const selectedOption = ref(null)
 
