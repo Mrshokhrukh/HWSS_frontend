@@ -2,7 +2,7 @@
   <div class="card p-4">
     <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
       filterDisplay="row" :loading="loading"
-      :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'submittedBy', 'approvalProcess']">
+      :globalFilterFields="['id', 'eventName', 'toolsUsed', 'duration', 'submittedBy', 'approvalProcess']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
           <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
@@ -17,11 +17,11 @@
       <template #loading> Loading events data. Please wait. </template>
 
       <!-- Existing columns -->
-      <Column field="date" header="Date" :sortable="true" />
-      <Column field="eventName" header="Event Name" :sortable="true" />
+      <Column field="start_date" header="Date" :sortable="true" />
+      <Column field="event_name" header="Event Name" :sortable="true" />
       <Column field="toolsUsed" header="Tools Used" :sortable="true">
         <template #body="{ data }">
-          {{ data.toolsUsed.join(', ') }}
+          {{ data.selected_tool }}
         </template>
         <template #filter="{ filterModel, filterCallback }">
           <MultiSelect v-model="filterModel.value" @change="filterCallback('toolsUsed')" :options="toolOptions"
@@ -29,18 +29,19 @@
         </template>
       </Column>
       <Column field="duration" header="Duration" :sortable="true" />
-      <Column field="submittedBy" header="Submitted By" :sortable="true" />
+      <Column field="counselor" header="Submitted By" :sortable="true" />
 
       <!-- New column for Approval Process -->
       <Column header="Approval Process" :showFilterMenu="false">
-        <template #body="{}">
-          <Button type="button" icon="pi pi-info-circle" class="custom-button" @click="visible = true"
+        <template #body="{ data }">
+          <Button type="button" icon="pi pi-info-circle" class="custom-button" @click="openDialogue(data)"
             label="Process for Approval" />
         </template>
+
       </Column>
     </DataTable>
 
-    <Dialog v-model:visible="visible" header="Approval Process Details" modal style="max-width: 50%;">
+    <Dialog v-model:visible="visible" header="Approval Process Details" modal style="width: 50%;">
       <div class="card p-4">
         <h4 class="event-details__title">Event Details</h4>
         <section v-for="(section, index) in sections" :key="index" class="event-details__section">
@@ -49,17 +50,17 @@
         </section>
         <h6 class="hwss-primary">Purpose:</h6>
         <div class="event-details__description px-4 py-2 mb-4 lh-base ">
-          {{ eventPurpose }}
+          {{ eventData.eventPurpose }}
         </div>
         <h6 class="hwss-primary">Tools to be used:</h6>
-        <p class="event-details__tools">Mental Health / SUD / Mental health & SUD</p>
+        <p class="event-details__tools px-4 py-2 mb-4 lh-base ">{{ eventData.toolsUsed }}</p>
         <section class="event-details__section">
-          <h6 class="hwss-primary">Total users to be screened:</h6>
-          <p class="event-details__value">12</p>
+          <h6 class="hwss-primary">Total days for screening:</h6>
+          <p class="event-details__value px-4 py-2 mb-4 lh-base ">{{ eventData.totalDays }} day(s)</p>
         </section>
         <section class="event-details__actions">
-          <button class="btn hwss-btn mx-1">Accept</button>
-          <button class="btn hwss-btn2 mx-1" @click="showRejectPopup">Reject</button>
+          <Button type="button" icon="pi pi-check" class="custom-button" @click="acceptEvent(eventData)" label="Accept" />
+          <Button type="button" icon="pi pi-times" class="custom-button" @click="showRejectPopup(eventData)" label="Reject" />
         </section>
         <div v-if="showPopup" class="popup">
           <div class="popup-content">
@@ -71,6 +72,7 @@
         </div>
       </div>
     </Dialog>
+
   </div>
 </template>
 
@@ -83,6 +85,15 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+import axios from 'axios';
+import endpoints from '@/api';
+import Swal from "sweetalert2";
+
+const eventData = ref({}); // Add this to store the event data for the modal
+const visible = ref(false); // Control visibility of the dialog
+const showPopup = ref(false); // Control visibility of the reject popup
+const rejectComment = ref(''); // Store the reject comment
+
 
 const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
 
@@ -92,7 +103,6 @@ const filters = ref({
   toolsUsed: { value: [], matchMode: FilterMatchMode.IN }
 });
 const loading = ref(true);
-const visible = ref(false);
 
 const filteredData = computed(() => {
   let filtered = monitorData.value;
@@ -116,86 +126,104 @@ const clearFilter = () => {
     filters.value[key].value = [];
   }
 };
+const fetchReportData = async () => {
+  try {
+    const response = await axios.get(endpoints.getEventScreeningList);
+    console.log('API Response:', response.data); // Log the response data to check
+    if (response.data && Array.isArray(response.data)) {
+      monitorData.value = response.data; // Use monitorData instead of reportData
+      console.log('Fetched Data: for request', monitorData.value); // Log the fetched data to check
+    } else {
+      handleFetchError();
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error); // Log any error
+    handleFetchError();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleFetchError = () => {
+  monitorData.value = [];
+  console.error('Failed to fetch data'); // Log fetch error
+};
 
 onMounted(() => {
-  // Dummy Data
-  monitorData.value = [
-    {
-      id: 1,
-      date: '21/02/24',
-      eventName: 'Empower Wellness Summit',
-      toolsUsed: ['Mental Health', 'SUD'],
-      duration: '5 days',
-      submittedBy: 'Ms. Namgay Tshering, Clinical Counselor',
-      approvalProcess: 'Your approval process details here'
-    },
-    {
-      id: 2,
-      date: '21/02/25',
-      eventName: 'Mental Health Awareness Workshop',
-      toolsUsed: ['Mental Health'],
-      duration: '3 days',
-      submittedBy: 'Mr. John Doe, Psychologist',
-      approvalProcess: 'Approval process details for event 2'
-    },
-    {
-      id: 3,
-      date: '21/02/26',
-      eventName: 'Substance Abuse Prevention Seminar',
-      toolsUsed: ['SUD'],
-      duration: '2 days',
-      submittedBy: 'Dr. Jane Smith, Psychiatrist',
-      approvalProcess: 'Approval process details for event 3'
-    },
-    {
-      id: 4,
-      date: '21/02/27',
-      eventName: 'Meditation Retreat',
-      toolsUsed: ['Mental Health'],
-      duration: '7 days',
-      submittedBy: 'Ms. Alice Johnson, Yoga Instructor',
-      approvalProcess: 'Approval process details for event 4'
-    },
-    {
-      id: 5,
-      date: '21/02/28',
-      eventName: 'Stress Management Workshop',
-      toolsUsed: ['Mental Health'],
-      duration: '1 day',
-      submittedBy: 'Dr. Michael Brown, Therapist',
-      approvalProcess: 'Approval process details for event 5'
-    }
-  ];
-  loading.value = false;
+  fetchReportData();
 });
-const sections = ref([
-  { label: 'Event Name', value: 'Empower Wellness Summit' },
-  { label: 'Proposed/Submitted By', value: 'Mr. Namgay Tshering' },
-  { label: 'Working Agency', value: 'Clinical Counselor' },
-  { label: 'Location', value: 'Motithang Higher Secondary School' },
-  { label: 'Dzongkhag', value: 'Thimphu' },
-  { label: 'Start Date', value: '01/12/2023' },
-  { label: 'End Date', value: '05/12/2023' },
-  { label: 'Duration', value: '4 days' },
-]);
 
-const showPopup = ref(false);
-const rejectComment = ref('');
-
-function showRejectPopup() {
-  showPopup.value = true;
-}
+const showRejectPopup = (data) => {
+  eventData.value = data; // Store the data to be used in the popup
+  showPopup.value = true; // Show the reject popup
+};
 
 function closePopup() {
   showPopup.value = false;
-  rejectComment.value = '';
+  visible.value = false; // Close the dialog
 }
 
-function rejectEvent() {
-  // Perform reject event logic here
-  // console.log('Event rejected with comment:', rejectComment.value);
-  closePopup();
-}
+const rejectEvent = async (eventData) => {
+  // try {
+  //   const response = await axios.post(endpoints.updateEventScreeningList, {
+  //     event_id: eventData.id,
+  //     approval_status: "rejected",
+  //     rejection_reason: rejectComment.value,
+  //   });
+  //   console.log('Event rejected with comment:', response.data);
+  // } catch (error) {
+  //   console.error('Error updating event:', error);
+  // } finally {
+  //   closePopup();
+  //   Swal.fire({
+  //     icon: 'error',
+  //     title: 'Event Rejected',
+  //     text: 'Reason: ' + rejectComment.value,
+  //     showConfirmButton: false,
+  //     timer: 2000
+  //   });
+  // }
+  console.log(eventData
+  )
+};
+
+
+
+
+const openDialogue = (data) => {
+  console.log(data)
+  eventData.value = {
+    id: data.id,
+    eventPurpose: data.event_purpose,
+    toolsUsed: data.selected_tool ? data.selected_tool : 'Not Choosen',
+    totalDays: data.duration
+    // Include any other necessary data fields here
+  };
+  visible.value = true;
+};
+
+const acceptEvent = async (eventData) => {
+  try {
+    const response = await axios.post(endpoints.updateEventScreeningList, {
+      event_id: eventData.id,
+      approval_status: "approved",
+    });
+    console.log('Event accepted:', response.data);
+  } catch (error) {
+    console.error('Error updating event:', error);
+  } finally {
+    visible.value = false; // Close the dialog
+    Swal.fire({
+      icon: 'success',
+      title: 'Successfully Approved',
+      showConfirmButton: false,
+      timer: 2000
+    });
+  }
+};
+
+
+
 </script>
 
 <style scoped>

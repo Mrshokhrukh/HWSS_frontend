@@ -1,5 +1,6 @@
 <template>
   <div>
+    <Quaryfilter />
     <!-- Options to select -->
     <div class="row justify-content-center mb-3">
       <div class="col-md-4 text-center">
@@ -13,7 +14,7 @@
       <div class="col-md-4 text-center">
         <div class="card option" :class="{ active: selectedOption === 'case' }" @click="selectOption('case')">
           <div class="card-body">
-            <i class="fas fa-briefcase fa-3x mb-3"></i> 
+            <i class="fas fa-briefcase fa-3x mb-3"></i>
             <p class="card-text">Case Report</p>
           </div>
         </div>
@@ -52,7 +53,7 @@ import { ref, onMounted } from 'vue'
 import MonitorReport from "./MHMonitorReport.vue"
 import CaseStatusReport from "./MHCaseStatusReport.vue" // Corrected import
 import SeverityReport from "./MHSeverityReport.vue"
-
+import Quaryfilter from './Quaryfilter.vue'
 const selectedOption = ref(null)
 
 onMounted(() => {

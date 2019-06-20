@@ -3,30 +3,36 @@
     <div class="row d-flex justify-content-center">
       <!-- Clustered Screening Donut Graph -->
       <div class="col-md-4 mx-auto">
-        <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Clustered Screening</h4>
+        <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975">Clustered Screening</h4>
         <div class="card">
           <div class="card-body">
-            <Chart :type="chartType" :data="clusteredChartData" :options="donutOptions" legend="bottom" />
+            <Chart
+              :type="chartType"
+              :data="clusteredData"
+              :options="donutOptions"
+              legend="bottom"
+              loading="Loading..."
+            />
           </div>
           <div class="d-flex align-items-center">
-            <p class="fs-5 fw-bold mx-auto">Male: {{ clusterMaleCount }}</p>
-            <p class="fs-5 fw-bold mx-auto">Female: {{ clusterFemaleCount }}</p>
-            <p class="fs-5 fw-bold mx-auto">Total: {{ clusterTotalCount }}</p>
+            <p class="fs-5 fw-bold mx-auto">Male: {{ male_Count_clustered }}</p>
+            <p class="fs-5 fw-bold mx-auto">Female: {{ femaleCount_clustered }}</p>
+            <p class="fs-5 fw-bold mx-auto">Total: {{ totalCount_clustered }}</p>
           </div>
         </div>
       </div>
 
       <!-- Independent Donut Graph -->
       <div class="col-md-4 mx-auto">
-        <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Independent Screening</h4>
+        <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975">Independent Screening</h4>
         <div class="card">
           <div class="card-body">
-            <Chart :type="chartType" :data="independentChartData" :options="donutOptions" />
+            <Chart :type="chartType" :data="independentData" :options="donutOptions" />
           </div>
           <div class="d-flex align-items-center">
-            <p class="fs-5 fw-bold mx-auto">Male: {{ independentMaleCount }}</p>
-            <p class="fs-5 fw-bold mx-auto">Female: {{ independentFemaleCount }}</p>
-            <p class="fs-5 fw-bold mx-auto">Total: {{ independentTotalCount }}</p>
+            <p class="fs-5 fw-bold mx-auto">Male: {{ data1 }}</p>
+            <p class="fs-5 fw-bold mx-auto">Female: {{ data2 }}</p>
+            <p class="fs-5 fw-bold mx-auto">Total: {{ total }}</p>
           </div>
         </div>
       </div>
@@ -34,103 +40,117 @@
   </div>
 </template>
 
-
 <script setup>
-import { ref, onMounted } from 'vue';
-import Chart from 'primevue/chart';
+import { ref, onMounted } from 'vue'
+import Chart from 'primevue/chart'
 
-const reportData = JSON.parse(sessionStorage.getItem('reportData'));
+const male_Count_clustered = ref(0)
+const femaleCount_clustered = ref(0)
+const totalCount_clustered = ref(0)
+const data1 = ref(300)
+const data2 = ref(100)
+const total = ref(400)
 
-const clusteredData = ref([]);
-const independentData = ref([]);
-const donutOptions = ref({});
-const chartType = 'doughnut';
+const clusteredData = ref([])
+const independentData = ref([])
+const donutOptions = ref({})
+const chartType = 'doughnut'
 
-const clusterMaleCount = ref(0);
-const clusterFemaleCount = ref(0);
-const clusterTotalCount = ref(0);
+// logic
+const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || [])
+const clusteredDatas = ref([])
+const independentDatas = ref([])
 
-const independentMaleCount = ref(0);
-const independentFemaleCount = ref(0);
-const independentTotalCount = ref(0);
-
-const clusteredChartData = ref({});
-const independentChartData = ref({});
-
+// Filter data when component is mounted
 onMounted(() => {
-  processReportData();
-  setChartOptions();
-});
+  // filtering clustered data
+  clusteredDatas.value = reportData.value.filter(
+    (item) =>
+      item.measurement?.fields?.user !== undefined ||
+      (null && item.measurement_assist?.fields?.user !== undefined) ||
+      null
+  )
 
-const processReportData = () => {
-  const clustered = reportData.filter(entry => Array.isArray(entry.case_screenings) && entry.case_screenings.length === 0);
-  const independent = reportData.filter(entry => Array.isArray(entry.case_screenings) && entry.case_screenings.length > 0);
+  // filtering independent data
+  independentDatas.value = reportData.value.filter(
+    (item) =>
+      item.event_screenings?.fields?.user !== undefined ||
+      (null && item.case_screenings?.fields?.user !== undefined) ||
+      null
+  )
 
-  clusterMaleCount.value = calculateGenderCount(clustered, 'Male');
-  clusterFemaleCount.value = calculateGenderCount(clustered, 'Female');
-  clusterTotalCount.value = clusterMaleCount.value + clusterFemaleCount.value;
+  // Log filtered data to the console
+  console.log('Filtered clusteredData Data:', clusteredDatas.value)
+  console.log('Filtered independentData Data:', independentDatas.value)
 
-  independentMaleCount.value = calculateGenderCount(independent, 'Male');
-  independentFemaleCount.value = calculateGenderCount(independent, 'Female');
-  independentTotalCount.value = independentMaleCount.value + independentFemaleCount.value;
+  countGender()
+})
 
-  clusteredChartData.value = {
+const countGender = () => {
+  let maleCount = 0
+  let femaleCount = 0
+
+  clusteredDatas.value.forEach((item) => {
+    const gender = item.user?.fields?.gender
+    if (gender === 'Male') {
+      maleCount++
+    } else if (gender === 'Female') {
+      femaleCount++
+    }
+  })
+
+  male_Count_clustered.value = maleCount
+  femaleCount_clustered.value = femaleCount
+  totalCount_clustered.value = maleCount + femaleCount
+
+  console.log('Male Count:', maleCount)
+  console.log('Female Count:', femaleCount)
+}
+
+const setChartData = () => {
+  clusteredData.value = {
     labels: ['Male', 'Female'],
     datasets: [
       {
-        data: [clusterMaleCount.value, clusterFemaleCount.value],
+        data: [male_Count_clustered.value, femaleCount_clustered.value],
         backgroundColor: ['#2c6975', '#64ac99']
       }
     ]
-  };
+  }
 
-  independentChartData.value = {
+  independentData.value = {
     labels: ['Male', 'Female'],
     datasets: [
       {
-        data: [independentMaleCount.value, independentFemaleCount.value],
+        data: [data1.value, data2.value],
         backgroundColor: ['#2c6975', '#64ac99']
       }
     ]
-  };
-};
+  }
+}
 
 const setChartOptions = () => {
+  // Set common options for both charts here
   donutOptions.value = {
     plugins: {
       legend: {
-        position: 'bottom',
         labels: {
+          cutout: '60%',
           color: '#242424'
         }
       }
-    },
-    cutout: '60%'
-  };
-};
-
-const calculateGenderCount = (data, gender) => {
-  return data.reduce((count, entry) => {
-    const user = entry.user && JSON.parse(entry.user)[0];
-    if (user?.fields?.gender === gender) {
-      return count + 1;
     }
-    return count;
-  }, 0);
-};
+  }
+}
+
+onMounted(() => {
+  setChartData()
+  setChartOptions()
+})
 </script>
 
-
 <style scoped>
-.container {
-  padding-top: 20px;
-}
-
-.card {
-  margin-top: 20px;
-}
-
-.fs-5 {
-  margin: 0 10px;
+.graph2 {
+  margin-left: 300px;
 }
 </style>

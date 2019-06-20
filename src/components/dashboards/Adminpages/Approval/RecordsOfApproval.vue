@@ -16,15 +16,15 @@
       <template #loading> Loading events data. Please wait. </template>
 
       <!-- Existing columns -->
-      <Column field="date" header="Date" :sortable="true" />
-      <Column field="eventName" header="Event Name" :sortable="true" />
-      <Column field="toolsUsed" header="Tools Used" :sortable="true" />
+      <Column field="start_date" header="Date" :sortable="true" />
+      <Column field="event_name" header="Event Name" :sortable="true" />
+      <Column field="selected_tool" header="Tools Used" :sortable="true" />
       <Column field="duration" header="Duration" :sortable="true" />
       <Column header="Status" :sortable="true">
         <template #body="{ data }">
           <Badge
-            :class="{ 'p-badge-success': data.status === 'Accepted', 'p-badge-danger': data.status === 'Rejected' }"
-            :value="data.status" @click="showStatusPopup(data.status)" style="cursor: pointer" class="w-50" />
+            :class="{ 'p-badge-success': data.approval_status === 'approved', 'p-badge-danger': data.approval_status === 'rejected', 'p-badge-warning': data.approval_status === 'ended' }"
+            :value="data.approval_status" @click="showStatusPopup(data.status)" style="cursor: pointer" class="w-50" />
         </template>
       </Column>
     </DataTable>
@@ -95,7 +95,8 @@ import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
-
+import axios from 'axios';
+import endpoints from '@/api';
 const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
 
 const monitorData = ref();
@@ -127,53 +128,79 @@ const clearFilter = () => {
 const closePopup = () => {
   showPopup.value = false;
 };
+const fetchReportData = async () => {
+  try {
+    const response = await axios.get(endpoints.getEventScreeningList);
+    console.log('API Response:', response.data); // Log the response data to check
+    if (response.data && Array.isArray(response.data)) {
+      monitorData.value = response.data; // Use monitorData instead of reportData
+      console.log('Fetched Data: for request', monitorData.value); // Log the fetched data to check
+    } else {
+      handleFetchError();
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error); // Log any error
+    handleFetchError();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleFetchError = () => {
+  monitorData.value = [];
+  console.error('Failed to fetch data'); // Log fetch error
+};
 
 onMounted(() => {
-  // Dummy Data
-  monitorData.value = [
-    {
-      id: 1,
-      date: '21/02/24',
-      eventName: 'Empower Wellness Summit',
-      toolsUsed: 'Mental Health, SUD',
-      duration: '5 days',
-      status: 'Rejected'
-    },
-    {
-      id: 2,
-      date: '21/02/25',
-      eventName: 'Mental Health Awareness Workshop',
-      toolsUsed: 'Mental Health',
-      duration: '3 days',
-      status: 'Accepted'
-    },
-    {
-      id: 3,
-      date: '21/02/26',
-      eventName: 'Substance Abuse Prevention Seminar',
-      toolsUsed: 'SUD',
-      duration: '2 days',
-      status: 'Rejected'
-    },
-    {
-      id: 4,
-      date: '21/02/27',
-      eventName: 'Meditation Retreat',
-      toolsUsed: 'Mental Health',
-      duration: '7 days',
-      status: 'Accepted'
-    },
-    {
-      id: 5,
-      date: '21/02/28',
-      eventName: 'Stress Management Workshop',
-      toolsUsed: 'Mental Health',
-      duration: '1 day',
-      status: 'Rejected'
-    }
-  ];
-  loading.value = false;
+  fetchReportData();
 });
+
+// onMounted(() => {
+//   // Dummy Data
+//   monitorData.value = [
+//     {
+//       id: 1,
+//       date: '21/02/24',
+//       eventName: 'Empower Wellness Summit',
+//       toolsUsed: 'Mental Health, SUD',
+//       duration: '5 days',
+//       status: 'Rejected'
+//     },
+//     {
+//       id: 2,
+//       date: '21/02/25',
+//       eventName: 'Mental Health Awareness Workshop',
+//       toolsUsed: 'Mental Health',
+//       duration: '3 days',
+//       status: 'Accepted'
+//     },
+//     {
+//       id: 3,
+//       date: '21/02/26',
+//       eventName: 'Substance Abuse Prevention Seminar',
+//       toolsUsed: 'SUD',
+//       duration: '2 days',
+//       status: 'Rejected'
+//     },
+//     {
+//       id: 4,
+//       date: '21/02/27',
+//       eventName: 'Meditation Retreat',
+//       toolsUsed: 'Mental Health',
+//       duration: '7 days',
+//       status: 'Accepted'
+//     },
+//     {
+//       id: 5,
+//       date: '21/02/28',
+//       eventName: 'Stress Management Workshop',
+//       toolsUsed: 'Mental Health',
+//       duration: '1 day',
+//       status: 'Rejected'
+//     }
+//   ];
+//   loading.value = false;
+// });
 
 const showStatusPopup = (status) => {
   selectedStatus.value = status;

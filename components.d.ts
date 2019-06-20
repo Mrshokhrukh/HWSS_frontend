@@ -81,6 +81,7 @@ declare module 'vue' {
     PersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/PersonalDetailsCard.vue')['default']
     ProfileCard: typeof import('./src/components/dashboards/dashboardCard/ProfileCard.vue')['default']
     PublicDashboard: typeof import('./src/components/dashboards/PublicDashboard.vue')['default']
+    Quaryfilter: typeof import('./src/components/dashboards/Adminpages/report/Quaryfilter.vue')['default']
     QuickToolCard: typeof import('./src/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue')['default']
     RecordsOfApproval: typeof import('./src/components/dashboards/Adminpages/Approval/RecordsOfApproval.vue')['default']
     ReferralAcceptedTable: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/ReferralAcceptedTable.vue')['default']
