@@ -40,8 +40,8 @@
 import { onMounted, ref } from 'vue';
 import Chart from 'chart.js/auto';
 
-const totalLifetimeUsers = 1000;  // Dummy data for Life Time User
-const totalDailySubstanceUsers = 200;  // Dummy data for Daily Substance Users
+const totalLifetimeUsers = 13;  // Dummy data for Life Time User
+const totalDailySubstanceUsers = 8;  // Dummy data for Daily Substance Users
 
 const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
 let substancesWithGender = [];

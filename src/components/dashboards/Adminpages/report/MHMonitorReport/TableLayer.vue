@@ -1,5 +1,9 @@
 <template>
-    <h1>1</h1>
-    <h1>༢</h1>
-    <h1>༣</h1>
+    <div class=" col-md text-center" >
+      <div class="card option">
+        <div class="card-body">
+          <h1>Report Table</h1>
+        </div>
+      </div>
+    </div>
 </template>

@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <FRLayer />
+   <div>
+    <RCAlayer />
   </div>
   <div>
-    <RCAlayer />
+    <FRLayer />
   </div>
   <div>
     <TableLayer />
