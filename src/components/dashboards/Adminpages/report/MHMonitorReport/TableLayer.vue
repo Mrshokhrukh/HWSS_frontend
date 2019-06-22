@@ -109,6 +109,11 @@ Availed_Count.value = AvailedCount_filter.value.length;
     const followupDataFilter = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up == 'Treatment Completed'));
   const followup_TCCount = ref(followupDataFilter.value.length);
 
+//Institution-based SUD Treatment and Care
+  const followup_IB_DataFilter = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up == 'Institution-based SUD Treatment and Care'));
+  const followup_IBCount = ref(followup_IB_DataFilter.value.length);
+  console.log(`test 3 ${followup_IBCount.value}`)
+
 
 const customers = ref([
   {
@@ -126,7 +131,7 @@ const customers = ref([
     Assement: { type: NotConducted_Count, title: 'Not Conducted' },
     Counseling: { type: Availed_Count, title: 'Availed' },
     Referral_Status:{type: referredCount, title: 'Referred' },
-    follow_up:{type: followup_TCCount, title: 'Treatment completed :' },
+    follow_up:{type: followup_IBCount, title: 'Institution-based SUD Treatment and Care :' },
   },
   {
     representative: { name: Rescreening_count },
