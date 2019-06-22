@@ -71,9 +71,12 @@
 
 <script setup>
 import { ref } from 'vue';
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
+// Inject filteredData from parent component
+import { inject } from 'vue'
 
+// Inject the filteredData
+const reportData = inject('filteredData')
 // Rescreening
 const Rescreening_count = ref(0);
 const Rescreening_filter = ref([]);

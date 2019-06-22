@@ -172,5 +172,6 @@ declare module 'vue' {
     TestTypeScreening: typeof import('./src/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue')['default']
     TopNavbarCard: typeof import('./src/components/navbar/TopNavbarCard.vue')['default']
     TopNavigationCards: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/TopNavigationCards.vue')['default']
+    TypesOfReports: typeof import('./src/components/dashboards/Adminpages/report/TypesOfReports.vue')['default']
   }
 }
