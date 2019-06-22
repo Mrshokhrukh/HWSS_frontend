@@ -20,9 +20,9 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import MonitorReport from "@/components/dashboards/Adminpages/AAA/report/MonitorReport.vue"
-import CaseStatusReport from "@/components/dashboards/Adminpages/AAA/report/CaseStatusReport.vue"
-import SeverityReport from "@/components/dashboards/Adminpages/AAA/report/SeverityReport.vue"
+import MonitorReport from "@/components/dashboards/Adminpages/AAA/report/AAAMonitorReport/AAAMonitorReport.vue"
+import CaseStatusReport from "@/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/CaseStatusReport.vue"
+import SeverityReport from "@/components/dashboards/Adminpages/AAA/report/AAASeverityReport/AAASeverityReport.vue"
 
 const selectedIndex = ref(null);
 
