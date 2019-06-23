@@ -120,8 +120,6 @@ declare module 'vue' {
     RnDChartTables: typeof import('./src/components/dashboards/Adminpages/R&D/RnDChartTables.vue')['default']
     RnDDashboard: typeof import('./src/components/dashboards/Adminpages/R&D/RnDDashboard.vue')['default']
     RndDataDisplay: typeof import('./src/components/dashboards/Adminpages/R&D/RndDataDisplay.vue')['default']
-    RnDGraph: typeof import('./src/components/dashboards/Adminpages/R&D/RnDGraph.vue')['default']
-    RndDataDisplay: typeof import('./src/components/dashboards/Adminpages/R&D/RndDataDisplay.vue')['default']
     RnDFilters: typeof import('./src/components/dashboards/Adminpages/R&D/RnDFilters.vue')['default']
     RnDGraph: typeof import('./src/components/dashboards/Adminpages/R&D/RnDGraph.vue')['default']
     RndHelp: typeof import('./src/components/dashboards/Adminpages/R&D/RndHelp.vue')['default']
