@@ -1,127 +1,74 @@
 <template>
-  <h2 class="text-center bold hwss-primary">Total Case Ongoing</h2>
-  <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
-    filterDisplay="row" :loading="loading" sortField="substanceRisk" :sortOrder="1"
-    :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
-    <template #header>
-      <div class="d-flex justify-content-between align-items-center">
-        <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
-          @click="clearFilter()" />
-        <div class="p-input-icon-left">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
+  <div class="card">
+    <DataTable :value="aggregateData" tableStyle="min-width: 50rem">
+      <template #header>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-xl font-bold">Case Status</span>
         </div>
-      </div>
-    </template>
-    <template #empty> No data found. </template>
-    <template #loading> Loading data. Please wait. </template>
-
-    <!-- Additional Headers -->
-
-    <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
-      <template #body="{ data }">
-        {{ data.date }}
       </template>
-    </Column>
-    <Column header="Gender" field="sex" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
-      <template #body="{ data }">
-        {{ data.sex }}
-      </template>
-    </Column>
-    <Column header="Dzongkha" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
-      :sortable="true">
-      <template #body="{ data }">
-        {{ data.present_dzongkhag }}
-      </template>
-    </Column>
-    <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
-      <template #body="{ data }">
-        {{ data.age }}
-      </template>
-    </Column>
-    <Column header="Class" field="user_class" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
-      <template #body="{ data }">
-        {{ data.user_class }}
-      </template>
-    </Column>
-    <Column header="case_status" field="case_status" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-      <template #body="{ data }">
-        {{ data.case_status }}
-      </template>
-    </Column>
-
-  </DataTable>
-
+      <Column field="field" header="Field"></Column>
+      <Column header="Count">
+        <template #body="slotProps">
+          <span v-if="typeof slotProps.data.count"> {{ slotProps.data.count }}</span>
+          <ul v-else>
+            <li v-for="(item, index) in slotProps.data.count" :key="index">
+              {{ item.key }}: {{ item.count }}
+            </li>
+          </ul>
+        </template>
+      </Column>
+    </DataTable>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { FilterMatchMode } from 'primevue/api';
+import { ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import axios from 'axios';
-import endpoints from '@/api';
-// import Badge from 'primevue/badge';
 
-const filters = ref({
-  global: { value: [], matchMode: FilterMatchMode.CONTAINS },
-  year: { value: [], matchMode: FilterMatchMode.IN },
-  gender: { value: [], matchMode: FilterMatchMode.IN },
-  dzongkha: { value: [], matchMode: FilterMatchMode.IN },
-  location: { value: [], matchMode: FilterMatchMode.IN },
-  age: { value: [], matchMode: FilterMatchMode.IN },
-  class: { value: [], matchMode: FilterMatchMode.IN },
-  employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
-});
-
-// const loading = ref(true);
-
-// const loading = ref(true);
 const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
 
-const filteredData = computed(() => {
-  // Check if reportData has been fetched and contains data
-  if (!reportData.value || !reportData.value.length) {
-    console.log('reportData is empty or undefined');
-    return [];
-  }
+// Computed properties for counts
+const OngoingCase_Count = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'On Going').length);
+const CaseDiscontinue_Count = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'Case Discontinue').length);
+const CaseClosed_Count = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'Case Closed').length);
 
-  // Filter reportData based on case_status
-  const filteredData = reportData.value.filter(item => item.service_and_treatment?.case_status === "On Going");
+// Aggregate data for DataTable
+const aggregateData = ref([
+  { field: 'Ongoing Case', count: OngoingCase_Count.value },
+  { field: 'DISCONTINUED CASES', count: CaseDiscontinue_Count.value },
+  { field: 'CLOSED CASES', count: CaseClosed_Count.value }
+]);
+console.log('aggregateData', aggregateData.value)
+</script>
 
-  // Map filtered data to extract required fields
-  const transformedData = filteredData.map(item => ({
-    date: item.service_and_treatment?.date || 'NA',
-    gender: item.user?.fields?.gender || 'NA',
-    dzongkha: item.user?.fields?.ps_add_dzongkhag || 'NA',
-    age: calculateAge(item.user?.fields?.date_of_birth) || 'NA',
-    user_class: item.user_agency?.fields?.user_class || 'NA',
-    case_status: item.service_and_treatment?.case_status || 'NA',
-  }));
-
-  return transformedData;
-});
-
-// Function to calculate age based on date of birth
-function calculateAge(dateOfBirth) {
-  if (!dateOfBirth) return '';
-  const birthDate = new Date(dateOfBirth);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
+<style scoped>
+.card {
+  margin-top: 20px;
 }
 
-// Function to clear filters
-const clearFilter = () => {
-  for (const key in filters.value) {
-    filters.value[key].value = [];
-  }
-};
-</script>
-<style scope></style>
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.card th,
+.card td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: left;
+}
+
+.card th {
+  background-color: hsl(107, 63%, 52%);
+}
+
+.card ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.card li {
+  margin-bottom: 4px;
+}
+</style>

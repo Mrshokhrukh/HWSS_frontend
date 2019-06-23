@@ -14,6 +14,6 @@
 <script setup>
 import MHSeverityTable from './MHSeverityTable.vue'
 import MHSeverityGraph from './MHSeverityGraph.vue'
-import SUDSeverityGraph from './SUDSeverityGraph.vue'
+import SUDSeverityGraph from './MHSUDSeverityGraph.vue'
 
 </script>

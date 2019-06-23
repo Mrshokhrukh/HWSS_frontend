@@ -6,13 +6,8 @@
         <h4 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975">Clustered Screening</h4>
         <div class="card">
           <div class="card-body">
-            <Chart
-              :type="chartType"
-              :data="clusteredData"
-              :options="donutOptions"
-              legend="bottom"
-              loading="Loading..."
-            />
+            <Chart :type="chartType" :data="clusteredData" :options="donutOptions" legend="bottom"
+              loading="Loading..." />
           </div>
           <div class="d-flex align-items-center">
             <p class="fs-5 fw-bold mx-auto">Male: {{ male_Count_clustered }}</p>
@@ -47,9 +42,9 @@ import Chart from 'primevue/chart'
 const male_Count_clustered = ref(0)
 const femaleCount_clustered = ref(0)
 const totalCount_clustered = ref(0)
-const data1 = ref(300)
-const data2 = ref(100)
-const total = ref(400)
+const data1 = ref(0)
+const data2 = ref(0)
+const total = ref(0)
 
 const clusteredData = ref([])
 const independentData = ref([])
