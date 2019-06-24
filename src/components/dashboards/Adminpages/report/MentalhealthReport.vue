@@ -1,5 +1,7 @@
 <template>
-  <div class="filter-form mb-5">
+  <div class="filter-form mb-2">
+    <h1>Filters</h1>
+    <hr>
     <form @submit.prevent="applyFilters" class="filter-form-container">
       <!-- Gender Wise Filter -->
       <div class="filter-item">
@@ -24,11 +26,7 @@
         <label for="dzongkhag">Dzongkhag:</label>
         <select id="dzongkhag" v-model="filters.dzongkhag">
           <option value="">Select Dzongkhag</option>
-          <option
-            v-for="dzongkhag in dzongkhags[filters.region]"
-            :key="dzongkhag"
-            :value="dzongkhag"
-          >
+          <option v-for="dzongkhag in dzongkhags[filters.region]" :key="dzongkhag" :value="dzongkhag">
             {{ dzongkhag }}
           </option>
         </select>
@@ -48,17 +46,34 @@
         </select>
       </div>
 
-      <button type="submit" class="filter-button">Apply Filters</button>
+      <button type="submit" class="filter-button mt-4 ">NEXT</button>
     </form>
   </div>
-<TypesOfReports />
+  <div v-if="filtersApplied" class="filter-option mb-5">
+    <h1>Which reports would you like to see</h1>
+    <hr>
+    <div class="filter-item">
+      <select v-model="selectedReport">
+        <option value="All Report">All Report</option>
+        <option value="Monitor Report">Monitor Report</option>
+        <option value="Case Study Report">Case Study Report</option>
+        <option value="Severity Report">Severity Report</option>
+      </select>
+    </div>
+    <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
+  </div>
+  <OverallReportTable v-if="showOverallReport" />
+  <MHMonitorReport v-if="showMonitorReport" />
+  <MHCaseStatusReport v-if="showCaseStatusReport" />
+  <MHSeverityReport v-if="showSeverityReport" />
 </template>
 
 <script setup>
 import { ref, reactive, provide } from 'vue'
-import TypesOfReports from './TypesOfReports.vue'
-
-
+import OverallReportTable from './OverallReportTable.vue';
+import MHMonitorReport from './MHMonitorReport/MHMonitorReport.vue';
+import MHCaseStatusReport from './MHCaseStatusReport/MHCaseStatusReport.vue';
+import MHSeverityReport from './MHSeverityReport/MHSeverityReport.vue';
 
 // Define reactive state for filters
 const filters = reactive({
@@ -88,8 +103,15 @@ const dzongkhags = ref({
 })
 
 const reportData = JSON.parse(sessionStorage.getItem('reportData')) || []
-// Reactive state for filtered data
 const filteredData = ref([])
+const filtersApplied = ref(false)
+const selectedReport = ref('All Report')
+const showOverallReport = ref(false)
+const showMonitorReport = ref(false)
+const showCaseStatusReport = ref(false)
+const showSeverityReport = ref(false)
+
+// sorting filter data
 const applyFilters = () => {
   filteredData.value = reportData.filter((item) => {
     if (filters.gender) {
@@ -103,8 +125,37 @@ const applyFilters = () => {
     }
     return true
   })
-  console.log('Filtered Data:',(filteredData.value))
+  console.log('Filtered Data:', (filteredData.value))
+  filtersApplied.value = true
 }
+
+// showing for selcted files
+const handleReportSelection = () => {
+  // Reset all report visibility
+  showOverallReport.value = false
+  showMonitorReport.value = false
+  showCaseStatusReport.value = false
+  showSeverityReport.value = false
+
+  // Show the selected report
+  switch (selectedReport.value) {
+    case 'All Report':
+      showOverallReport.value = true
+      break
+    case 'Monitor Report':
+      showMonitorReport.value = true
+      break
+    case 'Case Study Report':
+      showCaseStatusReport.value = true
+      break
+    case 'Severity Report':
+      showSeverityReport.value = true
+      break
+    default:
+      console.log('Invalid report type selected')
+  }
+}
+
 provide('filteredData', filteredData)
 </script>
 
@@ -147,7 +198,7 @@ provide('filteredData', filteredData)
 .filter-button {
   padding: 10px 20px;
   border: none;
-  background-color: #007bff;
+  background-color: #2C6975;
   color: white;
   font-size: 14px;
   font-weight: bold;
@@ -158,5 +209,12 @@ provide('filteredData', filteredData)
 
 .filter-button:hover {
   background-color: #0056b3;
+}
+
+.filter-option {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 </style>
