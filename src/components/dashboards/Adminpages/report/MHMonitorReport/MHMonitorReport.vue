@@ -4,37 +4,13 @@
       <div class="card option">
         <div class="card-body">
           <p class="card-text">Data Set</p>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="Rescreening Count" id="check1" v-model="selectedOptions">
-            <label class="form-check-label" for="check1">
-              Rescreening Count
+          <div v-for="(option, index) in dataOptions" :key="index" class="form-check text-start">
+            <input class="form-check-input" type="checkbox" :value="option.value" :id="'check'+index" v-model="selectedOptions">
+            <label class="form-check-label" :for="'check'+index">
+              {{ option.label }}
             </label>
           </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="Counseling" id="check2" v-model="selectedOptions">
-            <label class="form-check-label" for="check2">
-              Counseling
-            </label>
-          </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="Assessment" id="check3" v-model="selectedOptions">
-            <label class="form-check-label" for="check3">
-              Assessment
-            </label>
-          </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="Referral" id="check4" v-model="selectedOptions">
-            <label class="form-check-label" for="check4">
-              Referral
-            </label>
-          </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="Followup" id="check5" v-model="selectedOptions">
-            <label class="form-check-label" for="check5">
-              Followup
-            </label>
-          </div>
-          <button type="submit" class="btn btn-primary mt-3" @click="generateGraph">Generate</button>
+          <button @click="generateChart" class="btn btn-primary mt-3">Generate</button>
         </div>
       </div>
     </div>
@@ -43,7 +19,21 @@
         <div class="card-body">
           <p class="card-text">Graph</p>
           <div>
-            <canvas ref="SelectedChartCanvas"></canvas>
+            <canvas ref="chartCanvas"></canvas>
+          </div>
+          <div class=showtable >
+            <table v-if="showTable" class="table mt-3">
+            <thead>
+              <tr>
+                <th v-for="(value, key) in Tabledata[0]" :key="key">{{ key }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(data, index) in Tabledata" :key="index">
+                <td v-for="(value, key) in data" :key="key">{{ value }}</td>
+              </tr>
+            </tbody>
+          </table>
           </div>
         </div>
       </div>
@@ -52,55 +42,91 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import Chart from 'chart.js/auto';
 import { inject } from 'vue';
 
-const SelectedChartCanvas = ref(null);
+const chartCanvas = ref(null);
 const reportData = inject('filteredData');
-// Ensure reportData is an array
-const data = Array.isArray(reportData.value) ? reportData.value : [];
 
-const datacall = {
-        'Rescreening Count': item.rescreened,
-        'Counseling': item.service_and_treatment?.counseling,
-        'Assessment': item.service_and_treatment?.assessment_status,
-        'Referral': item.service_and_treatment?.referred,
-        'Followup': item.service_and_treatment?.follow_up,
-      };
-// Function to extract selected data values dynamically from service_and_treatment or rescreened
-function extractSelectedValues(data) {
-  const selectedDataValues = new Set(); // Use a Set to ensure uniqueness
-  data.forEach(item => {
-    if (datacall.value) {
-      selectedDataValues.add(datacall.value);
-    }
-  });
-  return Array.from(selectedDataValues); // Convert Set to Array for easy manipulation
-}
-
-// Function to count occurrences of each follow_up value
-function countSelectedDataValues(data) {
-  const counts = {};
-  data.forEach(value => {
-    counts[value] = (counts[value] || 0) + 1;
-  });
-  return counts;
-}
-
-// Extract follow_up values and count them
-const SelectedDataOptions = extractSelectedValues(data);
-const SelectedDataCounts = countSelectedDataValues(data.map(item => datacall.value ).filter(Boolean));
-
-// Prepare data for Chart.js
-const SelectedDataLabels = Object.keys(SelectedDataCounts);
-const SelectedData = Object.values(SelectedDataCounts);
-
-// Define a larger set of colors
-const followUpBackgroundColors = [
-  'rgba(44, 105, 117, 1)',
-  'rgba(114, 190, 203, 1)',
-  'rgba(104, 178, 160, 1)',
+const dataOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Rescreening Count', value: 'rescreened' },
+  { label: 'Counseling', value: 'counseling' },
+  { label: 'Assessment', value: 'assessment_status' },
+  { label: 'Referral', value: 'referred' },
+  { label: 'Follow-up', value: 'follow_up' }
 ];
 
+const Tabledata =[
+  { 'Rescreening Count': 3,
+    'Counseling': 12,
+    'Assessment': 5,
+    'Referral' : 2,
+    'Follow-up': 4
+  }
+];
+
+const selectedOptions = ref([]);
+
+let chart = null;
+let showTable = false;
+
+const generateChart = () => {
+  if (chart) {
+    chart.destroy();
+  }
+
+  if (selectedOptions.value.includes('all')) {
+    showTable = true;
+    return;
+  } else {
+    showTable = false;
+  }
+
+  const data = Array.isArray(reportData.value) ? reportData.value : [];
+
+  const chartData = {
+    labels: selectedOptions.value,
+    datasets: [{
+      label: 'Counts',
+      data: selectedOptions.value.map(option => {
+        return data.reduce((count, item) => {
+          if (option === 'rescreened') {
+            return count + (item[option] ? 1 : 0);
+          } else {
+            return count + (item.service_and_treatment && item.service_and_treatment[option] ? 1 : 0);
+          }
+        }, 0);
+      }),
+      backgroundColor: [
+        'rgba(44, 105, 117, 1)',
+        'rgba(114, 190, 203, 1)',
+        'rgba(104, 178, 160, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(153, 102, 255, 1)'
+      ],
+    }]
+  };
+
+  const ctx = chartCanvas.value.getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+  });
+};
+
+onMounted(() => {
+  if (chartCanvas.value) {
+    generateChart();
+  }
+});
+
+watch(reportData, () => {
+  generateChart();
+}, { deep: true });
 </script>

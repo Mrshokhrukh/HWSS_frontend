@@ -61,8 +61,8 @@ const followUpBackgroundColors = [
   'rgba(104, 178, 160, 1)',
 ];
 
-// Ensure there are enough colors
-const followUpDynamicColors = followUpBackgroundColors.slice(0, followUpLabels.length);
+// Ensure const followUpDynamicColors = followUpBackgroundColors.slice(0, followUpLabels.length);there are enough colors
+
 
 const followUpChartData = {
   labels: followUpLabels,
