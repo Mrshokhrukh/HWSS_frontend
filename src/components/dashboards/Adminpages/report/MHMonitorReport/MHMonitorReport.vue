@@ -17,7 +17,7 @@
               {{ option.label }}
             </label>
           </div>
-          <button @click="generateChart" class="btn btn-primary mt-3">Generate</button>
+          <button @click="generateReport" class="btn btn-primary mt-auto">Generate</button>
         </div>
       </div>
     </div>
@@ -140,3 +140,7 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+/* Add scoped styles as needed */
+</style>

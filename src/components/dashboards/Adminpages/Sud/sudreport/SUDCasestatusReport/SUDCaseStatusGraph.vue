@@ -1,85 +1,76 @@
 <template>
-  <div class="text-center">
-    <h1 class="fw-bold mb-4" style="color: #2c6975">Case Status Report</h1>
-    <div style="max-width: 60%; margin: auto;">
-      <canvas ref="chartCanvas" width="400" height="300"></canvas>
-    </div>
+  <div>
+    <canvas ref="chartCanvas"></canvas>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import Chart from 'chart.js/auto';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { Chart, registerables } from 'chart.js';
 
-const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
+Chart.register(...registerables);
 
-// Ongoing Case
-const OngoingCase_Count = ref(0);
-const OngoingCase_filter = ref([]);
-OngoingCase_filter.value = reportData.filter(item => item.service_and_treatment?.case_status === "On Going");
-OngoingCase_Count.value = OngoingCase_filter.value.length;
-console.log(`Ongoing Case Count = ${OngoingCase_Count.value}`);
-
-// Case Discontinue
-const CaseDiscontinue_Count = ref(0);
-const CaseDiscontinue_filter = ref([]);
-CaseDiscontinue_filter.value = reportData.filter(item => item.service_and_treatment?.case_status === "Case Discontinue");
-CaseDiscontinue_Count.value = CaseDiscontinue_filter.value.length;
-console.log(`Case Discontinue Count = ${CaseDiscontinue_Count.value}`);
-
-// Case Closed
-const CaseClosed_Count = ref(0);
-const CaseClosed_filter = ref([]);
-CaseClosed_filter.value = reportData.filter(item => item.service_and_treatment?.case_status === "Case Closed");
-CaseClosed_Count.value = CaseClosed_filter.value.length;
-console.log(`Case Closed Count = ${CaseClosed_Count.value}`);
-
-const chartCanvas = ref(null);
-
-const data = {
-  "On going Case": OngoingCase_Count.value,
-  "Case Discontinued": CaseDiscontinue_Count.value,
-  "Case Closed": CaseClosed_Count.value
-};
-
-onMounted(() => {
-  if (chartCanvas.value) {
-    new Chart(chartCanvas.value.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: Object.keys(data),
-        datasets: [{
-          label: 'Case Count',
-          data: Object.values(data),
-          backgroundColor: [
-            '#2c6975',
-            'rgba(54, 162, 235, 0.2)',
-            'rgba(255, 206, 86, 0.2)'
-          ],
-          borderColor: [
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)'
-          ],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        indexAxis: 'x',
-        responsive: true,
-        maintainAspectRatio: false, // Ensure the chart does not maintain aspect ratio
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
-    });
-  }
+const props = defineProps({
+  selectedOptions: Array,
+  reportData: Array,
 });
 
+const chartCanvas = ref(null);
+let chartInstance = null;
+
+const updateChart = () => {
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  const filteredData = props.selectedOptions.length > 0
+    ? props.reportData.filter(item => props.selectedOptions.includes(item.id))
+    : props.reportData;
+
+  const labels = filteredData.map(item => item.status);
+  const data = filteredData.map(item => item.count);
+
+  if (chartCanvas.value) {
+    chartInstance = new Chart(chartCanvas.value.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Number of Cases',
+            data,
+            backgroundColor: ['#56b5ac', '#40c78f', '#268497'],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+        },
+      },
+    });
+  }
+};
+
+watch(() => props.selectedOptions, updateChart, { deep: true });
+
+onMounted(() => {
+  updateChart();
+});
+
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+});
 </script>
 
 <style scoped>
-/* Add any custom styles here */
+canvas {
+  width: 100% !important;
+  height: auto !important;
+}
 </style>

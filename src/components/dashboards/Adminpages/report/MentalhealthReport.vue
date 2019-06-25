@@ -54,7 +54,7 @@
     <hr>
     <div class="filter-item">
       <select v-model="selectedReport">
-            <option value="Monitor Report">Monitor Report</option>
+        <option value="Monitor Report">Monitor Report</option>
         <option value="Case Study Report">Case Study Report</option>
         <option value="Severity Report">Severity Report</option>
       </select>
@@ -136,7 +136,7 @@ const handleReportSelection = () => {
 
   // Show the selected report
   switch (selectedReport.value) {
-       case 'Monitor Report':
+    case 'Monitor Report':
       showMonitorReport.value = true
       break
     case 'Case Study Report':
