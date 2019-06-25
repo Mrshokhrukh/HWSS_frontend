@@ -54,15 +54,13 @@
     <hr>
     <div class="filter-item">
       <select v-model="selectedReport">
-        <option value="All Report">All Report</option>
-        <option value="Monitor Report">Monitor Report</option>
+            <option value="Monitor Report">Monitor Report</option>
         <option value="Case Study Report">Case Study Report</option>
         <option value="Severity Report">Severity Report</option>
       </select>
     </div>
     <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
   </div>
-  <OverallReportTable v-if="showOverallReport" />
   <MHMonitorReport v-if="showMonitorReport" />
   <MHCaseStatusReport v-if="showCaseStatusReport" />
   <MHSeverityReport v-if="showSeverityReport" />
@@ -70,7 +68,6 @@
 
 <script setup>
 import { ref, reactive, provide } from 'vue'
-import OverallReportTable from './OverallReportTable.vue';
 import MHMonitorReport from './MHMonitorReport/MHMonitorReport.vue';
 import MHCaseStatusReport from './MHCaseStatusReport/MHCaseStatusReport.vue';
 import MHSeverityReport from './MHSeverityReport/MHSeverityReport.vue';
@@ -139,10 +136,7 @@ const handleReportSelection = () => {
 
   // Show the selected report
   switch (selectedReport.value) {
-    case 'All Report':
-      showOverallReport.value = true
-      break
-    case 'Monitor Report':
+       case 'Monitor Report':
       showMonitorReport.value = true
       break
     case 'Case Study Report':
