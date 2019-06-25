@@ -1,184 +1,141 @@
 <template>
-    <div class="card">
-        <!-- Severity Report: Mental Health Data Table -->
-        <DataTable :value="mentalHealthData" showGridlines tableStyle="min-width: 50rem" rowGroupMode="rowspan"
-            groupRowsBy="field">
-            <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xl font-bold">Severity Report: Mental Health Data</span>
-                </div>
-            </template>
-            <Column field="field" header="Field"></Column>
-            <Column header="Severity">
-                <template #body="slotProps">
-                    <span>{{ slotProps.data.severity }}</span>
-                </template>
-            </Column>
-            <Column header="Count">
-                <template #body="slotProps">
-                    <span v-if="typeof slotProps.data.count === 'string'">{{ slotProps.data.count }}</span>
-                    <ul v-else>
-                        <li v-for="(item, index) in slotProps.data.count" :key="index">
-                            {{ item.key }}: {{ item.count }}
-                        </li>
-                    </ul>
-                </template>
-            </Column>
-        </DataTable>
-
-        <!-- Severity Report: Substance Use Data Table -->
-        <DataTable :value="substanceUseData" showGridlines tableStyle="min-width: 50rem">
-            <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xl font-bold">Severity Report: Substance Use Data</span>
-                </div>
-            </template>
-            <Column field="field" header="Field"></Column>
-            <Column header="Severity">
-                <template #body="slotProps">
-                    <span>{{ slotProps.data.severity }}</span>
-                </template>
-            </Column>
-            <Column header="Count">
-                <template #body="slotProps">
-                    <span v-if="typeof slotProps.data.count === 'string'">{{ slotProps.data.count }}</span>
-                    <ul v-else>
-                        <li v-for="(item, index) in slotProps.data.count" :key="index">
-                            {{ item.key }}: {{ item.count }}
-                        </li>
-                    </ul>
-                </template>
-            </Column>
-        </DataTable>
+    <div class="card mt-3 b-0">
+      <h3 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">SUD Risk Level</h3>
+      <DataTable :value="tableData" :scrollable="true" scrollHeight="400px" class="p-datatable-sm">
+        <Column field="substance" header="Substance" frozen style="width: 200px"></Column>
+        <Column field="highRiskMale" header="High-risk Male" style="width: 150px"></Column>
+        <Column field="highRiskFemale" header="High-risk Female" style="width: 150px"></Column>
+        <Column field="moderateRiskMale" header="Moderate-risk Male" style="width: 150px"></Column>
+        <Column field="moderateRiskFemale" header="Moderate-risk Female" style="width: 150px"></Column>
+      </DataTable>
     </div>
-</template>
-
-<script setup>
-import { ref, computed } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
-
-// Function to filter data by category and severity
-const filterData = (type, level) => {
-    return reportData.value.filter(item => {
-        return item.measurement?.fields[`${type}_measurement`] === level;
-    }).length;
-};
-
-// Computed properties for mental health severity counts
-const gadCounts = {
-    severe: filterData('gad', 'severe'),
-    minimal: filterData('gad', 'minimal'),
-    moderate: filterData('gad', 'moderate'),
-    mild: filterData('gad', 'mild'),
-};
-
-const phqCounts = {
-    severe: filterData('phq', 'severe'),
-    minimal: filterData('phq', 'minimal'),
-    moderate: filterData('phq', 'moderate'),
-    moderately_severe: filterData('phq', 'moderately severe'),
-    mild: filterData('phq', 'mild'),
-};
-
-const aceCounts = {
-    high_risk: filterData('ace', 'high risk'),
-    intermediate_risk: filterData('ace', 'intermediate risk'),
-    low_risk: filterData('ace', 'low risk'),
-};
-
-const suicidalCounts = {
-    nearlyeveryday: filterData('suicidal', 'nearly everyday'),
-    more_than_half_the_days: filterData('suicidal', 'more than half the days'),
-    several_days: filterData('suicidal', 'several days'),
-};
-
-// Computed properties for substance use severity counts
-const LifetimeUse_Count = computed(() => ({
-    count: filterData('substance_use', 'Lifetime Use'),
-    severity: 'Lifetime Use'
-}));
-const CurrentUse_Count = computed(() => ({
-    count: filterData('substance_use', 'Current Use'),
-    severity: 'Current Use'
-}));
-const SubstanceWise_Count = computed(() => ({
-    count: filterData('substance_use', 'Substance Wise'),
-    severity: 'Substance Wise'
-}));
-
-// Aggregate data for Mental Health Data DataTable
-const mentalHealthData = ref([
-    { field: 'Depression', severity: 'Severe', count: gadCounts.severe },
-    { field: 'Depression', severity: 'Minimal', count: gadCounts.minimal },
-    { field: 'Depression', severity: 'Moderate', count: gadCounts.moderate },
-    { field: 'Depression', severity: 'Mild', count: gadCounts.mild },
-    { field: 'Anxiety', severity: 'Severe', count: phqCounts.severe },
-    { field: 'Anxiety', severity: 'Minimal', count: phqCounts.minimal },
-    { field: 'Anxiety', severity: 'Moderate', count: phqCounts.moderate },
-    { field: 'Anxiety', severity: 'Moderately Severe', count: phqCounts.moderately_severe },
-    { field: 'Anxiety', severity: 'Mild', count: phqCounts.mild },
-    { field: 'ACE', severity: 'High Risk', count: aceCounts.high_risk },
-    { field: 'ACE', severity: 'Intermediate Risk', count: aceCounts.intermediate_risk },
-    { field: 'ACE', severity: 'Low Risk', count: aceCounts.low_risk },
-    { field: 'Suicidal Behaviours', severity: 'Nearly Everyday', count: suicidalCounts.nearlyeveryday },
-    { field: 'Suicidal Behaviours', severity: 'More than Half the Days', count: suicidalCounts.more_than_half_the_days },
-    { field: 'Suicidal Behaviours', severity: 'Several Days', count: suicidalCounts.several_days },
-].reduce((acc, cur) => {
-    const existingItem = acc.find(item => item.field === cur.field && item.severity === cur.severity);
-    if (existingItem) {
-        existingItem.count += cur.count;
-    } else {
-        acc.push(cur);
-    }
-    return acc;
-}, []));
-
-// Aggregate data for Substance Use Data DataTable
-const substanceUseData = ref([
-    { field: 'Lifetime Use', severity: 'Lifetime Use', count: LifetimeUse_Count.value.count },
-    { field: 'Current Use', severity: 'Current Use', count: CurrentUse_Count.value.count },
-    { field: 'Substance Wise', severity: 'Substance Wise', count: SubstanceWise_Count.value.count }
-].reduce((acc, cur) => {
-    const existingItem = acc.find(item => item.field === cur.field && item.severity === cur.severity);
-    if (existingItem) {
-        existingItem.count += cur.count;
-    } else {
-        acc.push(cur);
-    }
-    return acc;
-}, []));
-</script>
-
-<style scoped>
-.card {
+  </template>
+  
+  <script setup>
+  import { computed } from 'vue';
+  import DataTable from 'primevue/datatable';
+  import Column from 'primevue/column';
+  
+  const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
+  
+  function extractMeasurementData(reportData) {
+    const results = [];
+  
+    reportData.forEach(person => {
+      const measurementAssist = person.measurement_assist?.fields;
+      const gender = person.user?.fields?.gender || "unknown";
+      if (measurementAssist) {
+        const data = {
+          gender: gender,
+          alcoholic: measurementAssist.alcoholic_measurement || "no data",
+          amphetamine: measurementAssist.amphetamine_measurement || "no data",
+          cannabis: measurementAssist.cannabis_measurement || "no data",
+          cocaine: measurementAssist.cocaine_measurement || "no data",
+          hallucinogens: measurementAssist.hallucinogens_measurement || "no data",
+          inhalants: measurementAssist.inhalants_measurement || "no data",
+          opioids: measurementAssist.opioids_measurement || "no data",
+          sedatives: measurementAssist.sedatives_measurement || "no data",
+          tobacco: measurementAssist.tobacco_measurement || "no data",
+          other: measurementAssist.other_measurement || "no data"
+        };
+        results.push(data);
+      }
+    });
+  
+    return results;
+  }
+  
+  const extractedData = extractMeasurementData(reportData);
+  
+  function countRiskLevels(data) {
+    const counts = {
+      tobacco_moderate_male: 0, tobacco_moderate_female: 0,
+      tobacco_high_male: 0, tobacco_high_female: 0,
+      alcoholic_moderate_male: 0, alcoholic_moderate_female: 0,
+      alcoholic_high_male: 0, alcoholic_high_female: 0,
+      cannabis_moderate_male: 0, cannabis_moderate_female: 0,
+      cannabis_high_male: 0, cannabis_high_female: 0,
+      cocaine_moderate_male: 0, cocaine_moderate_female: 0,
+      cocaine_high_male: 0, cocaine_high_female: 0,
+      amphetamine_moderate_male: 0, amphetamine_moderate_female: 0,
+      amphetamine_high_male: 0, amphetamine_high_female: 0,
+      inhalant_moderate_male: 0, inhalant_moderate_female: 0,
+      inhalant_high_male: 0, inhalant_high_female: 0,
+      sedative_moderate_male: 0, sedative_moderate_female: 0,
+      sedative_high_male: 0, sedative_high_female: 0,
+      hallucinate_moderate_male: 0, hallucinate_moderate_female: 0,
+      hallucinate_high_male: 0, hallucinate_high_female: 0,
+      opioids_moderate_male: 0, opioids_moderate_female: 0,
+      opioids_high_male: 0, opioids_high_female: 0,
+      others_moderate_male: 0, others_moderate_female: 0,
+      others_high_male: 0, others_high_female: 0,
+    };
+  
+    data.forEach(personData => {
+      Object.keys(personData).forEach(substance => {
+        const riskLevel = personData[substance];
+        const substanceKey = substance.toLowerCase().replace('-', '_');
+  
+        if (riskLevel === 'moderate risk' || riskLevel === 'high risk') {
+          const genderKeyModerate = `${substanceKey}_moderate`;
+          const genderKeyHigh = `${substanceKey}_high`;
+  
+          if (personData.gender === 'Male') {
+            if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_male`]++;
+            if (riskLevel === 'high risk') counts[`${genderKeyHigh}_male`]++;
+          } else if (personData.gender === 'Female') {
+            if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_female`]++;
+            if (riskLevel === 'high risk') counts[`${genderKeyHigh}_female`]++;
+          }
+        }
+      });
+    });
+  
+    return counts;
+  }
+  
+  const counts = countRiskLevels(extractedData);
+  
+  const tableData = computed(() => {
+    const substances = [
+      'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type', 
+      'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+    ];
+  
+    return substances.map(substance => {
+      const key = substance.toLowerCase().replace('-type', '');
+      return {
+        substance,
+        highRiskMale: counts[`${key}_high_male`] || 0,
+        highRiskFemale: counts[`${key}_high_female`] || 0,
+        moderateRiskMale: counts[`${key}_moderate_male`] || 0,
+        moderateRiskFemale: counts[`${key}_moderate_female`] || 0
+      };
+    });
+  });
+  </script>
+  
+  <style scoped>
+  .card {
     margin-top: 20px;
-}
-
-.card table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.card th,
-.card td {
-    border: 2px solid #000;
-    padding: 8px;
-    text-align: left;
-}
-
-.card th {
-    background-color: hsl(107, 63%, 52%);
-}
-
-.card ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.card li {
-    margin-bottom: 4px;
-}
-</style>
+  }
+  
+  :deep(.p-datatable) {
+    font-size: 0.9rem;
+  }
+  
+  :deep(.p-datatable .p-datatable-thead > tr > th) {
+    background-color: #2c6975;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  :deep(.p-datatable .p-datatable-tbody > tr > td) {
+    text-align: center;
+  }
+  
+  :deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
+    background-color: #d3e2e4;
+  }
+  </style>

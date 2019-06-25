@@ -1,12 +1,19 @@
 <template>
   <div class="row">
-    <div class="col-md-3 text-center">
+    <div class="col-md-2 text-center">
       <div class="card option">
         <div class="card-body">
           <p class="card-text">Data Set</p>
           <div v-for="(option, index) in dataOptions" :key="index" class="form-check text-start">
-            <input class="form-check-input" type="checkbox" :value="option.value" :id="'check'+index" v-model="selectedOptions">
-            <label class="form-check-label" :for="'check'+index">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :value="option.value"
+              :id="'check' + index"
+              v-model="selectedOptions"
+              @change="handleCheckboxChange(option.value)"
+            />
+            <label class="form-check-label" :for="'check' + index">
               {{ option.label }}
             </label>
           </div>
@@ -14,26 +21,14 @@
         </div>
       </div>
     </div>
-    <div class="col-md-9 text-center">
+    <div class="col-md-10 text-center">
       <div class="card option">
-        <div class="card-body">
-          <p class="card-text">Graph</p>
+        <div class="card">
           <div>
             <canvas ref="chartCanvas"></canvas>
           </div>
-          <div class=showtable >
-            <table v-if="showTable" class="table mt-3">
-            <thead>
-              <tr>
-                <th v-for="(value, key) in Tabledata[0]" :key="key">{{ key }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(data, index) in Tabledata" :key="index">
-                <td v-for="(value, key) in data" :key="key">{{ value }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-if="showTable" class="showtable">
+            <MHMonitorTable />
           </div>
         </div>
       </div>
@@ -42,12 +37,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue';
-import Chart from 'chart.js/auto';
-import { inject } from 'vue';
+import { onMounted, ref, computed, inject } from 'vue'
+import Chart from 'chart.js/auto'
+import MHMonitorTable from './MHMonitorTable.vue'
 
-const chartCanvas = ref(null);
-const reportData = inject('filteredData');
+const chartCanvas = ref(null)
+const reportData = inject('filteredData')
 
 const dataOptions = [
   { label: 'All', value: 'all' },
@@ -56,77 +51,92 @@ const dataOptions = [
   { label: 'Assessment', value: 'assessment_status' },
   { label: 'Referral', value: 'referred' },
   { label: 'Follow-up', value: 'follow_up' }
-];
+]
 
-const Tabledata =[
-  { 'Rescreening Count': 3,
-    'Counseling': 12,
-    'Assessment': 5,
-    'Referral' : 2,
-    'Follow-up': 4
+const selectedOptions = ref([])
+const showTable = ref(false)
+
+let chart = null
+
+const counts = computed(() => {
+  const result = {}
+
+  // Initialize result object with empty arrays for each option
+  dataOptions.forEach((option) => {
+    result[option.value] = {}
+  })
+
+  // Fill result object with counts
+  reportData.value.forEach((item) => {
+    dataOptions.forEach((option) => {
+      const key = option.value
+      const value = item.service_and_treatment?.[key] || item.rescreened?.toString() || 'NA'
+      result[key][value] = (result[key][value] || 0) + 1
+    })
+  })
+
+  return result
+})
+
+const handleCheckboxChange = (value) => {
+  if (selectedOptions.value.length > 1) {
+    selectedOptions.value = [value]
   }
-];
-
-const selectedOptions = ref([]);
-
-let chart = null;
-let showTable = false;
+}
 
 const generateChart = () => {
   if (chart) {
-    chart.destroy();
+    chart.destroy()
   }
 
   if (selectedOptions.value.includes('all')) {
-    showTable = true;
-    return;
+    showTable.value = true
+    return
   } else {
-    showTable = false;
+    showTable.value = false
   }
 
-  const data = Array.isArray(reportData.value) ? reportData.value : [];
+  const datasets = selectedOptions.value.map((option) => {
+    const data = counts.value[option]
+    return {
+      label: option,
+      data: Object.values(data),
+      backgroundColor: getRandomColor()
+    }
+  })
 
-  const chartData = {
-    labels: selectedOptions.value,
-    datasets: [{
-      label: 'Counts',
-      data: selectedOptions.value.map(option => {
-        return data.reduce((count, item) => {
-          if (option === 'rescreened') {
-            return count + (item[option] ? 1 : 0);
-          } else {
-            return count + (item.service_and_treatment && item.service_and_treatment[option] ? 1 : 0);
-          }
-        }, 0);
-      }),
-      backgroundColor: [
-        'rgba(44, 105, 117, 1)',
-        'rgba(114, 190, 203, 1)',
-        'rgba(104, 178, 160, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(153, 102, 255, 1)'
-      ],
-    }]
-  };
+  const labels = selectedOptions.value.flatMap((option) => Object.keys(counts.value[option]))
 
-  const ctx = chartCanvas.value.getContext('2d');
+  const ctx = chartCanvas.value.getContext('2d')
   chart = new Chart(ctx, {
     type: 'bar',
-    data: chartData,
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-    },
-  });
-};
+      scales: {
+        y: {
+          beginAtZero: true,
+          stepSize: 1
+        }
+      }
+    }
+  })
+}
+
+function getRandomColor() {
+  const r = Math.floor(Math.random() * 255)
+  const g = Math.floor(Math.random() * 255)
+  const b = Math.floor(Math.random() * 255)
+  return `rgba(${r}, ${g}, ${b}, 0.7)`
+}
 
 onMounted(() => {
   if (chartCanvas.value) {
-    generateChart();
+    generateChart()
   }
-});
-
-watch(reportData, () => {
-  generateChart();
-}, { deep: true });
+})
 </script>
