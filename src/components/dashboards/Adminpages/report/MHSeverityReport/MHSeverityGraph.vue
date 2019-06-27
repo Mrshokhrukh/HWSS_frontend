@@ -39,13 +39,17 @@
                 </div>
             </div>
         </div>
+
+    </div>
+    <div>
+        <MHDAASeverityTable />
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import Chart from 'chart.js/auto'
-
+import MHDAASeverityTable from './MHDAASeverityTable.vue';
 const activeButton = ref(null)
 const chart = ref(null)
 

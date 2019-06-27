@@ -1,17 +1,12 @@
 <template>
-  <div class="">
-    <DataTable :value="aggregateData" tableStyle="min-width: 50rem">
-      <template #header>
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-xl font-bold">Aggregates</span>
-        </div>
-      </template>
+  <div>
+    <DataTable :value="aggregateData">
       <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header">
         <template #body="slotProps">
           <template v-if="Array.isArray(slotProps.data[col.field])">
             <ul>
               <li v-for="(item, index) in slotProps.data[col.field]" :key="index">
-                {{ item.key }}: {{ item.count }}
+                  {{ item.key }}: {{ item.count }}
               </li>
             </ul>
           </template>
@@ -38,37 +33,24 @@ const NotRequired_Count = ref(reportData.value.filter(item => item.service_and_t
 const Availed_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Availed').length);
 const Conducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Conducted').length);
 const NotConducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Not Conducted').length);
-const Open_Case_Count = ref(reportData.value.filter(item => item.caseStatus === 'Open').length);
-const Closed_Case_Count = ref(reportData.value.filter(item => item.caseStatus === 'Closed').length);
-
-const FollowUp_Counts = computed(() => {
-  const counts = {
-    'Treatment completed': 0,
-    'Undergoing treatment': 0,
-    'Completed counselling sessions': 0,
-    'Undergoing counselling': 0,
-    'Unwilling to undergo treatment': 0,
-    'Undergone Rehabilitation': 0,
-    'Undergoing Rehabilitation': 0,
-    'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)': 0,
-    'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)': 0,
-    'School-based SUD Treatment and Care': 0,
-    'Institution-based SUD Treatment and Care': 0,
-    'Follow up Drug Test Conducted': 0,
-    'Detention-based SUD Treatment and Care': 0,
-  };
-
-  reportData.value.forEach(item => {
-    if (item.followUp in counts) {
-      counts[item.followUp]++;
-    }
-  });
-
-  return Object.entries(counts).map(([key, count]) => ({ key, count }));
-});
+const Referred_Count = ref(reportData.value.filter(item => item.service_and_treatment?.referred === 'Referred').length);
+const Notreferred_Count = ref(reportData.value.filter(item => item.service_and_treatment?.referred === 'Not Referred').length);
+// follow-up counts
+const Treatmentcompleted_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Treatment Completed').length);
+const Undergoingtreatment_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing treatment').length);
+const Completedcounsellingsessions_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Completed counselling sessions').length);
+const Undergoingcounselling_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing counselling').length);
+const Unwillingtoundergotreatment_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Unwilling to undergo treatment').length);
+const UndergoneRehabilitation_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergone Rehabilitation').length);
+const UndergoingRehabilitation_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing Rehabilitation').length);
+const HospitalbasedOutpatientSUDTreatmentandCarePrimaryPhase_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)').length);
+const HospitalbasedOutpatientSUDTreatmentandCareContinuingCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)').length);
+const SchoolbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'School-based SUD Treatment and Care').length);
+const InstitutionbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Institution-based SUD Treatment and Care').length);
+const FollowupDrugTestConducted_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Follow up Drug Test Conducted').length);
+const DetentionbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Detention-based SUD Treatment and Care').length);
 
 const columns = ref([
-  // { field: 'category', header: 'Category' },
   { field: 'rescreening', header: 'Rescreening' },
   { field: 'counseling', header: 'Counseling' },
   { field: 'assessment', header: 'Assessment' },
@@ -78,7 +60,6 @@ const columns = ref([
 
 const aggregateData = computed(() => [
   {
-    // category: 'Counts',
     rescreening: `Total: ${Rescreening_count.value}`,
     counseling: [
       { key: 'Waiting List', count: WaitingList_Count.value },
@@ -90,10 +71,24 @@ const aggregateData = computed(() => [
       { key: 'Not Conducted', count: NotConducted_Count.value }
     ],
     referral: [
-      { key: 'Referred', count: Open_Case_Count.value },
-      { key: 'Not Referred', count: Closed_Case_Count.value }
+      { key: 'Referred', count: Referred_Count.value },
+      { key: 'Not Referred', count: Notreferred_Count.value }
     ],
-    followUp: FollowUp_Counts.value
+    followUp: [
+      { key: 'Treatment completed', count: Treatmentcompleted_count.value },
+      { key: 'Undergoing treatment', count: Undergoingtreatment_count.value },
+      { key: 'Completed counselling sessions', count: Completedcounsellingsessions_count.value },
+      { key: 'Undergoing counselling', count: Undergoingcounselling_count.value },
+      { key: 'Unwilling to undergo treatment', count: Unwillingtoundergotreatment_count.value },
+      { key: 'Undergone Rehabilitation', count: UndergoneRehabilitation_count.value },
+      { key: 'Undergoing Rehabilitation', count: UndergoingRehabilitation_count.value },
+      { key: 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)', count: HospitalbasedOutpatientSUDTreatmentandCarePrimaryPhase_count.value },
+      { key: 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)', count: HospitalbasedOutpatientSUDTreatmentandCareContinuingCare_count.value },
+      { key: 'School-based SUD Treatment and Care', count: SchoolbasedSUDTreatmentandCare_count.value },
+      { key: 'Institution-based SUD Treatment and Care', count: InstitutionbasedSUDTreatmentandCare_count.value },
+      { key: 'Follow up Drug Test Conducted', count: FollowupDrugTestConducted_count.value },
+      { key: 'Detention-based SUD Treatment and Care', count: DetentionbasedSUDTreatmentandCare_count.value }
+    ]
   }
 ]);
 </script>
