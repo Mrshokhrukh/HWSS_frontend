@@ -2,40 +2,49 @@
   <div class="card">
     <h3 class="card-title">School/Event Data</h3>
     <DataTable :value="tableData" :rowHover="true" class="p-datatable-sm" responsiveLayout="scroll">
-      <Column field="schoolEvent" header="School/Event" sortable></Column>
-      <Column field="individualsScreened" header="Individuals Screened" sortable>
+      <Column field="schoolEvent" header="Agency/Event" sortable></Column>
+      <Column field="individualsScreened" header="Individuals Screened" sortable></Column>
+      <Column field="suicidalBehavior" header="Suicidal Behavior" sortable></Column>
+      <ColumnGroup type="header">
+        <Row>
+          <Column header="School/Event Data" :colspan="1" :rowspan="2"/>
+          <Column header="No. of Individuals Screened" :colspan="1" :rowspan="2"/>
+          <Column header="Suicidal Behavior" :colspan="1" :rowspan="2"/>
+          <Column header="PHQ" :colspan="5"/>
+          <Column header="GAD" :colspan="5"/>
+          <Column header="SUD" :rowspan="2"/>
+        </Row>
+        <Row>
+          <Column v-for="level in severityLevels" :key="'phq-'+level" :header="level"/>
+          <Column v-for="level in severityLevels" :key="'gad-'+level" :header="level"/>
+        </Row>
+      </ColumnGroup>
+      <Column v-for="level in severityLevels" :key="'phq-'+level" :field="'phq.'+level">
         <template #body="slotProps">
-          {{ slotProps.data.individualsScreened }}
+          {{ slotProps.data.phq[level] }}
         </template>
       </Column>
-      <Column field="suicidalBehavior" header="Suicidal Behavior" sortable>
-        <template #body="slotProps">
-          {{ slotProps.data.suicidalBehavior }}
+      <Column v-for="level in severityLevels" :key="'gad-'+level" :field="'gad.'+level">
+        <template #body="slotProps" >
+          {{ slotProps.data.gad[level] }}
         </template>
       </Column>
-      <Column field="severity" header="Severity (PHQ-9)">
+      <Column>
         <template #body="slotProps">
-          <div class="severity-bars">
-            <div v-for="(value, index) in slotProps.data.severity" :key="index" 
-                 class="severity-bar" 
-                 :style="{ width: `${value}%`, backgroundColor: getSeverityColor(index) }"
-                 :title="`${getSeverityLabel(index)}: ${value}%`">
-            </div>
-          </div>
-        </template>
-      </Column>
-      <Column field="sudSeverity" header="SUD Severity">
-        <template #body="slotProps">
-          <div class="severity-bars">
-            <div v-for="(value, index) in slotProps.data.sudSeverity" :key="index" 
-                 class="severity-bar" 
-                 :style="{ width: `${value}%`, backgroundColor: getSUDSeverityColor(index) }"
-                 :title="`${getSUDSeverityLabel(index)}: ${value}%`">
-            </div>
-          </div>
+          <Button label="SUD Details" @click="showSUDDetails(slotProps.data)" />
         </template>
       </Column>
     </DataTable>
+    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" :style="{width: '80vw'}">
+      <TabView>
+        <TabPanel v-for="substance in substances" :key="substance" :header="substance">
+          <DataTable :value="getSUDDetails(substance)" class="p-datatable-sm">
+            <Column field="riskLevel" header="Risk Level"></Column>
+            <Column field="count" header="Count"></Column>
+          </DataTable>
+        </TabPanel>
+      </TabView>
+    </Dialog>
   </div>
 </template>
 
@@ -43,6 +52,12 @@
 import { ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import ColumnGroup from 'primevue/columngroup';
+import Row from 'primevue/row';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
 
 const props = defineProps({
   filteredData: {
@@ -50,6 +65,17 @@ const props = defineProps({
     required: true
   }
 });
+
+const severityLevels = ['Minimal', 'Mild', 'Moderate', 'Moderately Severe', 'Severe'];
+const substances = [
+  'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
+  'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+];
+const riskLevels = ['No Risk', 'Low Risk', 'Moderate Risk', 'High Risk'];
+
+const displaySUDDialog = ref(false);
+const selectedSchool = ref('');
+const selectedSUDData = ref({});
 
 const tableData = computed(() => {
   const schoolEvents = new Map();
@@ -61,8 +87,12 @@ const tableData = computed(() => {
         schoolEvent,
         individualsScreened: 0,
         suicidalBehavior: 0,
-        severity: [0, 0, 0, 0, 0],
-        sudSeverity: [0, 0, 0, 0]
+        phq: { Minimal: 0, Mild: 0, Moderate: 0, 'Moderately Severe': 0, Severe: 0 },
+        gad: { Minimal: 0, Mild: 0, Moderate: 0, 'Moderately Severe': 0, Severe: 0 },
+        sud: {}
+      });
+      substances.forEach(substance => {
+        schoolEvents.get(schoolEvent).sud[substance] = { 'No Risk': 0, 'Low Risk': 0, 'Moderate Risk': 0, 'High Risk': 0 };
       });
     }
 
@@ -75,43 +105,41 @@ const tableData = computed(() => {
 
     const phqMeasurement = item.measurement?.fields?.phq_measurement;
     if (phqMeasurement) {
-      const index = ['minimal', 'mild', 'moderate', 'moderately severe', 'severe'].indexOf(phqMeasurement);
-      if (index !== -1) data.severity[index]++;
+      data.phq[capitalizeFirstLetter(phqMeasurement)]++;
     }
 
-    const sudMeasurement = item.measurement_assist?.fields?.alcoholic_measurement;
-    if (sudMeasurement) {
-      const index = ['no risk', 'low risk', 'moderate risk', 'high risk'].indexOf(sudMeasurement);
-      if (index !== -1) data.sudSeverity[index]++;
+    const gadMeasurement = item.measurement?.fields?.gad_measurement;
+    if (gadMeasurement) {
+      data.gad[capitalizeFirstLetter(gadMeasurement)]++;
     }
+
+    substances.forEach(substance => {
+      const sudMeasurement = item.measurement_assist?.fields?.[`${substance.toLowerCase()}_measurement`];
+      if (sudMeasurement) {
+        data.sud[substance][capitalizeFirstLetter(sudMeasurement)]++;
+      }
+    });
   });
 
-  return Array.from(schoolEvents.values()).map(item => ({
-    ...item,
-    severity: item.severity.map(v => (v / item.individualsScreened * 100).toFixed(1)),
-    sudSeverity: item.sudSeverity.map(v => (v / item.individualsScreened * 100).toFixed(1))
-  }));
+  return Array.from(schoolEvents.values());
 });
 
-const getSeverityColor = (index) => {
-  const colors = ['#4caf50', '#8bc34a', '#ffc107', '#ff9800', '#f44336'];
-  return colors[index];
-};
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
-const getSeverityLabel = (index) => {
-  const labels = ['Minimal', 'Mild', 'Moderate', 'Moderately Severe', 'Severe'];
-  return labels[index];
-};
+function showSUDDetails(data) {
+  selectedSchool.value = data.schoolEvent;
+  selectedSUDData.value = data.sud;
+  displaySUDDialog.value = true;
+}
 
-const getSUDSeverityColor = (index) => {
-  const colors = ['#4caf50', '#8bc34a', '#ffc107', '#f44336'];
-  return colors[index];
-};
-
-const getSUDSeverityLabel = (index) => {
-  const labels = ['No Risk', 'Low Risk', 'Moderate Risk', 'High Risk'];
-  return labels[index];
-};
+function getSUDDetails(substance) {
+  return riskLevels.map(level => ({
+    riskLevel: level,
+    count: selectedSUDData.value[substance][level]
+  }));
+}
 </script>
 
 <style scoped>
@@ -132,6 +160,7 @@ const getSUDSeverityLabel = (index) => {
 
 :deep(.p-datatable) {
   font-family: Arial, sans-serif;
+  border-collapse: collapse;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {
@@ -139,7 +168,10 @@ const getSUDSeverityLabel = (index) => {
   color: #333;
   font-weight: bold;
   padding: 1rem;
+  text-align: center;
+  border: 1px solid #ddd;
 }
+
 
 :deep(.p-datatable .p-datatable-tbody > tr) {
   background-color: #ffffff;
@@ -150,15 +182,7 @@ const getSUDSeverityLabel = (index) => {
   background-color: #f0f0f0;
 }
 
-.severity-bars {
-  display: flex;
-  height: 20px;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.severity-bar {
-  height: 100%;
-  transition: width 0.3s ease;
+:deep(.p-datatable .p-datatable-tfoot > tr > td) {
+  border: 1px solid #ddd;
 }
 </style>

@@ -61,9 +61,9 @@
     </div>
     <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
   </div>
-  <MHMonitorReport v-if="showMonitorReport" />
-  <MHCaseStatusReport v-if="showCaseStatusReport" />
-  <MHSeverityReport v-if="showSeverityReport" />
+  <MHMonitorReport v-if="showMonitorReport" :filteredData="filteredData"/>
+  <MHCaseStatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
+  <MHSeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
 </template>
 
 <script setup>
