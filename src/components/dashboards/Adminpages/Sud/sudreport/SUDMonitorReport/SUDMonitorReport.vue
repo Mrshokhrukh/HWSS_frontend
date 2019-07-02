@@ -21,10 +21,9 @@
                     <div v-else>
                         <div class="graph">
                             <div class="graph-placeholder d-flex justify-content-around">
-                                <SUDMonitorGraph v-if="selectedOption" :selectedOption="selectedOption"
+                                <SUDMonitorGraph v-if="selectedOption && selectedOption.id !== 'Table'" :selectedOption="selectedOption"
                                     :reportData="reportData" />
-
-                                <SUDTableLayer v-else :reportData="filteredData" />
+                                <SUDTableLayer v-if="selectedOption && selectedOption.id === 'Table'" :reportData="filteredData" />
                             </div>
                         </div>
                     </div>
@@ -83,7 +82,6 @@ const rawData = [
     }
 ];
 
-// Static options with adjusted labels and IDs
 const options = ref([
     { id: 'Rescreening', label: 'Rescreening', selected: false },
     { id: 'Counseling', label: 'Counseling', selected: false },
@@ -109,30 +107,31 @@ const generateReport = () => {
     selectedOption.value = options.value.find(option => option.selected);
     if (selectedOption.value) {
         showPreview.value = true;
-        // Prepare report data based on selected option's corresponding measurement
-        const selectedKey = selectedOption.value.id === 'Follow' ? 'follow_up_measurement' :
-            selectedOption.value.id === 'Referrals' ? 'referral_measurement' :
-                selectedOption.value.id.toLowerCase() + '_measurement';
-        reportData.value = rawData.map(item => ({
-            status: item.service[selectedKey],
-            count: item.Rescreened && item.service[selectedKey] !== undefined ? 1 : 0
-        })).reduce((acc, curr) => {
-            const existingItem = acc.find(item => item.status === curr.status);
-            if (existingItem) {
-                existingItem.count += curr.count;
-            } else {
-                acc.push(curr);
-            }
-            return acc;
-        }, []);
+        if (selectedOption.value.id !== 'Table') {
+            const selectedKey = selectedOption.value.id === 'Follow' ? 'follow_up_measurement' :
+                selectedOption.value.id === 'Referrals' ? 'referral_measurement' :
+                    selectedOption.value.id.toLowerCase() + '_measurement';
+            reportData.value = rawData.map(item => ({
+                status: item.service[selectedKey],
+                count: item.Rescreened && item.service[selectedKey] !== undefined ? 1 : 0
+            })).reduce((acc, curr) => {
+                const existingItem = acc.find(item => item.status === curr.status);
+                if (existingItem) {
+                    existingItem.count += curr.count;
+                } else {
+                    acc.push(curr);
+                }
+                return acc;
+            }, []);
+        }
+        // For 'Table' option, we don't need to process the data as filteredData will handle it
     } else {
         alert('Please select a parameter before generating the report.');
     }
 };
 
-// Define filteredData based on selectedOption and reportData
 const filteredData = computed(() => {
-    if (!selectedOption.value) {
+    if (!selectedOption.value || selectedOption.value.id === 'Table') {
         return rawData;
     } else {
         const selectedKey = selectedOption.value.id === 'Follow' ? 'follow_up_measurement' :

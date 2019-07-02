@@ -57,8 +57,14 @@
                                 <button type="button" class="btn mb-2"
                                     :class="{ 'btn-primary': activeButton === 'Others' }"
                                     @click="setActiveButton('Others')">Others</button>
+
+                                    <button type="button" class="btn mb-2"
+                                    :class="{ 'btn-primary': activeButton === 'Table' }"
+                                    @click="setActiveButton('Table')">Table</button>
                             </div>
                         </div>
+
+                        
 
                     </div>
                 </div>

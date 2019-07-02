@@ -39,7 +39,7 @@
 <script setup>
 import { onMounted, ref, computed, inject } from 'vue'
 import Chart from 'chart.js/auto'
-import MHMonitorTable from './MHMonitorTable.vue'
+import MHMonitorTable from './MHmonitorTable.vue'
 
 const chartCanvas = ref(null)
 const reportData = inject('filteredData')

@@ -67,9 +67,9 @@
       <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
     </div>
   </div>
-  <SUDMonitorReport v-if="showMonitorReport" />
-  <SUDCaseStatusReport v-if="showCaseStatusReport" />
-  <SUDSeverityReport v-if="showSeverityReport" />
+  <SUDMonitorReport v-if="showMonitorReport" :filteredData="filteredData" />
+  <SUDCaseStatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
+  <SUDSeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
 </template>
 
 <script setup>
@@ -116,18 +116,12 @@ const showSeverityReport = ref(false)
 // sorting filter data
 const applyFilters = () => {
   filteredData.value = reportData.filter((item) => {
-    if (filters.gender) {
-      return item.user?.fields?.gender === filters.gender
-    }
-    if (filters.dzongkhag) {
-      return item.user?.fields?.ps_add_dzongkhag === filters.dzongkhag
-    }
-    if (filters.class) {
-      return item.user_agency?.fields?.user_class === filters.class
-    }
-    return true
+    if (filters.gender && item.user?.fields?.gender !== filters.gender) return false;
+    if (filters.dzongkhag && item.user?.fields?.ps_add_dzongkhag !== filters.dzongkhag) return false;
+    if (filters.class && item.user_agency?.fields?.user_class !== filters.class) return false;
+    return true;
   })
-  console.log('Filtered Data:', (filteredData.value))
+  console.log('Filtered Data:', filteredData.value)
   filtersApplied.value = true
 }
 

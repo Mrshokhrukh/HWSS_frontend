@@ -1,338 +1,141 @@
 <template>
-  <div class="card l">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
-      filterDisplay="row" :loading="loading" sortField="substanceRisk" :sortOrder="1"
-      :globalFilterFields="['year', 'gender', 'dzongkha', 'location', 'age', 'class', 'employmentHistory']">
-      <template #header>
-        <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
-            @click="clearFilter()" />
-          <div class="p-input-icon-left">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
-          </div>
-        </div>
-      </template>
-      <template #empty> No data found. </template>
-      <template #loading> Loading data. Please wait. </template>
-
-      <!-- Additional Headers -->
-
-      <Column header="Date" field="date" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.date }}
-        </template>
-      </Column>
-      <Column header="Gender" field="sex" :showFilterMenu="false" style="min-width: 10rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.gender }}
-        </template>
-      </Column>
-      <Column header="Dzongkhag" field="present_dzongkhag" :showFilterMenu="false" style="min-width: 10rem"
-        :sortable="true">
-        <template #body="{ data }">
-          {{ data.dzongkha }}
-        </template>
-      </Column>
-      <Column header="Age" field="age" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.age }}
-        </template>
-      </Column>
-      <Column header="Class" field="user_class" :showFilterMenu="false" style="min-width: 9rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.user_class }}
-        </template>
-      </Column>
-      <Column header="Employment History" field="employmentHistory" :showFilterMenu="false" style="min-width: 14rem"
-        :sortable="true">
-        <template #body="{ data }">
-          {{ data.employmentHistory }}
-        </template>
-      </Column>
-      <!-- Lifetime Use -->
-      <Column header="Lifetime Use" field="lifetimeUse" :showFilterMenu="false" style="min-width: 14rem"
-        :sortable="true">
-        <template #body="{ data }">
-          {{ data.lifetimeUse }}
-        </template>
-      </Column>
-      <!-- Current Use -->
-      <Column header="Current Use" field="currentUse" :showFilterMenu="false" style="min-width: 14rem" :sortable="true">
-        <template #body="{ data }">
-          {{ data.currentUse }}
-        </template>
-      </Column>
-
-      <!-- Substance -->
-      <Column field="alcoholic_measurement" header="Alcoholic measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.alcoholic_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.alcoholic_measurement)"
-            :style="{ color: getSeverity(slotProps.data.alcoholic_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.alcoholic_measurement).bgColor }" />
-        </template>
-      </Column>
-
-      <Column field="tobacco_measurement" header="Tobacco Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.tobacco_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.tobacco_measurement)"
-            :style="{ color: getSeverity(slotProps.data.tobacco_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.tobacco_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="cannabis_measurement" header="Cannabis Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.cannabis_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.cannabis_measurement)"
-            :style="{ color: getSeverity(slotProps.data.cannabis_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.cannabis_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="amphetamine_measurement" header="Amphetamine Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.amphetamine_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.amphetamine_measurement)"
-            :style="{ color: getSeverity(slotProps.data.amphetamine_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.amphetamine_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="inhalants_measurement" header="Amphetamine Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.inhalants_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.inhalants_measurement)"
-            :style="{ color: getSeverity(slotProps.data.inhalants_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.inhalants_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="sedatives_measurement" header="Sedatives Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.sedatives_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.sedatives_measurement)"
-            :style="{ color: getSeverity(slotProps.data.sedatives_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.sedatives_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="hallucinogens_measurement" header="Hallucinogens Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.hallucinogens_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.hallucinogens_measurement)"
-            :style="{ color: getSeverity(slotProps.data.hallucinogens_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.hallucinogens_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="opioids_measurement" header="Opioids Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.opioids_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.opioids_measurement)"
-            :style="{ color: getSeverity(slotProps.data.opioids_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.opioids_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="injection_measurement" header="Injection Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.injection_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.injection_measurement)"
-            :style="{ color: getSeverity(slotProps.data.injection_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.injection_measurement).bgColor }" />
-        </template>
-      </Column>
-      <Column field="other_measurement" header="Other Measurement" sortable class="text-center">
-        <template #body="slotProps">
-          <Tag rounded :value="slotProps.data.other_measurement" class="w-100 text-capitalize"
-            :severity="getSeverity(slotProps.data.other_measurement)"
-            :style="{ color: getSeverity(slotProps.data.other_measurement).colorCode, backgroundColor: getSeverity(slotProps.data.other_measurement).bgColor }" />
-        </template>
-      </Column>
-
+  <div class="card mt-3 b-0">
+    <h3 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">SUD Risk Level</h3>
+    <DataTable :value="tableData" :scrollable="true" scrollHeight="400px" class="p-datatable-sm">
+      <Column field="substance" header="Substance" frozen style="width: 200px"></Column>
+      <Column field="highRiskMale" header="High-risk Male" style="width: 150px"></Column>
+      <Column field="highRiskFemale" header="High-risk Female" style="width: 150px"></Column>
+      <Column field="moderateRiskMale" header="Moderate-risk Male" style="width: 150px"></Column>
+      <Column field="moderateRiskFemale" header="Moderate-risk Female" style="width: 150px"></Column>
     </DataTable>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { FilterMatchMode } from 'primevue/api';
+import { computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-// import Badge from 'primevue/badge';
 
-const filters = ref({
-  global: { value: [], matchMode: FilterMatchMode.CONTAINS },
-  year: { value: [], matchMode: FilterMatchMode.IN },
-  gender: { value: [], matchMode: FilterMatchMode.IN },
-  dzongkhag: { value: [], matchMode: FilterMatchMode.IN },
-  location: { value: [], matchMode: FilterMatchMode.IN },
-  age: { value: [], matchMode: FilterMatchMode.IN },
-  class: { value: [], matchMode: FilterMatchMode.IN },
-  employmentHistory: { value: [], matchMode: FilterMatchMode.IN },
-});
+const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
 
-// const loading = ref(true);
+function extractMeasurementData(reportData) {
+  const results = [];
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
-
-// Computed property to filter reportData based on case_status and transform data
-const filteredData = computed(() => {
-  // Check if reportData has been fetched and contains data
-  if (!reportData.value || !reportData.value.length) {
-    console.log('reportData is empty or undefined');
-    return [];
-  }
-
-  // Function to set measurement values
-  const setMeasurements = (type, item) => {
-    switch (type) {
-      case 'measurement_assist':
-        return item.measurement_assist?.fields || {};
-      case 'rescreening_data':
-        return item.service_and_treatment?.rescreening_data || {};
-      case 'case_based_submissions':
-        return item.case_based_submissions || {};
-      case 'event_based_submissions':
-        return item.event_based_submissions || {};
-      default:
-        return {};
+  reportData.forEach(person => {
+    const measurementAssist = person.measurement_assist?.fields;
+    const gender = person.user?.fields?.gender || "unknown";
+    if (measurementAssist) {
+      const data = {
+        gender: gender,
+        alcoholic: measurementAssist.alcoholic_measurement || "no data",
+        amphetamine: measurementAssist.amphetamine_measurement || "no data",
+        cannabis: measurementAssist.cannabis_measurement || "no data",
+        cocaine: measurementAssist.cocaine_measurement || "no data",
+        hallucinogens: measurementAssist.hallucinogens_measurement || "no data",
+        inhalants: measurementAssist.inhalants_measurement || "no data",
+        opioids: measurementAssist.opioids_measurement || "no data",
+        sedatives: measurementAssist.sedatives_measurement || "no data",
+        tobacco: measurementAssist.tobacco_measurement || "no data",
+        other: measurementAssist.other_measurement || "no data"
+      };
+      results.push(data);
     }
-  };
-
-  // Map reportData to extract required fields
-  const transformedData = reportData.value.map(item => {
-    // Initialize variables to store data
-    let date = 'NA';
-    let gender = 'NA';
-    let dzongkha = 'NA';
-    let age = 'NA';
-    let user_class = 'NA';
-    let employmentHistory = 'NA';
-    let alcoholic_measurement = 'NA';
-    let tobacco_measurement = 'NA';
-    let cannabis_measurement = 'NA';
-    let amphetamine_measurement = 'NA';
-    let inhalants_measurement = 'NA';
-    let sedatives_measurement = 'NA';
-    let hallucinogens_measurement = 'NA';
-    let opioids_measurement = 'NA';
-    let injection_measurement = 'NA';
-    let other_measurement = 'NA';
-
-    // Check for user data
-    if (item.user?.fields) {
-      gender = item.user.fields.gender || 'NA';
-      dzongkha = item.user.fields.perm_add_dzongkhag || 'NA';
-      age = calculateAge(item.user.fields.date_of_birth) || 'NA';
-      employmentHistory = item.user.fields.role || 'NA';
-    }
-    console.log(`age, ${age}`)
-    // Check for user agency data
-    if (item.user_agency?.fields) {
-      user_class = item.user_agency.fields.user_class || 'NA';
-    }
-
-    // Determine the type of submission and set measurements
-    let measurements = {};
-    if (item.measurement_assist?.fields) {
-      measurements = setMeasurements('measurement_assist', item);
-    } else if (item.service_and_treatment?.rescreening_data) {
-      measurements = setMeasurements('rescreening_data', item);
-    } else if (item.case_based_submissions) {
-      measurements = setMeasurements('case_based_submissions', item);
-    } else if (item.event_based_submissions) {
-      measurements = setMeasurements('event_based_submissions', item);
-    }
-
-    // Set the measurement values
-    if (measurements.created_at) {
-      const isoDate = new Date(measurements.created_at);
-      date = isoDate.toISOString().split('T')[0];
-    }
-    alcoholic_measurement = measurements.alcoholic_measurement || 'NA';
-    tobacco_measurement = measurements.tobacco_measurement || 'NA';
-    cannabis_measurement = measurements.cannabis_measurement || 'NA';
-    amphetamine_measurement = measurements.amphetamine_measurement || 'NA';
-    inhalants_measurement = measurements.inhalants_measurement || 'NA';
-    sedatives_measurement = measurements.sedatives_measurement || 'NA';
-    hallucinogens_measurement = measurements.hallucinogens_measurement || 'NA';
-    opioids_measurement = measurements.opioids_measurement || 'NA';
-    injection_measurement = measurements.injection_measurement || 'NA';
-    other_measurement = measurements.other_measurement || 'NA';
-
-    // Return transformed item
-    return {
-      date,
-      gender,
-      dzongkha,
-      age,
-      user_class,
-      employmentHistory,
-      alcoholic_measurement,
-      tobacco_measurement,
-      cannabis_measurement,
-      amphetamine_measurement,
-      inhalants_measurement,
-      sedatives_measurement,
-      hallucinogens_measurement,
-      opioids_measurement,
-      injection_measurement,
-      other_measurement
-    };
   });
 
-  return transformedData;
-});
-
-
-
-// Function to calculate age based on date of birth
-function calculateAge(dateOfBirth) {
-  if (!dateOfBirth) return '';
-  const birthDate = new Date(dateOfBirth);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
+  return results;
 }
 
-const getSeverity = (severity) => {
-  let colorCode;
-  let bgColor;
-  switch (severity.toLowerCase()) {
-    case 'severe':
-    case 'high risk':
-    case 'nearly everyday':
-      colorCode = 'rgba(230, 20, 45, 0.75)'; // Wine Red
-      bgColor = 'rgba(230, 20, 45, 0.25)';
-      break;
-    case 'moderately-severe':
-      colorCode = 'rgba(255, 69, 0, 0.75)'; // Red-Orange
-      bgColor = 'rgba(255, 69, 0, 0.25)';
-      break;
-    case 'moderate risk':
-    case 'moderate':
-    case 'more than half the days':
-      colorCode = 'rgba(255, 165, 0, 0.75)'; // Orange
-      bgColor = 'rgba(255, 165, 0, 0.25)';
-      break;
-    case 'minimal':
-    case 'low risk':
-    case 'several days':
+const extractedData = extractMeasurementData(reportData);
 
-      colorCode = 'rgba(0, 100, 0, 0.75)'; // Darker Green (More towards Blue)
-      bgColor = 'rgba(0, 100, 0, 0.25)';
-      break;
-    default:
-      colorCode = 'rgba(52, 52, 52, 0.75)'; // Slate Grey
-      bgColor = 'rgba(52, 52, 52, 0.25)';
-  }
-  return { severity, colorCode, bgColor };
-};
+function countRiskLevels(data) {
+  const counts = {
+    tobacco_moderate_male: 0, tobacco_moderate_female: 0,
+    tobacco_high_male: 0, tobacco_high_female: 0,
+    alcoholic_moderate_male: 0, alcoholic_moderate_female: 0,
+    alcoholic_high_male: 0, alcoholic_high_female: 0,
+    cannabis_moderate_male: 0, cannabis_moderate_female: 0,
+    cannabis_high_male: 0, cannabis_high_female: 0,
+    cocaine_moderate_male: 0, cocaine_moderate_female: 0,
+    cocaine_high_male: 0, cocaine_high_female: 0,
+    amphetamine_moderate_male: 0, amphetamine_moderate_female: 0,
+    amphetamine_high_male: 0, amphetamine_high_female: 0,
+    inhalant_moderate_male: 0, inhalant_moderate_female: 0,
+    inhalant_high_male: 0, inhalant_high_female: 0,
+    sedative_moderate_male: 0, sedative_moderate_female: 0,
+    sedative_high_male: 0, sedative_high_female: 0,
+    hallucinate_moderate_male: 0, hallucinate_moderate_female: 0,
+    hallucinate_high_male: 0, hallucinate_high_female: 0,
+    opioids_moderate_male: 0, opioids_moderate_female: 0,
+    opioids_high_male: 0, opioids_high_female: 0,
+    others_moderate_male: 0, others_moderate_female: 0,
+    others_high_male: 0, others_high_female: 0,
+  };
 
+  data.forEach(personData => {
+    Object.keys(personData).forEach(substance => {
+      const riskLevel = personData[substance];
+      const substanceKey = substance.toLowerCase().replace('-', '_');
 
-// Function to clear filters
-const clearFilter = () => {
-  for (const key in filters.value) {
-    filters.value[key].value = [];
-  }
-};
+      if (riskLevel === 'moderate risk' || riskLevel === 'high risk') {
+        const genderKeyModerate = `${substanceKey}_moderate`;
+        const genderKeyHigh = `${substanceKey}_high`;
+
+        if (personData.gender === 'Male') {
+          if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_male`]++;
+          if (riskLevel === 'high risk') counts[`${genderKeyHigh}_male`]++;
+        } else if (personData.gender === 'Female') {
+          if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_female`]++;
+          if (riskLevel === 'high risk') counts[`${genderKeyHigh}_female`]++;
+        }
+      }
+    });
+  });
+
+  return counts;
+}
+
+const counts = countRiskLevels(extractedData);
+
+const tableData = computed(() => {
+  const substances = [
+    'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type', 
+    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+  ];
+
+  return substances.map(substance => {
+    const key = substance.toLowerCase().replace('-type', '');
+    return {
+      substance,
+      highRiskMale: counts[`${key}_high_male`] || 0,
+      highRiskFemale: counts[`${key}_high_female`] || 0,
+      moderateRiskMale: counts[`${key}_moderate_male`] || 0,
+      moderateRiskFemale: counts[`${key}_moderate_female`] || 0
+    };
+  });
+});
 </script>
-<style scope>
-.gray {
-  color: antiquewhite;
+
+<style scoped>
+.card {
+  margin-top: 20px;
+}
+
+:deep(.p-datatable) {
+  font-size: 0.9rem;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+  background-color: #2c6975;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  text-align: center;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
+  background-color: #d3e2e4;
 }
 </style>

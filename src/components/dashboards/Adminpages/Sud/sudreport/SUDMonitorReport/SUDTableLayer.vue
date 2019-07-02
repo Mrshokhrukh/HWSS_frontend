@@ -1,19 +1,15 @@
 <template>
-    <div class="">
-        <DataTable :value="aggregateData" tableStyle="min-width: 50rem">
+    <div class="card">
+        <DataTable :value="aggregateData" class="p-datatable-sm" responsiveLayout="scroll" :scrollable="true" scrollHeight="400px" scrollDirection="both">
             <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xl font-bold">Aggregates</span>
-                </div>
+                <div class="text-xl font-bold p-3">Aggregates</div>
             </template>
-            <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header">
+            <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" :style="{ width: '250px' }">
                 <template #body="slotProps">
                     <template v-if="Array.isArray(slotProps.data[col.field])">
-                        <ul>
-                            <li v-for="(item, index) in slotProps.data[col.field]" :key="index">
-                                {{ item.key }}: {{ item.count }}
-                            </li>
-                        </ul>
+                        <div v-for="(item, index) in slotProps.data[col.field]" :key="index" class="data-row">
+                            {{ item.key }}: {{ item.count }}
+                        </div>
                     </template>
                     <template v-else>
                         {{ slotProps.data[col.field] }}
@@ -29,46 +25,14 @@ import { ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
-
-// Existing count calculations...
-const Rescreening_count = ref(reportData.value.filter(item => item.rescreened === false).length);
-const WaitingList_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Waiting List').length);
-const NotRequired_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Not Required').length);
-const Availed_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Availed').length);
-const Conducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Conducted').length);
-const NotConducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Not Conducted').length);
-const Open_Case_Count = ref(reportData.value.filter(item => item.caseStatus === 'Open').length);
-const Closed_Case_Count = ref(reportData.value.filter(item => item.caseStatus === 'Closed').length);
-
-const FollowUp_Counts = computed(() => {
-    const counts = {
-        'Treatment completed': 0,
-        'Undergoing treatment': 0,
-        'Completed counselling sessions': 0,
-        'Undergoing counselling': 0,
-        'Unwilling to undergo treatment': 0,
-        'Undergone Rehabilitation': 0,
-        'Undergoing Rehabilitation': 0,
-        'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)': 0,
-        'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)': 0,
-        'School-based SUD Treatment and Care': 0,
-        'Institution-based SUD Treatment and Care': 0,
-        'Follow up Drug Test Conducted': 0,
-        'Detention-based SUD Treatment and Care': 0,
-    };
-    
-    reportData.value.forEach(item => {
-        if (item.followUp in counts) {
-            counts[item.followUp]++;
-        }
-    });
-    
-    return Object.entries(counts).map(([key, count]) => ({ key, count }));
+const props = defineProps({
+    reportData: {
+        type: Array,
+        required: true
+    }
 });
 
 const columns = ref([
-    // { field: 'category', header: 'Category' },
     { field: 'rescreening', header: 'Rescreening' },
     { field: 'counseling', header: 'Counseling' },
     { field: 'assessment', header: 'Assessment' },
@@ -76,61 +40,77 @@ const columns = ref([
     { field: 'followUp', header: 'Follow-Up' },
 ]);
 
-const aggregateData = computed(() => [
-    {
-        // category: 'Counts',
-        rescreening: `Total: ${Rescreening_count.value}`,
-        counseling: [
-            { key: 'Waiting List', count: WaitingList_Count.value },
-            { key: 'Not Required', count: NotRequired_Count.value },
-            { key: 'Availed', count: Availed_Count.value }
-        ],
-        assessment: [
-            { key: 'Conducted', count: Conducted_Count.value },
-            { key: 'Not Conducted', count: NotConducted_Count.value }
-        ],
-        referral: [
-            { key: 'Referred', count: Open_Case_Count.value },
-            { key: 'Not Referred', count: Closed_Case_Count.value }
-        ],
-        followUp: FollowUp_Counts.value
-    }
-]);
+const aggregateData = computed(() => {
+    const counts = {
+        rescreening: { Rescreened: 0, 'Not Rescreened': 0 },
+        counseling: {},
+        assessment: {},
+        referral: {},
+        followUp: {}
+    };
+
+    props.reportData.forEach(item => {
+        counts.rescreening[item.Rescreened ? 'Rescreened' : 'Not Rescreened']++;
+        const counseling = item.service.counseling_measurement;
+        counts.counseling[counseling] = (counts.counseling[counseling] || 0) + 1;
+        const assessment = item.service.assessment_measurement;
+        counts.assessment[assessment] = (counts.assessment[assessment] || 0) + 1;
+        const referral = item.service.referral_measurement;
+        counts.referral[referral] = (counts.referral[referral] || 0) + 1;
+        const followUp = item.service.follow_up_measurement;
+        counts.followUp[followUp] = (counts.followUp[followUp] || 0) + 1;
+    });
+
+    return [{
+        rescreening: Object.entries(counts.rescreening).map(([key, count]) => ({ key, count })),
+        counseling: Object.entries(counts.counseling).map(([key, count]) => ({ key, count })),
+        assessment: Object.entries(counts.assessment).map(([key, count]) => ({ key, count })),
+        referral: Object.entries(counts.referral).map(([key, count]) => ({ key, count })),
+        followUp: Object.entries(counts.followUp).map(([key, count]) => ({ key, count }))
+    }];
+});
 </script>
 
 <style scoped>
 .card {
     margin-top: 20px;
+    width: 100%;
 }
-
 :deep(.p-datatable) {
-    font-size: 0.9rem;
+    width: 100%;
 }
-
-:deep(.p-datatable-header) {
-    background-color: #f8f9fa;
-    font-weight: bold;
+:deep(.p-datatable-wrapper) {
+    overflow: auto;
 }
-
+:deep(.p-datatable-table) {
+    min-width: 100%;
+}
 :deep(.p-datatable-thead > tr > th) {
     background-color: #4caf50;
     color: white;
     font-weight: bold;
     text-align: center;
+    border: 1px solid #e0e0e0;
+    padding: 1rem;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
-
 :deep(.p-datatable-tbody > tr > td) {
-    text-align: center;
-}
-
-ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
     text-align: left;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem;
+    vertical-align: top;
+    white-space: nowrap;
 }
-
-li {
-    margin-bottom: 4px;
+:deep(.p-datatable-tbody > tr) {
+    border-bottom: 1px solid #e0e0e0;
+}
+:deep(.p-datatable-tbody > tr:nth-child(even)) {
+    background-color: #f5f5f5;
+}
+.data-row {
+    white-space: nowrap;
 }
 </style>
