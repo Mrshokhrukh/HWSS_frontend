@@ -4,29 +4,31 @@
     <DataTable :value="tableData" :rowHover="true" class="p-datatable-sm" responsiveLayout="scroll">
       <Column field="schoolEvent" header="Agency/Event" sortable></Column>
       <Column field="individualsScreened" header="Individuals Screened" sortable></Column>
-      <Column field="suicidalBehavior" header="Suicidal Behavior" sortable></Column>
+      <Column field="suicidalBehavior" header="Suicidal Behavior"  sortable></Column>
       <ColumnGroup type="header">
         <Row>
           <Column header="School/Event Data" :colspan="1" :rowspan="2"/>
           <Column header="No. of Individuals Screened" :colspan="1" :rowspan="2"/>
           <Column header="Suicidal Behavior" :colspan="1" :rowspan="2"/>
-          <Column header="PHQ" :colspan="5"/>
-          <Column header="GAD" :colspan="5"/>
-          <Column header="SUD" :rowspan="2"/>
+          <Column header="PHQ" :colspan="5" headerClass="justify-content-center"/>
+          <Column headerClass="justify-content-center" header="GAD" :colspan="5" bodyClass="text-center" />
+          <Column header="SUD" headerClass="text-center" :rowspan="2"/>
         </Row>
         <Row>
-          <Column v-for="level in severityLevels" :key="'phq-'+level" :header="level"/>
-          <Column v-for="level in severityLevels" :key="'gad-'+level" :header="level"/>
+          <div class="text-center">
+            <Column v-for="level in severityLevels" :key="'phq-'+level" :header="level"/>
+            <Column v-for="level in severityLevels" :key="'gad-'+level" :header="level"/>
+          </div>
         </Row>
       </ColumnGroup>
       <Column v-for="level in severityLevels" :key="'phq-'+level" :field="'phq.'+level">
         <template #body="slotProps">
-          {{ slotProps.data.phq[level] }}
+          <div class="text-center">{{ slotProps.data.phq[level] }}</div>
         </template>
       </Column>
       <Column v-for="level in severityLevels" :key="'gad-'+level" :field="'gad.'+level">
         <template #body="slotProps" >
-          {{ slotProps.data.gad[level] }}
+          <div class="text-center"> {{ slotProps.data.gad[level] }}</div>
         </template>
       </Column>
       <Column>
@@ -68,8 +70,8 @@ const props = defineProps({
 
 const severityLevels = ['Minimal', 'Mild', 'Moderate', 'Moderately Severe', 'Severe'];
 const substances = [
-  'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-  'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+  'Alcoholic', 'Tobacco', 'Cannabis', 'Cocaine', 'Amphetamine',
+  'Inhalants', 'Sedatives', 'Hallucinogens', 'Opioids', 'Other'
 ];
 const riskLevels = ['No Risk', 'Low Risk', 'Moderate Risk', 'High Risk'];
 
@@ -92,7 +94,7 @@ const tableData = computed(() => {
         sud: {}
       });
       substances.forEach(substance => {
-        schoolEvents.get(schoolEvent).sud[substance] = { 'No Risk': 0, 'Low Risk': 0, 'Moderate Risk': 0, 'High Risk': 0 };
+        schoolEvents.get(schoolEvent).sud[substance.toLowerCase()] = { 'No Risk': 0, 'Low Risk': 0, 'Moderate Risk': 0, 'High Risk': 0 };
       });
     }
 
@@ -113,12 +115,21 @@ const tableData = computed(() => {
       data.gad[capitalizeFirstLetter(gadMeasurement)]++;
     }
 
-    substances.forEach(substance => {
-      const sudMeasurement = item.measurement_assist?.fields?.[`${substance.toLowerCase()}_measurement`];
-      if (sudMeasurement) {
-        data.sud[substance][capitalizeFirstLetter(sudMeasurement)]++;
-      }
-    });
+    if (item.measurement_assist?.fields) {
+      substances.forEach(substance => {
+        const measurementKey = `${substance.toLowerCase()}_measurement`;
+        const sudMeasurement = item.measurement_assist.fields[measurementKey];
+        if (sudMeasurement) {
+          const riskLevel = sudMeasurement === 'no risk' ? 'No Risk' :
+                            sudMeasurement === 'low risk' ? 'Low Risk' :
+                            sudMeasurement === 'moderate risk' ? 'Moderate Risk' :
+                            sudMeasurement === 'high risk' ? 'High Risk' : null;
+          if (riskLevel) {
+            data.sud[substance.toLowerCase()][riskLevel]++;
+          }
+        }
+      });
+    }
   });
 
   return Array.from(schoolEvents.values());
@@ -135,14 +146,19 @@ function showSUDDetails(data) {
 }
 
 function getSUDDetails(substance) {
+  const substanceLower = substance.toLowerCase();
   return riskLevels.map(level => ({
     riskLevel: level,
-    count: selectedSUDData.value[substance][level]
+    count: selectedSUDData.value[substanceLower][level] || 0
   }));
 }
 </script>
 
 <style scoped>
+.centered-header {
+    text-align: center;
+}
+
 .card {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -168,10 +184,13 @@ function getSUDDetails(substance) {
   color: #333;
   font-weight: bold;
   padding: 1rem;
-  text-align: center;
+  text-align: left;
   border: 1px solid #ddd;
 }
 
+:deep(.p-datatable .p-datatable-thead > tr > th.centered-header) {
+  text-align: center;
+}
 
 :deep(.p-datatable .p-datatable-tbody > tr) {
   background-color: #ffffff;
