@@ -1,147 +1,153 @@
 <template>
-    <div class="container-fluid">
-        <div class="card">
-            <div class="row">
-                <!-- Sidebar for Options -->
-                <div class="col-md-2 p-4 bg-light border-end d-flex flex-column">
-                    <h5 class="mb-4">Data Set</h5>
-                    <div v-for="option in options" :key="option.id" class="form-check mb-2">
-                        <input type="checkbox" class="form-check-input" :id="option.id" v-model="option.selected"
-                            @change="handleOptionChange(option)" />
-                        <label class="form-check-label" :for="option.id">{{ option.label }}</label>
-                    </div>
-                    <button @click="generateReport" class="btn btn-primary mt-auto">Generate</button>
-                </div>
-                <!-- Preview Area -->
-                <div class="col-md-9 p-3 bg-white">
-                    <div v-if="!showPreview" class="text-center text-muted">
-                        <p class="note">Note: Please select a parameter</p>
-                        <p class="note">Note: The report will be shown only when the generate button is pressed.</p>
-                    </div>
-                    <div v-else>
-                        <div class="graph">
-                            <div class="graph-placeholder d-flex justify-content-around">
-                                <SUDMonitorGraph v-if="selectedOption && selectedOption.id !== 'Table'" :selectedOption="selectedOption"
-                                    :reportData="reportData" />
-                                <SUDTableLayer v-if="selectedOption && selectedOption.id === 'Table'" :reportData="filteredData" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div class="row g-0">
+      <div class="col-md-2">
+        <div class="card h-100">
+          <div class="card-body">
+            <p class="card-text">Data Set</p>
+            <div v-for="(option, index) in dataOptions" :key="index" class="form-check text-start">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :value="option.value"
+                :id="'check' + index"
+                v-model="selectedOptions"
+                @change="handleCheckboxChange(option.value)"
+              />
+              <label class="form-check-label" :for="'check' + index">
+                {{ option.label }}
+              </label>
             </div>
+            <button @click="generateChart" class="btn btn-primary mt-3">Generate</button>
+          </div>
         </div>
+      </div>
+      <div class="col-md-10">
+        <div class="card h-100">
+          <div class="card-body">
+            <div v-if="selectedOptions.length === 0" class="text-center">
+              <p class="text-primary mb-3 d-flex justify-content-center align-items-center">
+                Note: Please select the parameters
+              </p>
+              <p class="text-secondary d-flex justify-content-center align-items-center">
+                Note: The report will be shown only when the generate button is pressed.
+              </p>
+            </div>
+            <div v-else>
+              <div v-if="showTable" class="showtable">
+                <SUDTableLayer />
+              </div>
+              <canvas v-else ref="chartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</template>
-
-<script setup>
-import { ref, computed } from 'vue';
-import SUDMonitorGraph from './SUDMonitorGraph.vue';
-import SUDTableLayer from './SUDTableLayer.vue';
-
-// Mock data similar to your example
-const rawData = [
-    {
-        "id": 1,
-        "service": {
-            "counseling_measurement": "WaitingList",
-            "assessment_measurement": "Conducted",
-            "referral_measurement": "Referred",
-            "follow_up_measurement": "TreatmentCompleted"
-        },
-        "Rescreened": true
-    },
-    {
-        "id": 2,
-        "service": {
-            "counseling_measurement": "NotRequired",
-            "assessment_measurement": "NotConducted",
-            "referral_measurement": "NotReferred",
-            "follow_up_measurement": "InstitutionBasedSUDTreatmentAndCare"
-        },
-        "Rescreened": false
-    },
-    {
-        "id": 3,
-        "service": {
-            "counseling_measurement": "Availed",
-            "assessment_measurement": "NotConducted",
-            "referral_measurement": "NotReferred",
-            "follow_up_measurement": "CompletedCounsellingSessions"
-        },
-        "Rescreened": true
-    },
-    {
-        "id": 4,
-        "service": {
-            "counseling_measurement": "Availed",
-            "assessment_measurement": "NotConducted",
-            "referral_measurement": "NotReferred",
-            "follow_up_measurement": "UndergoingTreatment"
-        },
-        "Rescreened": true
+  </template>
+  
+  <script setup>
+  import { onMounted, ref, computed, inject } from 'vue'
+  import Chart from 'chart.js/auto'
+  import SUDTableLayer from './SUDTableLayer.vue'
+  
+  const chartCanvas = ref(null)
+  const reportData = inject('filteredData')
+  
+  const dataOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'Rescreening Count', value: 'rescreened' },
+    { label: 'Counseling', value: 'counseling' },
+    { label: 'Assessment', value: 'assessment_status' },
+    { label: 'Referral', value: 'referred' },
+    { label: 'Follow-up', value: 'follow_up' }
+  ]
+  
+  const selectedOptions = ref([])
+  const showTable = ref(false)
+  
+  let chart = null
+  
+  const counts = computed(() => {
+    const result = {}
+  
+    dataOptions.forEach((option) => {
+      result[option.value] = {}
+    })
+  
+    reportData.value.forEach((item) => {
+      dataOptions.forEach((option) => {
+        const key = option.value
+        const value = item.service_and_treatment?.[key] || item.rescreened?.toString() || 'NA'
+        result[key][value] = (result[key][value] || 0) + 1
+      })
+    })
+  
+    return result
+  })
+  
+  const handleCheckboxChange = (value) => {
+    if (selectedOptions.value.length > 1) {
+      selectedOptions.value = [value]
     }
-];
-
-const options = ref([
-    { id: 'Rescreening', label: 'Rescreening', selected: false },
-    { id: 'Counseling', label: 'Counseling', selected: false },
-    { id: 'Assessment', label: 'Assessment', selected: false },
-    { id: 'Follow', label: 'Follow up', selected: false },
-    { id: 'Referrals', label: 'Referrals', selected: false },
-    { id: 'Table', label: 'Table', selected: false },
-]);
-
-const showPreview = ref(false);
-const selectedOption = ref(null);
-const reportData = ref([]);
-
-const handleOptionChange = (changedOption) => {
-    options.value.forEach(option => {
-        if (option.id !== changedOption.id) {
-            option.selected = false;
-        }
-    });
-};
-
-const generateReport = () => {
-    selectedOption.value = options.value.find(option => option.selected);
-    if (selectedOption.value) {
-        showPreview.value = true;
-        if (selectedOption.value.id !== 'Table') {
-            const selectedKey = selectedOption.value.id === 'Follow' ? 'follow_up_measurement' :
-                selectedOption.value.id === 'Referrals' ? 'referral_measurement' :
-                    selectedOption.value.id.toLowerCase() + '_measurement';
-            reportData.value = rawData.map(item => ({
-                status: item.service[selectedKey],
-                count: item.Rescreened && item.service[selectedKey] !== undefined ? 1 : 0
-            })).reduce((acc, curr) => {
-                const existingItem = acc.find(item => item.status === curr.status);
-                if (existingItem) {
-                    existingItem.count += curr.count;
-                } else {
-                    acc.push(curr);
-                }
-                return acc;
-            }, []);
-        }
-        // For 'Table' option, we don't need to process the data as filteredData will handle it
+  }
+  
+  const generateChart = () => {
+    if (chart) {
+      chart.destroy()
+    }
+  
+    if (selectedOptions.value.includes('all')) {
+      showTable.value = true
+      return
     } else {
-        alert('Please select a parameter before generating the report.');
+      showTable.value = false
     }
-};
-
-const filteredData = computed(() => {
-    if (!selectedOption.value || selectedOption.value.id === 'Table') {
-        return rawData;
-    } else {
-        const selectedKey = selectedOption.value.id === 'Follow' ? 'follow_up_measurement' :
-            selectedOption.value.id === 'Referrals' ? 'referral_measurement' :
-                selectedOption.value.id.toLowerCase() + '_measurement';
-        return rawData.filter(item => item.service[selectedKey] !== undefined);
+  
+    if (selectedOptions.value.length === 0) {
+      return // Don't generate chart if no options are selected
     }
-});
-</script>
-
-<style scoped>
-/* Add scoped styles as needed */
-</style>
+  
+    const datasets = selectedOptions.value.map((option) => {
+      const data = counts.value[option]
+      return {
+        label: option,
+        data: Object.values(data),
+        backgroundColor: getRandomColor()
+      }
+    })
+  
+    const labels = selectedOptions.value.flatMap((option) => Object.keys(counts.value[option]))
+  
+    const ctx = chartCanvas.value.getContext('2d')
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            stepSize: 1
+          }
+        }
+      }
+    })
+  }
+  
+  function getRandomColor() {
+    const r = Math.floor(Math.random() * 255)
+    const g = Math.floor(Math.random() * 255)
+    const b = Math.floor(Math.random() * 255)
+    return `rgba(${r}, ${g}, ${b}, 0.7)`
+  }
+  
+  onMounted(() => {
+    if (chartCanvas.value) {
+      generateChart()
+    }
+  })
+  </script>
+  

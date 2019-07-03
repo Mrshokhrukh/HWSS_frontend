@@ -1,66 +1,94 @@
 <template>
   <div class="card">
-    <DataTable :value="processedReportData" :paginator="false" :rows="10" :rowsPerPageOptions="[5, 10, 20, 50]"
-               paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-               currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-               responsiveLayout="scroll" class="gridlines">
-      <Column field="status" header="Case Status" sortable></Column>
-      <Column field="count" header="Count" sortable></Column>
+    <DataTable :value="tableData" tableStyle="min-width: 50rem" class="edged-table">
+      <ColumnGroup type="header">
+        <Row>
+          <Column header="Case Status" :colspan="3" class="main-header" />
+        </Row>
+        <Row>
+          <Column header="Ongoing Case" />
+          <Column header="DISCONTINUED CASES" />
+          <Column header="CLOSED CASES" />
+        </Row>
+      </ColumnGroup>
+      <Column field="ongoingCase">
+        <template #body="slotProps">
+          {{ slotProps.data.ongoingCase }}
+        </template>
+      </Column>
+      <Column field="discontinuedCases">
+        <template #body="slotProps">
+          {{ slotProps.data.discontinuedCases }}
+        </template>
+      </Column>
+      <Column field="closedCases">
+        <template #body="slotProps">
+          {{ slotProps.data.closedCases }}
+        </template>
+      </Column>
     </DataTable>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, inject, } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import ColumnGroup from 'primevue/columngroup';
+import Row from 'primevue/row';
 
-const props = defineProps({
-  reportData: {
-    type: Array,
-    required: true
-  }
-});
+const reportData = inject('filteredData');
 
-const processedReportData = computed(() => {
-  const statusCounts = {
-    'On Going': 0,
-    'Case Closed': 0,
-    'Case Discontinued': 0,
-    'NA': 0 // Adding 'NA' for any missing case statuses
-  };
+// Computed properties for counts
+const ongoingCaseCount = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'On Going').length);
+const caseDiscontinueCount = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'Case Discontinue').length);
+const caseClosedCount = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'Case Closed').length);
 
-  props.reportData.forEach(item => {
-    const status = item.service_and_treatment?.case_status ?? 'NA';
-    if (!statusCounts.hasOwnProperty(status)) {
-      statusCounts[status] = 0;
-    }
-    statusCounts[status]++;
-  });
+// Aggregate data for DataTable
+const aggregateData = computed(() => ({
+  ongoingCase: ongoingCaseCount.value,
+  discontinuedCases: caseDiscontinueCount.value,
+  closedCases: caseClosedCount.value
+}));
 
-  return Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
-});
+// Wrap aggregateData in an array for DataTable
+const tableData = computed(() => [aggregateData.value]);
+
+console.log('tableData', tableData.value);
 </script>
 
 <style scoped>
 .card {
-  background: #ffffff;
-  padding: 1rem;
-  border-radius: 10px;
-  margin-bottom: 1rem;
+  margin-top: 20px;
 }
 
-/* Add gridlines */
-.gridlines .p-datatable-thead > tr > th,
-.gridlines .p-datatable-tbody > tr > td {
-  border: 1px solid #dcdcdc;
+:deep(.edged-table) {
+  border-collapse: collapse;
+  width: 100%;
 }
 
-.gridlines .p-datatable-thead > tr > th {
-  border-bottom-width: 2px;
+:deep(.edged-table th),
+:deep(.edged-table td) {
+  border: 1px solid #ddd;
+  padding: 8px;
 }
 
-.gridlines .p-datatable-tbody > tr {
-  border-bottom: 1px solid #dcdcdc;
+:deep(.p-datatable-thead > tr > th) {
+  background-color:#2C6975
+  ;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+:deep(.p-datatable-tbody > tr > td) {
+  text-align: center;
+}
+
+:deep(.main-header) {
+  text-align: center !important;
+  font-size: 1.2em;
+  background-color:#2C6975
+  !important;
 }
 </style>

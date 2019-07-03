@@ -17,7 +17,7 @@
               {{ option.label }}
             </label>
           </div>
-          <button @click="generateReport" class="btn btn-primary mt-auto">Generate</button>
+          <button @click="generateChart" class="btn btn-primary mt-3">Generate</button>
         </div>
       </div>
     </div>
@@ -36,7 +36,7 @@
             <div v-if="showTable" class="showtable">
               <MHMonitorTable />
             </div>
-            <canvas v-else ref="chartCanvas" class="d-flex justify-content-center align-items-center"></canvas>
+            <canvas v-else ref="chartCanvas"></canvas>
           </div>
         </div>
       </div>
@@ -150,7 +150,3 @@ onMounted(() => {
   }
 })
 </script>
-
-<style scoped>
-/* Add scoped styles as needed */
-</style>

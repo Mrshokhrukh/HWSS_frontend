@@ -1,141 +1,130 @@
 <template>
-  <div class="card mt-3 b-0">
-    <h3 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">SUD Risk Level</h3>
-    <DataTable :value="tableData" :scrollable="true" scrollHeight="400px" class="p-datatable-sm">
-      <Column field="substance" header="Substance" frozen style="width: 200px"></Column>
-      <Column field="highRiskMale" header="High-risk Male" style="width: 150px"></Column>
-      <Column field="highRiskFemale" header="High-risk Female" style="width: 150px"></Column>
-      <Column field="moderateRiskMale" header="Moderate-risk Male" style="width: 150px"></Column>
-      <Column field="moderateRiskFemale" header="Moderate-risk Female" style="width: 150px"></Column>
-    </DataTable>
+  <div class="card">
+      <h3 class="text-center font-bold text-xl mb-4" style="color: #2c6975">Mental Health Risk Level</h3>
+      <div class="card-body">
+          <div class="flex flex-col md:flex-row">
+              <div class="w-full md:w-1/3 mb-4 md:mb-0">
+                  <div class="flex flex-wrap gap-2">
+                      <Button @click="setActiveButton('Depression')"
+                          :class="{ 'p-button-primary': activeButton === 'Depression' }">
+                          Depression
+                      </Button>
+                      <Button @click="setActiveButton('Anxiety')"
+                          :class="{ 'p-button-primary': activeButton === 'Anxiety' }">
+                          Anxiety
+                      </Button>
+                      <Button @click="setActiveButton('ACE')" :class="{ 'p-button-primary': activeButton === 'ACE' }">
+                          ACE
+                      </Button>
+                      <Button @click="setActiveButton('Suicidal Behaviours')"
+                          :class="{ 'p-button-primary': activeButton === 'Suicidal Behaviours' }">
+                          Suicidal Behaviours
+                      </Button>
+                  </div>
+              </div>
+              <div class="w-full md:w-2/3">
+                  <DataTable :value="tableData" :paginator="true" :rows="5">
+                      <Column field="riskLevel" header="Risk Level"></Column>
+                      <Column field="count" header="Count"></Column>
+                  </DataTable>
+              </div>
+          </div>
+      </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { FilterMatchMode } from 'primevue/api';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Button from 'primevue/button';
 
+const activeButton = ref(null);
 const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
 
-function extractMeasurementData(reportData) {
-  const results = [];
+// Filter functions
+const filterData = (type, level) => reportData.filter(item => item.measurement?.fields[`${type}_measurement`] === level).length;
 
-  reportData.forEach(person => {
-    const measurementAssist = person.measurement_assist?.fields;
-    const gender = person.user?.fields?.gender || "unknown";
-    if (measurementAssist) {
-      const data = {
-        gender: gender,
-        alcoholic: measurementAssist.alcoholic_measurement || "no data",
-        amphetamine: measurementAssist.amphetamine_measurement || "no data",
-        cannabis: measurementAssist.cannabis_measurement || "no data",
-        cocaine: measurementAssist.cocaine_measurement || "no data",
-        hallucinogens: measurementAssist.hallucinogens_measurement || "no data",
-        inhalants: measurementAssist.inhalants_measurement || "no data",
-        opioids: measurementAssist.opioids_measurement || "no data",
-        sedatives: measurementAssist.sedatives_measurement || "no data",
-        tobacco: measurementAssist.tobacco_measurement || "no data",
-        other: measurementAssist.other_measurement || "no data"
-      };
-      results.push(data);
-    }
-  });
+// Data counts
+const gadCounts = {
+  severe: filterData('gad', 'severe'),
+  minimal: filterData('gad', 'minimal'),
+  moderate: filterData('gad', 'moderate'),
+  mild: filterData('gad', 'mild'),
+};
 
-  return results;
-}
+const phqCounts = {
+  severe: filterData('phq', 'severe'),
+  minimal: filterData('phq', 'minimal'),
+  moderate: filterData('phq', 'moderate'),
+  moderately_severe: filterData('phq', 'moderately severe'),
+  mild: filterData('phq', 'mild'),
+};
 
-const extractedData = extractMeasurementData(reportData);
+const aceCounts = {
+  high_risk: filterData('ace', 'high risk'),
+  intermediate_risk: filterData('ace', 'intermediate risk'),
+  low_risk: filterData('ace', 'low risk'),
+};
 
-function countRiskLevels(data) {
-  const counts = {
-    tobacco_moderate_male: 0, tobacco_moderate_female: 0,
-    tobacco_high_male: 0, tobacco_high_female: 0,
-    alcoholic_moderate_male: 0, alcoholic_moderate_female: 0,
-    alcoholic_high_male: 0, alcoholic_high_female: 0,
-    cannabis_moderate_male: 0, cannabis_moderate_female: 0,
-    cannabis_high_male: 0, cannabis_high_female: 0,
-    cocaine_moderate_male: 0, cocaine_moderate_female: 0,
-    cocaine_high_male: 0, cocaine_high_female: 0,
-    amphetamine_moderate_male: 0, amphetamine_moderate_female: 0,
-    amphetamine_high_male: 0, amphetamine_high_female: 0,
-    inhalant_moderate_male: 0, inhalant_moderate_female: 0,
-    inhalant_high_male: 0, inhalant_high_female: 0,
-    sedative_moderate_male: 0, sedative_moderate_female: 0,
-    sedative_high_male: 0, sedative_high_female: 0,
-    hallucinate_moderate_male: 0, hallucinate_moderate_female: 0,
-    hallucinate_high_male: 0, hallucinate_high_female: 0,
-    opioids_moderate_male: 0, opioids_moderate_female: 0,
-    opioids_high_male: 0, opioids_high_female: 0,
-    others_moderate_male: 0, others_moderate_female: 0,
-    others_high_male: 0, others_high_female: 0,
-  };
+const suicidalCounts = {
+  nearlyeveryday: filterData('suicidal', 'nearly everyday'),
+  more_than_half_the_days: filterData('suicidal', 'more than half the days'),
+  several_days: filterData('suicidal', 'several days'),
+};
 
-  data.forEach(personData => {
-    Object.keys(personData).forEach(substance => {
-      const riskLevel = personData[substance];
-      const substanceKey = substance.toLowerCase().replace('-', '_');
-
-      if (riskLevel === 'moderate risk' || riskLevel === 'high risk') {
-        const genderKeyModerate = `${substanceKey}_moderate`;
-        const genderKeyHigh = `${substanceKey}_high`;
-
-        if (personData.gender === 'Male') {
-          if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_male`]++;
-          if (riskLevel === 'high risk') counts[`${genderKeyHigh}_male`]++;
-        } else if (personData.gender === 'Female') {
-          if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_female`]++;
-          if (riskLevel === 'high risk') counts[`${genderKeyHigh}_female`]++;
-        }
-      }
-    });
-  });
-
-  return counts;
-}
-
-const counts = countRiskLevels(extractedData);
+const setActiveButton = (buttonName) => {
+  activeButton.value = buttonName;
+};
 
 const tableData = computed(() => {
-  const substances = [
-    'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type', 
-    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
-  ];
+  switch (activeButton.value) {
+      case 'Depression':
+          return [
+              { riskLevel: 'Severe', count: phqCounts.severe },
+              { riskLevel: 'Minimal', count: phqCounts.minimal },
+              { riskLevel: 'Moderate', count: phqCounts.moderate },
+              { riskLevel: 'Moderately Severe', count: phqCounts.moderately_severe },
+              { riskLevel: 'Mild', count: phqCounts.mild },
+          ];
+      case 'Anxiety':
+          return [
+              { riskLevel: 'Severe', count: gadCounts.severe },
+              { riskLevel: 'Minimal', count: gadCounts.minimal },
+              { riskLevel: 'Moderate', count: gadCounts.moderate },
+              { riskLevel: 'Mild', count: gadCounts.mild },
+          ];
+      case 'ACE':
+          return [
+              { riskLevel: 'High Risk', count: aceCounts.high_risk },
+              { riskLevel: 'Intermediate Risk', count: aceCounts.intermediate_risk },
+              { riskLevel: 'Low Risk', count: aceCounts.low_risk },
+          ];
+      case 'Suicidal Behaviours':
+          return [
+              { riskLevel: 'Nearly Everyday', count: suicidalCounts.nearlyeveryday },
+              { riskLevel: 'More Than Half The Days', count: suicidalCounts.more_than_half_the_days },
+              { riskLevel: 'Several Days', count: suicidalCounts.several_days },
+          ];
+      default:
+          return [];
+  }
+});
 
-  return substances.map(substance => {
-    const key = substance.toLowerCase().replace('-type', '');
-    return {
-      substance,
-      highRiskMale: counts[`${key}_high_male`] || 0,
-      highRiskFemale: counts[`${key}_high_female`] || 0,
-      moderateRiskMale: counts[`${key}_moderate_male`] || 0,
-      moderateRiskFemale: counts[`${key}_moderate_female`] || 0
-    };
-  });
+onMounted(() => {
+  setActiveButton('Depression');
 });
 </script>
 
 <style scoped>
-.card {
-  margin-top: 20px;
+.p-button {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
-:deep(.p-datatable) {
-  font-size: 0.9rem;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-  background-color: #2c6975;
-  color: white;
-  font-weight: 600;
-  text-align: center;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-  text-align: center;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
-  background-color: #d3e2e4;
+.p-button-primary {
+  background-color: #2c6975 !important;
+  border-color: #2c6975 !important;
 }
 </style>
