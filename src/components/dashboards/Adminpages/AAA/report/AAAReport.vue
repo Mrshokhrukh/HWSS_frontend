@@ -1,62 +1,215 @@
 <template>
-  <div>
-    <div class="container-fluid">
-      <div class="row justify-content-center">
-        <div class="col-md-4 mb-3" v-for="(card, index) in cards" :key="index">
-          <div class="card option" @click="selectCard(index)" :class="{ 'active': selectedIndex === index }">
-            <div class="card-body text-center">
-              <i :class="card.iconClass"></i>
-              <p class="card-text mt-2">{{ card.title }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="filter-form mb-2 card mb-4">
+    <div class="card-header">
+      <h4 class="hwss-primary">Filters</h4>
     </div>
-    <div v-if="selectedIndex !== null" class="mt-4">
-      <component :is="selectedComponent"></component>
+    <div class="card-body">
+      <form @submit.prevent="applyFilters" class="filter-form-container">
+        <!-- Gender Wise Filter -->
+        <div class="filter-item">
+          <label for="gender">Gender:</label>
+          <select id="gender" v-model="filters.gender">
+            <option value="">All</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <!-- Region Wise Filter -->
+        <div class="filter-item">
+          <label for="region">Region:</label>
+          <select id="region" v-model="filters.region" @change="updateDzongkhags">
+            <option value="">Select Region</option>
+            <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
+          </select>
+        </div>
+
+        <!-- Dzongkhag Wise Filter -->
+        <div class="filter-item" v-if="filters.region">
+          <label for="dzongkhag">Dzongkhag:</label>
+          <select id="dzongkhag" v-model="filters.dzongkhag">
+            <option value="">Select Dzongkhag</option>
+            <option v-for="dzongkhag in dzongkhags[filters.region]" :key="dzongkhag" :value="dzongkhag">
+              {{ dzongkhag }}
+            </option>
+          </select>
+        </div>
+        <!-- Age Wise Filter -->
+        <div class="filter-item">
+          <label for="class">Class:</label>
+          <select id="class" v-model="filters.class">
+            <option value="">All</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+          </select>
+        </div>
+
+        <button type="submit" class="filter-button mt-4 ">NEXT</button>
+      </form>
     </div>
   </div>
+  <div v-if="filtersApplied" class="filter-option mb-5 card">
+    <div class="card-header">
+      <h4 class="hwss-primary">Which reports would you like to see</h4>
+    </div>
+    <div class="card-body d-flex justify-items-center align-items-center gap-4">
+      <div class="filter-item">
+        <select v-model="selectedReport">
+          <option value="Monitor Report">Monitor Report</option>
+          <option value="Case Study Report">Case Study Report</option>
+          <option value="Severity Report">Severity Report</option>
+        </select>
+      </div>
+      <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
+    </div>
+  </div>
+  <AAAMonitorReport v-if="showMonitorReport" :filteredData="filteredData" />
+  <AAACasestatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
+  <AAASeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import MonitorReport from "@/components/dashboards/Adminpages/AAA/report/AAAMonitorReport/AAAMonitorReport.vue"
-import CaseStatusReport from "@/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/CaseStatusReport.vue"
-import SeverityReport from "@/components/dashboards/Adminpages/AAA/report/AAASeverityReport/AAASeverityReport.vue"
+import { ref, reactive, provide } from 'vue'
+import AAACasestatusReport from './AAACasestatusReport/CaseStatusReport.vue';
+import AAAMonitorReport from './AAAMonitorReport/AAAMonitorReport.vue';
+import AAASeverityReport from './AAASeverityReport/AAASeverityReport.vue';
 
-const selectedIndex = ref(null);
+// Define reactive state for filters
+const filters = reactive({
+  gender: '',
+  region: '',
+  dzongkhag: '',
+  age: '',
+  class: ''
+})
 
-const cards = [
-  { title: 'Monitor Report', component: MonitorReport, iconClass: 'fas fa-desktop fa-3x mb-3' },
-  { title: 'Case Status Report', component: CaseStatusReport, iconClass: 'fas fa-briefcase fa-3x mb-3' },
-  { title: 'Severity Report', component: SeverityReport, iconClass: 'fas fa-exclamation-triangle fa-3x mb-3' }
-];
+// Compute unique regions for dropdown
+const regions = ref(['Western', 'Central', 'Eastern', 'Southern'])
 
-const selectedComponent = computed(() => {
-  if (selectedIndex.value !== null) {
-    return cards[selectedIndex.value].component;
+// Compute dzongkhags for each region
+const dzongkhags = ref({
+  Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Wangdue Phodrang'],
+  Central: ['Trongsa', 'Bumthang', 'Zhemgang', 'Tsirang', 'Dagana', 'Sarpang'],
+  Eastern: [
+    'Mongar',
+    'Trashigang',
+    'Trashi Yangtse',
+    'Lhuentse',
+    'Pema Gatshel',
+    'Samdrup Jongkhar'
+  ],
+  Southern: ['Chukha', 'Samtse', 'Dagana', 'Tsirang']
+})
+
+const reportData = JSON.parse(sessionStorage.getItem('reportData')) || []
+const filteredData = ref([])
+const filtersApplied = ref(false)
+const selectedReport = ref('All Report')
+const showMonitorReport = ref(false)
+const showCaseStatusReport = ref(false)
+const showSeverityReport = ref(false)
+
+// sorting filter data
+const applyFilters = () => {
+  filteredData.value = reportData.filter((item) => {
+    if (filters.gender && item.user?.fields?.gender !== filters.gender) return false;
+    if (filters.dzongkhag && item.user?.fields?.ps_add_dzongkhag !== filters.dzongkhag) return false;
+    if (filters.class && item.user_agency?.fields?.user_class !== filters.class) return false;
+    return true;
+  })
+  console.log('Filtered Data:', filteredData.value)
+  filtersApplied.value = true
+}
+
+// showing for selcted files
+const handleReportSelection = () => {
+  // Reset all report visibility
+  showMonitorReport.value = false
+  showCaseStatusReport.value = false
+  showSeverityReport.value = false
+
+  // Show the selected report
+  switch (selectedReport.value) {
+    case 'Monitor Report':
+      showMonitorReport.value = true
+      break
+    case 'Case Study Report':
+      showCaseStatusReport.value = true
+      break
+    case 'Severity Report':
+      showSeverityReport.value = true
+      break
+    default:
+      console.log('Invalid report type selected')
   }
-  return null;
-});
+}
 
-const selectCard = (index) => {
-  selectedIndex.value = index;
-};
+provide('filteredData', filteredData)
 </script>
 
 <style scoped>
-.card {
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 10px;
-  cursor: pointer;
+.filter-form {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.card.active {
-  background-color: lightblue;
+.filter-form-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
 }
 
-.card:hover {
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 150px;
+  font-size: large;
+}
+
+.filter-item label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.filter-item input,
+.filter-item select {
+  padding: 8px;
+  border: 1px solid #ddd;
   background-color: #f9f9f9;
+  border-radius: 5px;
+  font-size: medium;
+  font-weight: 500;
+}
+
+.filter-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #2C6975;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.filter-button:hover {
+  background-color: #0056b3;
+}
+
+.filter-option {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
 }
 </style>

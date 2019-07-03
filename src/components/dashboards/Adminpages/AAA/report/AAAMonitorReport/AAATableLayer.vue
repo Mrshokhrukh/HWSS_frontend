@@ -1,133 +1,132 @@
 <template>
-    <div class="card rounded">
-        <DataTable :value="aggregateData" tableStyle="min-width: 50rem">
-            <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xl font-bold">Aggregates</span>
-                </div>
+    <div>
+      <DataTable :value="aggregateData">
+        <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header">
+          <template #body="slotProps">
+            <template v-if="Array.isArray(slotProps.data[col.field])">
+              <ul>
+                <li v-for="(item, index) in slotProps.data[col.field]" :key="index">
+                    {{ item.key }}: {{ item.count }}
+                </li>
+              </ul>
             </template>
-            <Column field="field" header="Field"></Column>
-            <Column header="Count">
-                <template #body="slotProps">
-                    <span v-if="typeof slotProps.data.count === 'string'">{{ slotProps.data.count }}</span>
-                    <ul v-else>
-                        <li v-for="(item, index) in slotProps.data.count" :key="index">
-                            {{ item.key }}: {{ item.count }}
-                        </li>
-                    </ul>
-                </template>
-            </Column>
-        </DataTable>
+            <template v-else>
+              {{ slotProps.data[col.field] }}
+            </template>
+          </template>
+        </Column>
+      </DataTable>
     </div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
-
-// Rescreening Count
-const Rescreening_filter = ref(reportData.value.filter(item => item.rescreened === false));
-const Rescreening_count = ref(Rescreening_filter.value.length);
-
-// Counseling - Waiting List
-const WaitingList_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Waiting List').length);
-
-// Counseling - Not Required
-const NotRequired_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Not Required').length);
-
-// Counseling - Availed
-const Availed_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Availed').length);
-
-// Assessment - Conducted
-const Conducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Conducted').length);
-
-
-
-// Assessment - Not Conducted
-const NotConducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Not Conducted').length);
-const FollowUp_Counts = ref({
-    'Treatment completed': reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Treatment completed').length,
-    'Undergoing treatment': reportData.value.filter(item => item.followUp === 'Undergoing treatment').length,
-    'Completed counselling sessions': reportData.value.filter(item => item.followUp === 'Completed counselling sessions').length,
-    'Undergoing counselling': reportData.value.filter(item => item.followUp === 'Undergoing counselling').length,
-    'Unwilling to undergo treatment': reportData.value.filter(item => item.followUp === 'Unwilling to undergo treatment').length,
-    'Undergone Rehabilitation': reportData.value.filter(item => item.followUp === 'Undergone Rehabilitation').length,
-    'Undergoing Rehabilitation': reportData.value.filter(item => item.followUp === 'Undergoing Rehabilitation').length,
-    'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)': reportData.value.filter(item => item.followUp === 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)').length,
-    'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)': reportData.value.filter(item => item.followUp === 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)').length,
-    'School-based SUD Treatment and Care': reportData.value.filter(item => item.followUp === 'School-based SUD Treatment and Care').length,
-    'Institution-based SUD Treatment and Care': reportData.value.filter(item => item.followUp === 'Institution-based SUD Treatment and Care').length,
-    'Follow up Drug Test Conducted': reportData.value.filter(item => item.followUp === 'Follow up Drug Test Conducted').length,
-    'Detention-based SUD Treatment and Care': reportData.value.filter(item => item.followUp === 'Detention-based SUD Treatment and Care').length,
-});
-
-
-// Case Status Counts
-const Open_Case_Count = ref(reportData.value.filter(item => item.caseStatus === 'Open').length);
-const Closed_Case_Count = ref(reportData.value.filter(item => item.caseStatus === 'Closed').length);
-
-const aggregateData = ref([
-    { field: 'RESCREENING COUNT', count: `Total: ${Rescreening_count.value}` },
+  </template>
+  
+  <script setup>
+  import { ref, computed } from 'vue';
+  import DataTable from 'primevue/datatable';
+  import Column from 'primevue/column';
+  
+  const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+  
+  // Existing count calculations...
+  const Rescreening_count = ref(reportData.value.filter(item => item.rescreened === false).length);
+  const WaitingList_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Waiting List').length);
+  const NotRequired_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Not Required').length);
+  const Availed_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Availed').length);
+  const Conducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Conducted').length);
+  const NotConducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Not Conducted').length);
+  const Referred_Count = ref(reportData.value.filter(item => item.service_and_treatment?.referred === 'Referred').length);
+  const Notreferred_Count = ref(reportData.value.filter(item => item.service_and_treatment?.referred === 'Not Referred').length);
+  // follow-up counts
+  const Treatmentcompleted_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Treatment Completed').length);
+  const Undergoingtreatment_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing treatment').length);
+  const Completedcounsellingsessions_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Completed counselling sessions').length);
+  const Undergoingcounselling_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing counselling').length);
+  const Unwillingtoundergotreatment_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Unwilling to undergo treatment').length);
+  const UndergoneRehabilitation_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergone Rehabilitation').length);
+  const UndergoingRehabilitation_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing Rehabilitation').length);
+  const HospitalbasedOutpatientSUDTreatmentandCarePrimaryPhase_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)').length);
+  const HospitalbasedOutpatientSUDTreatmentandCareContinuingCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)').length);
+  const SchoolbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'School-based SUD Treatment and Care').length);
+  const InstitutionbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Institution-based SUD Treatment and Care').length);
+  const FollowupDrugTestConducted_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Follow up Drug Test Conducted').length);
+  const DetentionbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Detention-based SUD Treatment and Care').length);
+  
+  const columns = ref([
+    { field: 'rescreening', header: 'Rescreening' },
+    { field: 'counseling', header: 'Counseling' },
+    { field: 'assessment', header: 'Assessment' },
+    { field: 'referral', header: 'Referral' },
+    { field: 'followUp', header: 'Follow-Up' },
+  ]);
+  
+  const aggregateData = computed(() => [
     {
-        field: 'Counseling',
-        count: [
-            { key: 'Waiting List', count: WaitingList_Count.value },
-            { key: 'Not Required', count: NotRequired_Count.value },
-            { key: 'Availed', count: Availed_Count.value }
-        ]
-    },
-    {
-        field: 'ASSESSMENT',
-        count: [
-            { key: 'Conducted', count: Conducted_Count.value },
-            { key: 'Not Conducted', count: NotConducted_Count.value }
-        ]
-    },
-    {
-        field: 'REFERRAL',
-        count: [
-            { key: 'Referred', count: Open_Case_Count.value },
-            { key: 'Not Referred', count: Closed_Case_Count.value }
-        ]
-    },
-    {
-        field: 'FOLLOW-UP',
-        count: Object.keys(FollowUp_Counts.value).map(key => ({ key, count: FollowUp_Counts.value[key] }))
+      rescreening: `Total: ${Rescreening_count.value}`,
+      counseling: [
+        { key: 'Waiting List', count: WaitingList_Count.value },
+        { key: 'Not Required', count: NotRequired_Count.value },
+        { key: 'Availed', count: Availed_Count.value }
+      ],
+      assessment: [
+        { key: 'Conducted', count: Conducted_Count.value },
+        { key: 'Not Conducted', count: NotConducted_Count.value }
+      ],
+      referral: [
+        { key: 'Referred', count: Referred_Count.value },
+        { key: 'Not Referred', count: Notreferred_Count.value }
+      ],
+      followUp: [
+        { key: 'Treatment completed', count: Treatmentcompleted_count.value },
+        { key: 'Undergoing treatment', count: Undergoingtreatment_count.value },
+        { key: 'Completed counselling sessions', count: Completedcounsellingsessions_count.value },
+        { key: 'Undergoing counselling', count: Undergoingcounselling_count.value },
+        { key: 'Unwilling to undergo treatment', count: Unwillingtoundergotreatment_count.value },
+        { key: 'Undergone Rehabilitation', count: UndergoneRehabilitation_count.value },
+        { key: 'Undergoing Rehabilitation', count: UndergoingRehabilitation_count.value },
+        { key: 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)', count: HospitalbasedOutpatientSUDTreatmentandCarePrimaryPhase_count.value },
+        { key: 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)', count: HospitalbasedOutpatientSUDTreatmentandCareContinuingCare_count.value },
+        { key: 'School-based SUD Treatment and Care', count: SchoolbasedSUDTreatmentandCare_count.value },
+        { key: 'Institution-based SUD Treatment and Care', count: InstitutionbasedSUDTreatmentandCare_count.value },
+        { key: 'Follow up Drug Test Conducted', count: FollowupDrugTestConducted_count.value },
+        { key: 'Detention-based SUD Treatment and Care', count: DetentionbasedSUDTreatmentandCare_count.value }
+      ]
     }
-]);
-
-</script>
-
-<style scoped>
-.card {
+  ]);
+  </script>
+  
+  <style scoped>
+  .card {
     margin-top: 20px;
-}
-
-.card table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.card th,
-.card td {
-    border: 1px solid #000;
-    padding: 8px;
-    text-align: left;
-}
-
-.card th {
-    background-color: hsl(107, 63%, 52%);
-}
-
-.card ul {
+  }
+  
+  :deep(.p-datatable) {
+    font-size: 0.9rem;
+  }
+  
+  :deep(.p-datatable-header) {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+  
+  :deep(.p-datatable-thead > tr > th) {
+    background-color: #2C6975;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  :deep(.p-datatable-tbody > tr > td) {
+    text-align: center;
+  }
+  
+  ul {
     list-style-type: none;
     padding: 0;
-}
-
-.card li {
+    margin: 0;
+    text-align: left;
+  }
+  
+  li {
     margin-bottom: 4px;
-}
-</style>
+  }
+  </style>
+  
