@@ -3,7 +3,7 @@
         <div class="col-md-6 d-flex">
             <div class="card flex-fill">
                 <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">No. of Schools</h3>
+                    <h3 class="card-title mb-3 text-start">No. of Agencies</h3>
                 </div>
                 <div class="card-body bg-info">
                     <p class="card-text display-3">{{ noOfSchools }}</p>
@@ -262,7 +262,7 @@ const createChart = (ctx, type, data, options) => {
 }
 
 .card-body {
-    padding: 20px;
+    padding: 10px;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -270,7 +270,7 @@ const createChart = (ctx, type, data, options) => {
 }
 
 .bg-info {
-    background-color: #87ceeb !important;
+    background-color: #A3CDB8 !important;
 }
 
 canvas {

@@ -3,8 +3,8 @@
     <h3 class="card-title">School/Event Data</h3>
     <DataTable :value="tableData" :rowHover="true" class="p-datatable-sm" responsiveLayout="scroll">
       <Column field="schoolEvent" header="Agency/Event" sortable></Column>
-      <Column field="individualsScreened" header="Individuals Screened" sortable></Column>
-      <Column field="suicidalBehavior" header="Suicidal Behavior"  sortable></Column>
+      <Column field="individualsScreened" header="Individuals Screened" bodyClass="text-center" sortable></Column>
+      <Column field="suicidalBehavior" header="Suicidal Behavior" bodyClass="text-center"  sortable></Column>
       <ColumnGroup type="header">
         <Row>
           <Column header="School/Event Data" :colspan="1" :rowspan="2"/>
@@ -37,7 +37,7 @@
         </template>
       </Column>
     </DataTable>
-    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" :style="{width: '80vw'}">
+    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" :style="{width: '60vw'}">
       <TabView>
         <TabPanel v-for="substance in substances" :key="substance" :header="substance">
           <DataTable :value="getSUDDetails(substance)" class="p-datatable-sm">
