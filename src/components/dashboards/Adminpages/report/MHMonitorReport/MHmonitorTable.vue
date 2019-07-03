@@ -6,7 +6,7 @@
           <template v-if="Array.isArray(slotProps.data[col.field])">
             <ul>
               <li v-for="(item, index) in slotProps.data[col.field]" :key="index">
-                {{ item.key }}: <span class="bold-count">{{ item.count }}</span>
+                  {{ item.key }}: {{ item.count }}
               </li>
             </ul>
           </template>
@@ -108,7 +108,7 @@ const aggregateData = computed(() => [
 }
 
 :deep(.p-datatable-thead > tr > th) {
-  background-color: #2C6975;
+  background-color: #4caf50;
   color: white;
   font-weight: bold;
   text-align: center;
@@ -116,11 +116,6 @@ const aggregateData = computed(() => [
 
 :deep(.p-datatable-tbody > tr > td) {
   text-align: center;
-  border: 1px solid #ddd; /* Adding border to td elements for grid lines */
-}
-
-:deep(.p-datatable-tbody > tr) {
-  border: 1px solid #ddd; /* Adding border to tr elements for grid lines */
 }
 
 ul {
@@ -132,9 +127,5 @@ ul {
 
 li {
   margin-bottom: 4px;
-}
-
-.bold-count {
-  font-weight: bold; /* Styling to make item.count bold */
 }
 </style>
