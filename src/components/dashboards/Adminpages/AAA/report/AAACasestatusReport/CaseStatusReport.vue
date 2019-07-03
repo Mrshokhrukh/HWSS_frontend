@@ -1,35 +1,42 @@
 <template>
-  <div class="container-fluid">
-    <div class="card">
-      <div class="row">
-        <!-- Sidebar for Options -->
-        <div class="col-md-3 p-4 bg-light border-end d-flex flex-column">
-          <h5 class="mb-4">Data Set</h5>
-          <div v-for="option in options" :key="option.id" class="form-check mb-2">
-            <input 
-              type="checkbox" 
-              class="form-check-input" 
-              :id="option.id" 
-              v-model="option.selected" 
-              @change="handleOptionChange(option)"
+  <div class="row g-0">
+    <div class="col-md-2">
+      <div class="card h-100">
+        <div class="card-body">
+          <p class="card-text">Data Set</p>
+          <div v-for="(option, index) in dataOptions" :key="index" class="form-check text-start">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :value="option.value"
+              :id="'check' + index"
+              v-model="selectedOptions"
+              @change="handleCheckboxChange(option.value)"
             />
-            <label class="form-check-label" :for="option.id">{{ option.label }}</label>
+            <label class="form-check-label" :for="'check' + index">
+              {{ option.label }}
+            </label>
           </div>
-          <button @click="generateReport" class="btn btn-primary mt-auto">Generate</button>
+          <button @click="generateChart" class="btn btn-primary mt-3">Generate</button>
         </div>
-        <!-- Preview Area -->
-        <div class="col-md-9 p-3 bg-white">
-          <div v-if="!showPreview" class="text-center text-muted">
-            <p class="note">Note: Please select the parameters</p>
-            <p class="note">Note: The report will be shown only when the generate button is pressed.</p>
+      </div>
+    </div>
+    <div class="col-md-10">
+      <div class="card h-100">
+        <div class="card-body">
+          <div v-if="selectedOptions.length === 0" class="text-center">
+            <p class="text-primary mb-3 d-flex justify-content-center align-items-center">
+              Note: Please select the parameters
+            </p>
+            <p class="text-secondary d-flex justify-content-center align-items-center">
+              Note: The report will be shown only when the generate button is pressed.
+            </p>
           </div>
           <div v-else>
-            <div class="graph">
-              <div class="graph-placeholder">
-                <AAACasestatusGraph v-if="!showTable" :selectedOptions="selectedOptions" :reportData="reportData" />
-                <TotalCaseOngoing v-else :reportData="reportData" />
-              </div>
+            <div v-if="showTable" class="showtable">
+              <AAACasereportTable />
             </div>
+            <canvas v-else ref="chartCanvas" class="d-flex justify-content-center align-items-center"></canvas>
           </div>
         </div>
       </div>
@@ -38,54 +45,135 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import TotalCaseOngoing from "./CSR_TotalCaseOngoing.vue";
-import AAACasestatusGraph from "@/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/AAACaseStatusGraph.vue";
+import { onMounted, ref, computed, inject } from 'vue'
+import Chart from 'chart.js/auto'
+import AAACasereportTable from './AAACasereportTable.vue'
 
-const options = ref([
-  { id: 'ONGoingCases', label: 'On Going Case', selected: false },
-  { id: 'CaseDiscontinued', label: 'Case Discontinued', selected: false },
-  { id: 'CaseClosed', label: 'Case Closed', selected: false },
-  { id: 'Table', label: 'All', selected: false },
-]);
+const chartCanvas = ref(null)
+const reportData = inject('filteredData')
 
-const showPreview = ref(false);
-const showTable = ref(false);
+const dataOptions = [
+  { label: 'ALL', value: 'all' },
+  { label: 'Case Ongoing', value: 'ongoing' },
+  { label: 'Case Closed', value: 'closed' },
+  { label: 'Case Discontinued', value: 'discontinued' }
+]
 
-const selectedOptions = computed(() => {
-  return options.value.filter(option => option.selected && option.id !== 'Table').map(option => option.id);
-});
+const selectedOptions = ref([])
+const showTable = ref(false)
+let chart = null
 
-const handleOptionChange = (changedOption) => {
-  if (changedOption.id === 'Table') {
-    // If Table is selected, deselect all other options
-    options.value.forEach(option => {
-      if (option.id !== 'Table') {
-        option.selected = false;
+const counts = computed(() => {
+  const result = {
+    ongoing: {},
+    closed: {},
+    discontinued: {}
+  }
+
+  reportData.value.forEach((item) => {
+    if (item.service_and_treatment?.case_status === 'On Going') {
+      result.ongoing['On Going'] = (result.ongoing['On Going'] || 0) + 1
+    } else if (item.service_and_treatment?.case_status === 'Case Closed') {
+      result.closed['Case Closed'] = (result.closed['Case Closed'] || 0) + 1
+    } else if (item.service_and_treatment?.case_status === 'Case Discontinued') {
+      result.discontinued['Case Discontinued'] = (result.discontinued['Case Discontinued'] || 0) + 1
+    }
+  })
+
+  return result
+})
+
+const handleCheckboxChange = (value) => {
+  if (value === 'all') {
+    selectedOptions.value = ['all']
+  } else {
+    selectedOptions.value = [value]
+  }
+
+  const checkboxes = ['all', 'ongoing', 'closed', 'discontinued']
+  checkboxes.forEach((checkbox, index) => {
+    if (checkbox !== value) {
+      const checkboxElement = document.getElementById(`check${index}`)
+      checkboxElement.checked = false
+    }
+  })
+}
+
+const generateChart = () => {
+  if (chart) {
+    chart.destroy()
+  }
+
+  if (selectedOptions.value.length === 0) {
+    showTable.value = false
+    return
+  }
+
+  if (selectedOptions.value.includes('all')) {
+    showTable.value = true
+    return
+  } else {
+    showTable.value = false
+  }
+
+  const datasets = selectedOptions.value.map((option) => {
+    const data = counts.value[option]
+    return {
+      label: option,
+      data: Object.values(data),
+      backgroundColor: getRandomColor()
+    }
+  })
+
+  const labels = selectedOptions.value.flatMap((option) => Object.keys(counts.value[option]))
+
+  const ctx = chartCanvas.value.getContext('2d')
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          stepSize: 1
+        }
       }
-    });
-  } else {
-    // If any other option is selected, deselect Table
-    options.value.find(option => option.id === 'Table').selected = false;
-  }
-  showTable.value = options.value.find(option => option.id === 'Table').selected;
-};
+    }
+  })
+}
 
-const generateReport = () => {
-  if (selectedOptions.value.length > 0 || showTable.value) {
-    showPreview.value = true;
-  } else {
-    alert('Please select at least one option before generating the report.');
-  }
-};
+function getRandomColor() {
+  const r = Math.floor(Math.random() * 255)
+  const g = Math.floor(Math.random() * 255)
+  const b = Math.floor(Math.random() * 255)
+  return `rgba(${r}, ${g}, ${b}, 0.7)`
+}
 
-const reportData = ref([
-  { id: 'ONGoingCases', status: 'On Going Case', count: 30 },
-  { id: 'CaseDiscontinued', status: 'Case Discontinued', count: 10 },
-  { id: 'CaseClosed', status: 'Case Closed', count: 60 },
-]);
+onMounted(() => {
+  if (chartCanvas.value) {
+    generateChart()
+  }
+})
 </script>
 
 <style scoped>
-/* Add scoped styles as needed */
+.card {
+  margin-top: 20px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+li {
+  margin-bottom: 4px;
+}
 </style>

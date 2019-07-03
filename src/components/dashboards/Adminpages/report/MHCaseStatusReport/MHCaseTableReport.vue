@@ -74,7 +74,8 @@
   }
   
   :deep(.p-datatable-thead > tr > th) {
-    background-color: hsl(107, 63%, 52%);
+    background-color:#2C6975
+    ;
     color: white;
     font-weight: bold;
     text-align: center;
@@ -87,6 +88,7 @@
   :deep(.main-header) {
     text-align: center !important;
     font-size: 1.2em;
-    background-color: hsl(107, 63%, 40%) !important;
+    background-color:#2C6975
+    !important;
   }
   </style>

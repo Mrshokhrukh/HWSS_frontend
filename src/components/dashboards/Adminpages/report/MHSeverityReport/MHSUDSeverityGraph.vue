@@ -47,6 +47,8 @@
                     @click="setActiveButton('Opioids')">Opioids</button>
                   <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Others' }"
                     @click="setActiveButton('Others')">Others</button>
+                    <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Table' }"
+                    @click="setActiveButton('Table')">Table</button>
                 </div>
               </div>
   
@@ -67,6 +69,9 @@
           <div class="col">
             <canvas id="barChart" width="100" height="50"></canvas>
           </div>
+          <div v-if="activeButton === 'Table'">
+          <MHSeverityTable/>
+          </div>
         </div>
       </div>
     </div>
@@ -76,6 +81,7 @@
   <script setup>
   import { ref } from 'vue';
   import Chart from 'chart.js/auto';
+  import MHSeverityTable from './MHSeverityTable.vue'
   
   const activeButton = ref(null);
   

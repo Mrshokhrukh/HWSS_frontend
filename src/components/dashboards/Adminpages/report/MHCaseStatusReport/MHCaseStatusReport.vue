@@ -1,44 +1,42 @@
 <template>
-  <div class="row">
-    <div class="col-md-3 text-center">
-      <div class="card option">
+  <div class="row g-0">
+    <div class="col-md-2">
+      <div class="card h-100">
         <div class="card-body">
           <p class="card-text">Data Set</p>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="all" id="checkAll" @change="handleCheckboxChange('all')">
-            <label class="form-check-label" for="checkAll">
-              ALL
+          <div v-for="(option, index) in dataOptions" :key="index" class="form-check text-start">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :value="option.value"
+              :id="'check' + index"
+              v-model="selectedOptions"
+              @change="handleCheckboxChange(option.value)"
+            />
+            <label class="form-check-label" :for="'check' + index">
+              {{ option.label }}
             </label>
           </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="ongoing" id="checkOngoing" @change="handleCheckboxChange('ongoing')">
-            <label class="form-check-label" for="checkOngoing">
-              Case Ongoing
-            </label>
-          </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="closed" id="checkClosed" @change="handleCheckboxChange('closed')">
-            <label class="form-check-label" for="checkClosed">
-              Case Closed
-            </label>
-          </div>
-          <div class="form-check text-start">
-            <input class="form-check-input" type="checkbox" value="discontinued" id="checkDiscontinued" @change="handleCheckboxChange('discontinued')">
-            <label class="form-check-label" for="checkDiscontinued">
-              Case Discontinued
-            </label>
-          </div>
-
-          <button type="button" class="btn btn-primary mt-3" @click="generateChart">Generate</button>
+          <button @click="generateChart" class="btn btn-primary mt-3">Generate</button>
         </div>
       </div>
     </div>
-    <div class="col-md-9 text-center">
-      <div class="card option">
+    <div class="col-md-10">
+      <div class="card h-100">
         <div class="card-body">
-          <canvas ref="chartCanvas"></canvas>
-          <div v-if="showTable" class="showtable">
-            <MHCaseTable />
+          <div v-if="selectedOptions.length === 0" class="text-center">
+            <p class="text-primary mb-3 d-flex justify-content-center align-items-center">
+              Note: Please select the parameters
+            </p>
+            <p class="text-secondary d-flex justify-content-center align-items-center">
+              Note: The report will be shown only when the generate button is pressed.
+            </p>
+          </div>
+          <div v-else>
+            <div v-if="showTable" class="showtable">
+              <MHCaseTable />
+            </div>
+            <canvas v-else ref="chartCanvas" class="d-flex justify-content-center align-items-center"></canvas>
           </div>
         </div>
       </div>
@@ -54,6 +52,13 @@ import MHCaseTable from './MHCaseTableReport.vue'
 const chartCanvas = ref(null)
 const reportData = inject('filteredData')
 
+const dataOptions = [
+  { label: 'ALL', value: 'all' },
+  { label: 'Case Ongoing', value: 'ongoing' },
+  { label: 'Case Closed', value: 'closed' },
+  { label: 'Case Discontinued', value: 'discontinued' }
+]
+
 const selectedOptions = ref([])
 const showTable = ref(false)
 let chart = null
@@ -65,7 +70,6 @@ const counts = computed(() => {
     discontinued: {}
   }
 
-  // Fill result object with counts
   reportData.value.forEach((item) => {
     if (item.service_and_treatment?.case_status === 'On Going') {
       result.ongoing['On Going'] = (result.ongoing['On Going'] || 0) + 1
@@ -86,11 +90,10 @@ const handleCheckboxChange = (value) => {
     selectedOptions.value = [value]
   }
 
-  // Uncheck other checkboxes
   const checkboxes = ['all', 'ongoing', 'closed', 'discontinued']
-  checkboxes.forEach((checkbox) => {
+  checkboxes.forEach((checkbox, index) => {
     if (checkbox !== value) {
-      const checkboxElement = document.getElementById(`check${checkbox.charAt(0).toUpperCase() + checkbox.slice(1)}`)
+      const checkboxElement = document.getElementById(`check${index}`)
       checkboxElement.checked = false
     }
   })
@@ -99,6 +102,11 @@ const handleCheckboxChange = (value) => {
 const generateChart = () => {
   if (chart) {
     chart.destroy()
+  }
+
+  if (selectedOptions.value.length === 0) {
+    showTable.value = false
+    return
   }
 
   if (selectedOptions.value.includes('all')) {

@@ -1,81 +1,75 @@
 <template>
-  <div class="filter-form mb-2 card mb-4">
-    <div class="card-header">
-      <h4 class="hwss-primary">Filters</h4>
-    </div>
-    <div class="card-body">
-      <form @submit.prevent="applyFilters" class="filter-form-container">
-        <!-- Gender Wise Filter -->
-        <div class="filter-item">
-          <label for="gender">Gender:</label>
-          <select id="gender" v-model="filters.gender">
-            <option value="">All</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
-        <!-- Region Wise Filter -->
-        <div class="filter-item">
-          <label for="region">Region:</label>
-          <select id="region" v-model="filters.region" @change="updateDzongkhags">
-            <option value="">Select Region</option>
-            <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
-          </select>
-        </div>
-
-        <!-- Dzongkhag Wise Filter -->
-        <div class="filter-item" v-if="filters.region">
-          <label for="dzongkhag">Dzongkhag:</label>
-          <select id="dzongkhag" v-model="filters.dzongkhag">
-            <option value="">Select Dzongkhag</option>
-            <option v-for="dzongkhag in dzongkhags[filters.region]" :key="dzongkhag" :value="dzongkhag">
-              {{ dzongkhag }}
-            </option>
-          </select>
-        </div>
-        <!-- Age Wise Filter -->
-        <div class="filter-item">
-          <label for="class">Class:</label>
-          <select id="class" v-model="filters.class">
-            <option value="">All</option>
-            <option value="6">6</option>
-            <option value="7">7</option>
-            <option value="8">8</option>
-            <option value="9">9</option>
-            <option value="10">10</option>
-            <option value="11">11</option>
-            <option value="12">12</option>
-          </select>
-        </div>
-
-        <button type="submit" class="filter-button mt-4 ">NEXT</button>
-      </form>
-    </div>
-  </div>
-  <div v-if="filtersApplied" class="filter-option mb-5 card">
-    <div class="card-header">
-      <h4 class="hwss-primary">Which reports would you like to see</h4>
-    </div>
-    <div class="card-body d-flex justify-items-center align-items-center gap-4">
+  <div class="filter-form mb-2">
+    <h1>Filters</h1>
+    <hr>
+    <form @submit.prevent="applyFilters" class="filter-form-container">
+      <!-- Gender Wise Filter -->
       <div class="filter-item">
-        <select v-model="selectedReport">
-          <option value="Monitor Report">Monitor Report</option>
-          <option value="Case Study Report">Case Study Report</option>
-          <option value="Severity Report">Severity Report</option>
+        <label for="gender">Gender:</label>
+        <select id="gender" v-model="filters.gender">
+          <option value="">All</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
         </select>
       </div>
-      <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
-    </div>
+      <!-- Region Wise Filter -->
+      <div class="filter-item">
+        <label for="region">Region:</label>
+        <select id="region" v-model="filters.region" @change="updateDzongkhags">
+          <option value="">Select Region</option>
+          <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
+        </select>
+      </div>
+
+      <!-- Dzongkhag Wise Filter -->
+      <div class="filter-item" v-if="filters.region">
+        <label for="dzongkhag">Dzongkhag:</label>
+        <select id="dzongkhag" v-model="filters.dzongkhag">
+          <option value="">Select Dzongkhag</option>
+          <option v-for="dzongkhag in dzongkhags[filters.region]" :key="dzongkhag" :value="dzongkhag">
+            {{ dzongkhag }}
+          </option>
+        </select>
+      </div>
+      <!-- Age Wise Filter -->
+      <div class="filter-item">
+        <label for="class">Class:</label>
+        <select id="class" v-model="filters.class">
+          <option value="">All</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+        </select>
+      </div>
+
+      <button type="submit" class="filter-button mt-4 ">NEXT</button>
+    </form>
   </div>
-  <AAAMonitorReport v-if="showMonitorReport" :filteredData="filteredData" />
-  <AAACasestatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
-  <AAASeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
+  <div v-if="filtersApplied" class="filter-option mb-5">
+    <h1>Which reports would you like to see</h1>
+    <hr>
+    <div class="filter-item">
+      <select v-model="selectedReport">
+        <option value="Monitor Report">Monitor Report</option>
+        <option value="Case Study Report">Case Study Report</option>
+        <option value="Severity Report">Severity Report</option>
+      </select>
+    </div>
+    <button @click="handleReportSelection" class="filter-button mt-2">NEXT</button>
+  </div>
+  <AAAMonitorReport v-if="showMonitorReport" />
+  <CaseStatusReport v-if="showCaseStatusReport" />
+  <AAASeverityReport v-if="showSeverityReport" />
 </template>
 
 <script setup>
 import { ref, reactive, provide } from 'vue'
-import AAACasestatusReport from './AAACasestatusReport/CaseStatusReport.vue';
 import AAAMonitorReport from './AAAMonitorReport/AAAMonitorReport.vue';
+import CaseStatusReport from './AAACasestatusReport/CaseStatusReport.vue';
 import AAASeverityReport from './AAASeverityReport/AAASeverityReport.vue';
 
 // Define reactive state for filters
@@ -109,6 +103,7 @@ const reportData = JSON.parse(sessionStorage.getItem('reportData')) || []
 const filteredData = ref([])
 const filtersApplied = ref(false)
 const selectedReport = ref('All Report')
+const showOverallReport = ref(false)
 const showMonitorReport = ref(false)
 const showCaseStatusReport = ref(false)
 const showSeverityReport = ref(false)
@@ -116,18 +111,25 @@ const showSeverityReport = ref(false)
 // sorting filter data
 const applyFilters = () => {
   filteredData.value = reportData.filter((item) => {
-    if (filters.gender && item.user?.fields?.gender !== filters.gender) return false;
-    if (filters.dzongkhag && item.user?.fields?.ps_add_dzongkhag !== filters.dzongkhag) return false;
-    if (filters.class && item.user_agency?.fields?.user_class !== filters.class) return false;
-    return true;
+    if (filters.gender) {
+      return item.user?.fields?.gender === filters.gender
+    }
+    if (filters.dzongkhag) {
+      return item.user?.fields?.ps_add_dzongkhag === filters.dzongkhag
+    }
+    if (filters.class) {
+      return item.user_agency?.fields?.user_class === filters.class
+    }
+    return true
   })
-  console.log('Filtered Data:', filteredData.value)
+  console.log('Filtered Data:', (filteredData.value))
   filtersApplied.value = true
 }
 
 // showing for selcted files
 const handleReportSelection = () => {
   // Reset all report visibility
+  showOverallReport.value = false
   showMonitorReport.value = false
   showCaseStatusReport.value = false
   showSeverityReport.value = false
@@ -171,7 +173,6 @@ provide('filteredData', filteredData)
   flex-direction: column;
   flex: 1;
   min-width: 150px;
-  font-size: large;
 }
 
 .filter-item label {
@@ -185,8 +186,7 @@ provide('filteredData', filteredData)
   border: 1px solid #ddd;
   background-color: #f9f9f9;
   border-radius: 5px;
-  font-size: medium;
-  font-weight: 500;
+  font-size: 14px;
 }
 
 .filter-button {
@@ -210,6 +210,5 @@ provide('filteredData', filteredData)
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
 }
 </style>
