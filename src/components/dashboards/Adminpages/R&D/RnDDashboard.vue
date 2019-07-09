@@ -77,15 +77,47 @@
     </div>
 
     <!-- Display all components -->
-    <div v-if="showResults">
-      <div class="mb-4">
-        <h5>Data Display</h5>
-        <RndDataDisplay :filtered-data="finalFilteredData" />
-      </div>
-      
-      <div class="mb-4">
-        <h5>Tables</h5>
-        <RnDChartTables :filtered-data="finalFilteredData" />
+     <!-- Tabs and content area -->
+     <div v-if="showResults" class="results-container mt-4">
+      <ul class="nav nav-tabs" id="resultTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="false">Charts</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tables-tab" data-bs-toggle="tab" data-bs-target="#tables" type="button" role="tab" aria-controls="tables" aria-selected="false">Tables</button>
+        </li>
+      </ul>
+      <div class="tab-content" id="resultTabsContent">
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+          <div class="mt-4">
+            <h5>Data Display</h5>
+            <RndDataDisplay :filtered-data="finalFilteredData" />
+          </div>
+          
+          <div class="mt-4">
+            <h5>Tables</h5>
+            <RnDChartTables :filtered-data="finalFilteredData" />
+          </div>
+        </div>
+        <div class="tab-pane fade" id="charts" role="tabpanel" aria-labelledby="charts-tab">
+          <div class="mt-4">
+            <h5>Charts</h5>
+            <!-- Add your chart components here -->
+            <p>Chart visualizations will be displayed here.</p>
+            <RNDmap/>
+            <RnDage :data="ageGenderData" />
+          </div>
+        </div>
+        <div class="tab-pane fade" id="tables" role="tabpanel" aria-labelledby="tables-tab">
+          <div class="mt-4">
+            <h5>Detailed Tables</h5>
+            <!-- Add your detailed table components here -->
+            <p>Detailed data tables will be displayed here.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -95,11 +127,23 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import RndDataDisplay from './RndDataDisplay.vue';
 import RnDChartTables from './RnDChartTables.vue';
+import RNDmap from './secondtab/RNDmap.vue';
+import RnDage from './secondtab/RnDage.vue';
 
 const reportData = ref([]);
 const primaryFilteredData = ref([]);
 const showSecondaryFilters = ref(false);
 const showResults = ref(false);
+
+const ageGenderData = ref({
+  '0-14': { male: 50, female: 45 },
+  '15-24': { male: 100, female: 120 },
+  '25-34': { male: 150, female: 160 },
+  '35-44': { male: 120, female: 130 },
+  '45-54': { male: 80, female: 90 },
+  '55-64': { male: 60, female: 70 },
+  '65+': { male: 40, female: 50 }
+});
 
 const loadReportData = () => {
   const storedData = sessionStorage.getItem('reportData');
@@ -274,5 +318,20 @@ const finalFilteredData = computed(() => {
 
 .second-filter-form {
   margin-top: 20px;
+}
+
+.results-container {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-tabs .nav-link {
+  color: #08919b;
+}
+
+.nav-tabs .nav-link.active {
+  color: #074042;
 }
 </style>
