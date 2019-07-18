@@ -1,10 +1,21 @@
-// api.js
+// src/api.js
 
-// Function to determine base URL based on the condition
-const protocol = window.location.protocol;
 function getBaseUrl() {
-  const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
-  return isLocalhost5173 ? `${protocol}//localhost:8000` : `${protocol}//app.thepemasystem.gov.bt`;
+  // Use environment variables injected by Kubernetes
+  const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
+  const apiPort = import.meta.env.VITE_API_PORT || '8888';
+  const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
+
+  return `${apiProtocol}://${apiHost}:${apiPort}`;
+}
+
+function getScreeningBaseUrl() {
+  // Use environment variables for screening service
+  const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost';
+  const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686';
+  const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http';
+
+  return `${screeningProtocol}://${screeningHost}:${screeningPort}`;
 }
 
 // Function to combine base URL with middle params
@@ -14,7 +25,7 @@ function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
 
 // Define base URLs
 const baseUrl = getBaseUrl();
-const baseScreeningUrl = getBaseUrl() === `${protocol}//localhost:8000` ? `${protocol}//localhost:8686` : `${protocol}//qbs.thepemasystem.gov.bt`;
+const baseScreeningUrl = getScreeningBaseUrl();
 
 // Define middle params
 const accessMiddleParams = 'access';
