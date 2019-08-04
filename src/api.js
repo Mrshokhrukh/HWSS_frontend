@@ -3,7 +3,7 @@
 function getBaseUrl() {
   // Use environment variables injected by Kubernetes
   const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
-  const apiPort = import.meta.env.VITE_API_PORT || '8888';
+  const apiPort = import.meta.env.VITE_API_PORT || '8123';
   const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
 
   return `${apiProtocol}://${apiHost}:${apiPort}`;
