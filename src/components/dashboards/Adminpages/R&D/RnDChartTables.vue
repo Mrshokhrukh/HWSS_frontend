@@ -1,33 +1,33 @@
 <template>
-  <div class="card">
-    <h3 class="card-title">School/Event Data</h3>
+  <div class="border">
+    <h3 class="card-title text-center">School/Event Data</h3>
     <DataTable :value="tableData" :rowHover="true" class="p-datatable-sm" responsiveLayout="scroll">
       <Column field="schoolEvent" header="Agency/Event" sortable></Column>
       <Column field="individualsScreened" header="Individuals Screened" bodyClass="text-center" sortable></Column>
-      <Column field="suicidalBehavior" header="Suicidal Behavior" bodyClass="text-center"  sortable></Column>
+      <Column field="suicidalBehavior" header="Suicidal Behavior" bodyClass="text-center" sortable></Column>
       <ColumnGroup type="header">
         <Row>
-          <Column header="School/Event Data" :colspan="1" :rowspan="2"/>
-          <Column header="No. of Individuals Screened" :colspan="1" :rowspan="2"/>
-          <Column header="Suicidal Behavior" :colspan="1" :rowspan="2"/>
-          <Column header="PHQ" :colspan="5" headerClass="justify-content-center"/>
+          <Column header="School/Event Data" :colspan="1" :rowspan="2" />
+          <Column header="No. of Individuals Screened" :colspan="1" :rowspan="2" />
+          <Column header="Suicidal Behavior" :colspan="1" :rowspan="2" />
+          <Column header="PHQ" :colspan="5" headerClass="justify-content-center" />
           <Column headerClass="justify-content-center" header="GAD" :colspan="5" bodyClass="text-center" />
-          <Column header="SUD" headerClass="text-center" :rowspan="2"/>
+          <Column header="SUD" headerClass="text-center" :rowspan="2" />
         </Row>
         <Row>
           <div class="text-center">
-            <Column v-for="level in severityLevels" :key="'phq-'+level" :header="level"/>
-            <Column v-for="level in severityLevels" :key="'gad-'+level" :header="level"/>
+            <Column v-for="level in severityLevels" :key="'phq-' + level" :header="level" />
+            <Column v-for="level in severityLevels" :key="'gad-' + level" :header="level" />
           </div>
         </Row>
       </ColumnGroup>
-      <Column v-for="level in severityLevels" :key="'phq-'+level" :field="'phq.'+level">
+      <Column v-for="level in severityLevels" :key="'phq-' + level" :field="'phq.' + level">
         <template #body="slotProps">
           <div class="text-center">{{ slotProps.data.phq[level] }}</div>
         </template>
       </Column>
-      <Column v-for="level in severityLevels" :key="'gad-'+level" :field="'gad.'+level">
-        <template #body="slotProps" >
+      <Column v-for="level in severityLevels" :key="'gad-' + level" :field="'gad.' + level">
+        <template #body="slotProps">
           <div class="text-center"> {{ slotProps.data.gad[level] }}</div>
         </template>
       </Column>
@@ -37,7 +37,7 @@
         </template>
       </Column>
     </DataTable>
-    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" :style="{width: '60vw'}">
+    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" :style="{ width: '60vw' }">
       <TabView>
         <TabPanel v-for="substance in substances" :key="substance" :header="substance">
           <DataTable :value="getSUDDetails(substance)" class="p-datatable-sm">
@@ -121,9 +121,9 @@ const tableData = computed(() => {
         const sudMeasurement = item.measurement_assist.fields[measurementKey];
         if (sudMeasurement) {
           const riskLevel = sudMeasurement === 'no risk' ? 'No Risk' :
-                            sudMeasurement === 'low risk' ? 'Low Risk' :
-                            sudMeasurement === 'moderate risk' ? 'Moderate Risk' :
-                            sudMeasurement === 'high risk' ? 'High Risk' : null;
+            sudMeasurement === 'low risk' ? 'Low Risk' :
+              sudMeasurement === 'moderate risk' ? 'Moderate Risk' :
+                sudMeasurement === 'high risk' ? 'High Risk' : null;
           if (riskLevel) {
             data.sud[substance.toLowerCase()][riskLevel]++;
           }
@@ -156,7 +156,7 @@ function getSUDDetails(substance) {
 
 <style scoped>
 .centered-header {
-    text-align: center;
+  text-align: center;
 }
 
 .card {

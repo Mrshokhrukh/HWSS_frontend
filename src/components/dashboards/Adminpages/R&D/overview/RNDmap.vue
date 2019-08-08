@@ -1,24 +1,11 @@
 <template>
-  <div class="regional-mental-health-map">
-    <h3 class="mb-4">Regional Mental Health Distribution</h3>
+  <div class="regional-user-distribution-map">
+    <h3 class="mb-4 text-center">User Distribution Across Bhutan</h3>
     <div class="bhutan-map-container">
-      <div class="map-controls">
-        <button @click="toggleView" class="toggle-btn">
-          {{ isRegionView ? 'Switch to Dzongkhag View' : 'Switch to Region View' }}
-        </button>
-      </div>
       <div class="map-wrapper" v-html="svgContent" ref="mapWrapper"></div>
       <div v-if="selectedArea" class="tooltip" :style="tooltipStyle">
         <h4>{{ selectedArea.name }}</h4>
-        <p>{{ isRegionView ? 'Region' : 'Dzongkhag' }}</p>
-        <p>Mental Health Score: {{ selectedArea.score }}</p>
-        <p>Cases: {{ selectedArea.cases }}</p>
-      </div>
-      <div class="legend">
-        <div v-for="item in legendItems" :key="item.label" class="legend-item">
-          <div class="color-box" :style="{ backgroundColor: item.color }"></div>
-          <span>{{ item.label }}</span>
-        </div>
+        <p>Users: {{ selectedArea.users }}</p>
       </div>
     </div>
   </div>
@@ -29,13 +16,12 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import bhutanSvg from './bhutan-map.svg';  // Make sure this file exists in your project
 
 const props = defineProps({
-  data: {
+  filteredData: {
     type: Array,
-    default: () => []
+    required: true
   }
 });
 
-const isRegionView = ref(false);
 const selectedArea = ref(null);
 const tooltipStyle = ref({
   display: 'none',
@@ -45,116 +31,38 @@ const tooltipStyle = ref({
 });
 const svgContent = ref('');
 const mapWrapper = ref(null);
-const mentalHealthData = ref({});
+const userDistribution = ref({});
 
-const dzongkhags = [
-  { id: 'BT-11', title: 'Paro', region: 'Western'},
-  { id: 'BT-15', title: 'Thimphu', region: 'Western'},
-  { id: 'BT-13', title: 'Haa', region: 'Western'},
-  { id: 'BT-23', title: 'Punakha', region: 'Western'},
-  { id: 'BT-GA', title: 'Gasa', region: 'Western'},
-  { id: 'BT-24', title: 'Wangdue Phodrang', region: 'Western'},
-  { id: 'BT-14', title: 'Trongsa', region: 'Central'},
-  { id: 'BT-33', title: 'Bumthang', region: 'Central'},
-  { id: 'BT-34', title: 'Zhemgang', region: 'Central'},
-  { id: 'BT-31', title: 'Sarpang', region: 'Central'},
-  { id: 'BT-32', title: 'Mongar', region: 'Eastern'},
-  { id: 'BT-45', title: 'Trashigang', region: 'Eastern'},
-  { id: 'BT-46', title: 'Trashi Yangtse', region: 'Eastern'},
-  { id: 'BT-44', title: 'Lhuentse', region: 'Eastern'},
-  { id: 'BT-47', title: 'Pema Gatshel', region: 'Eastern'},
-  { id: 'BT-48', title: 'Samdrup Jongkhar', region: 'Eastern'},
-  { id: 'BT-12', title: 'Chukha', region: 'Southern'},
-  { id: 'BT-17', title: 'Samtse', region: 'Southern'},
-  { id: 'BT-22', title: 'Dagana', region: 'Southern'},
-  { id: 'BT-21', title: 'Tsirang', region: 'Southern' }
-];
-
-const regionColors = {
-  'Western': '#FF6B6B',
-  'Central': '#2C6975',
-  'Eastern': '#45B7D1',
-  'Southern': '#FFA07A'
-};
-
-const legendItems = Object.entries(regionColors).map(([region, color]) => ({
-  color,
-  label: region
-}));
-
-const getDzongkhagRegion = (dzongkhagId) => {
-  const dzongkhag = dzongkhags.find(d => d.id === dzongkhagId);
-  return dzongkhag ? dzongkhag.region : 'Unknown';
-};
-
-const calculateMentalHealthScore = (items) => {
-  const validScores = items
-    .map(item => {
-      const phq = item.rescreening_data?.phq_score || item.measurement?.fields?.phq_score;
-      const gad = item.rescreening_data?.gad_score || item.measurement?.fields?.gad_score;
-      return (phq && gad) ? (phq + gad) / 2 : null;
-    })
-    .filter(score => score !== null);
-  return validScores.length > 0 ? validScores.reduce((sum, score) => sum + score, 0) / validScores.length : null;
-};
-
-const processMentalHealthData = (data) => {
-  if (!Array.isArray(data)) {
-    console.warn('Invalid data passed to RNDmap component');
-    return {};
-  }
-
-  const processedData = {};
-  dzongkhags.forEach(dzongkhag => {
-    const dzongkhagItems = data.filter(item => 
-      item && 
-      item.user && 
-      item.user.fields && 
-      item.user.fields.perm_add_dzongkhag === dzongkhag.title
-    );
-    processedData[dzongkhag.id] = {
-      score: calculateMentalHealthScore(dzongkhagItems),
-      cases: dzongkhagItems.length
-    };
+const processUserData = (filteredData) => {
+  const distribution = {};
+  filteredData.forEach(item => {
+    const dzongkhag = item.user.fields.perm_add_dzongkhag;
+    if (dzongkhag) {
+      distribution[dzongkhag] = (distribution[dzongkhag] || 0) + 1;
+    }
   });
-  return processedData;
+  return distribution;
 };
 
-const getColorByScore = (baseColor, scoreData) => {
-  if (!scoreData || typeof scoreData.score !== 'number') return baseColor + '33'; // 20% opacity for no data
-  const opacity = Math.min(Math.max((scoreData.score / 20) * 255, 20), 255).toString(16).padStart(2, '0');
-  return baseColor + opacity;
-};
+const getColorByUserCount = (count, maxCount) => {
+  if (count === 0) return '#666';  // White for no users
 
-const getDzongkhagColor = (dzongkhagId) => {
-  const region = getDzongkhagRegion(dzongkhagId);
-  const baseColor = regionColors[region] || '#CCCCCC';
-  return getColorByScore(baseColor, mentalHealthData.value[dzongkhagId]);
+  const percentage = count / maxCount;
+
+  if (percentage <= 0.2) return '#E1EDF0';  // Lightest shade
+  if (percentage <= 0.4) return '#B3D5DD';
+  if (percentage <= 0.6) return '#85BDC9';
+  if (percentage <= 0.8) return '#57A5B6';
+  return '#2C6975';  // Darkest shade for highest counts
 };
 
 const showTooltip = (event) => {
-  const dzongkhagId = event.target.id;
-  const dzongkhag = dzongkhags.find(d => d.id === dzongkhagId);
-  const region = getDzongkhagRegion(dzongkhagId);
-
-  let score, cases;
-  if (isRegionView.value) {
-    const regionDzongkhags = dzongkhags.filter(d => d.region === region);
-    const regionData = regionDzongkhags.map(d => mentalHealthData.value[d.id]).filter(d => d);
-    score = regionData.length > 0
-      ? (regionData.reduce((sum, d) => sum + d.score, 0) / regionData.length).toFixed(2)
-      : 'N/A';
-    cases = regionData.reduce((sum, d) => sum + d.cases, 0);
-  } else {
-    const dzongkhagData = mentalHealthData.value[dzongkhagId];
-    score = dzongkhagData?.score ? dzongkhagData.score.toFixed(2) : 'N/A';
-    cases = dzongkhagData?.cases || 0;
-  }
+  const dzongkhagName = event.target.getAttribute('title');
+  const userCount = userDistribution.value[dzongkhagName] || 0;
 
   selectedArea.value = {
-    name: isRegionView.value ? region : dzongkhag.title,
-    score: score,
-    cases: cases
+    name: dzongkhagName,
+    users: userCount
   };
 
   tooltipStyle.value = {
@@ -170,31 +78,45 @@ const hideTooltip = () => {
   tooltipStyle.value.display = 'none';
 };
 
-const toggleView = () => {
-  isRegionView.value = !isRegionView.value;
-  updateMapColors();
-};
-
 const updateMapColors = () => {
   if (!mapWrapper.value) return;
 
   const paths = mapWrapper.value.querySelectorAll('path');
+  const maxUserCount = Math.max(...Object.values(userDistribution.value));
+
   paths.forEach(path => {
-    const dzongkhagId = path.id;
-    const region = getDzongkhagRegion(dzongkhagId);
-    const color = isRegionView.value ? regionColors[region] : getDzongkhagColor(dzongkhagId);
+    const dzongkhagName = path.getAttribute('title');
+    const userCount = userDistribution.value[dzongkhagName] || 0;
+    const color = getColorByUserCount(userCount, maxUserCount);
     path.setAttribute('fill', color);
+
+    // Remove existing text if any
+    const existingText = path.parentNode.querySelector(`text[data-name="${dzongkhagName}"]`);
+    if (existingText) {
+      existingText.remove();
+    }
+
+    // Add text element for user count
+    const bbox = path.getBBox();
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute('x', bbox.x + bbox.width / 2);
+    text.setAttribute('y', bbox.y + bbox.height / 2);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('fill', '#FFF');
+    text.setAttribute('font-size', '10');
+    text.setAttribute('data-name', dzongkhagName);
+    text.textContent = userCount;
+    path.parentNode.appendChild(text);
   });
 };
 
-watch(() => props.data, (newData) => {
+watch(() => props.filteredData, (newData) => {
   if (newData) {
-    mentalHealthData.value = processMentalHealthData(newData);
+    userDistribution.value = processUserData(newData);
     nextTick(updateMapColors);
   }
 }, { deep: true, immediate: true });
-
-watch(isRegionView, updateMapColors);
 
 onMounted(async () => {
   try {
@@ -221,8 +143,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.regional-mental-health-map {
-  background-color: white;
+.regional-user-distribution-map {
+  background-color: #FFF;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -245,23 +167,6 @@ onMounted(async () => {
   height: auto;
 }
 
-.map-controls {
-  margin-bottom: 10px;
-}
-
-.toggle-btn {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.toggle-btn:hover {
-  background-color: #45a049;
-}
-
 .tooltip {
   background-color: white;
   border: 1px solid #ccc;
@@ -280,24 +185,7 @@ onMounted(async () => {
   margin: 3px 0;
 }
 
-.legend {
-  margin-top: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
-  margin-bottom: 10px;
-}
-
-.color-box {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
-  border: 1px solid #000;
+svg path#BT-11:hover {
+  background: #fff !important;
 }
 </style>

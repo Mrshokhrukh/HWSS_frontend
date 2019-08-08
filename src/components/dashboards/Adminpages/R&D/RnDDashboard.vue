@@ -34,7 +34,8 @@
             <label for="institute" class="form-label">Institute/Org</label>
             <select id="institute" v-model="primaryFilters.institute" class="form-select">
               <option value="">Select Institute/Org</option>
-              <option v-for="institute in filteredInstitutes" :key="institute" :value="institute">{{ institute }}</option>
+              <option v-for="institute in filteredInstitutes" :key="institute" :value="institute">{{ institute }}
+              </option>
             </select>
           </div>
         </div>
@@ -77,19 +78,18 @@
     </div>
 
     <!-- Display components -->
-    <div v-if="showResults" class="results-container mt-4">
+    <div v-if="showResults" class=" mt-4">
+
+      <div class="mt-4">
+        <RNDmap :filtered-data="finalFilteredData" />
+      </div>
+
       <div class="mt-4">
         <h5>Data Display</h5>
         <RndDataDisplay :filtered-data="finalFilteredData" />
       </div>
-      
-      <div class="mt-4">
-        <h5>Map</h5>
-        <RNDmap :data="finalFilteredData" />
-      </div>
 
       <div class="mt-4">
-        <h5>Tables</h5>
         <RnDChartTables :filtered-data="finalFilteredData" />
       </div>
     </div>
@@ -111,7 +111,7 @@ const loadReportData = () => {
   const storedData = sessionStorage.getItem('reportData');
   if (storedData) {
     reportData.value = JSON.parse(storedData);
-    
+
     // Check if this is the first load after login
     const hasReloaded = localStorage.getItem('hasReloaded');
     if (!hasReloaded) {
@@ -174,14 +174,14 @@ const updateDzongkhags = () => {
 
 const filteredInstitutes = computed(() => {
   let agencies = reportData.value.map(item => item.agency_name || '').filter(Boolean);
-  
+
   switch (primaryFilters.agency) {
     case 'School':
       return agencies.filter(agency => agency.toLowerCase().includes('school'));
     case 'Gyalsuung':
       return agencies.filter(agency => agency.toLowerCase().includes('gyalsung'));
     case 'RCSC':
-      return agencies.filter(agency => 
+      return agencies.filter(agency =>
         !agency.toLowerCase().includes('school') &&
         !agency.toLowerCase().includes('gyalsung') &&
         !agency.toLowerCase().includes('eventbased') &&
@@ -201,7 +201,7 @@ const applyPrimaryFilters = () => {
 
     if (primaryFilters.region) match = match && itemRegion === primaryFilters.region;
     if (primaryFilters.dzongkhag) match = match && itemDzongkhag === primaryFilters.dzongkhag;
-    
+
     if (primaryFilters.agency) {
       switch (primaryFilters.agency) {
         case 'School':
@@ -211,14 +211,14 @@ const applyPrimaryFilters = () => {
           match = match && itemAgency.includes('gyalsung');
           break;
         case 'RCSC':
-          match = match && !itemAgency.includes('school') && 
-                           !itemAgency.includes('gyalsung') && 
-                           !itemAgency.includes('eventbased') && 
-                           !itemAgency.includes('case_based');
+          match = match && !itemAgency.includes('school') &&
+            !itemAgency.includes('gyalsung') &&
+            !itemAgency.includes('eventbased') &&
+            !itemAgency.includes('case_based');
           break;
       }
     }
-    
+
     if (primaryFilters.institute) match = match && item.agency_name === primaryFilters.institute;
 
     return match;
@@ -235,7 +235,7 @@ const generateResults = () => {
 const finalFilteredData = computed(() => {
   return primaryFilteredData.value.filter((item) => {
     let match = true;
-    
+
     if (secondaryFilters.currentStatus && secondaryFilters.selectStatus) {
       const serviceAndTreatment = item.service_and_treatment || {};
       switch (secondaryFilters.currentStatus) {
@@ -250,10 +250,11 @@ const finalFilteredData = computed(() => {
           break;
       }
     }
-    
+
     return match;
   });
 });
+
 </script>
 
 <style scoped>

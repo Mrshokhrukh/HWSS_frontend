@@ -1,19 +1,29 @@
 <template>
     <div class="row g-4 mt-1 mx-auto d-flex align-items-stretch">
-        <div class="col-md-6 d-flex">
+        <div class="col-md-4 d-flex">
             <div class="card flex-fill">
                 <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">No. of Agencies</h3>
+                    <h3 class="card-title mb-3 text-start">No. of Schools</h3>
                 </div>
                 <div class="card-body bg-info">
                     <p class="card-text display-3">{{ noOfSchools }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 d-flex">
+        <div class="col-md-4 d-flex">
             <div class="card flex-fill">
                 <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">No. of Individuals with Suicidal Behavior</h3>
+                    <h3 class="card-title mb-3 text-start">No. of Agency</h3>
+                </div>
+                <div class="card-body bg-info">
+                    <p class="card-text display-3">{{ noOfAgencies }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 d-flex">
+            <div class="card flex-fill">
+                <div class="card-header hwss-primary text-white">
+                    <h3 class="card-title mb-3 text-start">Individuals with Suicidal Behavior</h3>
                 </div>
                 <div class="card-body bg-info">
                     <p class="card-text display-3">{{ noOfIndividualsWithSuicidalBehavior }}</p>
@@ -93,7 +103,7 @@ const uniqueSchools = computed(() => {
 });
 
 const noOfIndividualsWithSuicidalBehavior = computed(() => {
-    return props.filteredData.filter(item => 
+    return props.filteredData.filter(item =>
         item.measurement?.fields?.suicidal_measurement === "nearly everyday"
     ).length;
 });
@@ -110,6 +120,20 @@ onMounted(() => {
         createCharts();
     });
 });
+const uniqueAgencies = computed(() => {
+    const agencies = new Set();
+    props.filteredData.forEach(item => {
+        if (item.agency_name &&
+            !item.agency_name.toLowerCase().includes('school') &&
+            item.agency_name !== "Case Base Clients" &&
+            item.agency_name !== "Event Base Clients" &&
+            item.agency_name !== null) {
+            agencies.add(item.agency_name.toLowerCase());
+        }
+    });
+    return agencies;
+});
+const noOfAgencies = computed(() => uniqueAgencies.value.size);
 
 const createCharts = () => {
     const schoolsData = {
@@ -117,7 +141,7 @@ const createCharts = () => {
         datasets: [{
             label: 'No. of Students Screened',
             data: Array.from(uniqueSchools.value).map(school => {
-                return props.filteredData.filter(item => 
+                return props.filteredData.filter(item =>
                     item.agency_name && item.agency_name.toLowerCase() === school
                 ).length;
             }),
@@ -202,7 +226,7 @@ const createCharts = () => {
         }
     });
 
-    
+
     createChart(mentalHealthChart.value, 'bar', mentalHealthData, {
         responsive: true,
         maintainAspectRatio: false,
@@ -212,7 +236,7 @@ const createCharts = () => {
         },
         scales: {
             x: { stacked: false },
-            y: { 
+            y: {
                 beginAtZero: true,
                 title: {
                     display: true,
