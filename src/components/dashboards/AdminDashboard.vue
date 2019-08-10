@@ -7,7 +7,7 @@
             </div>
 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-                <MentalhealthReport :reportData="reportItems" />
+                <MentalhealthReport :reportData="reportData" />
             </div>
 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
@@ -153,14 +153,14 @@ const currentYear = new Date().getFullYear();
 const websiteName = "The PEMA HWSS";
 
 const userDetailsInLocal = () => {
-  const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
-  if (userDetails) {
-    const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
-    const roleName = userDetails.user ? userDetails.user.role : null;
-    console.log('agency name and role', agencyName, roleName);
-    return { agencyName, roleName };
-  }
-  return { agencyName: null, roleName: null };
+    const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+    if (userDetails) {
+        const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
+        const roleName = userDetails.user ? userDetails.user.role : null;
+        console.log('agency name and role', agencyName, roleName);
+        return { agencyName, roleName };
+    }
+    return { agencyName: null, roleName: null };
 }
 
 const fetchReportData = async () => {
@@ -186,7 +186,7 @@ const fetchReportData = async () => {
         const reportResponse = await axios.get(endpoints.getReport);
         console.log('Fetched data:', reportResponse.data);
         if (reportResponse.data) {
-            let reportItems = reportResponse.data.reporting_model_data; 
+            let reportItems = reportResponse.data.reporting_model_data;
 
             // Apply filtering only if userRole is 'aaa_admin'
             if (userRole === 'aaa_admin') {
@@ -208,6 +208,12 @@ const fetchReportData = async () => {
     }
 };
 
+const props = defineProps({
+    reportData: {
+        type: Object,
+        required: true
+    }
+});
 
 onMounted(() => {
     fetchReportData();

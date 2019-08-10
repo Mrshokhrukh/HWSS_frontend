@@ -184,8 +184,4 @@ onMounted(async () => {
 .tooltip p {
   margin: 3px 0;
 }
-
-svg path#BT-11:hover {
-  background: #fff !important;
-}
 </style>

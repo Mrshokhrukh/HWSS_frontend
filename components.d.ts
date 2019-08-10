@@ -31,6 +31,7 @@ declare module 'vue' {
     ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/ChangePasswordCard.vue')['default']
     Chart: typeof import('primevue/chart')['default']
     ChartCard: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue')['default']
+    ChartComponent: typeof import('./src/components/dashboards/Adminpages/report/MHMonitorReport/ChartComponent.vue')['default']
     ChartConfiguration: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartConfiguration.vue')['default']
     ChartMakerAdmin: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue')['default']
     ChartRendering: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartRendering.vue')['default']
