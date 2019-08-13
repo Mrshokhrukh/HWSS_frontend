@@ -12,6 +12,7 @@ import 'primevue/resources/themes/aura-light-green/theme.css'
 import ToastService from 'primevue/toastservice';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ConfirmationService from 'primevue/confirmationservice'; 
+import VueApexCharts from "vue3-apexcharts";
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -24,6 +25,8 @@ app.use(PrimeVue);
 app.use(ConfirmationService);
 app.use(ToastService);
 app.use(ConfirmDialog)
+app.use(VueApexCharts);
+
 
 const router = createAppRouter(pinia);
 app.use(router);

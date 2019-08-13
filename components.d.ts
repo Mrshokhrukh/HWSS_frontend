@@ -49,6 +49,7 @@ declare module 'vue' {
     CounselorRescreening: typeof import('./src/components/dashboards/counselorRescreenings/CounselorRescreening.vue')['default']
     CounselorScreening: typeof import('./src/components/dashboards/counselorScreenings/CounselorScreening.vue')['default']
     CounselorSetting: typeof import('./src/components/dashboards/counselorSetting/CounselorSetting.vue')['default']
+    CSchartComponent: typeof import('./src/components/dashboards/Adminpages/report/MHCaseStatusReport/CSchartComponent.vue')['default']
     CurrentStatus: typeof import('./src/components/dashboards/Adminpages/AAA/dashboardcard/CurrentStatus.vue')['default']
     DashboardCurrentStatus: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/DashboardCurrentStatus.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']

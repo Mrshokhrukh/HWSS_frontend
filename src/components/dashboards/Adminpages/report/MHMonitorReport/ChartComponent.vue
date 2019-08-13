@@ -1,12 +1,13 @@
 <template>
     <div class="chart-container">
-        <canvas ref="chartCanvas"></canvas>
+        <apexchart ref="chart" :options="chartOptions" :series="series" height="500" />
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import Chart from 'chart.js/auto'
+import { ref, computed, onMounted, watch } from 'vue'
+import VueApexCharts from 'vue3-apexcharts'
+import ApexCharts from 'apexcharts'
 
 const props = defineProps({
     chartData: {
@@ -19,75 +20,77 @@ const props = defineProps({
     }
 })
 
-const chartCanvas = ref(null)
-let chart = null
+const chart = ref(null)
 
-const generateChart = () => {
-    if (chart) {
-        chart.destroy()
-    }
-
-    const ctx = chartCanvas.value.getContext('2d')
-
-    const datasets = props.chartOptions.filter(option => option !== 'all').map((option) => {
-        const data = props.chartData[option]
-        return {
-            label: option,
-            data: Object.values(data),
-            backgroundColor: getRandomColor()
-        }
-    })
-
-    const labels = [...new Set(props.chartOptions.filter(option => option !== 'all').flatMap((option) => Object.keys(props.chartData[option])))]
-
-    chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    stepSize: 1
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'Data Visualization'
-                }
-            }
-        }
-    })
-}
-
-function getRandomColor() {
-    const r = Math.floor(Math.random() * 255)
-    const g = Math.floor(Math.random() * 255)
-    const b = Math.floor(Math.random() * 255)
-    return `rgba(${r}, ${g}, ${b}, 0.7)`
-}
-
-onMounted(() => {
-    generateChart()
+const series = computed(() => {
+    return props.chartOptions.filter(option => option !== 'all').map(option => ({
+        name: option,
+        data: Object.values(props.chartData[option])
+    }))
 })
 
+const labels = computed(() => [
+    ...new Set(
+        props.chartOptions
+            .filter(option => option !== 'all')
+            .flatMap(option => Object.keys(props.chartData[option]))
+    )
+])
+
+const chartOptions = computed(() => ({
+    chart: {
+        type: 'bar',
+        height: 500
+    },
+    xaxis: {
+        categories: labels.value
+    },
+    yaxis: {
+        min: 0,
+        tickAmount: 5
+    },
+    title: {
+        text: 'Data Visualization',
+        align: 'center'
+    },
+    legend: {
+        position: 'top'
+    },
+    colors: generateRandomColors(props.chartOptions.length - 1)
+}))
+
+function generateRandomColors(count) {
+    return Array.from({ length: count }, () => {
+        const r = Math.floor(Math.random() * 255)
+        const g = Math.floor(Math.random() * 255)
+        const b = Math.floor(Math.random() * 255)
+        return `rgb(${r}, ${g}, ${b})`
+    })
+}
+
+function downloadChart() {
+    if (chart.value) {
+        ApexCharts.exec(chart.value.chart.id, 'dataURI').then(({ imgURI }) => {
+            const downloadLink = document.createElement('a')
+            downloadLink.href = imgURI
+            downloadLink.download = 'chart.png'
+            downloadLink.click()
+        })
+    }
+}
+
 watch([() => props.chartData, () => props.chartOptions], () => {
-    generateChart()
+    if (chart.value) {
+        chart.value.updateOptions(chartOptions.value)
+        chart.value.updateSeries(series.value)
+    }
 }, { deep: true })
 </script>
 
 <style scoped>
 .chart-container {
     position: relative;
-    height: 500px;
+    height: 550px;
     width: 100%;
 }
 </style>

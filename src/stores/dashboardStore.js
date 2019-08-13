@@ -1,4 +1,3 @@
-// src/stores/dashboardStore.js
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import endpoints from '@/api';
@@ -19,7 +18,9 @@ export const useDashboardStore = defineStore('dashboard', {
       Southern: ['Chukha', 'Samtse', 'Dagana', 'Tsirang']
     },
     isLoading: false,
-    error: null
+    error: null,
+    userRole: null,
+    userAgencyName: null
   }),
 
   getters: {
@@ -55,6 +56,13 @@ export const useDashboardStore = defineStore('dashboard', {
       this.filters.region = '';
       this.filters.dzongkhag = '';
     },
+    setUserDetails() {
+      const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+      if (userDetails) {
+        this.userAgencyName = userDetails.agency ? userDetails.agency.agencyName : null;
+        this.userRole = userDetails.user ? userDetails.user.role : null;
+      }
+    },
     async fetchReportData() {
       this.isLoading = true;
       this.error = null;
@@ -79,7 +87,17 @@ export const useDashboardStore = defineStore('dashboard', {
         const reportResponse = await axios.get(endpoints.getReport);
         console.log('Fetched data:', reportResponse.data);
         if (reportResponse.data && reportResponse.data.reporting_model_data) {
-          this.reportData = reportResponse.data.reporting_model_data;
+          let reportItems = reportResponse.data.reporting_model_data;
+
+          // Apply filtering only if userRole is 'aaa_admin'
+          if (this.userRole === 'aaa_admin') {
+            reportItems = reportItems.filter(item => {
+              const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+              return itemAgencyName === this.userAgencyName.toLowerCase();
+            });
+          }
+
+          this.reportData = reportItems;
           sessionStorage.setItem('reportData', JSON.stringify(this.reportData));
           sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
           console.log('Stored new data in session storage:', this.reportData);

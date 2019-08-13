@@ -46,13 +46,6 @@
                 </select>
               </div>
               <div class="col-md-2">
-                <label for="employmentFilter" class="form-label">Employment</label>
-                <select id="employmentFilter" v-model="additionalFilters.employment" class="form-select">
-                  <option value="">All Employment</option>
-                  <option v-for="emp in availableEmployment" :key="emp" :value="emp">{{ emp }}</option>
-                </select>
-              </div>
-              <div class="col-md-2">
                 <label for="userClassFilter" class="form-label">User Class</label>
                 <select id="userClassFilter" v-model="additionalFilters.userClass" class="form-select">
                   <option value="">All User Classes</option>
@@ -60,6 +53,15 @@
                   </option>
                 </select>
               </div>
+
+              <div class="col-md-2">
+                <label for="employmentFilter" class="form-label">Employment</label>
+                <select id="employmentFilter" v-model="additionalFilters.employment" class="form-select">
+                  <option value="">All Employment</option>
+                  <option v-for="emp in availableEmployment" :key="emp" :value="emp">{{ emp }}</option>
+                </select>
+              </div>
+
             </div>
 
             <div v-if="selectedOption === 'all'" class="showtable">
@@ -157,7 +159,7 @@ const processedChartData = computed(() => {
 
 const handleCheckboxChange = (value) => {
   selectedOption.value = value
-  showReport.value = false  // Reset showReport when selection changes
+  showReport.value = false  
 }
 
 const generateReport = () => {
