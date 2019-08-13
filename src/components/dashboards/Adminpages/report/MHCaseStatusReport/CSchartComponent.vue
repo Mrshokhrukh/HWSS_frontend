@@ -1,12 +1,12 @@
 <template>
     <div class="chart-container">
-        <canvas ref="chartCanvas"></canvas>
+        <apexchart type="bar" height="100%" :options="chartOptions" :series="series"></apexchart>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import Chart from 'chart.js/auto'
+import { ref, computed, watch } from 'vue';
+import VueApexCharts from 'vue3-apexcharts';
 
 const props = defineProps({
     chartData: {
@@ -17,80 +17,143 @@ const props = defineProps({
         type: Array,
         required: true
     }
-})
+});
 
-const chartCanvas = ref(null)
-let chart = null
+const series = computed(() => {
+    return props.chartOptions.map(option => ({
+        name: option,
+        data: Object.values(props.chartData[option] || {})
+    }));
+});
 
-const createChart = () => {
-    if (chart) {
-        chart.destroy()
+const labels = computed(() => {
+    return props.chartOptions.flatMap(option => Object.keys(props.chartData[option] || {}));
+});
+
+// Function to generate shades of #64AC99
+const generateShades = (baseColor, count) => {
+    const shades = [];
+    for (let i = 0; i < count; i++) {
+        const shade = i * 20; // Adjust this value to change the difference between shades
+        shades.push(lightenDarkenColor(baseColor, shade));
     }
+    return shades;
+};
 
-    const ctx = chartCanvas.value.getContext('2d')
-    const datasets = props.chartOptions.map(option => {
-        const data = props.chartData[option]
-        return {
-            label: option,
-            data: Object.values(data),
-            backgroundColor: getRandomColor()
-        }
-    })
+// Function to lighten or darken a color
+const lightenDarkenColor = (color, amount) => {
+    let usePound = false;
+    if (color[0] === "#") {
+        color = color.slice(1);
+        usePound = true;
+    }
+    const num = parseInt(color, 16);
+    let r = (num >> 16) + amount;
+    let g = ((num >> 8) & 0x00FF) + amount;
+    let b = (num & 0x0000FF) + amount;
+    if (r > 255) r = 255;
+    else if (r < 0) r = 0;
+    if (g > 255) g = 255;
+    else if (g < 0) g = 0;
+    if (b > 255) b = 255;
+    else if (b < 0) b = 0;
+    return (usePound ? "#" : "") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
+};
 
-    const labels = props.chartOptions.flatMap(option => Object.keys(props.chartData[option]))
-
-    chart = new Chart(ctx, {
+const chartOptions = ref({
+    chart: {
         type: 'bar',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    stepSize: 1
-                }
+        height: '100%',
+        toolbar: {
+            show: true,
+            tools: {
+                download: true,
+                selection: false,
+                zoom: false,
+                zoomin: false,
+                zoomout: false,
+                pan: false,
+                reset: false
             },
-            plugins: {
-                legend: {
-                    position: 'top',
+            export: {
+                csv: {
+                    filename: 'Case Status Chart',
+                    columnDelimiter: ',',
+                    headerCategory: 'Category',
+                    headerValue: 'Value',
                 },
-                title: {
-                    display: true,
-                    text: 'Case Status Chart'
+                svg: {
+                    filename: 'Case Status Chart',
+                },
+                png: {
+                    filename: 'Case Status Chart',
                 }
             },
-            layout: {
-                padding: {
-                    top: 20,
-                    right: 20,
-                    bottom: 20,
-                    left: 20
-                }
+        }
+    },
+    plotOptions: {
+        bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            endingShape: 'rounded',
+            distributed: true
+        },
+    },
+    colors: generateShades('#64AC99', props.chartOptions.length),
+    dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+            return val
+        },
+        offsetY: -20,
+        style: {
+            fontSize: '12px',
+            colors: ["#304758"]
+        }
+    },
+    stroke: {
+        show: true,
+        width: 2,
+        colors: ['transparent']
+    },
+    xaxis: {
+        categories: labels,
+    },
+    yaxis: {
+        title: {
+            text: 'Count'
+        }
+    },
+    fill: {
+        opacity: 1
+    },
+    tooltip: {
+        y: {
+            formatter: function (val) {
+                return val + " cases"
             }
         }
-    })
-}
-
-function getRandomColor() {
-    const r = Math.floor(Math.random() * 255)
-    const g = Math.floor(Math.random() * 255)
-    const b = Math.floor(Math.random() * 255)
-    return `rgba(${r}, ${g}, ${b}, 0.7)`
-}
-
-onMounted(() => {
-    if (chartCanvas.value) {
-        createChart()
+    },
+    title: {
+        text: 'Case Status Chart',
+        align: 'center'
+    },
+    legend: {
+        show: false
     }
-})
+});
 
 watch(() => props.chartData, () => {
-    createChart()
-}, { deep: true })
+    // Update the series data when chartData changes
+    chartOptions.value = {
+        ...chartOptions.value,
+        xaxis: {
+            ...chartOptions.value.xaxis,
+            categories: labels.value
+        },
+        colors: generateShades('#64AC99', props.chartOptions.length)
+    };
+}, { deep: true });
 </script>
 
 <style scoped>
