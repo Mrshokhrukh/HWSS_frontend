@@ -20,7 +20,9 @@ export const useDashboardStore = defineStore('dashboard', {
     isLoading: false,
     error: null,
     userRole: null,
-    userAgencyName: null
+    userAgencyName: null,
+    currentYear: new Date().getFullYear(),
+    websiteName: "The PEMA HWSS"
   }),
 
   getters: {
@@ -61,6 +63,7 @@ export const useDashboardStore = defineStore('dashboard', {
       if (userDetails) {
         this.userAgencyName = userDetails.agency ? userDetails.agency.agencyName : null;
         this.userRole = userDetails.user ? userDetails.user.role : null;
+        console.log('agency name and role', this.userAgencyName, this.userRole);
       }
     },
     async fetchReportData() {
@@ -89,7 +92,7 @@ export const useDashboardStore = defineStore('dashboard', {
         if (reportResponse.data && reportResponse.data.reporting_model_data) {
           let reportItems = reportResponse.data.reporting_model_data;
 
-          // Apply filtering only if userRole is 'aaa_admin'
+          // Apply filtering based on user role
           if (this.userRole === 'aaa_admin') {
             reportItems = reportItems.filter(item => {
               const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;

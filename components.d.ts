@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AaaAdminDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/AaaAdminDetailsCard.vue')['default']
     AAACasereportTable: typeof import('./src/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/AAACasereportTable.vue')['default']
+    AAAChartComponent: typeof import('./src/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/AAAChartComponent.vue')['default']
     AaaDashboard: typeof import('./src/components/dashboards/Adminpages/AAA/AaaDashboard.vue')['default']
     AaaHelp: typeof import('./src/components/dashboards/Adminpages/AAA/AaaHelp.vue')['default']
     AAAMonitorGraph: typeof import('./src/components/dashboards/Adminpages/AAA/report/AAAMonitorReport/AAAMonitorGraph.vue')['default']
