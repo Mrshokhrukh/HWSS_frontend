@@ -53,7 +53,6 @@
                   </option>
                 </select>
               </div>
-
               <div class="col-md-2">
                 <label for="employmentFilter" class="form-label">Employment</label>
                 <select id="employmentFilter" v-model="additionalFilters.employment" class="form-select">
@@ -61,7 +60,6 @@
                   <option v-for="emp in availableEmployment" :key="emp" :value="emp">{{ emp }}</option>
                 </select>
               </div>
-
             </div>
 
             <div v-if="selectedOption === 'all'" class="showtable">
@@ -106,8 +104,6 @@ const additionalFilters = ref({
   userClass: ''
 })
 
-// Updated computed properties
-// Updated computed properties
 const availableYears = computed(() => [...new Set(props.filteredData.map(item => {
   const date = item.service_and_treatment?.date;
   return date ? new Date(date).getFullYear() : null;
@@ -119,7 +115,6 @@ const availableOrganizations = computed(() => [...new Set(props.filteredData.map
 
 const availableUserClasses = computed(() => [...new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean))])
 
-// Updated to ensure unique employment options
 const availableEmployment = computed(() => {
   const employmentSet = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
   return Array.from(employmentSet).sort();
@@ -142,31 +137,38 @@ const processedChartData = computed(() => {
   const result = {}
 
   if (selectedOption.value && selectedOption.value !== 'all') {
-    result[selectedOption.value] = {}
+    result[selectedOption.value] = {
+      male: {},
+      female: {},
+      other: {}
+    }
     finalFilteredData.value.forEach((item) => {
       let value
       if (selectedOption.value === 'rescreened') {
-        value = item.rescreened?.toString() || 'NA'
+        value = item.rescreened ? 'Yes' : 'No'
       } else {
         value = item.service_and_treatment?.[selectedOption.value] || 'NA'
       }
-      result[selectedOption.value][value] = (result[selectedOption.value][value] || 0) + 1
+      const gender = item.user?.fields?.gender?.toLowerCase() || 'unknown'
+      if (gender === 'male' || gender === 'female' || gender === 'other') {
+        result[selectedOption.value][gender][value] = (result[selectedOption.value][gender][value] || 0) + 1
+      }
     })
   }
 
+  console.log('Processed Chart Data:', JSON.stringify(result, null, 2))
   return result
 })
 
 const handleCheckboxChange = (value) => {
   selectedOption.value = value
-  showReport.value = false  
+  showReport.value = false
 }
 
 const generateReport = () => {
   showReport.value = true
 }
 
-// Watch for changes in additional filters and update the chart
 watch(additionalFilters, () => {
   if (showReport.value && selectedOption.value !== 'all') {
     // The chart will be updated automatically due to the reactivity of processedChartData

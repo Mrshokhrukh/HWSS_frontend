@@ -1,6 +1,8 @@
 <template>
     <div class="chart-container">
-        <apexchart type="bar" height="100%" :options="chartOptions" :series="series"></apexchart>
+        <apexchart v-if="series.length > 0" type="bar" height="100%" :options="chartOptions" :series="series">
+        </apexchart>
+        <p v-else>No data available to display.</p>
     </div>
 </template>
 
@@ -20,27 +22,32 @@ const props = defineProps({
 });
 
 const series = computed(() => {
-    return props.chartOptions.map(option => ({
-        name: option,
-        data: Object.values(props.chartData[option] || {})
+    if (!props.chartData || Object.keys(props.chartData).length === 0) {
+        console.warn('Chart data is empty or undefined');
+        return [];
+    }
+
+    const caseStatus = Object.keys(props.chartData)[0];
+
+    return props.chartOptions.map(gender => ({
+        name: gender,
+        data: [props.chartData[caseStatus][gender] || 0]
     }));
 });
 
 const labels = computed(() => {
-    return props.chartOptions.flatMap(option => Object.keys(props.chartData[option] || {}));
+    return Object.keys(props.chartData);
 });
 
-// Function to generate shades of #64AC99
 const generateShades = (baseColor, count) => {
     const shades = [];
     for (let i = 0; i < count; i++) {
-        const shade = i * 20; // Adjust this value to change the difference between shades
+        const shade = i * 20;
         shades.push(lightenDarkenColor(baseColor, shade));
     }
     return shades;
 };
 
-// Function to lighten or darken a color
 const lightenDarkenColor = (color, amount) => {
     let usePound = false;
     if (color[0] === "#") {
@@ -64,6 +71,7 @@ const chartOptions = ref({
     chart: {
         type: 'bar',
         height: '100%',
+        stacked: true,
         toolbar: {
             show: true,
             tools: {
@@ -95,8 +103,7 @@ const chartOptions = ref({
         bar: {
             horizontal: false,
             columnWidth: '55%',
-            endingShape: 'rounded',
-            distributed: true
+            endingShape: 'rounded'
         },
     },
     colors: generateShades('#64AC99', props.chartOptions.length),
@@ -135,16 +142,16 @@ const chartOptions = ref({
         }
     },
     title: {
-        text: 'Case Status Chart',
+        text: 'Case Status by Gender',
         align: 'center'
     },
     legend: {
-        show: false
+        position: 'top',
+        horizontalAlign: 'center'
     }
 });
 
 watch(() => props.chartData, () => {
-    // Update the series data when chartData changes
     chartOptions.value = {
         ...chartOptions.value,
         xaxis: {

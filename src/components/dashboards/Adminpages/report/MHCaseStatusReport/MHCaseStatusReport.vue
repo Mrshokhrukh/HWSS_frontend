@@ -65,7 +65,7 @@
             <div v-if="selectedOption === 'all'" class="showtable">
               <MHCaseTable :filteredData="finalFilteredData" />
             </div>
-            <CSChartComponent v-else :chartData="processedChartData" :chartOptions="[selectedOption]" />
+            <CSChartComponent v-else :chartData="processedChartData" :chartOptions="['Male', 'Female', 'Other']" />
           </div>
         </div>
       </div>
@@ -148,19 +148,25 @@ const processedChartData = computed(() => {
   const result = {}
 
   if (selectedOption.value && selectedOption.value !== 'all') {
-    result[selectedOption.value] = {}
+    result[selectedOption.value] = {
+      Male: 0,
+      Female: 0,
+      Other: 0
+    }
+
     finalFilteredData.value.forEach((item) => {
-      let value = item.service_and_treatment?.case_status || 'NA'
-      if (selectedOption.value === 'ongoing' && value === 'On Going') {
-        result[selectedOption.value][value] = (result[selectedOption.value][value] || 0) + 1
-      } else if (selectedOption.value === 'closed' && value === 'Case Closed') {
-        result[selectedOption.value][value] = (result[selectedOption.value][value] || 0) + 1
-      } else if (selectedOption.value === 'discontinued' && value === 'Case Discontinued') {
-        result[selectedOption.value][value] = (result[selectedOption.value][value] || 0) + 1
+      let status = item.service_and_treatment?.case_status || 'NA'
+      let gender = item.user?.fields?.gender || 'Other'
+
+      if (
+        (selectedOption.value === 'ongoing' && status === 'On Going') ||
+        (selectedOption.value === 'closed' && status === 'Case Closed') ||
+        (selectedOption.value === 'discontinued' && status === 'Case Discontinued')
+      ) {
+        result[selectedOption.value][gender] = (result[selectedOption.value][gender] || 0) + 1
       }
     })
   }
-
   return result
 })
 
