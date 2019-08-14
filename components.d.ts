@@ -164,6 +164,7 @@ declare module 'vue' {
     SUDCaseStatusGraph: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDCasestatusReport/SUDCaseStatusGraph.vue')['default']
     SUDCaseStatusReport: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDCasestatusReport/SUDCaseStatusReport.vue')['default']
     SUDChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/Sud/sudProfile/SUDChangePasswordCard.vue')['default']
+    SUDChartComponent: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDMonitorReport/SUDChartComponent.vue')['default']
     SUDCSR_Table: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDCasestatusReport/SUDCSR_Table.vue')['default']
     SUDCurrentUseGraph: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDCurrentUseGraph.vue')['default']
     SUDCurrentUseTable: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDCurrentUseTable.vue')['default']

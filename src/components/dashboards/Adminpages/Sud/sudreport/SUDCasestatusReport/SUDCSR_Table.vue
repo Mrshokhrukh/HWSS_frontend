@@ -31,18 +31,23 @@
 </template>
 
 <script setup>
-import { computed, inject, } from 'vue';
+import { computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import ColumnGroup from 'primevue/columngroup';
 import Row from 'primevue/row';
 
-const reportData = inject('filteredData');
+const props = defineProps({
+  filteredData: {
+    type: Array,
+    required: true
+  }
+});
 
 // Computed properties for counts
-const ongoingCaseCount = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'On Going').length);
-const caseDiscontinueCount = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'Case Discontinue').length);
-const caseClosedCount = computed(() => reportData.value.filter(item => item.service_and_treatment?.case_status === 'Case Closed').length);
+const ongoingCaseCount = computed(() => props.filteredData.filter(item => item.service_and_treatment?.case_status === 'On Going').length);
+const caseDiscontinueCount = computed(() => props.filteredData.filter(item => item.service_and_treatment?.case_status === 'Case Discontinued').length);
+const caseClosedCount = computed(() => props.filteredData.filter(item => item.service_and_treatment?.case_status === 'Case Closed').length);
 
 // Aggregate data for DataTable
 const aggregateData = computed(() => ({
@@ -74,8 +79,7 @@ console.log('tableData', tableData.value);
 }
 
 :deep(.p-datatable-thead > tr > th) {
-  background-color:#2C6975
-  ;
+  background-color: #2C6975;
   color: white;
   font-weight: bold;
   text-align: center;
@@ -88,7 +92,6 @@ console.log('tableData', tableData.value);
 :deep(.main-header) {
   text-align: center !important;
   font-size: 1.2em;
-  background-color:#2C6975
-  !important;
+  background-color: #2C6975 !important;
 }
 </style>
