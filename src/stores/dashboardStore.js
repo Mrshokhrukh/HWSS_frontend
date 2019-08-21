@@ -10,13 +10,13 @@ export const useDashboardStore = defineStore('dashboard', {
       region: '',
       dzongkhag: ''
     },
-    regions: ['Western', 'Central', 'Eastern', 'Southern'],
+    regions: ['Western', 'Central', 'Eastern'],
     dzongkhags: {
-      Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Wangdue Phodrang'],
-      Central: ['Trongsa', 'Bumthang', 'Zhemgang', 'Sarpang'],
-      Eastern: ['Mongar', 'Trashigang', 'Trashi Yangtse', 'Lhuentse', 'Pema Gatshel', 'Samdrup Jongkhar'],
-      Southern: ['Chukha', 'Samtse', 'Dagana', 'Tsirang']
+      Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse', 'Phuentsholing Thromde', 'Thimphu Thromde'],
+      Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang', 'Gelephu Thromde'],
+      Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Samdrup Jongkhar Thromde', 'Trashi Yangtse', 'Trashigang']
     },
+    
     isLoading: false,
     error: null,
     userRole: null,

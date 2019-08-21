@@ -38,18 +38,25 @@
                   <option v-for="gender in availableGenders" :key="gender" :value="gender">{{ gender }}</option>
                 </select>
               </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label for="organizationFilter" class="form-label">Organization</label>
-                <select id="organizationFilter" v-model="additionalFilters.organization" class="form-select">
-                  <option value="">All Organizations</option>
-                  <option v-for="org in availableOrganizations" :key="org" :value="org">{{ org }}</option>
-                </select>
+                <div class="searchable-dropdown">
+                  <input type="text" id="organizationFilter" class="form-control" v-model="organizationSearch"
+                    placeholder="Search organization..." @input="filterOrganizations"
+                    @focus="showOrganizationDropdown = true" />
+                  <ul class="dropdown-menu" :class="{ show: showOrganizationDropdown && filteredOrganizations.length }">
+                    <li v-for="org in filteredOrganizations" :key="org">
+                      <a class="dropdown-item" href="#" @click.prevent="selectOrganization(org)">{{ org }}</a>
+                    </li>
+                  </ul>
+                </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-md-2" v-if="isUserClassFilterActive">
                 <label for="userClassFilter" class="form-label">User Class</label>
                 <select id="userClassFilter" v-model="additionalFilters.userClass" class="form-select">
                   <option value="">All User Classes</option>
-                  <option v-for="userClass in availableUserClasses" :key="userClass" :value="userClass">{{ userClass }}
+                  <option v-for="userClass in availableUserClassesForOrganization" :key="userClass" :value="userClass">
+                    {{ userClass }}
                   </option>
                 </select>
               </div>
@@ -74,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import MHMonitorTable from './MHmonitorTable.vue'
 import ChartComponent from './ChartComponent.vue'
 
@@ -104,6 +111,11 @@ const additionalFilters = ref({
   userClass: ''
 })
 
+// New refs for searchable organization dropdown
+const organizationSearch = ref('')
+const showOrganizationDropdown = ref(false)
+const filteredOrganizations = ref([])
+
 const availableYears = computed(() => [...new Set(props.filteredData.map(item => {
   const date = item.service_and_treatment?.date;
   return date ? new Date(date).getFullYear() : null;
@@ -113,11 +125,25 @@ const availableGenders = computed(() => [...new Set(props.filteredData.map(item 
 
 const availableOrganizations = computed(() => [...new Set(props.filteredData.map(item => item.agency_name).filter(Boolean))])
 
-const availableUserClasses = computed(() => [...new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean))])
-
 const availableEmployment = computed(() => {
   const employmentSet = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
   return Array.from(employmentSet).sort();
+})
+
+// New computed property to determine if userClass filter should be active
+const isUserClassFilterActive = computed(() => {
+  return additionalFilters.value.organization.toLowerCase().includes('school');
+})
+
+// New computed property to get user classes for the selected organization
+const availableUserClassesForOrganization = computed(() => {
+  if (!additionalFilters.value.organization) {
+    return [];
+  }
+  return [...new Set(props.filteredData
+    .filter(item => item.agency_name === additionalFilters.value.organization)
+    .map(item => item.user_agency?.fields?.user_class)
+    .filter(Boolean))];
 })
 
 const finalFilteredData = computed(() => {
@@ -127,7 +153,7 @@ const finalFilteredData = computed(() => {
       (additionalFilters.value.year === '' || itemYear === parseInt(additionalFilters.value.year)) &&
       (additionalFilters.value.gender === '' || item.user?.fields?.gender === additionalFilters.value.gender) &&
       (additionalFilters.value.organization === '' || item.agency_name === additionalFilters.value.organization) &&
-      (additionalFilters.value.userClass === '' || item.user_agency?.fields?.user_class === additionalFilters.value.userClass) &&
+      (!isUserClassFilterActive.value || additionalFilters.value.userClass === '' || item.user_agency?.fields?.user_class === additionalFilters.value.userClass) &&
       (additionalFilters.value.employment === '' || item.user_agency?.fields?.user_role_agency === additionalFilters.value.employment)
     )
   })
@@ -169,10 +195,62 @@ const generateReport = () => {
   showReport.value = true
 }
 
+// Functions for searchable organization dropdown
+const filterOrganizations = () => {
+  filteredOrganizations.value = availableOrganizations.value.filter(org =>
+    org.toLowerCase().includes(organizationSearch.value.toLowerCase())
+  )
+}
+
+const selectOrganization = (org) => {
+  organizationSearch.value = org
+  additionalFilters.value.organization = org
+  showOrganizationDropdown.value = false
+
+  // Reset userClass filter when organization changes
+  additionalFilters.value.userClass = ''
+}
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.searchable-dropdown')) {
+    showOrganizationDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
 watch(additionalFilters, () => {
   if (showReport.value && selectedOption.value !== 'all') {
     // The chart will be updated automatically due to the reactivity of processedChartData
   }
 }, { deep: true })
 
+// Sync organizationSearch with additionalFilters.organization
+watch(() => additionalFilters.value.organization, (newValue) => {
+  organizationSearch.value = newValue
+})
+
+watch(organizationSearch, (newValue) => {
+  additionalFilters.value.organization = newValue
+})
+
 </script>
+
+<style scoped>
+.searchable-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
+</style>
