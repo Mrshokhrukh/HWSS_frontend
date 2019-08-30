@@ -1,58 +1,43 @@
 <template>
-	<div class="card p-4">
-		<div class="row container-fluid p-5">
-			<div class="col-md-8">
-				<div v-if="loading" class="loading-container">
-					<div class="loading-spinner"></div>
-					<p>Loading...</p>
-				</div>
-				<div v-else>
-					<h1 class="text-center bold mb-4" v-if="clusterTestStatus === 'active'">
-						{{ clusterTestTitle }}
-					</h1>
-					<p class="custom-font mb-4" v-if="clusterTestStatus === 'active'">
-						{{ clusterTestContent }}
-					</p>
-					<p class="custom-text-color mb-5" v-if="clusterTestStatus === 'active'">
-						{{ clusterTestDisclaimer }}
-					</p>
-					<div class="d-flex justify-content-center" v-if="clusterTestStatus === 'active'">
-						<button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">
-							Continue
-						</button>
+	<div class="card shadow-lg border-0 rounded-3 overflow-hidden">
+		<div class="card-body p-0">
+			<div class="row g-0">
+				<div class="col-lg-8 p-5">
+					<div v-if="loading" class="d-flex justify-content-center align-items-center" style="height: 300px;">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
 					</div>
-					<div v-if="clusterTestStatus !== 'active'">
-						<p>
-							Currently, there are no tests available. In the meantime, consider reading
-							these articles for mental health awareness:
-						</p>
-						<ul>
-							<li>
-								<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-									target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i>
+					<div v-else>
+						<div v-if="clusterTestStatus === 'active'">
+							<h1 class="fw-bold mb-4 hwss-primary">{{ clusterTestTitle }}</h1>
+							<p class="lead mb-4">{{ clusterTestContent }}</p>
+							<div class="alert alert-info mb-4" role="alert">
+								<i class="bi bi-info-circle-fill me-2"></i>
+								{{ clusterTestDisclaimer }}
+							</div>
+							<button @click="continueAction"
+								class="btn btn-primary btn-lg w-100 py-3 fw-bold text-uppercase">
+								Continue <i class="bi bi-arrow-right-circle ms-2"></i>
+							</button>
+						</div>
+						<div v-else>
+							<h2 class="h3 mb-4">No Tests Available</h2>
+							<p class="lead mb-4">Currently, there are no tests available. In the meantime, consider
+								reading these articles for mental health awareness:</p>
+							<div class="list-group">
+								<a v-for="(article, index) in articles" :key="index" :href="article.url" target="_blank"
+									class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+									{{ article.title }}
+									<i class="bi bi-box-arrow-up-right"></i>
 								</a>
-							</li>
-							<li>
-								<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders"
-									target="_blank">Anxiety
-									Disorders <i class="fas fa-external-link-alt"></i></a>
-							</li>
-							<li>
-								<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
-									target="_blank">Coping with Drug Use and Addiction
-									<i class="fas fa-external-link-alt"></i></a>
-							</li>
-							<li>
-								<a href="https://www.mentalhealth.gov/basics/what-is-mental-health"
-									target="_blank">Mental
-									Health and Wellness <i class="fas fa-external-link-alt"></i></a>
-							</li>
-						</ul>
+							</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="col-md-4 text-center">
-				<img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon" />
+				<div class="col-lg-4 d-flex align-items-center justify-content-center bg-light p-5">
+					<img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon" />
+				</div>
 			</div>
 		</div>
 	</div>
@@ -75,10 +60,14 @@ const clusterTestStatus = ref("");
 const loading = ref(true);
 const cacheDuration = 5 * 60 * 1000;
 
-// const emit = defineEmits(["continue"]);
+const articles = [
+	{ title: "Understanding Depression", url: "https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm" },
+	{ title: "Anxiety Disorders", url: "https://www.nimh.nih.gov/health/topics/anxiety-disorders" },
+	{ title: "Coping with Drug Use and Addiction", url: "https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction" },
+	{ title: "Mental Health and Wellness", url: "https://www.mentalhealth.gov/basics/what-is-mental-health" },
+];
 
 const continueAction = () => {
-	// emit("continue");
 	if (clusterTestStatus.value === 'active') {
 		router.push('/student-dashboard/screening-start')
 	}
@@ -111,14 +100,12 @@ async function checkClusterTestStatus() {
 	} catch (error) {
 		console.error("Error fetching cluster test status:", error);
 	} finally {
-		// Simulate loading delay for demonstration
 		setTimeout(() => {
 			loading.value = false;
-		}, 1200); // 2 seconds delay
+		}, 1200);
 	}
 }
 
-// Fetch data from the API when the component is mounted
 onMounted(async () => {
 	checkClusterTestStatus();
 	try {
@@ -136,6 +123,24 @@ onMounted(async () => {
 	}
 });
 </script>
+
+<style scoped>
+.animated-icon {
+	transition: transform 0.3s ease-in-out;
+}
+
+.animated-icon:hover {
+	transform: scale(1.05);
+}
+
+.list-group-item {
+	transition: background-color 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+	background-color: #f8f9fa;
+}
+</style>
 
 <style scoped>
 .border-div {

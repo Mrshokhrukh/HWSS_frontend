@@ -1,7 +1,4 @@
 <template>
-	<div style="z-index: 9999;" class="text-center mx-auto" v-if="showConfetti">
-		<ConfettiExplosion :particleCount="200" :particleSize="10" :duration="5000" :force="0.8" />
-	</div>
 	<div :class="{ sidebar: true, 'sidebar-open': sidebarStore.isOpen }">
 		<!-- User Profile Section -->
 		<div class="user-profile text-center my-3">
@@ -59,14 +56,12 @@ import { useUserDetailsStore } from "@/stores/userDetails";
 import { useProgressStore } from "@/stores/progressStore";
 import deFaultProfilePic from "@/assets/images/icon.png";
 import Swal from 'sweetalert2';
-import ConfettiExplosion from "vue-confetti-explosion";
 
 
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
 
-const showConfetti = ref(false);
 
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;

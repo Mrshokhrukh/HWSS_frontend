@@ -1,13 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <!-- Chat Widget Icon -->
-    <div class="chat-icon" :class="{ 'active': isChatOpen }" @click="toggleChat">
-      <img :src="chatIcon" alt="Chat Icon" />
-    </div>
-
-    <!-- Chat Widget -->
-    <div class="chat-widget" v-if="isChatOpen">
-      <ChatWidget :isOpen="isChatOpen" @minimize="minimizeChat" @close="closeChat" @sendMessage="handleNewMessage" />
+    <div>
+      <NewChatWidget />
     </div>
 
     <header>
@@ -31,7 +25,7 @@ import axios from 'axios'
 import endpoints from '@/api'
 import Cookies from 'js-cookie'
 import chatIcon from '@/assets/images/chat.gif'
-import ChatWidget from '@/components/common/ChatWidget.vue'
+import NewChatWidget from '@/components/common/NewChatWidget.vue'
 
 const copyright = ref('')
 const isMobileDevice = ref(false)

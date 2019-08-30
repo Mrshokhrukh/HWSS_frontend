@@ -1,21 +1,23 @@
-// src/api.js
-
 function getBaseUrl() {
-  // Use environment variables injected by Kubernetes
-  const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
-  const apiPort = import.meta.env.VITE_API_PORT || '8123';
-  const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
-
-  return `${apiProtocol}://${apiHost}:${apiPort}`;
+  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+    const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
+    const apiPort = import.meta.env.VITE_API_PORT || '8123';
+    const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
+    return `${apiProtocol}://${apiHost}:${apiPort}`;
+  } else {
+    return import.meta.env.VITE_PRODUCTION_API_URL;
+  }
 }
 
 function getScreeningBaseUrl() {
-  // Use environment variables for screening service
-  const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost';
-  const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686';
-  const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http';
-
-  return `${screeningProtocol}://${screeningHost}:${screeningPort}`;
+  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+    const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost';
+    const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686';
+    const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http';
+    return `${screeningProtocol}://${screeningHost}:${screeningPort}`;
+  } else {
+    return import.meta.env.VITE_PRODUCTION_SCREENING_URL;
+  }
 }
 
 // Function to combine base URL with middle params
