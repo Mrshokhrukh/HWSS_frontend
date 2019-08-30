@@ -27,11 +27,6 @@
             <span v-else>{{ data[field.key] }}</span>
           </template>
         </Column>
-        <!-- <Column>
-          <template #body="rowData">
-          <Button label="Download" @click="downloadReport(rowData)" />
-        </template>
-        </Column> -->
       </DataTable>
     </div>
 
@@ -44,23 +39,21 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
 import SchoolEnvironmentTable from "./SchoolEnvironmentTable.vue"
-const reportData = ref([]);
-const globalFilter = ref('');
-const filteredData = ref([]);
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 
+const reportData = ref([]);
+const globalFilter = ref('');
+const filteredData = ref([]);
 
-// eslint-disable-next-line no-unused-vars
 const globalFilterFields = [
   'date', 'username', 'age', 'sex', 'past_diagnosis',
   'gad_measurement', 'phq_measurement', 'ace_measurement', 'suicidal_measurement',
   'tobacco_measurement', 'alcoholic_measurement', 'cannabis_measurement', 'cocaine_measurement', 'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement',
   'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'
 ];
+
 const tableFields = [
   { key: 'date', header: 'Date' },
   { key: 'username', header: 'Name' },
@@ -105,91 +98,131 @@ const tableFields = [
   { key: 'referral_remarks', header: 'Referral Remarks' },
 ];
 
-const selectedOption = ref('general Report'); // Default option
+const selectedOption = ref('general Report');
 
 const options = [
   'general Report',
   'school'
 ];
 
-// Determine if the user is a school counselor
 const isSchoolCounselor = computed(() => {
   return true; // For demonstration purposes
 });
 
-// Fetch report data from API
-const fetchReportData = async () => {
-  try {
-    const response = await axios.get(endpoints.generateReport);
-    if (response.data && Array.isArray(response.data)) {
-      reportData.value = response.data;
-      filteredData.value = response.data;
-    } else {
+const fetchReportDataFromSessionStorage = () => {
+  const storedReportData = sessionStorage.getItem('reportData');
+  if (storedReportData) {
+    try {
+      const parsedData = JSON.parse(storedReportData);
+      if (Array.isArray(parsedData)) {
+        reportData.value = parsedData.map(transformData);
+        filteredData.value = reportData.value;
+      } else {
+        handleFetchError();
+      }
+    } catch (error) {
       handleFetchError();
     }
-  } catch (error) {
+  } else {
+    console.log('No data found in sessionStorage under the key "reportData".');
     handleFetchError();
   }
 };
-// Fetch report data from session storage
-// const fetchReportData = () => {
-//   try {
-//     const storedReportData = sessionStorage.getItem('reportData');
-//     if (storedReportData) {
-//       reportData.value = JSON.parse(storedReportData);
-//       filteredData.value = JSON.parse(storedReportData);
-//     } else {
-//       handleFetchError();
-//     }
-//   } catch (error) {
-//     handleFetchError();
-//   }
-// };
 
+const transformData = (item) => {
+  const user = item.user.fields;
+  const userAgency = item.user_agency.fields;
+  const measurement = item.measurement.fields;
+  const measurementAssist = item.measurement_assist.fields;
+  const serviceAndTreatment = item.service_and_treatment;
 
-// Handle fetch error
+  return {
+    date: item.original_submission_date,
+    username: `${user.first_name} ${user.middle_name} ${user.last_name}`.trim(),
+    age: calculateAge(user.date_of_birth),
+    sex: user.gender,
+    present_dzongkhag: user.ps_add_dzongkhag,
+    present_gewog: user.ps_add_gewog,
+    present_village: user.ps_add_village,
+    user_code: userAgency.user_code,
+    parent_occupation: userAgency.parent_occupation,
+    guardian_name: userAgency.guardian_name,
+    guardian_occupation: userAgency.guardian_occupation,
+    parent_status: userAgency.parent_status,
+    current_living_with: userAgency.current_living_with,
+    user_role_agency: userAgency.user_role_agency,
+    user_class: userAgency.user_class,
+    user_stream: userAgency.user_stream,
+    user_sub_class: userAgency.user_sub_class,
+    past_diagnosis: user.past_diagnosis,
+    suicidal_measurement: measurement.suicidal_measurement,
+    gad_measurement: measurement.gad_measurement,
+    phq_measurement: measurement.phq_measurement,
+    ace_measurement: measurement.ace_measurement,
+    alcoholic_measurement: measurementAssist.alcoholic_measurement,
+    tobacco_measurement: measurementAssist.tobacco_measurement,
+    cannabis_measurement: measurementAssist.cannabis_measurement,
+    cocaine_measurement: measurementAssist.cocaine_measurement,
+    amphetamine_measurement: measurementAssist.amphetamine_measurement,
+    inhalants_measurement: measurementAssist.inhalants_measurement,
+    sedatives_measurement: measurementAssist.sedatives_measurement,
+    hallucinogens_measurement: measurementAssist.hallucinogens_measurement,
+    opioids_measurement: measurementAssist.opioids_measurement,
+    injection_measurement: measurementAssist.injection_measurement,
+    other_measurement: measurementAssist.other_measurement,
+    other_name: measurementAssist.other_name,
+    assessment_status: serviceAndTreatment.assessment_status,
+    case_status: serviceAndTreatment.case_status,
+    counseling: serviceAndTreatment.counseling,
+    follow_up: serviceAndTreatment.follow_up,
+    comments: serviceAndTreatment.comments,
+    referral_status: serviceAndTreatment.referred,
+    referral_remarks: ''  // This field is not present in the provided data structure
+  };
+};
+
+const calculateAge = (birthDate) => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const handleFetchError = () => {
   reportData.value = [];
   filteredData.value = [];
-  // Handle error
-}
+  console.error('Error fetching or parsing report data');
+};
 
-// Function to convert data to CSV format
 const convertToCSV = (data) => {
   const header = Object.keys(data[0]);
   const csv = [
     header.join(','),
-    ...data.map(row => header.map(fieldName => JSON.stringify(row[fieldName])).join(','))
+    ...data.map(row => header.map(fieldName => JSON.stringify(row[fieldName] || '')).join(','))
   ].join('\n');
   return csv;
 };
 
-// Function to trigger CSV download
-// const downloadCSV = (csvData, fileName) => {
-//   const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8' });
-//   saveAs(blob, fileName);
-// };
-
-// Function to handle bulk download
 const bulkDownload = () => {
   const csvData = convertToCSV(filteredData.value);
   const zip = new JSZip();
   const zipFolder = zip.folder('reports');
 
-  // Add the CSV file to the ZIP folder
   zipFolder.file('reports.csv', csvData);
 
-  // Generate password based on user's username and current year
   const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
   const username = userDetails ? userDetails.user.username : 'defaultUser';
   const currentYear = new Date().getFullYear();
   const password = `${username}@${currentYear}#`;
 
   console.log(password);
-  // Generate the password-protected ZIP file
+
   zip.generateAsync({ type: 'blob', compression: 'DEFLATE', password: 'password' })
     .then(function (blob) {
-      // Trigger download
       saveAs(blob, 'reports.zip');
     })
     .catch(function (error) {
@@ -197,28 +230,21 @@ const bulkDownload = () => {
     });
 };
 
-
-
-// Filter data based on global filter
 const filterData = () => {
   if (!globalFilter.value) {
     filteredData.value = [...reportData.value];
     return;
   }
   const filtered = reportData.value.filter(item => {
-    return Object.values(item).some(val => String(val).toLowerCase().includes(globalFilter.value.toLowerCase()));
+    return Object.values(item).some(val =>
+      val && String(val).toLowerCase().includes(globalFilter.value.toLowerCase())
+    );
   });
   filteredData.value = filtered;
-}
+};
+
 const filteredPatients = computed(() => {
-  let filtered = filteredData.value.filter(user => {
-    return Object.values(user).some(val => {
-      if (typeof val === 'string') {
-        return val.toLowerCase().includes(globalFilter.value.toLowerCase());
-      }
-      return false;
-    });
-  });
+  let filtered = filteredData.value;
 
   const riskColumns = [
     'tobacco_measurement',
@@ -234,21 +260,15 @@ const filteredPatients = computed(() => {
   ];
 
   filtered.sort((a, b) => {
-    // Compare the risk levels based on the desired order
     const riskOrder = ['high risk', 'moderate risk', 'low risk', 'no risk'];
-    const getRiskIndex = (risk) => riskOrder.indexOf(risk.toLowerCase());
+    const getRiskIndex = (risk) => riskOrder.indexOf((risk || '').toLowerCase());
 
-    const aRiskValues = riskColumns.map(column => a[column].toLowerCase());
-    const bRiskValues = riskColumns.map(column => b[column].toLowerCase());
+    for (let column of riskColumns) {
+      const aIndex = getRiskIndex(a[column]);
+      const bIndex = getRiskIndex(b[column]);
 
-    for (let i = 0; i < riskColumns.length; i++) {
-      const aIndex = getRiskIndex(aRiskValues[i]);
-      const bIndex = getRiskIndex(bRiskValues[i]);
-
-      if (aIndex < bIndex) {
-        return -1;
-      } else if (aIndex > bIndex) {
-        return 1;
+      if (aIndex !== bIndex) {
+        return aIndex - bIndex;
       }
     }
 
@@ -258,38 +278,34 @@ const filteredPatients = computed(() => {
   return filtered;
 });
 
-
-
-// Watch for changes in global filter
 watch(globalFilter, filterData);
 
-// Function to determine severity class
 const severityClass = (value) => {
-  switch (value.toLowerCase()) {
+  if (!value) return 'info';
+
+  switch (value.toString().toLowerCase()) {
     case 'severe':
     case 'high risk':
     case 'nearly everyday':
-      return 'danger'; // Wine Red
+      return 'danger';
     case 'moderately-severe':
-      return 'warning'; // Red-Orange
     case 'moderate risk':
     case 'moderate':
     case 'more than half the days':
-      return 'warning'; // Orange
+      return 'warning';
     case 'minimal':
     case 'low risk':
     case 'several days':
-      return 'success'; // Darker Green (More towards Blue)
     case 'no risk':
-      return 'success'; // Green
+      return 'success';
     default:
-      return 'info'; // Slate Grey
+      return 'info';
   }
-}
+};
 
 onMounted(() => {
-  fetchReportData();
-})
+  fetchReportDataFromSessionStorage();
+});
 </script>
 
 <style scoped>
