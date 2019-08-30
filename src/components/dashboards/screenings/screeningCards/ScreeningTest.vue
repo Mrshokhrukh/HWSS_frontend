@@ -608,15 +608,25 @@ const isAssistOrSchoolEnv = computed(() =>
 const showBgGreen = computed(() =>
     ["PHQ2", "PHQ9", "GAD2", "GAD7"].includes(currentQuestionSetName.value)
 );
+function getIconBaseUrl() {
+  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+    const iconHost = import.meta.env.VITE_ICON_HOST || 'localhost';
+    const iconPort = import.meta.env.VITE_ICON_PORT || '8686';
+    const iconProtocol = import.meta.env.VITE_ICON_PROTOCOL || 'http';
+    return `${iconProtocol}://${iconHost}:${iconPort}`;
+  } else {
+    return import.meta.env.VITE_PRODUCTION_ICON_URL || 'https://thepemasystem.gov.bt';
+  }
+}
+
+// Computed property for iconURL
 const iconURL = computed(() => {
-    const iconPath = currentQuestion.value?.icon || "";
-    if (iconPath) {
-        return location.hostname === "localhost"
-            ? `http://localhost:8080${iconPath}`
-            : `https://qbs.thepemasystem.gov.bt${iconPath}`;
-    } else {
-        return fallbackIcon;
-    }
+  const iconPath = currentQuestion.value?.icon || "";
+  if (iconPath) {
+    return `${getIconBaseUrl()}${iconPath}`;
+  } else {
+    return fallbackIcon;
+  }
 });
 
 const processedQuestionText = computed(() => {
