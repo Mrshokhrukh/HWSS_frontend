@@ -78,19 +78,40 @@
           placeholder="Search by referral status" />
       </template>
     </Column>
+    <Column :style="{ 'min-width': '8rem' }">
+      <template #body="{ data }">
+        <Button label="View Details" icon="pi pi-external-link" @click="showDetails(data)" />
+      </template>
+    </Column>
   </DataTable>
+
+  <Dialog v-model:visible="dialogVisible" :style="{ width: '50vw' }" :modal="true" :header="'Referral Details'">
+    <div v-if="selectedReferral">
+      <h3>{{ selectedReferral.user_data.name }}</h3>
+      <p><strong>Age:</strong> {{ selectedReferral.user_data.age }}</p>
+      <p><strong>Gender:</strong> {{ selectedReferral.user_data.gender }}</p>
+      <p><strong>Referred To:</strong> {{ selectedReferral.referred_to.name }}</p>
+      <p><strong>Referred By:</strong> {{ selectedReferral.referred_by.username }}</p>
+      <p><strong>Referral Status:</strong> {{ selectedReferral.referral_status }}</p>
+      <p><strong>Date:</strong> {{ formatDate(selectedReferral.date) }}</p>
+    </div>
+  </Dialog>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import Dialog from 'primevue/dialog';
+import Button from 'primevue/button';
 
 const rowData = ref([]);
 const filters = ref({});
+const dialogVisible = ref(false);
+const selectedReferral = ref(null);
 
 const formatDate = (timestamp) => {
-  if (!timestamp) return ''; // Return empty string if timestamp is not provided
+  if (!timestamp) return '';
 
   const date = new Date(timestamp);
   const year = date.getFullYear();
@@ -103,7 +124,6 @@ const formatDate = (timestamp) => {
 const loadData = async () => {
   try {
     const response = await axios.get(endpoints.getReferralList);
-    // console.log(response.data.referral_list);
     rowData.value = response.data.referral_list;
   } catch (error) {
     console.error('Error loading data:', error);
@@ -112,6 +132,11 @@ const loadData = async () => {
 
 const clearFilter = () => {
   filters.value = {};
+};
+
+const showDetails = (data) => {
+  selectedReferral.value = data;
+  dialogVisible.value = true;
 };
 
 onMounted(async () => {
