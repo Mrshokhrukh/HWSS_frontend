@@ -82,7 +82,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import MHMonitorTable from './MHmonitorTable.vue'
+import MHMonitorTable from './MHMonitorTable.vue'
 import ChartComponent from './ChartComponent.vue'
 
 const props = defineProps({
