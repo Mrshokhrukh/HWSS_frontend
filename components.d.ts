@@ -82,6 +82,7 @@ declare module 'vue' {
     MHCaseTableReport: typeof import('./src/components/dashboards/Adminpages/report/MHCaseStatusReport/MHCaseTableReport.vue')['default']
     MHDAASeverityTable: typeof import('./src/components/dashboards/Adminpages/report/MHSeverityReport/MHDAASeverityTable.vue')['default']
     MHMonitorReport: typeof import('./src/components/dashboards/Adminpages/report/MHMonitorReport/MHMonitorReport.vue')['default']
+    MHMonitorTable: typeof import('./src/components/dashboards/Adminpages/report/MHMonitorReport/MHMonitorTable.vue')['default']
     MHSeverityGraph: typeof import('./src/components/dashboards/Adminpages/report/MHSeverityReport/MHSeverityGraph.vue')['default']
     MHSeverityReport: typeof import('./src/components/dashboards/Adminpages/report/MHSeverityReport/MHSeverityReport.vue')['default']
     MHSeverityTable: typeof import('./src/components/dashboards/Adminpages/report/MHSeverityReport/MHSeverityTable.vue')['default']
