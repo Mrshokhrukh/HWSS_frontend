@@ -59,8 +59,10 @@
           <p class="event-details__value px-4 py-2 mb-4 lh-base ">{{ eventData.totalDays }} day(s)</p>
         </section>
         <section class="event-details__actions">
-          <Button type="button" icon="pi pi-check" class="custom-button" @click="acceptEvent(eventData)" label="Accept" />
-          <Button type="button" icon="pi pi-times" class="custom-button" @click="showRejectPopup(eventData)" label="Reject" />
+          <Button type="button" icon="pi pi-check" class="custom-button" @click="acceptEvent(eventData)"
+            label="Accept" />
+          <Button type="button" icon="pi pi-times" class="custom-button" @click="showRejectPopup(eventData)"
+            label="Reject" />
         </section>
         <div v-if="showPopup" class="popup">
           <div class="popup-content">
@@ -105,8 +107,9 @@ const filters = ref({
 const loading = ref(true);
 
 const filteredData = computed(() => {
-  let filtered = monitorData.value;
-  // Apply filters based on the selected values
+  let filtered = monitorData.value ? monitorData.value.filter(item => item.approval_status === "pending") : [];
+
+  // Apply existing filters
   for (const key in filters.value) {
     if (filters.value[key].value.length > 0) {
       if (key === 'toolsUsed') {
@@ -118,7 +121,6 @@ const filteredData = computed(() => {
   }
   return filtered;
 });
-
 
 const clearFilter = () => {
   // Clear all filters
@@ -163,28 +165,38 @@ function closePopup() {
   visible.value = false; // Close the dialog
 }
 
-const rejectEvent = async (eventData) => {
-  // try {
-  //   const response = await axios.post(endpoints.updateEventScreeningList, {
-  //     event_id: eventData.id,
-  //     approval_status: "rejected",
-  //     rejection_reason: rejectComment.value,
-  //   });
-  //   console.log('Event rejected with comment:', response.data);
-  // } catch (error) {
-  //   console.error('Error updating event:', error);
-  // } finally {
-  //   closePopup();
-  //   Swal.fire({
-  //     icon: 'error',
-  //     title: 'Event Rejected',
-  //     text: 'Reason: ' + rejectComment.value,
-  //     showConfirmButton: false,
-  //     timer: 2000
-  //   });
-  // }
-  console.log(eventData
-  )
+const rejectEvent = async () => {
+  try {
+    const response = await axios.post(endpoints.updateEventScreeningList, {
+      event_id: eventData.value.id,
+      approval_status: "rejected",
+      rejection_reason: rejectComment.value,
+    });
+    console.log('Event rejected with comment:', response.data);
+
+    // Update the local data to reflect the change
+    const index = monitorData.value.findIndex(item => item.id === eventData.value.id);
+    if (index !== -1) {
+      monitorData.value[index].approval_status = "rejected";
+    }
+
+    closePopup();
+    Swal.fire({
+      icon: 'error',
+      title: 'Event Rejected',
+      text: 'Reason: ' + rejectComment.value,
+      showConfirmButton: false,
+      timer: 2000
+    });
+  } catch (error) {
+    console.error('Error updating event:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Failed to reject the event. Please try again.',
+      showConfirmButton: true,
+    });
+  }
 };
 
 

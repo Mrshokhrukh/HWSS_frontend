@@ -24,31 +24,37 @@ import { ref, computed } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+const props = defineProps({
+  filteredData: {
+    type: Array,
+    required: true
+  }
+});
 
-// Existing count calculations...
-const Rescreening_count = ref(reportData.value.filter(item => item.rescreened === false).length);
-const WaitingList_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Waiting List').length);
-const NotRequired_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Not Required').length);
-const Availed_Count = ref(reportData.value.filter(item => item.service_and_treatment?.counseling === 'Availed').length);
-const Conducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Conducted').length);
-const NotConducted_Count = ref(reportData.value.filter(item => item.service_and_treatment?.assessment_status === 'Not Conducted').length);
-const Referred_Count = ref(reportData.value.filter(item => item.service_and_treatment?.referred === 'Referred').length);
-const Notreferred_Count = ref(reportData.value.filter(item => item.service_and_treatment?.referred === 'Not Referred').length);
-// follow-up counts
-const Treatmentcompleted_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Treatment Completed').length);
-const Undergoingtreatment_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing treatment').length);
-const Completedcounsellingsessions_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Completed counselling sessions').length);
-const Undergoingcounselling_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing counselling').length);
-const Unwillingtoundergotreatment_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Unwilling to undergo treatment').length);
-const UndergoneRehabilitation_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergone Rehabilitation').length);
-const UndergoingRehabilitation_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Undergoing Rehabilitation').length);
-const HospitalbasedOutpatientSUDTreatmentandCarePrimaryPhase_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)').length);
-const HospitalbasedOutpatientSUDTreatmentandCareContinuingCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)').length);
-const SchoolbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'School-based SUD Treatment and Care').length);
-const InstitutionbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Institution-based SUD Treatment and Care').length);
-const FollowupDrugTestConducted_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Follow up Drug Test Conducted').length);
-const DetentionbasedSUDTreatmentandCare_count = ref(reportData.value.filter(item => item.service_and_treatment?.follow_up === 'Detention-based SUD Treatment and Care').length);
+// Count calculations using props.filteredData
+const Rescreening_count = computed(() => props.filteredData.filter(item => item.rescreened === false).length);
+const WaitingList_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.counseling === 'Waiting List').length);
+const NotRequired_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.counseling === 'Not Required').length);
+const Availed_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.counseling === 'Availed').length);
+const Conducted_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.assessment_status === 'Conducted').length);
+const NotConducted_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.assessment_status === 'Not Conducted').length);
+const Referred_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.referred === 'Referred').length);
+const Notreferred_Count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.referred === 'Not Referred').length);
+
+// Follow-up counts
+const Treatmentcompleted_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Treatment Completed').length);
+const Undergoingtreatment_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Undergoing treatment').length);
+const Completedcounsellingsessions_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Completed counselling sessions').length);
+const Undergoingcounselling_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Undergoing counselling').length);
+const Unwillingtoundergotreatment_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Unwilling to undergo treatment').length);
+const UndergoneRehabilitation_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Undergone Rehabilitation').length);
+const UndergoingRehabilitation_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Undergoing Rehabilitation').length);
+const HospitalbasedOutpatientSUDTreatmentandCarePrimaryPhase_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)').length);
+const HospitalbasedOutpatientSUDTreatmentandCareContinuingCare_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)').length);
+const SchoolbasedSUDTreatmentandCare_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'School-based SUD Treatment and Care').length);
+const InstitutionbasedSUDTreatmentandCare_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Institution-based SUD Treatment and Care').length);
+const FollowupDrugTestConducted_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Follow up Drug Test Conducted').length);
+const DetentionbasedSUDTreatmentandCare_count = computed(() => props.filteredData.filter(item => item.service_and_treatment?.follow_up === 'Detention-based SUD Treatment and Care').length);
 
 const columns = ref([
   { field: 'rescreening', header: 'Rescreening' },
@@ -87,7 +93,7 @@ const aggregateData = computed(() => [
       { key: 'School-based SUD Treatment and Care', count: SchoolbasedSUDTreatmentandCare_count.value },
       { key: 'Institution-based SUD Treatment and Care', count: InstitutionbasedSUDTreatmentandCare_count.value },
       { key: 'Follow up Drug Test Conducted', count: FollowupDrugTestConducted_count.value },
-      { key: 'Detention-based SUD Treatment and Care', count: DetentionbasedSUDTreatmentandCare_count.value }
+      { key: 'Detention-based SUD Treatment and Care', count: DetentionbasedSUDTreatmentandCare_count.value },
     ]
   }
 ]);
@@ -116,11 +122,11 @@ const aggregateData = computed(() => [
 
 :deep(.p-datatable-tbody > tr > td) {
   text-align: center;
-  border: 1px solid #ddd; /* Adding border to td elements for grid lines */
+  border: 1px solid #ddd;
 }
 
 :deep(.p-datatable-tbody > tr) {
-  border: 1px solid #ddd; /* Adding border to tr elements for grid lines */
+  border: 1px solid #ddd;
 }
 
 ul {
@@ -135,6 +141,6 @@ li {
 }
 
 .bold-count {
-  font-weight: bold; /* Styling to make item.count bold */
+  font-weight: bold;
 }
 </style>

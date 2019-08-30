@@ -50,9 +50,9 @@
       :style="{ 'min-width': '12rem' }" />
 
     <Column :style="{ 'min-width': '8rem' }" header="Actions">
-      <template #body="{ rowData }">
+      <template #body="{ data }">
         <Button type="button" icon="pi pi-pencil" label="View" class="btn hwss-btn"
-          @click="showCustomConfirmDialog(rowData)" />
+          @click="showCustomConfirmDialog(data)" />
       </template>
     </Column>
 
@@ -72,7 +72,7 @@ const filters = ref({});
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
-    return ''; 
+    return '';
   } else {
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
@@ -80,10 +80,8 @@ const formatDate = (dateString) => {
 
 const loadData = async () => {
   const counselor_id = JSON.parse(localStorage.getItem('userDetailsStore'));
-  // console.log(counselor_id.user.id);
   try {
     const response = await axios.get(endpoints.getReferralList);
-    // console.log(response.data)
     referrals.value = response.data.referral_list.filter(referral => referral.referred_to.user_id === counselor_id.user.id);
     rowData.value = referrals.value;
   } catch (error) {
@@ -95,12 +93,11 @@ const clearFilter = () => {
   filters.value = {};
 };
 
-const showCustomConfirmDialog = async () => {
-  await loadData(); // Wait for data to be loaded
+const showCustomConfirmDialog = async (referral) => {
   Swal.fire({
     title: 'Confirm Action',
     text: 'Do you want to accept or reject this referral?',
-    icon: false,
+    icon: 'question',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
     cancelButtonColor: '#d33',
@@ -108,13 +105,12 @@ const showCustomConfirmDialog = async () => {
     cancelButtonText: 'Reject'
   }).then((result) => {
     if (result.isConfirmed) {
-      acceptReferral(rowData.value[0]); // Pass the first element of rowData
+      acceptReferral(referral);
     } else if (result.dismiss === Swal.DismissReason.cancel) {
-      showRejectReasonDialog(rowData.value[0]);
+      showRejectReasonDialog(referral);
     }
   });
 };
-
 
 const showRejectReasonDialog = (referral) => {
   Swal.fire({
@@ -139,22 +135,18 @@ const showRejectReasonDialog = (referral) => {
 };
 
 const acceptReferral = async (referral) => {
-  // console.log('Referral:', referral); 
   try {
-    const referredToUserId = referral.referred_to.user_id;
-    const patientId = referral.user_data.patient_id;
-
-    const response = await axios.post(endpoints.acceptReferral, { referredToUserId, patientId });
-    // console.log('Referral accepted:', referral);
+    const response = await axios.post(endpoints.acceptReferral, {
+      referredToUserId: referral.referred_to.user_id,
+      patientId: referral.user_data.patient_id
+    });
     Swal.fire({
       icon: 'success',
       title: 'Referral Accepted',
       text: response.data.message,
       timer: 1500
     });
-    setTimeout(() => {
-      window.location.reload();
-    },2000)
+    updateReferralStatus(referral, 'accepted');
   } catch (error) {
     console.error('Error accepting referral:', error);
     Swal.fire({
@@ -165,20 +157,19 @@ const acceptReferral = async (referral) => {
   }
 };
 
-
 const rejectReferral = async (referral, reason) => {
   try {
-    const referredToUserId = referral.referred_to.user_id;
-    const patientId = referral.user_data.patient_id;
-
-    const response = await axios.post(endpoints.rejectReferral, { referredToUserId, patientId, reason });
-    // Optionally, you can reload data or show a success message
-    // console.log('Referral rejected with reason:', referral, reason);
+    const response = await axios.post(endpoints.rejectReferral, {
+      referredToUserId: referral.referred_to.user_id,
+      patientId: referral.user_data.patient_id,
+      reason
+    });
     Swal.fire({
       icon: 'success',
-      title: 'Referral Rejected', 
+      title: 'Referral Rejected',
       text: response.data.message
     });
+    updateReferralStatus(referral, 'rejected');
   } catch (error) {
     console.error('Error rejecting referral:', error);
     Swal.fire({
@@ -186,6 +177,14 @@ const rejectReferral = async (referral, reason) => {
       title: 'Error',
       text: 'An error occurred while rejecting the referral.'
     });
+  }
+};
+
+const updateReferralStatus = (referral, newStatus) => {
+  const index = rowData.value.findIndex(r => r.id === referral.id);
+  if (index !== -1) {
+    rowData.value[index].referral_status = newStatus;
+    rowData.value = [...rowData.value]; // Trigger reactivity
   }
 };
 
