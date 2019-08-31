@@ -615,7 +615,7 @@ function getIconBaseUrl() {
     const iconProtocol = import.meta.env.VITE_ICON_PROTOCOL || 'http';
     return `${iconProtocol}://${iconHost}:${iconPort}`;
   } else {
-    return import.meta.env.VITE_PRODUCTION_ICON_URL || 'https://thepemasystem.gov.bt';
+    return import.meta.env.VITE_PRODUCTION_ICON_URL || 'https://thepemasystem.gov.bt/api/screening';
   }
 }
 
