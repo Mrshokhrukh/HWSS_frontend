@@ -19,10 +19,10 @@
                 <MentalhealthcardSetting />
             </div>
 
-
+            <!-- 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-chart-maker'" class="admin-report">
                 <ChartMakerAdmin />
-            </div>
+            </div> -->
 
 
             <div v-else>
@@ -130,13 +130,12 @@ import AaaHelp from "@/components/dashboards/Adminpages/AAA/AaaHelp.vue"
 import RnDDashboard from "@/components/dashboards/Adminpages/R&D/RnDDashboard.vue"
 import RndHelp from "@/components/dashboards/Adminpages/R&D/RndHelp.vue"
 import RnDSetting from "@/components/dashboards/Adminpages/R&D/RnDProfile/RnDSetting.vue"
-import ChartMakerAdmin from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue"
+// import ChartMakerAdmin from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue"
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRoute } from 'vue-router';
 
 const reportData = ref([])
-
 const route = useRoute();
 
 const currentRoute = computed(() => route.path);

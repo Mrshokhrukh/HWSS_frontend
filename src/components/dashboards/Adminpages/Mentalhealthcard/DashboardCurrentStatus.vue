@@ -13,8 +13,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useDashboardStore } from '@/stores/dashboardStore'; // Adjust the import path as needed
 
+const dashboardStore = useDashboardStore();
 
 // Method to format numbers with K, M, B
 const formatNumber = (num) => {
@@ -30,21 +32,30 @@ const formatNumber = (num) => {
   return num;
 };
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+// Computed properties to calculate case counts
+const totalOngoingCase = computed(() =>
+  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "On Going").length
+);
 
-// Filter reportData based on case_status
-const Ongoing_Case = reportData.value.filter(item => item.service_and_treatment?.case_status === "On Going");
-const total_Ongoing_Case = Ongoing_Case.length;
+const totalClosedCase = computed(() =>
+  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Closed").length
+);
 
-const Closed_Case = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Closed");
-const total_Closed_Case = Closed_Case.length;
+const totalDiscontinueCase = computed(() =>
+  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Discontinue").length
+);
 
-const Discontinue_Case = reportData.value.filter(item => item.service_and_treatment?.case_status === "Case Discontinue");
-const total_Discontinue_Case = Discontinue_Case.length;
-
-const statuses = ref([
-  { title: 'Total Case Ongoing', iconClass: 'description', count: total_Ongoing_Case },
-  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: total_Discontinue_Case },
-  { title: 'Total Case Closed', iconClass: 'fact_check', count: total_Closed_Case }
+// Reactive statuses array
+const statuses = computed(() => [
+  { title: 'Total Case Ongoing', iconClass: 'description', count: totalOngoingCase.value },
+  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
+  { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
 ]);
+
+// Fetch data when component is mounted
+onMounted(() => {
+  if (dashboardStore.reportData.length === 0) {
+    dashboardStore.fetchReportData();
+  }
+});
 </script>
