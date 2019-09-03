@@ -4,11 +4,11 @@
       filterDisplay="row" :loading="loading" :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'status']">
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
+          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="hwss-btn" label="Clear" outlined
             @click="clearFilter()" />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm" />
+            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm ms-2" />
           </div>
         </div>
       </template>
@@ -16,73 +16,73 @@
       <template #loading> Loading events data. Please wait. </template>
 
       <!-- Existing columns -->
-      <Column field="date" header="Date" :sortable="true" />
-      <Column field="eventName" header="Event Name" :sortable="true" />
-      <Column field="toolsUsed" header="Tools Used" :sortable="true" />
+      <Column field="start_date" header="Date" :sortable="true" />
+      <Column field="event_name" header="Event Name" :sortable="true" />
+      <Column field="selected_tool" header="Tools Used" :sortable="true" />
       <Column field="duration" header="Duration" :sortable="true" />
       <Column header="Status" :sortable="true">
         <template #body="{ data }">
-          <Badge :class="{ 'p-badge-success': data.status === 'Accepted', 'p-badge-danger': data.status === 'Rejected' }"
-            :value="data.status" @click="showStatusPopup(data.status)" />
+          <Badge
+            :class="{ 'p-badge-success': data.approval_status === 'approved', 'p-badge-danger': data.approval_status === 'rejected', 'p-badge-warning': data.approval_status === 'ended' }"
+            :value="data.approval_status" @click="showStatusPopup(data.status)" style="cursor: pointer" class="w-50" />
         </template>
       </Column>
     </DataTable>
   </div>
 
-  <Dialog v-model="showPopup" :visible="showPopup" :modal="true" class="w-100% h-auto">
-    <!-- <p>Status: {{ selectedStatus }}</p> -->
-    <div class="event-details container">
-      <h2 class="event-details__title">Event Details</h2>
+  <Dialog v-model:visible="showPopup" :modal="true" style="max-width: 50%;">
+    <div class="card p-4">
+      <h4 class="event-details__title">Event Details</h4>
       <section class="event-details__section">
-        <h3 class="event-details__label">Event Name:</h3>
+        <h6 class="hwss-primary">Event Name:</h6>
         <p class="event-details__value">Empower Wellness Summit</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Proposed/Submitted By:</h3>
+        <h6 class="hwss-primary">Proposed/Submitted By:</h6>
         <p class="event-details__value">Mr. Namgay Tshering</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Working Agency:</h3>
+        <h6 class="hwss-primary">Working Agency:</h6>
         <p class="event-details__value">Clincial Counselor</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Location:</h3>
+        <h6 class="hwss-primary">Location:</h6>
         <p class="event-details__value">Motithang Higher Secondary School</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Dzongkhag:</h3>
+        <h6 class="hwss-primary">Dzongkhag:</h6>
         <p class="event-details__value">Thimphu</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Start Date:</h3>
+        <h6 class="hwss-primary">Start Date:</h6>
         <p class="event-details__value">01/12/2023</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">End Date:</h3>
+        <h6 class="hwss-primary">End Date:</h6>
         <p class="event-details__value">05/12/2023</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Duration:</h3>
+        <h6 class="hwss-primary">Duration:</h6>
         <p class="event-details__value">4 days</p>
       </section>
-      <h3 class="event-details__label">Purpose:</h3>
-      <p class="event-details__description">
-        Mental health screening serves as a proactive measure for early detection and intervention for mental health
-        disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental
-        health conditions. By doing so, it facilitates timely access to treatment.
-      </p>
-      <h3 class="event-details__label">Tools to be used:</h3>
+      <h6 class="hwss-primary">Purpose:</h6>
+      <div class="event-details__description py-2 px-4 mb-3">
+        {{ eventPurpose }}
+      </div>
+      <h6 class="hwss-primary">Tools to be used:</h6>
       <p class="event-details__tools">Mental Health / SUD / Mental health & SUD</p>
       <section class="event-details__section">
-        <h3 class="event-details__label">Total users to be screened:</h3>
+        <h6 class="hwss-primary">Total users to be screened:</h6>
         <p class="event-details__value">12</p>
       </section>
       <section class="event-details__section">
-        <h3 class="event-details__label">Status:</h3>
+        <h6 class="hwss-primary">Status:</h6>
         <p class="event-details__status" v-if="showPopup">{{ selectedStatus }}</p>
       </section>
     </div>
-    <Button type="button" label="Close" class="p-button-text" @click="closePopup" />
+    <div class="d-flex">
+      <Button type="button" label="Close" class="btn hwss-btn my-4 ms-auto" @click="closePopup" />
+    </div>
   </Dialog>
 </template>
 
@@ -95,6 +95,9 @@ import Badge from 'primevue/badge';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
+import axios from 'axios';
+import endpoints from '@/api';
+const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
 
 const monitorData = ref();
 const filters = ref({
@@ -125,53 +128,79 @@ const clearFilter = () => {
 const closePopup = () => {
   showPopup.value = false;
 };
+const fetchReportData = async () => {
+  try {
+    const response = await axios.get(endpoints.getEventScreeningList);
+    console.log('API Response:', response.data); // Log the response data to check
+    if (response.data && Array.isArray(response.data)) {
+      monitorData.value = response.data; // Use monitorData instead of reportData
+      console.log('Fetched Data: for request', monitorData.value); // Log the fetched data to check
+    } else {
+      handleFetchError();
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error); // Log any error
+    handleFetchError();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleFetchError = () => {
+  monitorData.value = [];
+  console.error('Failed to fetch data'); // Log fetch error
+};
 
 onMounted(() => {
-  // Dummy Data
-  monitorData.value = [
-    {
-      id: 1,
-      date: '21/02/24',
-      eventName: 'Empower Wellness Summit',
-      toolsUsed: 'Mental Health, SUD',
-      duration: '5 days',
-      status: 'Rejected'
-    },
-    {
-      id: 2,
-      date: '21/02/25',
-      eventName: 'Mental Health Awareness Workshop',
-      toolsUsed: 'Mental Health',
-      duration: '3 days',
-      status: 'Accepted'
-    },
-    {
-      id: 3,
-      date: '21/02/26',
-      eventName: 'Substance Abuse Prevention Seminar',
-      toolsUsed: 'SUD',
-      duration: '2 days',
-      status: 'Rejected'
-    },
-    {
-      id: 4,
-      date: '21/02/27',
-      eventName: 'Meditation Retreat',
-      toolsUsed: 'Mental Health',
-      duration: '7 days',
-      status: 'Accepted'
-    },
-    {
-      id: 5,
-      date: '21/02/28',
-      eventName: 'Stress Management Workshop',
-      toolsUsed: 'Mental Health',
-      duration: '1 day',
-      status: 'Rejected'
-    }
-  ];
-  loading.value = false;
+  fetchReportData();
 });
+
+// onMounted(() => {
+//   // Dummy Data
+//   monitorData.value = [
+//     {
+//       id: 1,
+//       date: '21/02/24',
+//       eventName: 'Empower Wellness Summit',
+//       toolsUsed: 'Mental Health, SUD',
+//       duration: '5 days',
+//       status: 'Rejected'
+//     },
+//     {
+//       id: 2,
+//       date: '21/02/25',
+//       eventName: 'Mental Health Awareness Workshop',
+//       toolsUsed: 'Mental Health',
+//       duration: '3 days',
+//       status: 'Accepted'
+//     },
+//     {
+//       id: 3,
+//       date: '21/02/26',
+//       eventName: 'Substance Abuse Prevention Seminar',
+//       toolsUsed: 'SUD',
+//       duration: '2 days',
+//       status: 'Rejected'
+//     },
+//     {
+//       id: 4,
+//       date: '21/02/27',
+//       eventName: 'Meditation Retreat',
+//       toolsUsed: 'Mental Health',
+//       duration: '7 days',
+//       status: 'Accepted'
+//     },
+//     {
+//       id: 5,
+//       date: '21/02/28',
+//       eventName: 'Stress Management Workshop',
+//       toolsUsed: 'Mental Health',
+//       duration: '1 day',
+//       status: 'Rejected'
+//     }
+//   ];
+//   loading.value = false;
+// });
 
 const showStatusPopup = (status) => {
   selectedStatus.value = status;
@@ -197,9 +226,7 @@ const showStatusPopup = (status) => {
 .event-details__title {
   color: #000;
   text-align: center;
-  text-decoration: underline;
   align-self: center;
-  font: 700 20px Roboto, sans-serif;
 }
 
 .event-details__section {
@@ -211,12 +238,10 @@ const showStatusPopup = (status) => {
 
 .event-details__label {
   color: #30406b;
-  font: 700 20px Roboto, sans-serif;
 }
 
 .event-details__value {
   color: #000;
-  font: 400 18px Roboto, sans-serif;
 }
 
 .event-details__description,
@@ -224,11 +249,9 @@ const showStatusPopup = (status) => {
   align-self: start;
   color: #000;
   margin-top: 5px;
-  font: 400 18px Roboto, sans-serif;
 }
 
 .event-details__status {
   color: #2b656f;
-  font: 400 18px Roboto, sans-serif;
 }
 </style>
