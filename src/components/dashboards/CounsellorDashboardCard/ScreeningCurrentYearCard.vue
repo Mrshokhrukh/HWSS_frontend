@@ -4,12 +4,11 @@
             <h4 class="text-center text-capitalize">Total screened for the year: {{ getCurrentYear() }}</h4>
         </div>
         <div class="card-body">
-            <template v-if="dataLoaded">
-                <template v-if="!isDataEmpty()">
-                    <!-- Pass colors array directly to the chart component -->
+            <template v-if="!isLoading">
+                <template v-if="!isDataEmpty">
                     <Chart type="doughnut" :data="chartData" :options="chartOptions" class="w-75 mx-auto" />
                     <div class="mt-4 text-center">
-                        <div class="hwss-primary text-capitalize font-italic"> {{ agencyName }}</div>
+                        <div class="hwss-primary text-capitalize font-italic">{{ store.agencyName }}</div>
                     </div>
                 </template>
                 <template v-else>
@@ -20,142 +19,85 @@
             </template>
             <template v-else>
                 <div class="pseudo-chart">
-                    <p>Loading Data...</p>
+                    <p>Loading Data... {{ loadingStatus }}</p>
                 </div>
             </template>
         </div>
-        <div class="card-footer">
-            <!-- Use correct data access syntax -->
+        <div v-if="!isLoading && !isDataEmpty" class="card-footer">
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': chartColors[0] }"></span> Male ({{
-                    chartData.datasets[0].data[0] || 0 }})
+                <span class="legend-color" :style="{ 'background-color': store.chartColors[0] }"></span>
+                Male ({{ chartData.datasets[0].data[0] || 0 }})
             </span>
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': chartColors[1] }"></span> Female ({{
-                    chartData.datasets[0].data[1] || 0
-                }})
+                <span class="legend-color" :style="{ 'background-color': store.chartColors[1] }"></span>
+                Female ({{ chartData.datasets[0].data[1] || 0 }})
             </span>
-            <span><strong>Total: {{ getTotalCount }}</strong></span>
+            <span><strong>Total: {{ store.totalScreenedCount }}</strong></span>
+        </div>
+        <div v-if="store.error" class="error-message">
+            {{ store.error }}
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
+import Chart from 'primevue/chart';
 
-const getAgencyName = JSON.parse(localStorage.getItem('userDetailsStore'))
-const agencyName = getAgencyName?.agency?.agencyName || 'Unknown Agency';
+const store = useCounselorDashboardStore();
 
-const chartData = ref({
-    'Male': 0,
-    'Female': 0,
-    'datasets': [{
-        data: [],
-        backgroundColor: [],
-        borderWidth: 0
-    }],
-    'labels': []
+const chartData = computed(() => store.chartData);
+const isDataEmpty = computed(() => store.totalScreenedCount === 0);
+const isLoading = computed(() => store.isLoading);
+const loadingStatus = ref('');
+
+const chartOptions = ref({
+    plugins: {
+        legend: {
+            display: false
+        }
+    },
+    cutout: '60%'
 });
 
-const chartColors = ref(['#2c6975', '#64ac99']);
-const dataLoaded = ref(false);
+const getCurrentYear = () => new Date().getFullYear();
 
-const chartOptions = ref();
-
-const getCurrentYear = () => {
-    return new Date().getFullYear();
-};
-
-const getTotalCount = ref(0);
-
-const isDataEmpty = () => {
-    return chartData.value.datasets[0].data.every(count => count === 0);
-};
-
-const fetchChartData = async () => {
+onMounted(async () => {
     try {
-        const storedReportData = sessionStorage.getItem('reportData');
-        if (storedReportData) {
-            const reportData = JSON.parse(storedReportData);
-            updateChartData(reportData);
+        loadingStatus.value = 'Initializing...';
+        if (!store.isInitialized) {
+            await store.initializeStore();
         }
+        loadingStatus.value = 'Data loaded.';
     } catch (error) {
-        console.error('Error fetching report data:', error);
-    }
-};
-
-const updateChartData = (reportData) => {
-    let maleCount = 0;
-    let femaleCount = 0;
-
-    reportData.forEach((item) => {
-        const gender = item.user.fields.gender;
-        if (gender === 'Male') {
-            maleCount++;
-        } else if (gender === 'Female') {
-            femaleCount++;
-        }
-    });
-
-    chartData.value.datasets[0].data = [maleCount, femaleCount];
-    getTotalCount.value = maleCount + femaleCount;
-    dataLoaded.value = true;
-};
-
-const initialFetchCompleted = ref(false);
-
-onMounted(() => {
-    if (initialFetchCompleted.value === false) {
-        setTimeout(() => {
-            fetchChartData();
-            initialFetchCompleted.value = true;
-        }, 1500);
+        console.error('Error initializing store:', error);
+        loadingStatus.value = 'Error loading data. Please try again.';
     }
 });
 
-const setChartData = () => {
-    return {
-        labels: ['Male', 'Female'],
-        datasets: [
-            {
-                backgroundColor: ['#2c6975', '#64ac99'],
-                borderColor: ['#2c6975', '#64ac99'],
-                borderWidth: 1
-            }
-        ]
-    };
-};
+watch(() => store.reportData, (newData) => {
+    console.log('Report data updated:', newData.length, 'items');
+}, { deep: true });
 
-const setChartOptions = () => {
-    const documentStyle = getComputedStyle(document.documentElement);
-    const textColor = documentStyle.getPropertyValue('--text-color');
+watch(() => store.isLoading, (newValue) => {
+    console.log('isLoading changed:', newValue);
+});
 
-    return {
-        plugins: {
-            legend: {
-                labels: {
-                    cutout: '60%',
-                    color: textColor
-                }
-            }
-        }
-    };
-};
+watch(() => store.error, (newError) => {
+    if (newError) {
+        console.error('Store error:', newError);
+    }
+});
 
-onMounted(() => {
-    chartData.value = setChartData();
-    chartOptions.value = setChartOptions();
+watch(() => store.sudError, (newError) => {
+    if (newError) {
+        console.warn('SUD data error:', newError);
+    }
 });
 </script>
 
 <style scoped>
-.container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
 .card {
     width: 400px;
 }
@@ -193,5 +135,15 @@ onMounted(() => {
     padding: 20px;
     background-color: #f5f5f5;
     border: 1px solid #ddd;
+}
+
+.hwss-primary {
+    color: #2c6975;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+    padding: 10px;
 }
 </style>

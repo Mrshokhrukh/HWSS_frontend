@@ -37,44 +37,43 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import Chart from 'chart.js/auto';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
-const totalLifetimeUsers = 13;  // Dummy data for Life Time User
-const totalDailySubstanceUsers = 8;  // Dummy data for Daily Substance Users
+const store = useCounselorDashboardStore();
 
-const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
-let substancesWithGender = [];
+const totalLifetimeUsers = computed(() => store.filteredSudData.lifetime_users.length);
+const totalDailySubstanceUsers = computed(() => store.filteredSudData.active_users.length);
 
-if (reportData && reportData.length > 0) {
-  for (const data of reportData) {
+const substancesWithGender = computed(() => {
+  return store.filteredMeasurementData.map(data => {
     const measurementAssist = data.measurement_assist;
-    if (measurementAssist && measurementAssist.fields) {
-      const measurementAssistFields = measurementAssist.fields;
-      const gender = data.user.fields.gender;
-      const substances = [];
-      for (const key in measurementAssistFields) {
+    const gender = data.user_details.gender;
+    const substances = [];
+    if (measurementAssist) {
+      for (const key in measurementAssist) {
         if (key.endsWith('_measurement')) {
           substances.push({
             name: key.replace('_measurement', ''),
-            value: measurementAssistFields[key]
+            value: measurementAssist[key]
           });
         }
       }
-      substancesWithGender.push({
-        gender: gender,
-        substances: substances
-      });
     }
-  }
-}
+    return {
+      gender: gender,
+      substances: substances
+    };
+  });
+});
 
 const severityLevels = ['low risk', 'moderate risk', 'high risk'];
 
-const chartData = {
+const chartData = ref({
   labels: [],
   datasets: []
-};
+});
 
 const processChartData = () => {
   const substanceCounts = {
@@ -82,7 +81,7 @@ const processChartData = () => {
     female: {}
   };
 
-  substancesWithGender.forEach(entry => {
+  substancesWithGender.value.forEach(entry => {
     const gender = entry.gender.toLowerCase();
     entry.substances.forEach(substance => {
       if (!substanceCounts[gender][substance.name]) {
@@ -94,19 +93,19 @@ const processChartData = () => {
     });
   });
 
-  chartData.labels = Object.keys(substanceCounts.male).concat(Object.keys(substanceCounts.female)).filter((value, index, self) => self.indexOf(value) === index);
+  chartData.value.labels = Object.keys(substanceCounts.male).concat(Object.keys(substanceCounts.female)).filter((value, index, self) => self.indexOf(value) === index);
 
-  chartData.datasets = severityLevels.flatMap((severity, index) => [
+  chartData.value.datasets = severityLevels.flatMap((severity, index) => [
     {
       label: `Male - ${severity}`,
-      data: chartData.labels.map(substance => substanceCounts.male[substance] ? substanceCounts.male[substance][severity] : 0),
+      data: chartData.value.labels.map(substance => substanceCounts.male[substance] ? substanceCounts.male[substance][severity] : 0),
       backgroundColor: `rgba(44, 105, 117, ${0.2 + index * 0.2})`,
       borderColor: `rgba(44, 105, 117, 1)`,
       borderWidth: 1
     },
     {
       label: `Female - ${severity}`,
-      data: chartData.labels.map(substance => substanceCounts.female[substance] ? substanceCounts.female[substance][severity] : 0),
+      data: chartData.value.labels.map(substance => substanceCounts.female[substance] ? substanceCounts.female[substance][severity] : 0),
       backgroundColor: `rgba(44, 105, 117, ${0.2 + index * 0.2})`,
       borderColor: `rgba(44, 105, 117, 1)`,
       borderWidth: 1
@@ -139,7 +138,7 @@ const handleLifetimeUserClick = () => {
     labels: ['Lifetime Users'],
     datasets: [{
       label: 'Users',
-      data: [totalLifetimeUsers],
+      data: [totalLifetimeUsers.value],
       backgroundColor: 'rgba(44, 105, 117, 0.2)',
       borderColor: 'rgba(44, 105, 117, 1)',
       borderWidth: 1
@@ -153,7 +152,7 @@ const handleDailyUsersClick = () => {
     labels: ['Daily Users'],
     datasets: [{
       label: 'Users',
-      data: [totalDailySubstanceUsers],
+      data: [totalDailySubstanceUsers.value],
       backgroundColor: 'rgba(44, 105, 117, 0.4)',
       borderColor: 'rgba(44, 105, 117, 1)',
       borderWidth: 1
@@ -164,7 +163,7 @@ const handleDailyUsersClick = () => {
 
 const handleSubstanceSeverityClick = () => {
   processChartData();
-  displayChart(chartData);
+  displayChart(chartData.value);
 };
 
 onMounted(() => {
