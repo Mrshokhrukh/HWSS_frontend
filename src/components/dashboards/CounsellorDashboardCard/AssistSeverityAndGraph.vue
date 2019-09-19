@@ -28,8 +28,8 @@
         <div class="card-header text-center">
           <h4 class="graph-title">Assist Graph</h4>
         </div>
-        <div class="card-body d-flex justify-content-center align-items-center w-100 h-50">
-          <canvas id="myChart"></canvas>
+        <div class="card-body d-flex justify-content-center align-items-center w-100" style="height: 400px;">
+          <canvas ref="chartCanvas"></canvas>
         </div>
       </div>
     </div>
@@ -39,112 +39,94 @@
 <script setup>
 import { onMounted, ref, computed, watch } from 'vue';
 import Chart from 'chart.js/auto';
+import { storeToRefs } from 'pinia';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
 const store = useCounselorDashboardStore();
+const { filteredSudData, filteredAssistMeasurementData, filteredReportData, isInitialized } = storeToRefs(store);
 
-const totalLifetimeUsers = computed(() => {
-  console.log('Lifetime users:', store.filteredSudData.lifetime_users);
-  return store.filteredSudData.lifetime_users.length;
-});
+const chartCanvas = ref(null);
+let myChart = null;
 
-const totalDailySubstanceUsers = computed(() => {
-  console.log('Active users:', store.filteredSudData.active_users);
-  return store.filteredSudData.active_users.length;
-});
+const totalLifetimeUsers = computed(() => store.filteredSudData.lifetime_users.length);
+const totalDailySubstanceUsers = computed(() => store.filteredSudData.active_users.length);
 
 const substancesWithGender = computed(() => {
-  console.log('Assist Measurement Data:', store.filteredAssistMeasurementData);
-  console.log('Report Data:', store.filteredReportData);
-
-  return store.filteredAssistMeasurementData.map(data => {
-    const reportUser = store.filteredReportData.find(report => report.user?.id === data.user);
+  return filteredAssistMeasurementData.value.map(data => {
+    const reportUser = filteredReportData.value.find(report => report.user?.id === data.user);
     const gender = reportUser?.user_details?.gender || 'Unknown';
-    const substances = [];
-    for (const key in data) {
-      if (key.endsWith('_measurement') && data[key] !== null) {
-        substances.push({
-          name: key.replace('_measurement', ''),
-          value: data[key]
-        });
-      }
-    }
-    return {
-      gender: gender,
-      substances: substances
-    };
+    const substances = Object.entries(data)
+      .filter(([key, value]) => key.endsWith('_measurement') && value !== null)
+      .map(([key, value]) => ({
+        name: key.replace('_measurement', ''),
+        value: parseInt(value, 10)
+      }));
+    return { gender, substances };
   });
 });
 
-const severityLevels = ['low risk', 'moderate risk', 'high risk'];
+const severityLevels = ['low', 'moderate', 'high'];
 
-const chartData = ref({
-  labels: [],
-  datasets: []
-});
-
-const processChartData = () => {
-  console.log('Processing chart data');
-  const substanceCounts = {
-    male: {},
-    female: {}
-  };
+const chartData = computed(() => {
+  const substanceCounts = { male: {}, female: {} };
 
   substancesWithGender.value.forEach(entry => {
     const gender = entry.gender.toLowerCase();
-    if (gender !== 'male' && gender !== 'female') return; // Skip unknown genders
+    if (gender !== 'male' && gender !== 'female') return;
 
     entry.substances.forEach(substance => {
       if (!substanceCounts[gender][substance.name]) {
-        substanceCounts[gender][substance.name] = { 'low risk': 0, 'moderate risk': 0, 'high risk': 0 };
+        substanceCounts[gender][substance.name] = { low: 0, moderate: 0, high: 0 };
       }
-      if (severityLevels.includes(substance.value)) {
-        substanceCounts[gender][substance.name][substance.value]++;
-      }
+      let severity = 'low';
+      if (substance.value >= 27) severity = 'high';
+      else if (substance.value >= 4) severity = 'moderate';
+      substanceCounts[gender][substance.name][severity]++;
     });
   });
 
-  chartData.value.labels = Object.keys(substanceCounts.male).concat(Object.keys(substanceCounts.female)).filter((value, index, self) => self.indexOf(value) === index);
+  const labels = [...new Set([...Object.keys(substanceCounts.male), ...Object.keys(substanceCounts.female)])];
 
-  chartData.value.datasets = severityLevels.flatMap((severity, index) => [
+  const datasets = severityLevels.flatMap((severity, index) => [
     {
       label: `Male - ${severity}`,
-      data: chartData.value.labels.map(substance => substanceCounts.male[substance] ? substanceCounts.male[substance][severity] : 0),
+      data: labels.map(substance => substanceCounts.male[substance]?.[severity] || 0),
       backgroundColor: `rgba(44, 105, 117, ${0.2 + index * 0.2})`,
       borderColor: `rgba(44, 105, 117, 1)`,
       borderWidth: 1
     },
     {
       label: `Female - ${severity}`,
-      data: chartData.value.labels.map(substance => substanceCounts.female[substance] ? substanceCounts.female[substance][severity] : 0),
-      backgroundColor: `rgba(44, 105, 117, ${0.2 + index * 0.2})`,
-      borderColor: `rgba(44, 105, 117, 1)`,
+      data: labels.map(substance => substanceCounts.female[substance]?.[severity] || 0),
+      backgroundColor: `rgba(100, 172, 153, ${0.2 + index * 0.2})`,
+      borderColor: `rgba(100, 172, 153, 1)`,
       borderWidth: 1
     }
   ]);
 
-  console.log('Processed chart data:', chartData.value);
-};
-
-let myChart = null;
+  return { labels, datasets };
+});
 
 const displayChart = (data) => {
-  console.log('Displaying chart with data:', data);
-  const ctx = document.getElementById('myChart');
-  if (!ctx) {
-    console.error('Canvas element not found');
-    return;
-  }
-  if (myChart) {
-    myChart.destroy();
-  }
-  myChart = new Chart(ctx, {
+  if (!chartCanvas.value) return;
+
+  if (myChart) myChart.destroy();
+
+  myChart = new Chart(chartCanvas.value, {
     type: 'bar',
     data: data,
     options: {
       scales: {
-        y: {
-          beginAtZero: true
+        y: { beginAtZero: true, stacked: true },
+        x: { stacked: true }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        title: {
+          display: true,
+          text: 'Substance Use by Gender and Severity'
         }
       }
     }
@@ -152,8 +134,7 @@ const displayChart = (data) => {
 };
 
 const handleLifetimeUserClick = () => {
-  console.log('Handling lifetime user click');
-  const lifetimeChartData = {
+  displayChart({
     labels: ['Lifetime Users'],
     datasets: [{
       label: 'Users',
@@ -162,13 +143,11 @@ const handleLifetimeUserClick = () => {
       borderColor: 'rgba(44, 105, 117, 1)',
       borderWidth: 1
     }]
-  };
-  displayChart(lifetimeChartData);
+  });
 };
 
 const handleDailyUsersClick = () => {
-  console.log('Handling daily users click');
-  const dailyChartData = {
+  displayChart({
     labels: ['Daily Users'],
     datasets: [{
       label: 'Users',
@@ -177,36 +156,215 @@ const handleDailyUsersClick = () => {
       borderColor: 'rgba(44, 105, 117, 1)',
       borderWidth: 1
     }]
-  };
-  displayChart(dailyChartData);
+  });
 };
 
 const handleSubstanceSeverityClick = () => {
-  console.log('Handling substance severity click');
-  processChartData();
   displayChart(chartData.value);
 };
 
-onMounted(() => {
-  console.log('Component mounted');
-  if (store.isInitialized) {
+onMounted(async () => {
+  await store.initializeStore();
+  if (isInitialized.value) {
     handleSubstanceSeverityClick();
   }
 });
 
-watch(() => store.isInitialized, (newValue) => {
-  console.log('Store initialization status changed:', newValue);
+watch(isInitialized, (newValue) => {
   if (newValue) {
     handleSubstanceSeverityClick();
   }
 });
 
-// Watch for changes in the filtered data
-watch([() => store.filteredSudData, () => store.filteredAssistMeasurementData, () => store.filteredReportData],
-  ([newSudData, newAssistData, newReportData]) => {
-    console.log('Filtered data updated:', { sudData: newSudData, assistData: newAssistData, reportData: newReportData });
-    handleSubstanceSeverityClick();
-  },
-  { deep: true }
-);
+watch([filteredSudData, filteredAssistMeasurementData, filteredReportData], () => {
+  handleSubstanceSeverityClick();
+}, { deep: true });
+</script>
+<template>
+  <div class="row">
+    <div class="col-4">
+      <div class="card bg-light h-100">
+        <div class="card-header">
+          <h4 class="text-center">Assists</h4>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleLifetimeUserClick">
+            <h1>{{ totalLifetimeUsers }}</h1>
+            <p class="mb-0">Life Time User</p>
+          </button>
+
+          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleDailyUsersClick">
+            <h1>{{ totalDailySubstanceUsers }}</h1>
+            <p class="mb-0">Daily Substance Users</p>
+          </button>
+
+          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleSubstanceSeverityClick">
+            Each Substance Severity
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-8">
+      <div class="card w-100 h-100">
+        <div class="card-header text-center">
+          <h4 class="graph-title">Assist Graph</h4>
+        </div>
+        <div class="card-body d-flex justify-content-center align-items-center w-100" style="height: 400px;">
+          <canvas ref="chartCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, ref, computed, watch } from 'vue';
+import Chart from 'chart.js/auto';
+import { storeToRefs } from 'pinia';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
+
+const store = useCounselorDashboardStore();
+const { 
+  filteredSudData, 
+  filteredAssistMeasurementData, 
+  filteredReportData, 
+  isInitialized,
+  chartColors,
+  userRole,
+  agencyName
+} = storeToRefs(store);
+
+const chartCanvas = ref(null);
+let myChart = null;
+
+const totalLifetimeUsers = computed(() => store.filteredSudData.lifetime_users.length);
+const totalDailySubstanceUsers = computed(() => store.filteredSudData.active_users.length);
+
+const substancesWithGender = computed(() => {
+  return filteredAssistMeasurementData.value.map(data => {
+    const reportUser = filteredReportData.value.find(report => report.user?.id === data.user);
+    const gender = reportUser?.user_details?.gender || 'Unknown';
+    const substances = Object.entries(data)
+      .filter(([key, value]) => key.endsWith('_measurement') && value !== null)
+      .map(([key, value]) => ({
+        name: key.replace('_measurement', ''),
+        value: parseInt(value, 10)
+      }));
+    return { gender, substances };
+  });
+});
+
+const severityLevels = ['low', 'moderate', 'high'];
+
+const chartData = computed(() => {
+  const substanceCounts = { male: {}, female: {} };
+
+  substancesWithGender.value.forEach(entry => {
+    const gender = entry.gender.toLowerCase();
+    if (gender !== 'male' && gender !== 'female') return;
+
+    entry.substances.forEach(substance => {
+      if (!substanceCounts[gender][substance.name]) {
+        substanceCounts[gender][substance.name] = { low: 0, moderate: 0, high: 0 };
+      }
+      let severity = 'low';
+      if (substance.value >= 27) severity = 'high';
+      else if (substance.value >= 4) severity = 'moderate';
+      substanceCounts[gender][substance.name][severity]++;
+    });
+  });
+
+  const labels = [...new Set([...Object.keys(substanceCounts.male), ...Object.keys(substanceCounts.female)])];
+
+  const datasets = severityLevels.flatMap((severity, index) => [
+    {
+      label: `Male - ${severity}`,
+      data: labels.map(substance => substanceCounts.male[substance]?.[severity] || 0),
+      backgroundColor: `rgba(${chartColors.value[0]}, ${0.2 + index * 0.2})`,
+      borderColor: chartColors.value[0],
+      borderWidth: 1
+    },
+    {
+      label: `Female - ${severity}`,
+      data: labels.map(substance => substanceCounts.female[substance]?.[severity] || 0),
+      backgroundColor: `rgba(${chartColors.value[1]}, ${0.2 + index * 0.2})`,
+      borderColor: chartColors.value[1],
+      borderWidth: 1
+    }
+  ]);
+
+  return { labels, datasets };
+});
+
+const displayChart = (data) => {
+  if (!chartCanvas.value) return;
+
+  if (myChart) myChart.destroy();
+
+  myChart = new Chart(chartCanvas.value, {
+    type: 'bar',
+    data: data,
+    options: {
+      scales: {
+        y: { beginAtZero: true, stacked: true },
+        x: { stacked: true }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        title: {
+          display: true,
+          text: `Substance Use by Gender and Severity - ${agencyName.value}`
+        }
+      }
+    }
+  });
+};
+
+const handleLifetimeUserClick = () => {
+  displayChart({
+    labels: ['Lifetime Users'],
+    datasets: [{
+      label: 'Users',
+      data: [totalLifetimeUsers.value],
+      backgroundColor: `rgba(${chartColors.value[0]}, 0.2)`,
+      borderColor: chartColors.value[0],
+      borderWidth: 1
+    }]
+  });
+};
+
+const handleDailyUsersClick = () => {
+  displayChart({
+    labels: ['Daily Users'],
+    datasets: [{
+      label: 'Users',
+      data: [totalDailySubstanceUsers.value],
+      backgroundColor: `rgba(${chartColors.value[0]}, 0.4)`,
+      borderColor: chartColors.value[0],
+      borderWidth: 1
+    }]
+  });
+};
+
+const handleSubstanceSeverityClick = () => {
+  displayChart(chartData.value);
+};
+
+onMounted(async () => {
+  if (!isInitialized.value) {
+    await store.initializeStore();
+  }
+  handleSubstanceSeverityClick();
+});
+
+watch([filteredSudData, filteredAssistMeasurementData, filteredReportData], () => {
+  handleSubstanceSeverityClick();
+}, { deep: true });
+
+// Log user role and agency name for debugging
+console.log('User Role:', userRole.value);
+console.log('Agency Name:', agencyName.value);
 </script>

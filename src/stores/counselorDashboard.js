@@ -232,12 +232,15 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
       console.log('Fetching SUD data...');
       try {
         const sudResponse = await axios.get(endpoints.getSUDData);
-        if (sudResponse.data && sudResponse.data.success === true) {
-          this.sudData = sudResponse.data.data;
+        if (sudResponse.data && 
+            typeof sudResponse.data === 'object' &&
+            'lifetime_users' in sudResponse.data &&
+            'active_users' in sudResponse.data) {
+          this.sudData = sudResponse.data;
           this.sudError = null;
-          console.log('SUD data fetched successfully');
+          console.log('SUD data fetched successfully:', this.sudData);
         } else {
-          throw new Error('SUD data fetch was not successful or data is in unexpected format');
+          throw new Error('SUD data is in unexpected format');
         }
       } catch (error) {
         console.error("Error fetching SUD data:", error);

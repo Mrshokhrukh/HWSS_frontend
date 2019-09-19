@@ -1,8 +1,5 @@
 <template>
   <div>
-    <p>Total referrals in store: {{ referralList.length }}</p>
-    <p>Current user ID: {{ currentUserId }}</p>
-    <p>Filtered referrals for counselor: {{ combinedReferrals.length }}</p>
     <DataTable v-model:filters="filters" :value="combinedReferrals" paginator showGridlines :rows="10" dataKey="id"
       filterDisplay="menu"
       :globalFilterFields="['name', 'age', 'gender', 'class', 'section_stream', 'school_name', 'dzongkhag', 'parental_status', 'assessment_status', 'counseling', 'follow_up', 'comments', 'referred_by']">
