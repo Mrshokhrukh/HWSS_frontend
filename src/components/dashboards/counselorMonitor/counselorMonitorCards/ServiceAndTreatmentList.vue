@@ -48,13 +48,17 @@
                             <ul class="list-unstyled ">
                                 <li class="mb-3"><strong>Age:</strong><br> {{ selectedUser.date_of_birth }}</li>
                                 <li class="mb-3"><strong>Sex:</strong><br> {{ selectedUser.gender }}</li>
-                                <li class="mb-3" v-if="selectedUser.role !== 'student'"><strong>Employee ID:</strong><br> {{ selectedUser.academy_code }}</li>
-                                <li class="mb-3"><strong>Citizen ID:</strong><br> {{ selectedUser.identity_number }}</li>
+                                <li class="mb-3" v-if="selectedUser.role !== 'student'"><strong>Employee
+                                        ID:</strong><br> {{
+                                            selectedUser.academy_code }}</li>
+                                <li class="mb-3"><strong>Citizen ID:</strong><br> {{ selectedUser.identity_number }}
+                                </li>
                                 <li class="mb-3"><strong>Nationality:</strong><br> {{ selectedUser.nationality }}</li>
                                 <li class="mb-3"><strong>Phone Number:</strong><br> {{ selectedUser.mob_number }}</li>
                                 <li class="mb-3"><strong>Email:</strong><br> {{ selectedUser.email }}</li>
                                 <li class="mb-3"><strong>Role:</strong><br> {{ selectedUser.role }}</li>
-                                <li class="mb-3 text-truncate" v-if="selectedUser.active_agency !== null"><strong>Active Agency:</strong><br> {{ selectedUser.active_agency }}</li>
+                                <li class="mb-3 text-truncate" v-if="selectedUser.active_agency !== null"><strong>Active
+                                        Agency:</strong><br> {{ selectedUser.active_agency }}</li>
                             </ul>
                         </div>
                     </div>
@@ -278,7 +282,7 @@
             </div>
         </div>
 
-        <div class="mt-4 d-flex justify-content-end"> 
+        <div class="mt-4 d-flex justify-content-end">
             <div>
                 <Button label="Close" class="p-button-secondary p-mr-2 mx-2" @click="handleModalClose" />
             </div>
@@ -290,7 +294,12 @@
 import { ref, computed, onMounted, watchEffect } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 import Swal from 'sweetalert2';
+
+
+const store = useCounselorDashboardStore();
+
 
 const showModal = ref(false);
 const selectedUser = ref(null);
@@ -319,11 +328,11 @@ const formatEmpty = (rowData, column) => {
 };
 
 const filteredRows = computed(() => {
-    if (!searchQuery.value.trim() || !Array.isArray(rowData.value) || rowData.value.length === 0) {
-        return rowData.value;
+    if (!searchQuery.value.trim() || !Array.isArray(store.serviceAndTreatmentList) || store.serviceAndTreatmentList.length === 0) {
+        return store.serviceAndTreatmentList;
     }
 
-    return rowData.value.filter(row => {
+    return store.serviceAndTreatmentList.filter(row => {
         return selectedFields.value.some(field => {
             const fieldValue = row[field.split('.').pop()];
             return fieldValue !== undefined && fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
@@ -332,17 +341,7 @@ const filteredRows = computed(() => {
 });
 
 const getServiceList = async () => {
-    try {
-        const response = await axios.get(endpoints.generateServiceAndTreatment);
-        if (response && response.data && Array.isArray(response.data.data)) {
-            // console.log(response.data);
-            rowData.value = response.data.data;
-        } else {
-            console.error('Invalid response format:', response);
-        }
-    } catch (error) {
-        console.error(error);
-    }
+    await store.fetchServiceAndTreatmentList();
 };
 
 const openModal = async (user) => {

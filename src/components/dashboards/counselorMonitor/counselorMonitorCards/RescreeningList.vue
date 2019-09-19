@@ -144,14 +144,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import endpoints from '@/api';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
 const router = useRouter();
-const users = ref([]);
+const store = useCounselorDashboardStore();
+
 const tableSearch = ref('');
 const loadingPatients = ref(false);
 const selectedUsers = ref([]);
@@ -211,14 +213,47 @@ const handleRescreen = () => {
   });
 };
 
-
-
 const handleSelectionChange = (selected) => {
   selectedUsers.value = selected;
 };
 
+const mappedUsers = computed(() => {
+  return store.filteredReportData.map(data => {
+    const user = data.user?.fields || {};
+    const measurement = data.measurement?.fields || {};
+    const measurementAssist = data.measurement_assist?.fields || {};
+    const serviceAndTreatment = data.service_and_treatment || {};
+
+    const date = data.rescreening_data?.fields?.submission_date?.split('T')[0] || '';
+
+    return {
+      id: data.userId,
+      date: date,
+      name: `${user.first_name || ''} ${user.middle_name || ''} ${user.last_name || ''}`.trim(),
+      age: user.date_of_birth ? new Date().getFullYear() - new Date(user.date_of_birth).getFullYear() : 'N/A',
+      sex: user.gender || 'N/A',
+      pastDiagnosis: serviceAndTreatment.case_status || 'none',
+      phqSeverity: measurement.phq_measurement || 'none',
+      gadSeverity: measurement.gad_measurement || 'none',
+      aceSeverity: measurement.ace_measurement || 'none',
+      tobaccoRisk: measurementAssist.tobacco_measurement || 'none',
+      alcoholRisk: measurementAssist.alcoholic_measurement || 'none',
+      cannabisRisk: measurementAssist.cannabis_measurement || 'none',
+      cocaineRisk: measurementAssist.cocaine_measurement || 'none',
+      amphetamineRisk: measurementAssist.amphetamine_measurement || 'none',
+      inhalantsRisk: measurementAssist.inhalants_measurement || 'none',
+      sedativeRisk: measurementAssist.sedatives_measurement || 'none',
+      hallucinogensRisk: measurementAssist.hallucinogens_measurement || 'none',
+      opioidsRisk: measurementAssist.opioids_measurement || 'none',
+      othersRisk: measurementAssist.other_measurement || 'none',
+      nonMedicalInjectionUse: measurementAssist.injection_measurement || 'none',
+      flags: measurement.overall_flag || 'none',
+    };
+  });
+});
+
 const filteredPatients = computed(() => {
-  let filtered = users.value.filter(user => {
+  let filtered = mappedUsers.value.filter(user => {
     return Object.values(user).some(val => {
       if (typeof val === 'string') {
         return val.toLowerCase().includes(tableSearch.value.toLowerCase());
@@ -265,61 +300,11 @@ const filteredPatients = computed(() => {
   return filtered;
 });
 
-onMounted(() => {
+onMounted(async () => {
   try {
     loadingPatients.value = true;
-
-    // Retrieve the data from session storage
-    const reportData = sessionStorage.getItem('reportData');
-  
-    if (reportData) {
-      const response = JSON.parse(reportData);
-      console.log("Parsed response:", response); // Log the parsed response
-
-      if (Array.isArray(response)) {
-        const mappedUsers = response.map(data => {
-          const user = data.user?.fields || {};
-          const measurement = data.measurement?.fields || {};
-          const measurementAssist = data.measurement_assist?.fields || {};
-          const serviceAndTreatment = data.service_and_treatment || {};
-
-          // Add logs to debug field mappings
-          console.log("Measurement fields:", measurement);
-          console.log("Measurement Assist fields:", measurementAssist);
-
-          const date = data.rescreening_data?.fields?.submission_date?.split('T')[0] || '';
-
-          return {
-            id: data.userId,
-            date: date,
-            name: `${user.first_name || ''} ${user.middle_name || ''} ${user.last_name || ''}`.trim(),
-            age: user.date_of_birth ? new Date().getFullYear() - new Date(user.date_of_birth).getFullYear() : 'N/A',
-            sex: user.gender || 'N/A',
-            pastDiagnosis: serviceAndTreatment.case_status || 'none',
-            phqSeverity: measurement.phq_measurement || 'none',
-            gadSeverity: measurement.gad_measurement || 'none',
-            aceSeverity: measurement.ace_measurement || 'none',
-            tobaccoRisk: measurementAssist.tobacco_measurement || 'none',
-            alcoholRisk: measurementAssist.alcoholic_measurement || 'none',
-            cannabisRisk: measurementAssist.cannabis_measurement || 'none',
-            cocaineRisk: measurementAssist.cocaine_measurement || 'none',
-            amphetamineRisk: measurementAssist.amphetamine_measurement || 'none',
-            inhalantsRisk: measurementAssist.inhalants_measurement || 'none',
-            sedativeRisk: measurementAssist.sedatives_measurement || 'none',
-            hallucinogensRisk: measurementAssist.hallucinogens_measurement || 'none',
-            opioidsRisk: measurementAssist.opioids_measurement || 'none',
-            othersRisk: measurementAssist.other_measurement || 'none',
-            nonMedicalInjectionUse: measurementAssist.injection_measurement || 'none',
-            flags: measurement.overall_flag || 'none',
-          };
-        });
-        users.value = mappedUsers;
-        console.log("Mapped users:", mappedUsers); // Log the mapped users
-      } else {
-        console.error("Invalid response data format");
-      }
-    } else {
-      console.error("No data found in session storage");
+    if (!store.isInitialized) {
+      await store.initializeStore();
     }
   } catch (error) {
     console.error(error);
@@ -328,10 +313,9 @@ onMounted(() => {
   }
 });
 
-
-
-
-
+watch(() => store.filteredReportData, (newData) => {
+  console.log("Filtered report data updated:", newData);
+}, { deep: true });
 
 const getSeverity = (severity) => {
   let colorCode;
@@ -363,7 +347,6 @@ const getSeverity = (severity) => {
   return { severity, colorCode, bgColor };
 };
 
-
 const handleMarkAsSafe = (rowData) => {
   if (!rowData) {
     Swal.fire({
@@ -380,7 +363,6 @@ const handleMarkAsSafe = (rowData) => {
   markAsSafe(userId);
 };
 
-
 const markAsSafe = (userId) => {
   console.log('Marking user as safe:', userId);
   axios.post('/mark-user-as-safe', { userId })
@@ -391,5 +373,4 @@ const markAsSafe = (userId) => {
       console.error('Error marking user as safe:', error);
     });
 };
-
 </script>

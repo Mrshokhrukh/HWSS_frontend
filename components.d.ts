@@ -25,6 +25,7 @@ declare module 'vue' {
     AdminDashboard: typeof import('./src/components/dashboards/AdminDashboard.vue')['default']
     AssistSeverityAndGraph: typeof import('./src/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue')['default']
     Button: typeof import('primevue/button')['default']
+    Calendar: typeof import('primevue/calendar')['default']
     CaseScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningRegister.vue')['default']
     CaseScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningScreening.vue')['default']
     CaseScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSelectTools.vue')['default']

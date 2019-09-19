@@ -30,7 +30,15 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
     gyalsungUserProfiles: [],
     isLoading: false,
     isInitialized: false,
-    error: null
+    error: null,
+    serviceAndTreatmentList: [],
+    selectedUserDetails: null,
+    officialOptions: [],
+    referralList: [],
+    selectedReferral: null,
+
+    referralList: [],
+    selectedReferral: null,
   }),
 
   getters: {
@@ -79,6 +87,13 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
     agencyUserIds: (state) => {
       return new Set(state.filteredReportData.map(report => report.user?.id));
     },
+
+    filteredReferrals: (state) => {
+      const currentUserId = state.userDetails?.user?.id;
+      return state.referralList.filter(referral =>
+        referral.referred_to && referral.referred_to.user_id === currentUserId
+      );
+    }
   },
 
   actions: {
@@ -91,6 +106,61 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
       } else {
         console.error('User details not found in localStorage');
         this.error = 'User details not found';
+      }
+    },
+
+    async fetchServiceAndTreatmentList() {
+      try {
+        const response = await axios.get(endpoints.generateServiceAndTreatment);
+        if (response && response.data && Array.isArray(response.data.data)) {
+          this.serviceAndTreatmentList = response.data.data;
+        } else {
+          console.error('Invalid response format:', response);
+        }
+      } catch (error) {
+        console.error('Error fetching service and treatment list:', error);
+      }
+    },
+
+    async fetchUserDetailsById(userId) {
+      try {
+        const response = await axios.get(`${endpoints.getUserMonitoringDetails}?user_id=${userId}`);
+        this.selectedUserDetails = response.data;
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    },
+
+    async updateServiceAndTreatment(formData) {
+      try {
+        const response = await axios.post(endpoints.updateServiceAndTreatment, JSON.stringify(formData));
+        return response;
+      } catch (error) {
+        console.error('Error updating service and treatment:', error);
+        throw error;
+      }
+    },
+
+    async updateReferralStatus(formData) {
+      try {
+        const response = await axios.post(endpoints.updateReferralStatus, JSON.stringify(formData));
+        return response;
+      } catch (error) {
+        console.error('Error updating referral status:', error);
+        throw error;
+      }
+    },
+
+    async fetchOfficialOptions(role) {
+      try {
+        const response = await axios.get(`${endpoints.fetchReferralCounselors}?role=${role}`);
+        if (response && response.data && Array.isArray(response.data.data)) {
+          this.officialOptions = response.data.data;
+        } else {
+          console.error('Invalid response format:', response);
+        }
+      } catch (error) {
+        console.error('Error fetching official options:', error);
       }
     },
 
@@ -177,6 +247,36 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
       }
     },
 
+    async fetchReferralList() {
+      try {
+        const response = await axios.get(endpoints.getReferralList);
+        this.referralList = response.data.referral_list;
+      } catch (error) {
+        console.error('Error fetching referral list:', error);
+        this.error = `Failed to fetch referral list: ${error.message}`;
+      }
+    },
+  
+    setSelectedReferral(referral) {
+      this.selectedReferral = referral;
+    },
+  
+    async updateReferralStatus(formData) {
+      try {
+        const response = await axios.post(endpoints.updateReferralStatus, formData);
+        // Optionally update the local state based on the response
+        await this.fetchReferralList(); // Refresh the list after update
+        return response;
+      } catch (error) {
+        console.error('Error updating referral status:', error);
+        throw error;
+      }
+    },
+
+    setSelectedReferral(referral) {
+      this.selectedReferral = referral;
+    },
+
     filterByAgency(data, agencyNameGetter) {
       const userAgencyName = this.userDetails?.agency?.agencyName?.toLowerCase();
       if (!userAgencyName) {
@@ -258,7 +358,9 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
     
           await this.fetchSUDData();
           if (this.error) throw new Error(this.error);
-    
+          
+          await this.fetchUserDetails();
+          await this.fetchReferralList();
           // Filter all data after fetching
           this.filterReportData();
           this.filterMeasurementData();
@@ -268,6 +370,8 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
           // Update severity counts after all data is fetched and filtered
           this.updateSeverityCounts();
           this.updateAssistCount();
+
+          
     
           this.isInitialized = true;
           console.log('Store initialization complete.');
@@ -279,7 +383,7 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', {
         }
       } else {
         console.log('Store already initialized.');
-      }
+      }  
     }    
   }
 })

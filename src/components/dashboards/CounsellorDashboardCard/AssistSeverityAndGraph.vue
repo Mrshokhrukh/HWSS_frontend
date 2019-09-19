@@ -37,28 +37,36 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import Chart from 'chart.js/auto';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
 const store = useCounselorDashboardStore();
 
-const totalLifetimeUsers = computed(() => store.filteredSudData.lifetime_users.length);
-const totalDailySubstanceUsers = computed(() => store.filteredSudData.active_users.length);
+const totalLifetimeUsers = computed(() => {
+  console.log('Lifetime users:', store.filteredSudData.lifetime_users);
+  return store.filteredSudData.lifetime_users.length;
+});
+
+const totalDailySubstanceUsers = computed(() => {
+  console.log('Active users:', store.filteredSudData.active_users);
+  return store.filteredSudData.active_users.length;
+});
 
 const substancesWithGender = computed(() => {
-  return store.filteredMeasurementData.map(data => {
-    const measurementAssist = data.measurement_assist;
-    const gender = data.user_details.gender;
+  console.log('Assist Measurement Data:', store.filteredAssistMeasurementData);
+  console.log('Report Data:', store.filteredReportData);
+
+  return store.filteredAssistMeasurementData.map(data => {
+    const reportUser = store.filteredReportData.find(report => report.user?.id === data.user);
+    const gender = reportUser?.user_details?.gender || 'Unknown';
     const substances = [];
-    if (measurementAssist) {
-      for (const key in measurementAssist) {
-        if (key.endsWith('_measurement')) {
-          substances.push({
-            name: key.replace('_measurement', ''),
-            value: measurementAssist[key]
-          });
-        }
+    for (const key in data) {
+      if (key.endsWith('_measurement') && data[key] !== null) {
+        substances.push({
+          name: key.replace('_measurement', ''),
+          value: data[key]
+        });
       }
     }
     return {
@@ -76,6 +84,7 @@ const chartData = ref({
 });
 
 const processChartData = () => {
+  console.log('Processing chart data');
   const substanceCounts = {
     male: {},
     female: {}
@@ -83,6 +92,8 @@ const processChartData = () => {
 
   substancesWithGender.value.forEach(entry => {
     const gender = entry.gender.toLowerCase();
+    if (gender !== 'male' && gender !== 'female') return; // Skip unknown genders
+
     entry.substances.forEach(substance => {
       if (!substanceCounts[gender][substance.name]) {
         substanceCounts[gender][substance.name] = { 'low risk': 0, 'moderate risk': 0, 'high risk': 0 };
@@ -111,12 +122,19 @@ const processChartData = () => {
       borderWidth: 1
     }
   ]);
+
+  console.log('Processed chart data:', chartData.value);
 };
 
 let myChart = null;
 
 const displayChart = (data) => {
-  const ctx = document.getElementById('myChart').getContext('2d');
+  console.log('Displaying chart with data:', data);
+  const ctx = document.getElementById('myChart');
+  if (!ctx) {
+    console.error('Canvas element not found');
+    return;
+  }
   if (myChart) {
     myChart.destroy();
   }
@@ -134,6 +152,7 @@ const displayChart = (data) => {
 };
 
 const handleLifetimeUserClick = () => {
+  console.log('Handling lifetime user click');
   const lifetimeChartData = {
     labels: ['Lifetime Users'],
     datasets: [{
@@ -148,6 +167,7 @@ const handleLifetimeUserClick = () => {
 };
 
 const handleDailyUsersClick = () => {
+  console.log('Handling daily users click');
   const dailyChartData = {
     labels: ['Daily Users'],
     datasets: [{
@@ -162,11 +182,31 @@ const handleDailyUsersClick = () => {
 };
 
 const handleSubstanceSeverityClick = () => {
+  console.log('Handling substance severity click');
   processChartData();
   displayChart(chartData.value);
 };
 
 onMounted(() => {
-  handleSubstanceSeverityClick();
+  console.log('Component mounted');
+  if (store.isInitialized) {
+    handleSubstanceSeverityClick();
+  }
 });
+
+watch(() => store.isInitialized, (newValue) => {
+  console.log('Store initialization status changed:', newValue);
+  if (newValue) {
+    handleSubstanceSeverityClick();
+  }
+});
+
+// Watch for changes in the filtered data
+watch([() => store.filteredSudData, () => store.filteredAssistMeasurementData, () => store.filteredReportData],
+  ([newSudData, newAssistData, newReportData]) => {
+    console.log('Filtered data updated:', { sudData: newSudData, assistData: newAssistData, reportData: newReportData });
+    handleSubstanceSeverityClick();
+  },
+  { deep: true }
+);
 </script>
