@@ -2,7 +2,7 @@
   <div class="text-center">
     <div class="row">
       <h4 class="col-12 mb-2 text-start">Severity</h4>
-      <div v-for="(item, index) in store.severityItems" :key="index" class="col-md-2 mx-auto mb-4 counter-card">
+      <div v-for="(item, index) in SEVERITY_ITEMS" :key="index" class="col-md-2 mx-auto mb-4 counter-card">
         <div @click="setActiveIndex(index)" :class="[isActive(index) ? 'active-card' : 'card text-secondary', 'h-100']">
           <div class="card-body d-flex flex-column align-items-center justify-content-center">
             <h1>{{ item.count }}</h1>
@@ -36,6 +36,7 @@
 
 <script setup>
 import { ref, computed, onMounted, provide, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
 import SeverityGraphCard from '@/components/dashboards/CounsellorDashboardCard/SeverityGraphCard.vue';
@@ -44,13 +45,25 @@ import SeverityIndicatorCard from '@/components/dashboards/CounsellorDashboardCa
 
 const store = useCounselorDashboardStore();
 
+// Use storeToRefs for reactive store properties
+const { filteredMeasurementData, filteredAssistMeasurementData, filteredSudData } = storeToRefs(store);
+
+// Constants
+const SEVERITY_ITEMS = [
+  { count: '0', title: 'Suicidal Behavior', link: '/suicidal-behavior' },
+  { count: '0', title: 'Depression', link: '/depression' },
+  { count: '0', title: 'Anxiety', link: '/anxiety' },
+  { count: '0', title: 'ACE', link: '/ace' },
+  { count: '0', title: 'Assist', link: '/assist' }
+];
+
 const activeIndex = ref(0);
 
 function isActive(index) {
   return index === activeIndex.value;
 }
 
-const activeItem = computed(() => store.severityItems[activeIndex.value]);
+const activeItem = computed(() => SEVERITY_ITEMS[activeIndex.value]);
 
 onMounted(async () => {
   if (!store.isInitialized) {
@@ -59,9 +72,9 @@ onMounted(async () => {
 });
 
 // Provide filtered data to child components
-provide('measurementData', computed(() => store.filteredMeasurementData));
-provide('measurementAssistData', computed(() => store.filteredAssistMeasurementData));
-provide('sudData', computed(() => store.filteredSudData));
+provide('measurementData', filteredMeasurementData);
+provide('measurementAssistData', filteredAssistMeasurementData);
+provide('sudData', filteredSudData);
 
 function setActiveIndex(index) {
   activeIndex.value = index;
@@ -70,13 +83,23 @@ function setActiveIndex(index) {
 
 // Watch for changes in filtered data and update severity counts
 watch(
-  () => [store.filteredMeasurementData, store.filteredAssistMeasurementData],
+  [filteredMeasurementData, filteredAssistMeasurementData],
   () => {
     store.updateSeverityCounts();
-    store.updateAssistCount();
+    updateLocalSeverityCounts();
   },
   { deep: true }
 );
+
+// Function to update local severity counts
+function updateLocalSeverityCounts() {
+  SEVERITY_ITEMS.forEach((item, index) => {
+    item.count = store.countSeverity(item.title).toString();
+  });
+}
+
+// Initial update of local severity counts
+updateLocalSeverityCounts();
 </script>
 
 <style scoped>
