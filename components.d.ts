@@ -94,6 +94,7 @@ declare module 'vue' {
     PendingRequest: typeof import('./src/components/dashboards/Adminpages/Approval/PendingRequest.vue')['default']
     PersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/PersonalDetailsCard.vue')['default']
     ProfileCard: typeof import('./src/components/dashboards/dashboardCard/ProfileCard.vue')['default']
+    ProgressBar: typeof import('primevue/progressbar')['default']
     PublicDashboard: typeof import('./src/components/dashboards/PublicDashboard.vue')['default']
     QuickToolCard: typeof import('./src/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue')['default']
     RecordsOfApproval: typeof import('./src/components/dashboards/Adminpages/Approval/RecordsOfApproval.vue')['default']
@@ -189,5 +190,6 @@ declare module 'vue' {
     TestTypeScreening: typeof import('./src/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue')['default']
     TopNavbarCard: typeof import('./src/components/navbar/TopNavbarCard.vue')['default']
     TopNavigationCards: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/TopNavigationCards.vue')['default']
+    UserTypeCard: typeof import('./src/components/auth/UserTypeCard.vue')['default']
   }
 }

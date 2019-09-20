@@ -1,48 +1,47 @@
 <template>
-    <div class="vh-100 d-flex justify-content-center align-items-center authbg cust-margin">
-        <div class="card my-5 shadow-lg bg-body rounded card-reg mx-auto" style="width: 60vw;">
+    <div class="min-vh-100 d-flex justify-content-center align-items-center authbg">
+        <div class="card shadow-lg bg-body rounded card-reg mx-auto" style="width: 100%; max-width: 1000px;">
             <div class="row g-0 loginbg">
                 <div
                     class="col-md-5 d-flex flex-column align-items-center justify-content-center position-relative left-card-side">
-                    <!-- Float-start image -->
-                    <img class="position-absolute start-0 bottom-0" src="@/assets/images/shape.png" alt="Shape Image"
-                        style="z-index: 999;">
-
-                    <!-- Centered and sized logo -->
-                    <div id="reg-img">
-                        <img :src="registrationLogo" class="img-fluid rounded reg-img" alt="Logo" style="width: 350px;">
-                        <!-- Dynamic tagline -->
-                        <h2 class="reg-heading display-7">{{ tagline }}</h2>
+                    <img class="position-absolute start-0 bottom-0 img-fluid" src="@/assets/images/shape.png"
+                        alt="Shape Image" style="z-index: 1;">
+                    <div id="reg-img" class="text-center z-2 position-relative">
+                        <img :src="registrationLogo" class="img-fluid rounded reg-img bounce-animation" alt="Logo"
+                            style="max-width: 100%; width: 350px;">
+                        <h2 class="reg-heading display-7 mt-3">{{ tagline }}</h2>
                     </div>
                 </div>
                 <div class="col-md-7 d-flex flex-column justify-content-center right-card-side">
-                    <div class="auth-form text-center">
-                        <h2 class="text-center mt-5 mb-4" style="color: #2B656F; font-weight: bold">Sign Up</h2>
-                        <p class="text-center text-capitalize" style="color: #2B656F; font-weight: bold">Select type
-                            of user</p>
-                        <div class="row justify-content-center align-items-center">
-                            <div :class="['card', 'reg-card', { 'active': selectedOption === 'pre-recorded' }]"
-                                @click="updateSelectedUserType('pre-recorded')">
-                                <div class="card-body d-flex align-items-center flex-column">
-                                    <img src="@/assets/images/pre-recorded-icon.png" alt="" class="img-fluid mb-2">
-                                    <br />
-                                    <h6 class="card-text" style="color: #2B656F;">Pre Recorded User</h6>
+                    <div class="auth-form text-center px-3 px-md-5">
+                        <h2 class="text-center mt-4 mb-4" style="color: #2B656F; font-weight: bold">Sign Up</h2>
+                        <p class="text-center text-capitalize" style="color: #2B656F; font-weight: bold">Select type of
+                            user</p>
+                        <div class="row justify-content-center align-items-center g-3">
+                            <div class="col-sm-6">
+                                <div :class="['card', 'reg-card', { 'active': selectedOption === 'pre-recorded' }]"
+                                    @click="updateSelectedUserType('pre-recorded')">
+                                    <div class="card-body d-flex align-items-center flex-column">
+                                        <img src="@/assets/images/pre-recorded-icon.png" alt="" class="img-fluid mb-2"
+                                            style="max-width: 80px;">
+                                        <h6 class="card-text" style="color: #2B656F;">Pre Recorded User</h6>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div :class="['card', 'reg-card', { 'active': selectedOption === 'new-user' }]"
-                                @click="updateSelectedUserType('new-user')">
-                                <div class="card-body d-flex align-items-center flex-column">
-                                    <!-- <i class="fas fa-user" style="color: #2B656F;"></i> -->
-                                    <img src="@/assets/images/agency-based-icon.png" alt="" class="img-fluid mb-2">
-                                    <br />
-                                    <h6 class="card-text" style="color: #2B656F;">Agency Based User</h6>
+                            <div class="col-sm-6">
+                                <div :class="['card', 'reg-card', { 'active': selectedOption === 'new-user' }]"
+                                    @click="updateSelectedUserType('new-user')">
+                                    <div class="card-body d-flex align-items-center flex-column">
+                                        <img src="@/assets/images/agency-based-icon.png" alt="" class="img-fluid mb-2"
+                                            style="max-width: 80px;">
+                                        <h6 class="card-text" style="color: #2B656F;">Agency Based User</h6>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="text-center mt-4 mb-5">
-                        <button class="btn btn-primary btn-lg rounded-3 continue-button mb-5 w-50"
+                        <button class="btn btn-primary btn-lg rounded-3 continue-button mb-3 w-75"
                             :disabled="!selectedOption" @click="continueToPage">
                             Continue
                         </button>
@@ -170,6 +169,40 @@ const continueToPage = () => {
     .left-card-side,
     .right-card-side {
         flex: 1 0 100%;
+    }
+}
+
+.bounce-animation {
+    animation: bounce 5s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@media (max-width: 767px) {
+    .card-reg {
+        width: 90% !important;
+    }
+
+    .left-card-side {
+        padding: 2rem 0;
+    }
+
+    .right-card-side {
+        padding: 2rem 1rem;
+    }
+
+    .continue-button {
+        width: 100% !important;
     }
 }
 </style>

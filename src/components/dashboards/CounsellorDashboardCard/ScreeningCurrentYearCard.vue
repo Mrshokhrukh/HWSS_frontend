@@ -84,6 +84,7 @@ const fetchChartData = async () => {
     }
 };
 
+
 const updateChartData = (reportData) => {
     let maleCount = 0;
     let femaleCount = 0;

@@ -1,75 +1,60 @@
 <template>
-    <div class="vh-100 d-flex justify-content-center align-items-center authbg cust-margin">
-        <div class="card shadow-card my-5 shadow-lg bg-body" style="width: 60vw;">
-            <div class="row g-0 loginbg">
-                <div class="col-7 d-flex align-items-center">
-                    <div class="card-body">
+    <div class="vh-100 d-flex justify-content-center align-items-center authbg">
+        <div class="card shadow-card bg-body" style="width: 90%; max-width: 1000px;">
+            <div class="row g-0 h-100">
+                <div class="col-md-7 login-form-section">
+                    <div class="card-body d-flex flex-column justify-content-center h-100">
                         <div class="auth-form text-center">
-                            <h1 class="text-center my-3 bold" style="color: #2B656F;">Sign In</h1>
+                            <h1 class="text-center mb-4 bold login-title">Sign In</h1>
                             <form class="row justify-content-center" @submit.prevent="loginUser">
-                                <div class="mb-3 col-md-8">
-                                    <input v-model="username" type="text" class="form-control" placeholder="Username"
-                                        required />
+                                <div class="mb-3 col-md-10">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input v-model="username" type="text" class="form-control"
+                                            placeholder="Username" required />
+                                    </div>
                                 </div>
-                                <div class="mb-5 col-md-8">
-                                    <input v-model="password" type="password" class="form-control"
-                                        placeholder="Password" required />
+                                <div class="mb-4 col-md-10">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input v-model="password" type="password" class="form-control"
+                                            placeholder="Password" required />
+                                    </div>
                                 </div>
-                                <div class="text-center col-md-8">
-                                    <button type="submit" class="btn col-md-12 singin-button btnbg">Sign In</button>
+                                <div class="text-center col-md-10">
+                                    <button type="submit" class="btn col-12 signin-button btnbg">
+                                        Sign In
+                                        <i class="fas fa-sign-in-alt ms-2"></i>
+                                    </button>
                                 </div>
                             </form>
 
-                            <div v-if="loginStatus === 'success'" class="alert alert-success mt-3" role="alert">
-                                Login successful! Redirecting...
+                            <div class="mt-4">
+                                <a href="#" class="ndi-link">
+                                    <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo me-2" />
+                                    Login with NDI
+                                </a>
                             </div>
-                            <div v-if="loginStatus === 'failed'" class="alert alert-danger mt-3" role="alert">
-                                Login failed. Please check your credentials and try again.
-                            </div>
-                            <br />
-                            <div>
-                                <p class="text-center my-4">
-                                    <img src="@/assets/images/NDILogo.png" alt="NDI Logo" />
-                                    <a href="#" style="color: black; font-weight: bold"> Login with NDI</a>
-                                </p>
-                            </div>
-                            <p class="text-center my-3" style="color: #2B656F;">
-                                Don't have an account? <router-link to="/register"
-                                    style="color: #2B656F; font-weight: bold">Sign Up</router-link>
+                            <p class="mt-3 signup-link">
+                                Don't have an account? <router-link to="/register">Sign Up</router-link>
                             </p>
-                            <p class="text-center my-3">
-                                <router-link to="/forgot-password" style="color: #2B656F; font-weight: bold;">Forgot
+                            <p class="mt-2">
+                                <router-link to="/forgot-password" class="forgot-password-link">Forgot
                                     Password?</router-link>
                             </p>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-5 custombg position-relative">
-                    <img class="position-absolute bottom-0 start-0" src="../../assets/images/shape.png"
+                <div class="col-md-5 custombg d-flex flex-column justify-content-center align-items-center">
+                    <img class="position-absolute bottom-0 start-0 shape-img" src="../../assets/images/shape.png"
                         alt="Shape Image">
-
-                    <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                        <img :src="loginLogo" alt="Logo" class="img-fluid" style="max-width: 100%; height: auto;">
-                        <h2 class="text-white display-7 mt-3 tag-line-login">{{ tagline }}</h2>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-        <div v-if="loading === true" class="loader">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
+                    <img :src="loginLogo" alt="Logo" class="img-fluid logo-image mb-3">
+                    <h2 class="text-white text-center tag-line-login">Mental Health Matters</h2>
                 </div>
             </div>
         </div>
     </div>
 </template>
-
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -140,9 +125,9 @@ const fetchUserAndAgencyDetails = async (userRole, authToken) => {
                 text: 'Your data has been successfully retrieved.',
                 icon: 'success',
                 showConfirmButton: false,
-                timer: 1500
+                timer: 500
             }).then(() => {
-                redirectToDashboard(userRole); 
+                redirectToDashboard(userRole);
             });
         } else {
             // Show error message based on the response message
@@ -196,29 +181,49 @@ const handleLoginError = (error) => {
 
 </script>
 
-
-
 <style scoped>
-.tag-line-login {
-    font-family: "Boogaloo", sans-serif;
-    font-weight: 200;
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.loginbg {
+.login-form-section {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
-    height: 500px;
-    border-radius: 10px;
+    background-position: center;
 }
 
 .custombg {
     background-color: #2C6975;
-    border-radius: 20% 10px 10px 20%;
-    height: 100%;
+    position: relative;
+    overflow: hidden;
 }
 
-.auth-form .signin-button {
-    border-radius: 5px;
+.login-title {
+    color: #2B656F;
+    font-weight: 600;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-right: none;
+}
+
+.form-control {
+    border-left: none;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #ced4da;
+}
+
+.signin-button {
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
 .btnbg {
@@ -226,17 +231,74 @@ const handleLoginError = (error) => {
     color: white;
 }
 
-.loader {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+.btnbg:hover {
+    background-color: #1e4a52;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ndi-logo {
+    max-height: 30px;
+}
+
+.ndi-link,
+.signup-link a,
+.forgot-password-link {
+    color: #2B656F;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.ndi-link:hover,
+.signup-link a:hover,
+.forgot-password-link:hover {
+    color: #1e4a52;
+    text-decoration: underline;
+}
+
+.shape-img {
+    max-width: 100%;
+    opacity: 0.1;
+}
+
+.logo-image {
+    max-width: 70%;
+    height: auto;
+    animation: float 6s ease-in-out infinite;
+}
+
+.tag-line-login {
+    font-family: "Boogaloo", sans-serif;
+    font-weight: 200;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@media (max-width: 768px) {
+    .custombg {
+        min-height: 200px;
+    }
+
+    .logo-image {
+        max-width: 50%;
+    }
+
+    .tag-line-login {
+        font-size: 1.5rem;
+    }
 }
 </style>

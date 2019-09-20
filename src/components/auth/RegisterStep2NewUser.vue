@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="d-flex justify-content-center align-items-center mt-5" >
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-8">
@@ -286,6 +286,7 @@
         <!-- Loading, Success, and Failed Modals/Overlays can be inserted here if they should be fullscreen -->
     </div>
 </template>
+
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
