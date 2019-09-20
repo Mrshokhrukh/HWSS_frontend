@@ -1,14 +1,14 @@
 <template>
     <div class="card w-100">
         <div class="card-header">
-            <h4 class="text-center text-capitalize">Total screened for the year: {{ getCurrentYear() }}</h4>
+            <h4 class="text-center text-capitalize">Total screened for the year: {{ currentYear }}</h4>
         </div>
         <div class="card-body">
             <template v-if="!isLoading">
                 <template v-if="!isDataEmpty">
                     <Chart type="doughnut" :data="chartData" :options="chartOptions" class="w-75 mx-auto" />
                     <div class="mt-4 text-center">
-                        <div class="hwss-primary text-capitalize font-italic">{{ store.agencyName }}</div>
+                        <div class="hwss-primary text-capitalize font-italic">{{ agencyName }}</div>
                     </div>
                 </template>
                 <template v-else>
@@ -25,31 +25,43 @@
         </div>
         <div v-if="!isLoading && !isDataEmpty" class="card-footer">
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': store.chartColors[0] }"></span>
-                Male ({{ chartData.datasets[0].data[0] || 0 }})
+                <span class="legend-color" :style="{ 'background-color': store.CHART_COLORS[0] }"></span>
+                Male ({{ chartData.datasets[0]?.data[0] || 0 }})
             </span>
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': store.chartColors[1] }"></span>
-                Female ({{ chartData.datasets[0].data[1] || 0 }})
+                <span class="legend-color" :style="{ 'background-color': store.CHART_COLORS[1] }"></span>
+                Female ({{ chartData.datasets[0]?.data[1] || 0 }})
             </span>
-            <span><strong>Total: {{ store.totalScreenedCount }}</strong></span>
+            <span><strong>Total: {{ totalScreenedCount }}</strong></span>
         </div>
-        <div v-if="store.error" class="error-message">
-            {{ store.error }}
+        <div v-if="error" class="error-message">
+            {{ error }}
         </div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 import Chart from 'primevue/chart';
 
 const store = useCounselorDashboardStore();
 
-const chartData = computed(() => store.chartData);
-const isDataEmpty = computed(() => store.totalScreenedCount === 0);
-const isLoading = computed(() => store.isLoading);
+const {
+    chartData,
+    isLoading,
+    error,
+    agencyName,
+    totalScreenedCount,
+    currentYear,
+    filteredReportData
+} = storeToRefs(store);
+
+const isDataEmpty = computed(() => {
+    return totalScreenedCount.value === 0 || !chartData.value || !chartData.value.datasets || chartData.value.datasets[0].data.length === 0;
+});
+
 const loadingStatus = ref('');
 
 const chartOptions = ref({
@@ -61,8 +73,6 @@ const chartOptions = ref({
     cutout: '60%'
 });
 
-const getCurrentYear = () => new Date().getFullYear();
-
 onMounted(async () => {
     try {
         loadingStatus.value = 'Initializing...';
@@ -70,29 +80,8 @@ onMounted(async () => {
             await store.initializeStore();
         }
         loadingStatus.value = 'Data loaded.';
-    } catch (error) {
-        console.error('Error initializing store:', error);
+    } catch (err) {
         loadingStatus.value = 'Error loading data. Please try again.';
-    }
-});
-
-watch(() => store.reportData, (newData) => {
-    console.log('Report data updated:', newData.length, 'items');
-}, { deep: true });
-
-watch(() => store.isLoading, (newValue) => {
-    console.log('isLoading changed:', newValue);
-});
-
-watch(() => store.error, (newError) => {
-    if (newError) {
-        console.error('Store error:', newError);
-    }
-});
-
-watch(() => store.sudError, (newError) => {
-    if (newError) {
-        console.warn('SUD data error:', newError);
     }
 });
 </script>
