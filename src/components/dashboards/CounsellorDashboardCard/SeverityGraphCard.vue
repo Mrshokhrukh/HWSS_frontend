@@ -9,7 +9,7 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, inject, watchEffect } from 'vue';
 
@@ -98,16 +98,13 @@ watchEffect(() => {
     // Set chart categories as all unique severity levels
     chartCategories.value = Array.from(allSeverities);
 });
-
-
 </script>
 
 
 
-  
+
 <style scoped>
 .graph-title {
     color: #2c6975;
 }
 </style>
-  

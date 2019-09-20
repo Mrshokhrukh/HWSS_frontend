@@ -6,41 +6,38 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch, computed } from 'vue';
 import Chart from 'chart.js/auto';
+import { useDashboardStore } from '@/stores/dashboardStore'; // Adjust the import path as needed
 
 const chartCanvas = ref(null);
-const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
+const dashboardStore = useDashboardStore();
+
+// Use a computed property to get the filtered data from the store
+const filteredReportData = computed(() => dashboardStore.filteredData);
 
 // Function to extract follow_up values dynamically from service_and_treatment
 function extractFollowUpValues(data) {
-  const followUpValues = new Set(); // Use a Set to ensure uniqueness
-
+  const followUpValues = new Set();
   data.forEach(item => {
     if (item.service_and_treatment?.follow_up) {
       followUpValues.add(item.service_and_treatment.follow_up);
     }
   });
-
-  return Array.from(followUpValues); // Convert Set to Array for easy manipulation
+  return Array.from(followUpValues);
 }
 
 // Function to count occurrences of each follow_up value
 function countFollowUpValues(data) {
   const counts = {};
-  data.forEach(value => {
-    counts[value] = (counts[value] || 0) + 1;
+  data.forEach(item => {
+    if (item.service_and_treatment?.follow_up) {
+      const value = item.service_and_treatment.follow_up;
+      counts[value] = (counts[value] || 0) + 1;
+    }
   });
   return counts;
 }
-
-// Extract follow_up values and count them
-const followUpOptions = extractFollowUpValues(reportData);
-const followUpCounts = countFollowUpValues(followUpOptions);
-
-// Prepare data for Chart.js
-const labels = Object.keys(followUpCounts);
-const data = Object.values(followUpCounts);
 
 // Define a larger set of colors
 const backgroundColors = [
@@ -66,32 +63,58 @@ const backgroundColors = [
   'rgba(64, 64, 199, 1)'
 ];
 
-// Ensure there are enough colors
-const dynamicColors = backgroundColors.slice(0, labels.length);
+let chart = null;
 
-const chartData = {
-  labels,
-  datasets: [{
-    label: 'Follow Up Data',
-    data,
-    backgroundColor: dynamicColors,
-    borderWidth: 1,
-  }]
-};
+onMounted(async () => {
+  // Ensure the data is fetched
+  if (dashboardStore.reportData.length === 0) {
+    await dashboardStore.fetchReportData();
+  }
 
-onMounted(() => {
-  const ctx = chartCanvas.value.getContext('2d');
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: chartData,
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    },
-  });
+  createOrUpdateChart();
 });
+
+// Watch for changes in filteredReportData
+watch(filteredReportData, () => {
+  createOrUpdateChart();
+}, { deep: true });
+
+function createOrUpdateChart() {
+  const followUpCounts = countFollowUpValues(filteredReportData.value);
+  const labels = Object.keys(followUpCounts);
+  const data = Object.values(followUpCounts);
+
+  // Ensure there are enough colors
+  const dynamicColors = backgroundColors.slice(0, labels.length);
+
+  const chartData = {
+    labels,
+    datasets: [{
+      label: 'Follow Up Data',
+      data,
+      backgroundColor: dynamicColors,
+      borderWidth: 1,
+    }]
+  };
+
+  const ctx = chartCanvas.value.getContext('2d');
+
+  if (chart) {
+    chart.data = chartData;
+    chart.update();
+  } else {
+    chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      },
+    });
+  }
+}
 </script>
 
-<style>
+<style scoped>
 /* Add any custom styles for the chart canvas here */
 </style>

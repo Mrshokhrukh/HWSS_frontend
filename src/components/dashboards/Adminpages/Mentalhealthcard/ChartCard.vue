@@ -10,9 +10,9 @@
               loading="Loading..." />
           </div>
           <div class="d-flex align-items-center">
-            <p class="fs-5 fw-bold mx-auto">Male: {{ male_Count_clustered }}</p>
-            <p class="fs-5 fw-bold mx-auto">Female: {{ femaleCount_clustered }}</p>
-            <p class="fs-5 fw-bold mx-auto">Total: {{ totalCount_clustered }}</p>
+            <p class="fs-5 fw-bold mx-auto">Male: {{ maleCountClustered }}</p>
+            <p class="fs-5 fw-bold mx-auto">Female: {{ femaleCountClustered }}</p>
+            <p class="fs-5 fw-bold mx-auto">Total: {{ totalCountClustered }}</p>
           </div>
         </div>
       </div>
@@ -25,9 +25,9 @@
             <Chart :type="chartType" :data="independentData" :options="donutOptions" />
           </div>
           <div class="d-flex align-items-center">
-            <p class="fs-5 fw-bold mx-auto">Male: {{ data1 }}</p>
-            <p class="fs-5 fw-bold mx-auto">Female: {{ data2 }}</p>
-            <p class="fs-5 fw-bold mx-auto">Total: {{ total }}</p>
+            <p class="fs-5 fw-bold mx-auto">Male: {{ maleCountIndependent }}</p>
+            <p class="fs-5 fw-bold mx-auto">Female: {{ femaleCountIndependent }}</p>
+            <p class="fs-5 fw-bold mx-auto">Total: {{ totalCountIndependent }}</p>
           </div>
         </div>
       </div>
@@ -36,112 +36,76 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import Chart from 'primevue/chart'
+import { ref, computed, onMounted } from 'vue';
+import Chart from 'primevue/chart';
+import { useDashboardStore } from '@/stores/dashboardStore'; // Adjust the import path as needed
 
-const male_Count_clustered = ref(0)
-const femaleCount_clustered = ref(0)
-const totalCount_clustered = ref(0)
-const data1 = ref(0)
-const data2 = ref(0)
-const total = ref(0)
+const dashboardStore = useDashboardStore();
 
-const clusteredData = ref([])
-const independentData = ref([])
-const donutOptions = ref({})
-const chartType = 'doughnut'
+const chartType = 'doughnut';
 
-// logic
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || [])
-const clusteredDatas = ref([])
-const independentDatas = ref([])
+// Computed properties for clustered screening
+const clusteredData = computed(() => {
+  const filteredData = dashboardStore.filteredData.filter(item =>
+    item.measurement && item.measurement_assist
+  );
 
-// Filter data when component is mounted
-onMounted(() => {
-  // filtering clustered data
-  clusteredDatas.value = reportData.value.filter(
-    (item) =>
-      item.measurement?.fields?.user !== undefined ||
-      (null && item.measurement_assist?.fields?.user !== undefined) ||
-      null
-  )
+  const maleCount = filteredData.filter(item => item.user?.fields?.gender === 'Male').length;
+  const femaleCount = filteredData.filter(item => item.user?.fields?.gender === 'Female').length;
 
-  // filtering independent data
-  independentDatas.value = reportData.value.filter(
-    (item) =>
-      item.event_screenings?.fields?.user !== undefined ||
-      (null && item.case_screenings?.fields?.user !== undefined) ||
-      null
-  )
-
-  // Log filtered data to the console
-  console.log('Filtered clusteredData Data:', clusteredDatas.value)
-  console.log('Filtered independentData Data:', independentDatas.value)
-
-  countGender()
-})
-
-const countGender = () => {
-  let maleCount = 0
-  let femaleCount = 0
-
-  clusteredDatas.value.forEach((item) => {
-    const gender = item.user?.fields?.gender
-    if (gender === 'Male') {
-      maleCount++
-    } else if (gender === 'Female') {
-      femaleCount++
-    }
-  })
-
-  male_Count_clustered.value = maleCount
-  femaleCount_clustered.value = femaleCount
-  totalCount_clustered.value = maleCount + femaleCount
-
-  console.log('Male Count:', maleCount)
-  console.log('Female Count:', femaleCount)
-}
-
-const setChartData = () => {
-  clusteredData.value = {
+  return {
     labels: ['Male', 'Female'],
-    datasets: [
-      {
-        data: [male_Count_clustered.value, femaleCount_clustered.value],
-        backgroundColor: ['#2c6975', '#64ac99']
-      }
-    ]
-  }
+    datasets: [{
+      data: [maleCount, femaleCount],
+      backgroundColor: ['#2c6975', '#64ac99']
+    }]
+  };
+});
 
-  independentData.value = {
+const maleCountClustered = computed(() => clusteredData.value.datasets[0].data[0]);
+const femaleCountClustered = computed(() => clusteredData.value.datasets[0].data[1]);
+const totalCountClustered = computed(() => maleCountClustered.value + femaleCountClustered.value);
+
+// Computed properties for independent screening
+const independentData = computed(() => {
+  const filteredData = dashboardStore.filteredData.filter(item =>
+    item.agency_name === 'Event Base Clients' || item.agency_name === 'Case Base Clients'
+  );
+
+  const maleCount = filteredData.filter(item => item.user?.fields?.gender === 'Male').length;
+  const femaleCount = filteredData.filter(item => item.user?.fields?.gender === 'Female').length;
+
+  return {
     labels: ['Male', 'Female'],
-    datasets: [
-      {
-        data: [data1.value, data2.value],
-        backgroundColor: ['#2c6975', '#64ac99']
-      }
-    ]
-  }
-}
+    datasets: [{
+      data: [maleCount, femaleCount],
+      backgroundColor: ['#2c6975', '#64ac99']
+    }]
+  };
+});
 
-const setChartOptions = () => {
-  // Set common options for both charts here
-  donutOptions.value = {
-    plugins: {
-      legend: {
-        labels: {
-          cutout: '60%',
-          color: '#242424'
-        }
+const maleCountIndependent = computed(() => independentData.value.datasets[0].data[0]);
+const femaleCountIndependent = computed(() => independentData.value.datasets[0].data[1]);
+const totalCountIndependent = computed(() => maleCountIndependent.value + femaleCountIndependent.value);
+
+// Chart options
+const donutOptions = ref({
+  plugins: {
+    legend: {
+      labels: {
+        cutout: '60%',
+        color: '#242424'
       }
     }
   }
-}
+});
 
+// Fetch data when component is mounted
 onMounted(() => {
-  setChartData()
-  setChartOptions()
-})
+  if (dashboardStore.reportData.length === 0) {
+    dashboardStore.fetchReportData();
+  }
+});
 </script>
 
 <style scoped>
