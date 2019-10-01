@@ -2,46 +2,52 @@
 	<div :class="{ sidebar: true, 'sidebar-open': sidebarStore.isOpen }">
 		<!-- User Profile Section -->
 		<div class="user-profile text-center my-3">
-			<img :src="profilePictureUrl" alt="User" :class="profilePicClass" />
-			<h5 class="user-name mb-0" v-if="sidebarStore.isOpen">{{ fullName }}</h5>
+			<div class="profile-image-container">
+				<img :src="profilePictureUrl" alt="User" :class="profilePicClass" />
+				<span class="status-indicator online"></span>
+			</div>
+			<transition name="fade">
+				<div v-if="sidebarStore.isOpen" class="user-info mt-2">
+					<h5 class="user-name mb-0">{{ fullName }}</h5>
+					<small class="user-role text-light-green">{{ userType }}</small>
+				</div>
+			</transition>
 		</div>
 
 		<!-- Menu Items -->
-		<div v-if="isRNDAdmin.value === 'rd_admin'">
+		<div v-if="isRNDAdmin === 'rd_admin'" class="menu-container">
 			<nav class="menu-items">
-				<router-link class="side-btn" :class="{ active: $route.path === menu.route }"
-					v-b-tooltip.hover.bottom="menu.text">
-					<i :class="menu.iconClass" class="link-icon"></i>
-					<span class="link-text" v-if="sidebarStore.isOpen">RD Admin Test</span>
+				<router-link class="side-btn" :class="{ active: $route.path === '/rd-admin' }"
+					v-b-tooltip.hover.right="{ title: 'RD Admin Dashboard', disabled: sidebarStore.isOpen }">
+					<i class="fas fa-tachometer-alt link-icon"></i>
+					<span class="link-text" v-if="sidebarStore.isOpen">RD Admin Dashboard</span>
 				</router-link>
 			</nav>
 		</div>
-		<div v-else>
+		<div v-else class="menu-container">
 			<nav class="menu-items">
 				<router-link v-for="(menu, index) in menus" :key="index" :to="menu.route" class="side-btn"
-					:class="{ active: $route.path === menu.route }" v-b-tooltip.hover.bottom="menu.text">
+					:class="{ active: $route.path === menu.route }"
+					v-b-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
 					<i :class="menu.iconClass" class="link-icon"></i>
 					<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
 				</router-link>
 			</nav>
 		</div>
-		<!-- <div>
-			<nav class="menu-items">
-				<Button label="Get" class="side-btn" @click="populateReportsModel"/>
-			</nav>
-		</div> -->
 
 		<!-- Logout and Toggle Icon -->
-		<div class="logout mt-auto p-0">
-			<router-link to="#" class="side-btn" @click="logout">
+		<div class="sidebar-footer mt-auto">
+			<router-link to="#" class="side-btn logout-btn" @click="logout"
+				v-b-tooltip.hover.right="{ title: 'Log Out', disabled: sidebarStore.isOpen }">
 				<i class="fas fa-sign-out-alt"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
 			</router-link>
 
-			<router-link to="#" class="side-btn" @click="toggle">
+			<button class="toggle-btn" @click="toggle"
+				v-b-tooltip.hover.right="{ title: sidebarStore.isOpen ? 'Collapse' : 'Expand', disabled: sidebarStore.isOpen }">
 				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
-			</router-link>
+			</button>
 		</div>
 	</div>
 </template>
@@ -57,11 +63,9 @@ import { useProgressStore } from "@/stores/progressStore";
 import deFaultProfilePic from "@/assets/images/icon.png";
 import Swal from 'sweetalert2';
 
-
 const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
-
 
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
@@ -72,19 +76,12 @@ const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
 	const role = userDetailsStore.user.role?.toLowerCase();
-	if (!role) return "public";
+	if (!role) return "Public User";
 
-	if (role.includes("admin")) {
-		return "admin";
-	} else if (role.includes("counselor")) {
-		return "counselor";
-	} else if (role.includes("professional")) {
-		return "counselor";
-	} else if (role === "student") {
-		return "student";
-	} else {
-		return role;
-	}
+	if (role.includes("admin")) return "Administrator";
+	if (role.includes("counselor") || role.includes("professional")) return "Counselor";
+	if (role === "student") return "Student";
+	return role.charAt(0).toUpperCase() + role.slice(1);
 });
 
 const fetchedMenus = ref([]);
@@ -100,28 +97,25 @@ const profilePicClass = computed(() => {
 });
 
 const menus = computed(() => {
-	const baseRoute = `/${userType.value}-dashboard`;
+	const baseRoute = `/${userType.value.toLowerCase()}-dashboard`;
 
 	const staticMenuItems = [
-		{ text: "Dashboard", route: baseRoute, iconClass: "fa-solid fa-toolbox" },
+		{ text: "Dashboard", route: baseRoute, iconClass: "fas fa-tachometer-alt" },
 	];
 
-	const role = userType.value;
+	const role = userType.value.toLowerCase();
 
 	const dynamicMenuItems = fetchedMenus.value
-		.filter((menu) => {
-			return menu.roles.some((r) => r.name === role);
-		})
+		.filter((menu) => menu.roles.some((r) => r.name === role))
 		.map((menu) => ({
 			text: menu.name,
 			route: menu.route,
 			iconClass: menu.icon_class,
-		})); // Log dynamic menu items for debugging
+		}));
 
 	return [...staticMenuItems, ...dynamicMenuItems];
 });
 
-// Function to fetch menu items from the API
 const fetchMenuItems = async () => {
 	try {
 		const response = await axios.get(endpoints.menuItem);
@@ -139,13 +133,10 @@ const profilePictureUrl = computed(() => {
 	return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 
-
 const adminRole = JSON.parse(localStorage.getItem('userDetailsStore'));
 const userOriginalRole = adminRole.user.role;
-// console.log(userOriginalRole);
 
-// Check if the user is a school counselor
-const isRNDAdmin = ref(userOriginalRole === 'rd_admin');
+const isRNDAdmin = computed(() => userOriginalRole === 'rd_admin');
 
 const logout = async () => {
 	const progressStore = useProgressStore();
@@ -178,11 +169,9 @@ const logout = async () => {
 						icon: 'success',
 						showConfirmButton: false,
 						timer: 1200
-					}).then(() => {
-						router.push("/login");
-					})
+					});
 
-
+					router.push("/login");
 				} else {
 					console.error("Logout failed:", response.data.message);
 				}
@@ -190,83 +179,98 @@ const logout = async () => {
 		}
 	} catch (error) {
 		console.error("Logout failed:", error);
-		if (Swal) {
-			await Swal.fire({
-				title: 'Error',
-				text: 'Logout failed. Please try again.',
-				icon: 'error',
-				confirmButtonText: 'OK'
-			});
-		}
+		await Swal.fire({
+			title: 'Error',
+			text: 'Logout failed. Please try again.',
+			icon: 'error',
+			confirmButtonText: 'OK'
+		});
 	}
 };
-
 
 onMounted(() => {
 	fetchMenuItems();
 });
-
 </script>
 
 <style scoped>
-.link-icon {
-	font-size: 1.5rem;
-	margin-right: 0.5rem;
-	margin-left: 0.5rem;
-}
-
-.mini-profile-pic {
-	width: 35px;
-	height: 35px;
-	margin: 2rem auto;
-	border-radius: 50%;
-	border: 3px solid white;
-	object-fit: cover;
-	object-position: top;
-}
-
 .sidebar {
 	background-color: #2c6975;
 	color: white;
-	transition: width 0.3s ease-in-out;
+	transition: all 0.3s ease-in-out;
 	display: flex;
 	flex-direction: column;
-	padding-bottom: 1rem;
+	padding: 1rem 0;
 	position: fixed;
 	z-index: 999;
 	height: 100vh;
+	width: 4.5rem;
+	overflow-x: hidden;
 }
 
 .sidebar-open {
 	width: 16%;
-	height: 100vh;
 }
 
 .user-profile {
-	background-color: #2c6975;
-	padding: 0.5rem 0;
+	padding: 0.5rem;
 	transition: all 0.3s ease-in-out;
-	overflow: hidden;
-	height: auto;
 }
 
-.profile-pic {
-	width: 100px;
-	height: 100px;
+.profile-image-container {
+	position: relative;
+	display: inline-block;
+}
+
+.profile-pic,
+.mini-profile-pic {
+	width: 80px;
+	height: 80px;
 	border-radius: 50%;
-	border: 5px solid white;
+	border: 3px solid #cde0c9;
 	object-fit: cover;
 	object-position: top;
-	margin: 10px auto;
+	transition: all 0.3s ease-in-out;
+}
+
+.mini-profile-pic {
+	width: 40px;
+	height: 40px;
+}
+
+.status-indicator {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background-color: #4CAF50;
+	border: 2px solid #2c6975;
+}
+
+.user-info {
+	margin-top: 0.5rem;
 }
 
 .user-name {
 	color: white;
 	font-size: 1rem;
+	margin-bottom: 0.2rem;
+}
+
+.user-role {
+	font-size: 0.8rem;
+	opacity: 0.8;
+}
+
+.menu-container {
+	flex-grow: 1;
+	overflow-y: auto;
+	margin-top: 1rem;
 }
 
 .menu-items {
-	flex-grow: 1;
 	display: flex;
 	flex-direction: column;
 }
@@ -274,57 +278,84 @@ onMounted(() => {
 .side-btn {
 	display: flex;
 	align-items: center;
-	padding: 1rem;
+	padding: 0.8rem 1rem;
 	color: white;
 	text-decoration: none;
-	transition: background-color 0.3s;
+	transition: all 0.3s ease;
+	border-radius: 0 25px 25px 0;
+	margin: 0.2rem 0;
 }
 
-.side-btn.active,
-.side-btn:hover {
+.side-btn:hover,
+.side-btn.active {
 	background-color: #cde0c9;
 	color: #2c6975;
-	border-radius: 50px 0 0 50px;
 }
 
-.side-btn.active::before,
-.side-btn.active::after {
-	content: "";
-	position: absolute;
-	width: 100%;
-	height: 10px;
-	/* Adjust height as needed */
-	background-color: white;
-}
-
-.side-btn.active::before {
-	top: -10px;
-	/* Adjust based on element height */
-	border-radius: 0 0 30px 0;
-}
-
-.side-btn.active::after {
-	bottom: -10px;
-	/* Adjust based on element height */
-	border-radius: 0 30px 0 0;
-}
-
-.side-btn i {
-	min-width: 20px;
+.link-icon {
+	font-size: 1.2rem;
+	width: 1.5rem;
+	text-align: center;
+	margin-right: 1rem;
 }
 
 .link-text {
-	padding-left: 1rem;
-	font-size: 1.1rem;
+	font-size: 0.9rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.logout {
+.sidebar-footer {
+	margin-top: auto;
 	padding: 1rem;
 }
 
-/* Adjust sidebar width when collapsed */
-.sidebar:not(.sidebar-open) {
-	width: 4.5rem;
-	/* Adjust according to your icon size */
+.logout-btn,
+.toggle-btn {
+	width: 100%;
+	padding: 0.8rem;
+	margin-top: 0.5rem;
+	background: none;
+	border: none;
+	color: white;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	text-align: left;
+	border-radius: 25px;
+}
+
+.logout-btn:hover,
+.toggle-btn:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+
+/* Scrollbar styling */
+.menu-container::-webkit-scrollbar {
+	width: 5px;
+}
+
+.menu-container::-webkit-scrollbar-track {
+	background: #2c6975;
+}
+
+.menu-container::-webkit-scrollbar-thumb {
+	background: #cde0c9;
+	border-radius: 5px;
+}
+
+.menu-container::-webkit-scrollbar-thumb:hover {
+	background: #a8c7a4;
 }
 </style>

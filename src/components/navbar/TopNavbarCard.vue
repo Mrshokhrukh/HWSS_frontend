@@ -1,47 +1,72 @@
 <template>
-  <nav class="navbar navbar-expand-lg">
+  <nav class="navbar navbar-expand-lg bg-white shadow-sm">
     <div class="container-fluid">
       <!-- Navbar brand -->
-      <a class="navbar-brand hwss-primary" href="#">The PEMA HWSS</a>
+      <a class="navbar-brand" href="#">
+        <span class="ms-2 fw-bold text-primary">The PEMA HWSS</span>
+      </a>
 
       <!-- Navbar toggler -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+        aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- Navbar links -->
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <ul class="navbar-nav d-flex align-items-center">
+      <!-- Navbar content -->
+      <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
+        <ul class="navbar-nav align-items-center">
           <!-- Home icon -->
           <li class="nav-item">
-            <router-link class="nav-link" aria-current="page" to="/"><i class="fas fa-home"></i></router-link>
+            <router-link class="nav-link" to="/" v-b-tooltip.hover title="Home">
+              <i class="fas fa-home fa-lg"></i>
+            </router-link>
           </li>
 
-          <!-- Bell icon for notifications -->
-          <li class="nav-item m-3 mb-1">
-            <div class="notification-icon" @click="showNotifications = !showNotifications">
+          <!-- Notifications -->
+          <li class="nav-item dropdown">
+            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" v-b-tooltip.hover title="Notifications">
               <i class="fas fa-bell fa-lg"></i>
-              <span v-if="unreadNotificationsCount > 0" class="badge">{{ unreadNotificationsCount }}</span>
-            </div>
-            <!-- Notification dropdown -->
-            <div v-show="showNotifications" class="notification-dropdown">
-              <ul>
-                <li v-for="(notification, index) in notifications" :key="index">
-                  <div class="notification-item" :class="{ 'unread': !notification.read }" @click="handleNotificationClick(notification)">
-                    <div>{{ notification.sender }} ({{ notification.senderId }})</div>
-                    <div>{{ notification.message }}</div>
-                    <div>{{ notification.timestamp }}</div>
-                    <Button v-if="!notification.read" icon="pi pi-check" class="mark-read-btn" @click.stop="markNotificationRead(index)"></Button>
+              <span v-if="unreadNotificationsCount > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ unreadNotificationsCount }}
+                <span class="visually-hidden">unread notifications</span>
+              </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
+              <li v-for="(notification, index) in notifications" :key="index">
+                <a class="dropdown-item notification-item" href="#" :class="{ 'unread': !notification.read }" @click="handleNotificationClick(notification)">
+                  <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                      <img :src="notification.senderAvatar" alt="Sender Avatar" class="rounded-circle" width="40" height="40">
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                      <p class="mb-0 fw-bold">{{ notification.sender }}</p>
+                      <p class="mb-0 text-muted">{{ notification.message }}</p>
+                      <small class="text-muted">{{ formatTimestamp(notification.timestamp) }}</small>
+                    </div>
                   </div>
-                </li>
-              </ul>
-            </div>
+                </a>
+              </li>
+              <li v-if="notifications.length === 0">
+                <span class="dropdown-item text-muted">No notifications</span>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
+            </ul>
           </li>
 
-          <!-- Profile icon -->
-          <li class="nav-item">
-            <router-link class="nav-link" to="/profile"><i class="fas fa-user"></i></router-link>
+          <!-- User menu -->
+          <li class="nav-item dropdown ms-3">
+            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <img :src="profilePictureUrl" alt="User" class="rounded-circle me-2" width="32" height="32">
+              <span class="d-none d-lg-inline">{{ fullName }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><h6 class="dropdown-header">{{ userRole }}</h6></li>
+              <li><router-link class="dropdown-item" to="/profile"><i class="fas fa-user me-2"></i>Profile</router-link></li>
+              <li><router-link class="dropdown-item" to="/settings"><i class="fas fa-cog me-2"></i>Settings</router-link></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" @click="logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+            </ul>
           </li>
         </ul>
       </div>
@@ -51,121 +76,131 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import Button from 'primevue/button';
+import { useRouter } from 'vue-router';
+import { formatDistanceToNow } from 'date-fns';
+import { useUserDetailsStore } from '@/stores/userDetails';
+import { useProgressStore } from '@/stores/progressStore';
+import axios from 'axios';
+import endpoints from '@/api';
+import Swal from 'sweetalert2';
+import profileIcon from '@/assets/images/icon.png';
 
-// Mock data for notifications
+const router = useRouter();
+const userDetailsStore = useUserDetailsStore();
+
 const notifications = ref([
   {
-    sender: 'Sender Name',
-    senderId: '123',
-    message: 'Notification 1',
-    timestamp: '2024-04-14 10:00:00',
+    sender: 'Tashi Dorji',
+    senderAvatar: profileIcon,
+    message: 'New assignment submitted',
+    timestamp: new Date(2024, 3, 14, 10, 0, 0),
     read: false
   },
   {
-    sender: 'Another Sender',
-    senderId: '456',
-    message: 'Notification 2',
-    timestamp: '2024-04-14 11:00:00',
+    sender: 'Kinzang Dema',
+    senderAvatar: profileIcon,
+    message: 'Meeting rescheduled',
+    timestamp: new Date(2024, 3, 14, 11, 0, 0),
     read: false
   }
 ]);
 
-// Compute unread notifications count
-const unreadNotificationsCount = computed(() => notifications.value.filter(notification => !notification.read).length);
+const unreadNotificationsCount = computed(() => notifications.value.filter(n => !n.read).length);
 
-// Show/hide notification dropdown
-const showNotifications = ref(false);
-
-// Mark notification as read
-const markNotificationRead = (index) => {
-  notifications.value[index].read = true;
-}
-
-// Handle notification click
 const handleNotificationClick = (notification) => {
-  if (!notification.read) {
-    markNotificationRead(notifications.value.indexOf(notification));
-  }
-  // Additional actions can be performed here, such as displaying the full message
-  alert(notification.message);
-}
+  notification.read = true;
+  // Additional actions can be performed here, such as navigating to a specific page
+};
 
+const formatTimestamp = (timestamp) => {
+  return formatDistanceToNow(timestamp, { addSuffix: true });
+};
+
+const fullName = computed(() => {
+  const { firstName, middleName, lastName } = userDetailsStore.user;
+  return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
+});
+
+const userRole = computed(() => userDetailsStore.user.role || 'User');
+
+const profilePictureUrl = computed(() => {
+  const baseUrl = import.meta.env.VITE_APP_BASE_URL || '';
+  return userDetailsStore.user.profilePicture
+    ? baseUrl + userDetailsStore.user.profilePicture
+    : profileIcon;
+});
+
+const logout = async () => {
+  const progressStore = useProgressStore();
+  progressStore.resetStore();
+
+  try {
+    const response = await axios.post(endpoints.logOutUser);
+    if (response.data.message === "Logout successful") {
+      localStorage.clear();
+      sessionStorage.clear();
+      userDetailsStore.clearUserDetails();
+
+      await Swal.fire({
+        title: 'Logged Out',
+        text: 'You have been successfully logged out of the system.',
+        icon: 'success',
+        showConfirmButton: false,
+        timer: 1200
+      });
+
+      router.push("/login");
+    } else {
+      throw new Error(response.data.message);
+    }
+  } catch (error) {
+    console.error("Logout failed:", error);
+    await Swal.fire({
+      title: 'Error',
+      text: 'Logout failed. Please try again.',
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+  }
+};
 </script>
 
 <style scoped>
-.navbar-brand {
-  font-weight: bold;
-  font-size: 1.5rem;
-}
-
-.navbar-nav .nav-link {
-  font-size: 1.2rem;
-  margin: 0 15px;
-}
-
-.navbar-toggler {
-  border: none;
-}
-
-.navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3e%3cpath stroke='rgba(0, 0, 0, 0.5)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-}
-
-.notification-icon {
-  position: relative;
-  cursor: pointer;
-}
-
-.badge {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 5px;
+.navbar {
+  padding: 0.5rem 1rem;
 }
 
 .notification-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  background-color: #fff;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  z-index: 999;
-  display: none;
-  min-width: 250px;
-  max-height: 300px;
+  width: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
-.notification-dropdown ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.notification-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
 }
 
-.notification-item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
+.notification-item:hover {
+  background-color: #f8f9fa;
 }
 
 .notification-item.unread {
-  background-color: #f0f0f0;
+  background-color: #e9ecef;
 }
 
 .notification-item:last-child {
   border-bottom: none;
 }
 
-.mark-read-btn {
-  margin-left: 1rem;
-}
+@media (max-width: 991px) {
+  .navbar-nav {
+    flex-direction: row;
+  }
 
-.navbar {
-  box-shadow: none;
+  .nav-item {
+    padding: 0 0.5rem;
+  }
 }
 </style>
