@@ -61,9 +61,8 @@
 import { ref, onMounted } from 'vue';
 import endpoints from '@/api';
 import axios from 'axios'
+import registrationLogo from '@/assets/images/seal.png';
 
-
-const registrationLogo = ref('');
 const tagline = ref('');
 
 // Fetch and update the registration component settings on component mount
@@ -72,7 +71,6 @@ onMounted(async () => {
         const response = await axios.get(endpoints.settings);
         // Assuming the response data is an object or an array where you fetch the first item
         const settings = response.data[0];
-        registrationLogo.value = settings.registration_logo; // Update the registration logo
         tagline.value = settings.tagline; // Update the tagline
     } catch (error) {
         console.error('Error fetching settings:', error);

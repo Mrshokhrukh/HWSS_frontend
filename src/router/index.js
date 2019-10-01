@@ -4,7 +4,7 @@ import axios from 'axios';
 import endpoints from '@/api';
 import NotFoundPage from '@/views/errorpages/pagenotfound404.vue'
 // Define a reusable dashboard component
-const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
+const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
 
 
 // Define a function to generate routes for user dashboards

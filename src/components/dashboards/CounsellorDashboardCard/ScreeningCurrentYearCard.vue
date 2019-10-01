@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 import Chart from 'primevue/chart';
@@ -55,7 +55,6 @@ const {
     agencyName,
     totalScreenedCount,
     currentYear,
-    filteredReportData
 } = storeToRefs(store);
 
 const isDataEmpty = computed(() => {

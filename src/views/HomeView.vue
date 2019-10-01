@@ -11,7 +11,7 @@
               <h1 class="title">The PEMA</h1>
             </transition>
             <transition appear name="fade-slide-up" :delay="300">
-              <h2 class="subtitle my-3">Health & Wellbeing Screening System</h2>
+              <h2 class="subtitle my-3">Health &amp; Wellbeing Screening System</h2>
             </transition>
             <transition appear name="fade-slide-up" :delay="600">
               <router-link to="/login" class="btn btn-lg mt-3 text-white get-started">
@@ -95,9 +95,9 @@ import { ref, onMounted, computed } from 'vue';
 import { vTyping } from '@/directives/vTyping';
 import axios from 'axios';
 import endpoints from '@/api';
+import logoUrl from '@/assets/images/landing_logo.png';
+import landingImgBg from '@/assets/images/landing_bg.png';
 
-const logoUrl = ref('');
-const landingImgBg = ref('');
 const landingTagLine = ref('"Touching People, Building Lives"');
 const googlePlayLink = ref('');
 const appleAppStoreLink = ref('');
@@ -115,8 +115,6 @@ onMounted(async () => {
     const response = await axios.get(endpoints.settings);
     if (response.data && response.data.length > 0) {
       const data = response.data[0];
-      logoUrl.value = data.landing_page_logo;
-      landingImgBg.value = data.landing_img_bg;
       googlePlayLink.value = data.google_play_link;
       appleAppStoreLink.value = data.apple_appstore_link;
     }
@@ -137,13 +135,6 @@ const stopLogoAnimation = () => {
   isLogoAnimating.value = false;
 };
 
-const hoverStoreButton = (store) => {
-  // Add hover effect logic here if needed
-};
-
-const unhoverStoreButton = (store) => {
-  // Add unhover effect logic here if needed
-};
 </script>
 
 
