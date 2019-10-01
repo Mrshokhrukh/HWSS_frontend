@@ -84,17 +84,17 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import Chart from 'chart.js/auto';
 
 const props = defineProps({
-    filteredData: {
+    finalFilteredData: {
         type: Array,
         required: true
     }
 });
 
-console.log("Filtered Data:", props.filteredData);
+console.log("Filtered Data:", props.finalFilteredData);
 
 const uniqueSchools = computed(() => {
     const schools = new Set();
-    props.filteredData.forEach(item => {
+    props.finalFilteredData.forEach(item => {
         if (item.agency_name && item.agency_name !== "Case Base Clients" && item.agency_name !== "Event Base Clients") {
             schools.add(item.agency_name.toLowerCase());
         }
@@ -103,7 +103,7 @@ const uniqueSchools = computed(() => {
 });
 
 const noOfIndividualsWithSuicidalBehavior = computed(() => {
-    return props.filteredData.filter(item =>
+    return props.finalFilteredData.filter(item =>
         item.measurement?.fields?.suicidal_measurement === "nearly everyday"
     ).length;
 });
@@ -122,7 +122,7 @@ onMounted(() => {
 });
 const uniqueAgencies = computed(() => {
     const agencies = new Set();
-    props.filteredData.forEach(item => {
+    props.finalFilteredData.forEach(item => {
         if (item.agency_name &&
             !item.agency_name.toLowerCase().includes('school') &&
             item.agency_name !== "Case Base Clients" &&
@@ -141,7 +141,7 @@ const createCharts = () => {
         datasets: [{
             label: 'No. of Students Screened',
             data: Array.from(uniqueSchools.value).map(school => {
-                return props.filteredData.filter(item =>
+                return props.finalFilteredData.filter(item =>
                     item.agency_name && item.agency_name.toLowerCase() === school
                 ).length;
             }),
@@ -156,8 +156,8 @@ const createCharts = () => {
         datasets: [{
             label: 'Number of Screenings',
             data: [
-                props.filteredData.filter(item => item.agency_name === "Event Base Clients").length,
-                props.filteredData.filter(item => item.agency_name === "Case Base Clients").length
+                props.finalFilteredData.filter(item => item.agency_name === "Event Base Clients").length,
+                props.finalFilteredData.filter(item => item.agency_name === "Case Base Clients").length
             ],
             backgroundColor: ['#FF9F40', '#4BC0C0'],
             borderColor: ['#FF9F40', '#4BC0C0'],
@@ -170,21 +170,21 @@ const createCharts = () => {
         datasets: [{
             label: 'PHQ-9 Severity',
             data: [
-                props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'minimal').length,
-                props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'mild').length,
-                props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderate').length,
-                props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderately severe').length,
-                props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'severe').length
+                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'minimal').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'mild').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderate').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderately severe').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'severe').length
             ],
             backgroundColor: '#36A2EB'
         }, {
             label: 'GAD-7 Severity',
             data: [
-                props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'minimal').length,
-                props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'mild').length,
-                props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'moderate').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'minimal').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'mild').length,
+                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'moderate').length,
                 0,
-                props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'severe').length
+                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'severe').length
             ],
             backgroundColor: '#FF6384'
         }]
@@ -196,10 +196,10 @@ const createCharts = () => {
         datasets: [{
             label: 'SUD Risk Level',
             data: [
-                props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'no risk').length,
-                props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'low risk').length,
-                props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'moderate risk').length,
-                props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'high risk').length
+                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'no risk').length,
+                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'low risk').length,
+                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'moderate risk').length,
+                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'high risk').length
             ],
             backgroundColor: ['#4BC0C0', '#36A2EB', '#FFCE56', '#FF6384']
         }]

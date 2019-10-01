@@ -63,6 +63,7 @@ import axios from 'axios';
 import endpoints from '@/api';
 import { useUserDetailsStore } from '@/stores/userDetails';
 import Swal from 'sweetalert2';
+import loginLogo from '@/assets/images/seal.png';
 
 const router = useRouter();
 
@@ -70,14 +71,12 @@ const username = ref('');
 const password = ref('');
 const loginStatus = ref(null);
 const loading = ref(false);
-const loginLogo = ref('');
 const tagline = ref('');
 
 onMounted(async () => {
     try {
         const response = await axios.get(endpoints.settings);
         const settings = response.data[0];
-        loginLogo.value = settings.login_logo;
         tagline.value = settings.tagline;
     } catch (error) {
         console.error('Error fetching settings:', error);

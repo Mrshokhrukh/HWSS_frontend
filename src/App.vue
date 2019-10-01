@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import endpoints from '@/api'
 import Cookies from 'js-cookie'
@@ -29,8 +29,6 @@ import NewChatWidget from '@/components/common/NewChatWidget.vue'
 const copyright = ref('')
 const isMobileDevice = ref(false)
 const csrfToken = ref('')
-const appOpenedOnceKey = 'appOpenedOnce';
-const isFirstTimeOpening = ref(false);
 
 onMounted(async () => {
   // Check if mobile device
@@ -66,37 +64,7 @@ onMounted(async () => {
     console.error('Error fetching copyright message:', error)
   }
 
-
-  const openedOnce = localStorage.getItem(appOpenedOnceKey);
-
-  if (!openedOnce) {
-    // First time the app is opened after closure, clear storage
-    sessionStorage.clear();
-    localStorage.clear();
-
-    // Set a flag in localStorage to indicate that the app has been opened
-    localStorage.setItem(appOpenedOnceKey, 'true');
-    isFirstTimeOpening.value = true;
-  } else {
-    // Not the first time, skip clearing
-    isFirstTimeOpening.value = false;
-  }
-
-  // Handle window close event
-  window.addEventListener('beforeunload', handleWindowClose);
-
 })
-
-
-onBeforeUnmount(() => {
-  window.removeEventListener('beforeunload', handleWindowClose);
-});
-
-function handleWindowClose() {
-  // Clear the storage on window close
-  sessionStorage.clear();
-  localStorage.removeItem(appOpenedOnceKey); // Reset the flag for next time
-}
 </script>
 
 <style scoped>
