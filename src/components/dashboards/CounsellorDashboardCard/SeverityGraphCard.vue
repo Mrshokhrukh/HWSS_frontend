@@ -4,23 +4,35 @@
             <h4 class="graph-title text-center">Screening by Gender for: {{ props.cardTitle }}</h4>
         </div>
         <div class="card-body">
-            <column-chart :data="chartData" :colors="chartColors" :xtitle="'Severity'" :ytitle="'Count'"
-                :borderSkipped="true" />
+            <column-chart v-if="chartDataReady" :data="chartData" :colors="chartColors" :xtitle="'Severity'"
+                :ytitle="'Count'" :borderSkipped="true" />
+            <p v-else>Loading chart data...</p>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, inject, watchEffect } from 'vue';
+import { ref, computed, watchEffect, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
-const measurementData = ref(inject('measurementData'));
+const store = useCounselorDashboardStore();
+const { filteredUserData, isInitialized } = storeToRefs(store);
+
+const props = defineProps({
+    cardTitle: String
+});
+
+const chartData = ref([]);
+const chartCategories = ref([]);
+const chartColors = ['#2c6975', '#64ac99'];
+const chartDataReady = ref(false);
 
 // Define a function to count occurrences of severity levels by gender
 const countSeverityByGender = (data, cardTitle) => {
     const maleData = {};
     const femaleData = {};
 
-    // Define a mapping object to map card titles to corresponding properties in the measurement data
     const titleToProperty = {
         'Suicidal Behavior': 'suicidal_measurement',
         'Depression': 'phq_measurement',
@@ -31,34 +43,22 @@ const countSeverityByGender = (data, cardTitle) => {
 
     const measurementProperty = titleToProperty[cardTitle];
 
-    // Iterate over measurement data
-    data.forEach(entry => {
-        const measurement = entry.measurement;
-        const userDetails = entry.user_details;
+    data.forEach(user => {
+        if (user && user.measurementData) {
+            const measurement = user.measurementData;
+            const gender = user.gender ? user.gender.toLowerCase() : 'unknown';
 
-        // Check if the measurement property corresponding to the card title exists
-        if (measurement[measurementProperty]) {
-            const gender = userDetails.gender.toLowerCase();
-            const severity = measurement[measurementProperty];
-
-            // Update count based on gender and severity level
-            if (gender === 'male') {
-                if (!maleData[severity]) {
-                    maleData[severity] = 1;
-                } else {
-                    maleData[severity]++;
-                }
-            } else if (gender === 'female') {
-                if (!femaleData[severity]) {
-                    femaleData[severity] = 1;
-                } else {
-                    femaleData[severity]++;
+            if (measurement[measurementProperty]) {
+                const severity = measurement[measurementProperty];
+                if (gender === 'male') {
+                    maleData[severity] = (maleData[severity] || 0) + 1;
+                } else if (gender === 'female') {
+                    femaleData[severity] = (femaleData[severity] || 0) + 1;
                 }
             }
         }
     });
 
-    // Ensure that both male and female data contain the same severity levels
     const allSeverities = new Set([...Object.keys(maleData), ...Object.keys(femaleData)]);
     Array.from(allSeverities).forEach(severity => {
         if (!maleData[severity]) maleData[severity] = 0;
@@ -68,40 +68,41 @@ const countSeverityByGender = (data, cardTitle) => {
     return { maleData, femaleData };
 };
 
-// Define the chart data and colors computed properties
-const props = defineProps({
-    cardTitle: String
-});
+const updateChartData = () => {
+    if (filteredUserData.value && filteredUserData.value.length > 0) {
+        const { maleData, femaleData } = countSeverityByGender(filteredUserData.value, props.cardTitle);
+        const allSeverities = new Set([...Object.keys(maleData), ...Object.keys(femaleData)]);
 
-let chartData = ref([]);
-let chartCategories = ref([]);
-let chartColors = ['#2c6975', '#64ac99'];
+        chartData.value = [
+            {
+                name: 'Male',
+                data: Object.fromEntries(Array.from(allSeverities).map(severity => [severity, maleData[severity] || 0]))
+            },
+            {
+                name: 'Female',
+                data: Object.fromEntries(Array.from(allSeverities).map(severity => [severity, femaleData[severity] || 0]))
+            }
+        ];
+
+        chartCategories.value = Array.from(allSeverities);
+        chartDataReady.value = true;
+    } else {
+        chartDataReady.value = false;
+    }
+};
+
+onMounted(() => {
+    if (!isInitialized.value) {
+        store.initializeStore();
+    }
+});
 
 watchEffect(() => {
-    const { maleData, femaleData } = countSeverityByGender(measurementData.value, props.cardTitle);
-
-    // Get all unique severity levels from male and female data
-    const allSeverities = new Set([...Object.keys(maleData), ...Object.keys(femaleData)]);
-
-    // Transform the data structure to match the expected format with dynamically set keys
-    chartData.value = [
-        {
-            name: 'Male',
-            data: Object.fromEntries(Array.from(allSeverities).map(severity => [severity, maleData[severity] || 0]))
-        },
-        {
-            name: 'Female',
-            data: Object.fromEntries(Array.from(allSeverities).map(severity => [severity, femaleData[severity] || 0]))
-        }
-    ];
-
-    // Set chart categories as all unique severity levels
-    chartCategories.value = Array.from(allSeverities);
+    if (isInitialized.value && filteredUserData.value) {
+        updateChartData();
+    }
 });
 </script>
-
-
-
 
 <style scoped>
 .graph-title {

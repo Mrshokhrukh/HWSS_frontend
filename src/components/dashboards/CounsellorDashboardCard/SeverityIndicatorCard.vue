@@ -27,9 +27,11 @@
 </template>
 <script setup>
 import { ref, computed, inject } from 'vue';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard'
+import { storeToRefs } from 'pinia'
 
-const measurementData = ref(inject('measurementData'));
-const measuremenAssisttData = ref(inject('measuremenAssisttData'));
+const store = useCounselorDashboardStore()
+const { measurementData, assistMeasurementData } = storeToRefs(store)
 const maxButtonsInRow = 3;
 const selectedMeasurement = ref('');
 

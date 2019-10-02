@@ -16,6 +16,11 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
   const isLoading = ref(false)
   const isInitialized = ref(false)
   const error = ref(null)
+  const userDetailsFromStorage = ref(null)
+
+  
+  // New state for chart
+  const CHART_COLORS = ['#36A2EB', '#FF6384'] // Blue for male, Pink for female
 
   // Helper function to safely parse JSON
   const safeJSONParse = (jsonString, fallback = null) => {
@@ -26,6 +31,17 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
       return fallback;
     }
   };
+
+  // Function to initialize user details from local storage
+  const initUserDetailsFromStorage = () => {
+    const storedDetails = localStorage.getItem('userDetailsStore')
+    if (storedDetails) {
+      userDetailsFromStorage.value = JSON.parse(storedDetails)
+    }
+  }
+
+  // Call this function when the store is created
+  initUserDetailsFromStorage()
 
   // Computed property to map all user data together
   const mappedUserData = computed(() => {
@@ -150,6 +166,54 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
     return mappedData;
   })
 
+  const agencyName = computed(() => userDetailsFromStorage.value?.agency?.agencyName || 'Unknown Agency')
+
+
+  // New computed property for filtered user data
+  const filteredUserData = computed(() => {
+    if (!userDetailsFromStorage.value || !mappedUserData.value) {
+      return []
+    }
+
+
+    const userRole = userDetailsFromStorage.value.user.role
+    const agencyName = userDetailsFromStorage.value.agency.agencyName
+    const userPsAddDzongkhag = userDetailsFromStorage.value.user.psAddDzongkhag
+
+    return mappedUserData.value.filter(user => {
+      switch (userRole) {
+        case 'school_counselor':
+        case 'trained_professional':
+        case 'gyalsung_counselor':
+          return user.agencyName === agencyName
+        case 'clinical_counselor':
+          return user.psAddDzongkhag === userPsAddDzongkhag
+        default:
+          // For other roles, return all data
+          return true
+      }
+    })
+  })
+
+  const chartData = computed(() => {
+    const maleCount = filteredUserData.value.filter(user => user.gender === 'male').length
+    const femaleCount = filteredUserData.value.filter(user => user.gender === 'female').length
+    
+    return {
+      labels: ['Male', 'Female'],
+      datasets: [{
+        data: [maleCount, femaleCount],
+        backgroundColor: CHART_COLORS,
+        hoverBackgroundColor: CHART_COLORS
+      }]
+    }
+  })
+
+  const totalScreenedCount = computed(() => {
+    return filteredUserData.value.length
+  })
+
+
   // Actions
   async function initializeStore() {
     if (isInitialized.value) return
@@ -239,8 +303,16 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
     isInitialized,
     error,
     mappedUserData,
+    filteredUserData,
+    userDetailsFromStorage,
     initializeStore,
     fetchUserDetailsById,
-    fetchOfficialOptions
+    fetchOfficialOptions,
+    initUserDetailsFromStorage,
+    CHART_COLORS,
+    agencyName,
+    chartData,
+    totalScreenedCount,
+    currentYear,
   }
 })
