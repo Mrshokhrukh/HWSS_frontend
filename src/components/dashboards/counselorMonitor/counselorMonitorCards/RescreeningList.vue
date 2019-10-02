@@ -5,136 +5,34 @@
 
     <!-- Filters -->
     <div class="row d-flex align-items-center mb-4">
-      <div class="col-5">
+      <div class="col-6">
         <!-- Search Input -->
         <InputText v-model="tableSearch" placeholder="Search in table" class="w-100"></InputText>
       </div>
-      <div class="col-5">
+      <div class="col-6">
         <!-- Multiselect -->
-        <MultiSelect :modelValue="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
+        <MultiSelect v-model="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
           display="chip" placeholder="Select Columns" class="w-100" />
-      </div>
-      <div class="col-2">
-        <!-- Rescreen Button -->
-        <Button class="btn w-100 hwss-btn" @click="handleRescreen(selectedUsers.value)" icon="pi pi-user-edit"
-          label="Rescreen" />
       </div>
     </div>
 
     <!-- Table -->
     <div class="main-container mt-2">
-      <DataTable v-model:selection="selectedUsers" :value="filteredPatients" :loading="loadingPatients"
+      <DataTable :value="filteredPatients" :loading="loadingPatients"
         :paginator="true" :rows="10" resizableColumns size="large" columnResizeMode="expand"
-        :rowsPerPageOptions="[5, 10, 20]" :responsive="true" selectionMode="single" :selection="selectedUsers"
-        @selectionChange="handleSelectionChange">
+        :rowsPerPageOptions="[5, 10, 20]" :responsive="true">
         <!-- Columns -->
-        <Column selectionMode="single" headerStyle="width: 3rem" frozen class="font-bold"></Column>
-        <Column field="date" header="Date" frozen sortable></Column>
-        <Column field="name" header="Name" frozen sortable></Column>
-        <Column field="age" header="Age" sortable></Column>
-        <Column field="sex" header="Sex" sortable></Column>
-        <Column field="pastDiagnosis" header="Past Diagnosis" sortable></Column>
-        <Column field="phqSeverity" header="PHQ Severity" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.phqSeverity" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.phqSeverity)"
-              :style="{ color: getSeverity(slotProps.data.phqSeverity).colorCode, backgroundColor: getSeverity(slotProps.data.phqSeverity).bgColor }" />
-          </template>
-        </Column>
-        <Column field="gadSeverity" header="GAD Severity" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.gadSeverity" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.gadSeverity)"
-              :style="{ color: getSeverity(slotProps.data.gadSeverity).colorCode, backgroundColor: getSeverity(slotProps.data.gadSeverity).bgColor }" />
-          </template>
-        </Column>
-        <Column field="aceSeverity" header="ACE Severity" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.aceSeverity" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.aceSeverity)"
-              :style="{ color: getSeverity(slotProps.data.aceSeverity).colorCode, backgroundColor: getSeverity(slotProps.data.aceSeverity).bgColor }" />
-          </template>
-        </Column>
-        <Column field="tobaccoRisk" header="Tobacco Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.tobaccoRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.tobaccoRisk)"
-              :style="{ color: getSeverity(slotProps.data.tobaccoRisk).colorCode, backgroundColor: getSeverity(slotProps.data.tobaccoRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="alcoholRisk" header="Alcohol Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.alcoholRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.alcoholRisk)"
-              :style="{ color: getSeverity(slotProps.data.alcoholRisk).colorCode, backgroundColor: getSeverity(slotProps.data.alcoholRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="cannabisRisk" header="Cannabis Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.cannabisRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.cannabisRisk)"
-              :style="{ color: getSeverity(slotProps.data.cannabisRisk).colorCode, backgroundColor: getSeverity(slotProps.data.cannabisRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="cocaineRisk" header="Cocaine Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.cocaineRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.cocaineRisk)"
-              :style="{ color: getSeverity(slotProps.data.cocaineRisk).colorCode, backgroundColor: getSeverity(slotProps.data.cocaineRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="amphetamineRisk" header="Amphetamine Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.amphetamineRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.amphetamineRisk)"
-              :style="{ color: getSeverity(slotProps.data.amphetamineRisk).colorCode, backgroundColor: getSeverity(slotProps.data.amphetamineRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="inhalantsRisk" header="Inhalants Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.inhalantsRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.inhalantsRisk)"
-              :style="{ color: getSeverity(slotProps.data.inhalantsRisk).colorCode, backgroundColor: getSeverity(slotProps.data.inhalantsRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="sedativeRisk" header="Sedative Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.sedativeRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.sedativeRisk)"
-              :style="{ color: getSeverity(slotProps.data.sedativeRisk).colorCode, backgroundColor: getSeverity(slotProps.data.sedativeRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="hallucinogensRisk" header="Hallucinogens Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.hallucinogensRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.hallucinogensRisk)"
-              :style="{ color: getSeverity(slotProps.data.hallucinogensRisk).colorCode, backgroundColor: getSeverity(slotProps.data.hallucinogensRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="opioidsRisk" header="Opioids Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.opioidsRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.opioidsRisk)"
-              :style="{ color: getSeverity(slotProps.data.opioidsRisk).colorCode, backgroundColor: getSeverity(slotProps.data.opioidsRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="othersRisk" header="Others Risk" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.othersRisk" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.othersRisk)"
-              :style="{ color: getSeverity(slotProps.data.othersRisk).colorCode, backgroundColor: getSeverity(slotProps.data.othersRisk).bgColor }" />
-          </template>
-        </Column>
-        <Column field="nonMedicalInjectionUse" header="Non Medical Injection Use" sortable class="text-center">
-          <template #body="slotProps">
-            <Tag rounded :value="slotProps.data.nonMedicalInjectionUse" class="w-100 text-capitalize"
-              :severity="getSeverity(slotProps.data.nonMedicalInjectionUse)"
-              :style="{ color: getSeverity(slotProps.data.nonMedicalInjectionUse).colorCode, backgroundColor: getSeverity(slotProps.data.nonMedicalInjectionUse).bgColor }" />
+        <Column v-for="col in selectedColumns" :key="col.field" :field="col.field" :header="col.header" 
+               :sortable="true" :frozen="col.frozen">
+          <template #body="slotProps" v-if="isRiskColumn(col.field)">
+            <Tag rounded :value="slotProps.data[col.field]" class="w-100 text-capitalize"
+              :severity="getSeverity(slotProps.data[col.field])"
+              :style="{ color: getSeverity(slotProps.data[col.field]).colorCode, backgroundColor: getSeverity(slotProps.data[col.field]).bgColor }" />
           </template>
         </Column>
         <Column field="Action" header="Action" sortable>
           <template #body="slotProps">
-            <Button icon="pi pi-check-circle" label="Mark As Safe" @click="handleMarkAsSafe(slotProps)"
+            <Button icon="pi pi-user-edit" label="Rescreen" @click="handleRescreen(slotProps.data)"
               class="btn w-100 hwss-btn" />
           </template>
         </Column>
@@ -154,7 +52,6 @@ const router = useRouter();
 const users = ref([]);
 const tableSearch = ref('');
 const loadingPatients = ref(false);
-const selectedUsers = ref([]);
 const myAgency = ref('');
 
 const columns = ref([
@@ -182,20 +79,20 @@ const columns = ref([
 const selectedColumns = ref(columns.value);
 
 const onToggle = (val) => {
-  selectedColumns.value = columns.value.filter(col => val.includes(col.header));
+  selectedColumns.value = columns.value.filter(col => val.includes(col));
 };
 
-const handleRescreen = () => {
-  if (!selectedUsers.value) {
-    Swal.fire({
-      icon: 'error',
-      title: 'No user selected',
-      text: 'Please select a user to perform rescreening.',
-    });
-    return;
-  }
+const isRiskColumn = (field) => {
+  return [
+    'phqSeverity', 'gadSeverity', 'aceSeverity', 'tobaccoRisk', 'alcoholRisk', 
+    'cannabisRisk', 'cocaineRisk', 'amphetamineRisk', 'inhalantsRisk', 
+    'sedativeRisk', 'hallucinogensRisk', 'opioidsRisk', 'othersRisk', 
+    'nonMedicalInjectionUse'
+  ].includes(field);
+};
 
-  const message = `Do you wish to rescreen ${selectedUsers.value.name}?`;
+const handleRescreen = (user) => {
+  const message = `Do you wish to rescreen ${user.name}?`;
 
   Swal.fire({
     icon: 'question',
@@ -205,17 +102,11 @@ const handleRescreen = () => {
     cancelButtonText: 'Cancel',
   }).then((result) => {
     if (result.isConfirmed) {
-      const userId = selectedUsers.value.id;
+      const userId = user.id;
       sessionStorage.setItem('RescreeningUserID', JSON.stringify(userId));
       router.push('/counselor-dashboard/counselor-rescreening');
     }
   });
-};
-
-
-
-const handleSelectionChange = (selected) => {
-  selectedUsers.value = selected;
 };
 
 const filteredPatients = computed(() => {
@@ -353,34 +244,4 @@ const getSeverity = (severity) => {
   }
   return { severity, colorCode, bgColor };
 };
-
-
-const handleMarkAsSafe = (rowData) => {
-  if (!rowData) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Row data is undefined',
-    });
-    return;
-  }
-
-  handleSelectionChange([rowData]);
-
-  const userId = rowData.data.id;
-  markAsSafe(userId);
-};
-
-
-const markAsSafe = (userId) => {
-  console.log('Marking user as safe:', userId);
-  axios.post('/mark-user-as-safe', { userId })
-    .then(response => {
-      console.log('User marked as safe successfully:', response.data);
-    })
-    .catch(error => {
-      console.error('Error marking user as safe:', error);
-    });
-};
-
 </script>
