@@ -38,7 +38,8 @@ const {
     error,
     agencyName,
     currentYear,
-    filteredUserData
+    filteredUserData,
+    CHART_COLORS
 } = storeToRefs(store);
 
 const chartData = ref({
@@ -46,7 +47,7 @@ const chartData = ref({
     'Female': 0
 });
 
-const chartColors = ['#2c6975', '#64ac99'];
+const chartColors = computed(() => CHART_COLORS?.value || ['#2c6975', '#F4A7B9']);
 const chartPseudoColors = ['#dedede', '#efefef'];
 
 const getTotalCount = computed(() => {
@@ -61,11 +62,11 @@ const chartDisplayData = computed(() => ({
     labels: ['Male', 'Female'],
     datasets: [{
         data: isDataLoaded.value ? [chartData.value.Male, chartData.value.Female] : [1, 1],
-        backgroundColor: isDataLoaded.value ? chartColors : chartPseudoColors
+        backgroundColor: isDataLoaded.value ? chartColors.value : chartPseudoColors
     }]
 }));
 
-const displayColors = computed(() => isDataLoaded.value ? chartColors : chartPseudoColors);
+const displayColors = computed(() => isDataLoaded.value ? chartColors.value : chartPseudoColors);
 
 const chartOptions = {
     responsive: true,
@@ -79,19 +80,32 @@ const chartOptions = {
 };
 
 const updateChartData = () => {
+    console.log('Updating chart data. Current year:', currentYear?.value);
+    console.log('Filtered user data:', filteredUserData?.value);
+    if (!filteredUserData?.value || !currentYear?.value) {
+        console.warn('filteredUserData or currentYear is undefined');
+        return;
+    }
     const currentYearData = filteredUserData.value.filter(user => {
-        const submissionDate = new Date(user.reportData.original_submission_date);
-        return submissionDate.getFullYear() === currentYear.value;
+        const submissionDate = user.reportData?.original_submission_date
+            ? new Date(user.reportData.original_submission_date)
+            : user.measurementData?.created_at
+                ? new Date(user.measurementData.created_at)
+                : null;
+        return submissionDate && submissionDate.getFullYear() === currentYear.value;
     });
 
     let maleCount = 0;
     let femaleCount = 0;
 
     currentYearData.forEach(user => {
-        if (user.gender.toLowerCase() === 'male') {
-            maleCount++;
-        } else if (user.gender.toLowerCase() === 'female') {
-            femaleCount++;
+        const gender = user.reportData?.user?.fields?.gender || user.sudData?.active?.sex;
+        if (gender) {
+            if (gender.toLowerCase() === 'male') {
+                maleCount++;
+            } else if (gender.toLowerCase() === 'female') {
+                femaleCount++;
+            }
         }
     });
 
@@ -113,7 +127,8 @@ onMounted(async () => {
 });
 
 // Watch for changes in filteredUserData and update chart accordingly
-watch(filteredUserData, updateChartData);
+watch(() => filteredUserData?.value, updateChartData, { deep: true });
+watch(() => currentYear?.value, updateChartData);
 </script>
 
 <style scoped>

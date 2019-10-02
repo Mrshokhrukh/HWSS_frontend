@@ -44,17 +44,38 @@ const countSeverityByGender = (data, cardTitle) => {
     const measurementProperty = titleToProperty[cardTitle];
 
     data.forEach(user => {
-        if (user && user.measurementData) {
-            const measurement = user.measurementData;
-            const gender = user.gender ? user.gender.toLowerCase() : 'unknown';
+        let measurement, gender;
 
-            if (measurement[measurementProperty]) {
-                const severity = measurement[measurementProperty];
-                if (gender === 'male') {
-                    maleData[severity] = (maleData[severity] || 0) + 1;
-                } else if (gender === 'female') {
-                    femaleData[severity] = (femaleData[severity] || 0) + 1;
+        if (cardTitle === 'Assist') {
+            measurement = user.assistMeasurementData;
+            gender = user.sudData?.active?.sex?.toLowerCase() ||
+                user.reportData?.user?.fields?.gender?.toLowerCase() || 'unknown';
+        } else {
+            measurement = user.measurementData;
+            gender = user.reportData?.user?.fields?.gender?.toLowerCase() ||
+                user.sudData?.active?.sex?.toLowerCase() || 'unknown';
+        }
+
+        if (measurement) {
+            let severity;
+            if (cardTitle === 'Assist') {
+                // For Assist, check if any measurement is not 'no risk'
+                const hasRisk = Object.keys(measurement).some(key =>
+                    key.includes('_measurement') && measurement[key] !== 'no risk' && measurement[key] !== null
+                );
+                severity = hasRisk ? 'At Risk' : 'No Risk';
+            } else {
+                severity = measurement[measurementProperty];
+                // Only count if the severity is not null or undefined
+                if (severity === null || severity === undefined) {
+                    return; // Skip this user for this measurement
                 }
+            }
+
+            if (gender === 'male') {
+                maleData[severity] = (maleData[severity] || 0) + 1;
+            } else if (gender === 'female') {
+                femaleData[severity] = (femaleData[severity] || 0) + 1;
             }
         }
     });

@@ -86,9 +86,25 @@ function setActiveIndex(index) {
 function updateSeverityCounts() {
   if (filteredUserData.value) {
     SEVERITY_ITEMS.value.forEach((item) => {
-      const count = filteredUserData.value.filter(user =>
-        user.measurementData && user.measurementData[item.field] !== undefined
-      ).length;
+      let count = 0;
+      filteredUserData.value.forEach(user => {
+        if (item.field === 'assist') {
+          // Check if any ASSIST measurement is not 'no risk'
+          const assistData = user.assistMeasurementData;
+          if (assistData) {
+            const hasRisk = Object.keys(assistData).some(key =>
+              key.includes('_measurement') && assistData[key] !== 'no risk' && assistData[key] !== null
+            );
+            if (hasRisk) count++;
+          }
+        } else {
+          // For other fields, check if measurement exists and is not null
+          const measurement = user.measurementData?.[item.field];
+          if (measurement !== undefined && measurement !== null) {
+            count++;
+          }
+        }
+      });
       item.count = count.toString();
     });
   }

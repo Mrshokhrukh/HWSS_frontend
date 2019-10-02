@@ -18,9 +18,8 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
   const error = ref(null)
   const userDetailsFromStorage = ref(null)
 
-  
   // New state for chart
-  const CHART_COLORS = ['#36A2EB', '#FF6384'] // Blue for male, Pink for female
+  const CHART_COLORS = ['#36A2EB', '#2c6975'] 
 
   // Helper function to safely parse JSON
   const safeJSONParse = (jsonString, fallback = null) => {
@@ -63,56 +62,58 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
       return userMap.get(userId)
     }
 
-    // Process report data
-    reportData.value.forEach(report => {
-      const userParsed = safeJSONParse(report.user, []);
-      const user = userParsed[0]?.fields || {};
-      const userAgency = safeJSONParse(report.user_agency, [])[0]?.fields || {};
-      const measurement = safeJSONParse(report.measurement, [])[0]?.fields;
-      const measurementAssist = safeJSONParse(report.measurement_assist, [])[0]?.fields;
-      const rescreeningData = safeJSONParse(report.rescreening_data, [])[0]?.fields;
+    if (reportData.value && reportData.value.reporting_model_data) {
+      reportData.value.reporting_model_data.forEach(report => {
+        const user = report.user && report.user[0]?.fields;
+        const userAgency = report.user_agency && report.user_agency[0]?.fields;
+        const measurement = report.measurement && report.measurement[0]?.fields;
+        const measurementAssist = report.measurement_assist && report.measurement_assist[0]?.fields;
+        const rescreeningData = report.rescreening_data && report.rescreening_data[0]?.fields;
 
-      const userId = user.id || report.userId;
-      if (!userId) {
-        console.warn('No valid user ID found in report:', report);
-        return;
-      }
+        const userId = user?.id || report.userId;
+        if (!userId) {
+          console.warn('No valid user ID found in report:', report);
+          return;
+        }
 
-      const userEntry = getOrCreateUser(userId);
-      Object.assign(userEntry, {
-        username: user.username,
-        firstName: user.first_name,
-        middleName: user.middle_name,
-        lastName: user.last_name,
-        dateOfBirth: user.date_of_birth,
-        gender: user.gender,
-        email: user.email,
-        mobNumber: user.mob_number,
-        agencyName: report.agency_name,
-        activeAgency: user.active_agency,
-        psAddVillage: user.ps_add_village,
-        psAddGewog: user.ps_add_gewog,
-        psAddDzongkhag: user.ps_add_dzongkhag,
-        isGyalsung: user.is_gyalsung,
-        academyCode: user.academy_code,
-        role: user.role,
-        accessLevel: user.access_level,
-        userCode: userAgency.user_code,
-        parentOccupation: userAgency.parent_occupation,
-        guardianName: userAgency.guardian_name,
-        guardianOccupation: userAgency.guardian_occupation,
-        parentStatus: userAgency.parent_status,
-        currentLivingWith: userAgency.current_living_with,
-        userRoleAgency: userAgency.user_role_agency,
-        userClass: userAgency.user_class,
-        userStream: userAgency.user_stream,
-        userSubClass: userAgency.user_sub_class,
-        measurementData: measurement,
-        assistMeasurementData: measurementAssist,
-        rescreeningData: rescreeningData,
-        reportData: report
+        const userEntry = getOrCreateUser(userId);
+        Object.assign(userEntry, {
+          username: user?.username,
+          firstName: user?.first_name,
+          middleName: user?.middle_name,
+          lastName: user?.last_name,
+          dateOfBirth: user?.date_of_birth,
+          gender: user?.gender,
+          email: user?.email,
+          mobNumber: user?.mob_number,
+          agencyName: report.agency_name,
+          activeAgency: user?.active_agency,
+          psAddVillage: user?.ps_add_village,
+          psAddGewog: user?.ps_add_gewog,
+          psAddDzongkhag: user?.ps_add_dzongkhag,
+          isGyalsung: user?.is_gyalsung,
+          academyCode: user?.academy_code,
+          role: user?.role,
+          accessLevel: user?.access_level,
+          userCode: userAgency?.user_code,
+          parentOccupation: userAgency?.parent_occupation,
+          guardianName: userAgency?.guardian_name,
+          guardianOccupation: userAgency?.guardian_occupation,
+          parentStatus: userAgency?.parent_status,
+          currentLivingWith: userAgency?.current_living_with,
+          userRoleAgency: userAgency?.user_role_agency,
+          userClass: userAgency?.user_class,
+          userStream: userAgency?.user_stream,
+          userSubClass: userAgency?.user_sub_class,
+          measurementData: measurement,
+          assistMeasurementData: measurementAssist,
+          rescreeningData: rescreeningData,
+          reportData: report
+        });
       });
-    })
+    } else {
+      console.warn('reportData.value or reporting_model_data is not available:', reportData.value);
+    }
 
     // Process measurement data
     measurementData.value.forEach(data => {
@@ -132,7 +133,6 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
       }
     })
 
-    // Process SUD data
     if (sudData.value) {
       sudData.value.lifetime_users.forEach(user => {
         const userEntry = getOrCreateUser(user.user_id)
@@ -168,36 +168,71 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
 
   const agencyName = computed(() => userDetailsFromStorage.value?.agency?.agencyName || 'Unknown Agency')
 
-
   // New computed property for filtered user data
   const filteredUserData = computed(() => {
     if (!userDetailsFromStorage.value || !mappedUserData.value) {
-      return []
+      console.log('userDetailsFromStorage or mappedUserData is null/undefined');
+      return [];
     }
 
+    const userRole = userDetailsFromStorage.value.user?.role;
+    const agencyName = userDetailsFromStorage.value.agency?.agencyName;
+    const userPsAddDzongkhag = userDetailsFromStorage.value.user?.psAddDzongkhag;
 
-    const userRole = userDetailsFromStorage.value.user.role
-    const agencyName = userDetailsFromStorage.value.agency.agencyName
-    const userPsAddDzongkhag = userDetailsFromStorage.value.user.psAddDzongkhag
+    console.log('Filtering with:', { userRole, agencyName, userPsAddDzongkhag });
 
     return mappedUserData.value.filter(user => {
+      const checkAgencyName = (user) => {
+        const agencyNames = [
+          user.serviceAndTreatment?.[0]?.user?.user_agency?.agency_name,
+          user.sudData?.active?.agency_name,
+          user.sudData?.lifetime?.agency_name,
+          user.agencyName,
+          user.user?.user_agency?.agency_name,
+          user.agency_name
+        ];
+        return agencyNames.some(name => name && name.toLowerCase() === agencyName?.toLowerCase());
+      };
+
+      const checkDzongkhag = (user) => {
+        const dzongkhags = [
+          user.psAddDzongkhag,
+          user.sudData?.active?.ps_dzongkhag,
+          user.sudData?.lifetime?.ps_dzongkhag,
+          user.user?.ps_add_dzongkhag
+        ];
+        return dzongkhags.some(dzongkhag => dzongkhag && dzongkhag.toLowerCase() === userPsAddDzongkhag?.toLowerCase());
+      };
+
+      let shouldInclude = false;
+
       switch (userRole) {
         case 'school_counselor':
         case 'trained_professional':
         case 'gyalsung_counselor':
-          return user.agencyName === agencyName
+          shouldInclude = checkAgencyName(user);
+          break;
         case 'clinical_counselor':
-          return user.psAddDzongkhag === userPsAddDzongkhag
+          shouldInclude = checkDzongkhag(user);
+          break;
         default:
-          // For other roles, return all data
-          return true
+          shouldInclude = true;
       }
-    })
-  })
 
+      if (shouldInclude) {
+        console.log('Including user:', user.userId || user.id);
+      } else {
+        console.log('Excluding user:', user.userId || user.id);
+      }
+
+      return shouldInclude;
+    });
+  });
+  
+  // Adjust the chartData and totalScreenedCount computeds accordingly:
   const chartData = computed(() => {
-    const maleCount = filteredUserData.value.filter(user => user.gender === 'male').length
-    const femaleCount = filteredUserData.value.filter(user => user.gender === 'female').length
+    const maleCount = filteredUserData.value.filter(user => user.sudData.active?.sex === 'Male').length
+    const femaleCount = filteredUserData.value.filter(user => user.sudData.active?.sex === 'Female').length
     
     return {
       labels: ['Male', 'Female'],
@@ -208,11 +243,10 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
       }]
     }
   })
-
+  
   const totalScreenedCount = computed(() => {
     return filteredUserData.value.length
   })
-
 
   // Actions
   async function initializeStore() {
@@ -313,6 +347,5 @@ export const useCounselorDashboardStore = defineStore('counselorDashboard', () =
     agencyName,
     chartData,
     totalScreenedCount,
-    currentYear,
   }
 })

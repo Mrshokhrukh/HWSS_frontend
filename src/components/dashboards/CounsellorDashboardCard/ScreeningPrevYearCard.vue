@@ -37,16 +37,14 @@ const {
     filteredUserData,
     agencyName,
     isLoading,
-    error
+    error,
+    CHART_COLORS
 } = storeToRefs(store);
 
 const chartData = ref({
     'Male': 0,
     'Female': 0
 });
-
-const chartColors = ['#2c6975', '#64ac99'];
-const chartPseudoColors = ['#dedede', '#efefef'];
 
 const getPreviousYear = () => {
     return new Date().getFullYear() - 1;
@@ -64,11 +62,11 @@ const chartDisplayData = computed(() => ({
     labels: ['Male', 'Female'],
     datasets: [{
         data: isDataLoaded.value ? [chartData.value.Male, chartData.value.Female] : [1, 1],
-        backgroundColor: isDataLoaded.value ? chartColors : chartPseudoColors
+        backgroundColor: isDataLoaded.value ? CHART_COLORS.value : ['#dedede', '#efefef']
     }]
 }));
 
-const displayColors = computed(() => isDataLoaded.value ? chartColors : chartPseudoColors);
+const displayColors = computed(() => isDataLoaded.value ? CHART_COLORS.value : ['#dedede', '#efefef']);
 
 const chartOptions = {
     responsive: true,
@@ -84,15 +82,29 @@ const updateChartData = () => {
     const previousYear = getPreviousYear();
 
     const previousYearData = filteredUserData.value.filter(user => {
-        const submissionDate = new Date(user.reportData.original_submission_date);
-        return submissionDate.getFullYear() === previousYear;
+        // Check if reportData exists and has original_submission_date
+        if (user.reportData && user.reportData.original_submission_date) {
+            const submissionDate = new Date(user.reportData.original_submission_date);
+            return submissionDate.getFullYear() === previousYear;
+        }
+        // If no reportData or submission date, check serviceAndTreatment
+        if (user.serviceAndTreatment && user.serviceAndTreatment.length > 0) {
+            const treatmentDate = new Date(user.serviceAndTreatment[0].date);
+            return treatmentDate.getFullYear() === previousYear;
+        }
+        // If neither exists, exclude this user
+        return false;
     });
 
     let maleCount = 0;
     let femaleCount = 0;
 
     previousYearData.forEach(user => {
-        const gender = user.gender.toLowerCase();
+        // Check multiple possible locations for gender information
+        const gender = user.gender?.toLowerCase() ||
+            user.sudData?.active?.sex?.toLowerCase() ||
+            user.serviceAndTreatment?.[0]?.user?.gender?.toLowerCase();
+
         if (gender === 'male') {
             maleCount++;
         } else if (gender === 'female') {
@@ -120,6 +132,7 @@ onMounted(async () => {
 // Watch for changes in filteredUserData and update chart accordingly
 watch(filteredUserData, updateChartData);
 </script>
+
 
 <style scoped>
 .card {

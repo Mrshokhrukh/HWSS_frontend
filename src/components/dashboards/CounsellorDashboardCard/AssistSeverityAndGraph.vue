@@ -11,9 +11,9 @@
             <p class="mb-0">Life Time User</p>
           </button>
 
-          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleDailyUsersClick">
-            <h1>{{ totalDailySubstanceUsers }}</h1>
-            <p class="mb-0">Daily Substance Users</p>
+          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleActiveUsersClick">
+            <h1>{{ totalActiveUsers }}</h1>
+            <p class="mb-0">Active Substance Users</p>
           </button>
 
           <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleSubstanceSeverityClick">
@@ -43,75 +43,67 @@ import { storeToRefs } from 'pinia';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 
 const store = useCounselorDashboardStore();
-const {
-  filteredSudData,
-  filteredAssistMeasurementData,
-  filteredReportData,
-  isInitialized,
-  agencyName
-} = storeToRefs(store);
-
-// Access CHART_COLORS directly from the store
-const { CHART_COLORS } = store;
+const { filteredUserData, isInitialized, agencyName, CHART_COLORS } = storeToRefs(store);
 
 const chartCanvas = ref(null);
 let myChart = null;
 
-const totalLifetimeUsers = computed(() => filteredSudData.value.lifetime_users.length);
-const totalDailySubstanceUsers = computed(() => filteredSudData.value.active_users.length);
+// Fallback colors in case CHART_COLORS is undefined
+const fallbackColors = ['#36A2EB', '#FF6384'];
+
+const getChartColor = (index) => {
+  return CHART_COLORS?.value?.[index] || fallbackColors[index] || fallbackColors[0];
+};
+
+const totalLifetimeUsers = computed(() =>
+  filteredUserData.value.filter(user => user.sudData?.lifetime).length
+);
+
+const totalActiveUsers = computed(() =>
+  filteredUserData.value.filter(user => user.sudData?.active).length
+);
 
 const substancesWithGender = computed(() => {
-  return filteredAssistMeasurementData.value.map(data => {
-    const reportUser = filteredReportData.value.find(report => report.user?.id === data.user);
-    const gender = reportUser?.user_details?.gender || 'Unknown';
-    const substances = Object.entries(data)
-      .filter(([key, value]) => key.endsWith('_measurement') && value !== null)
-      .map(([key, value]) => ({
-        name: key.replace('_measurement', ''),
-        value: parseInt(value, 10)
-      }));
+  return filteredUserData.value.map(user => {
+    const gender = user.sudData?.active?.sex || user.gender || 'Unknown';
+    const substances = user.sudData?.active?.substances_used || [];
     return { gender, substances };
   });
 });
 
-const severityLevels = ['low', 'moderate', 'high'];
-
 const chartData = computed(() => {
-  const substanceCounts = { male: {}, female: {} };
+  const substanceCounts = { Male: {}, Female: {} };
 
   substancesWithGender.value.forEach(entry => {
-    const gender = entry.gender.toLowerCase();
-    if (gender !== 'male' && gender !== 'female') return;
+    const gender = entry.gender;
+    if (gender !== 'Male' && gender !== 'Female') return;
 
     entry.substances.forEach(substance => {
-      if (!substanceCounts[gender][substance.name]) {
-        substanceCounts[gender][substance.name] = { low: 0, moderate: 0, high: 0 };
+      if (!substanceCounts[gender][substance]) {
+        substanceCounts[gender][substance] = 0;
       }
-      let severity = 'low';
-      if (substance.value >= 27) severity = 'high';
-      else if (substance.value >= 4) severity = 'moderate';
-      substanceCounts[gender][substance.name][severity]++;
+      substanceCounts[gender][substance]++;
     });
   });
 
-  const labels = [...new Set([...Object.keys(substanceCounts.male), ...Object.keys(substanceCounts.female)])];
+  const labels = [...new Set([...Object.keys(substanceCounts.Male), ...Object.keys(substanceCounts.Female)])];
 
-  const datasets = severityLevels.flatMap((severity, index) => [
+  const datasets = [
     {
-      label: `Male - ${severity}`,
-      data: labels.map(substance => substanceCounts.male[substance]?.[severity] || 0),
-      backgroundColor: `${CHART_COLORS[0]}${Math.round((0.2 + index * 0.2) * 255).toString(16).padStart(2, '0')}`,
-      borderColor: CHART_COLORS[0],
+      label: 'Male',
+      data: labels.map(substance => substanceCounts.Male[substance] || 0),
+      backgroundColor: `${getChartColor(0)}99`,
+      borderColor: getChartColor(0),
       borderWidth: 1
     },
     {
-      label: `Female - ${severity}`,
-      data: labels.map(substance => substanceCounts.female[substance]?.[severity] || 0),
-      backgroundColor: `${CHART_COLORS[1]}${Math.round((0.2 + index * 0.2) * 255).toString(16).padStart(2, '0')}`,
-      borderColor: CHART_COLORS[1],
+      label: 'Female',
+      data: labels.map(substance => substanceCounts.Female[substance] || 0),
+      backgroundColor: `${getChartColor(1)}99`,
+      borderColor: getChartColor(1),
       borderWidth: 1
     }
-  ]);
+  ];
 
   return { labels, datasets };
 });
@@ -126,7 +118,7 @@ const displayChart = (data) => {
     data: data,
     options: {
       scales: {
-        y: { beginAtZero: true, stacked: true },
+        y: { beginAtZero: true },
         x: { stacked: true }
       },
       responsive: true,
@@ -135,7 +127,7 @@ const displayChart = (data) => {
         legend: { position: 'top' },
         title: {
           display: true,
-          text: `Substance Use by Gender and Severity - ${agencyName.value}`
+          text: `Substance Use by Gender - ${agencyName.value || 'Agency'}`
         }
       }
     }
@@ -148,21 +140,21 @@ const handleLifetimeUserClick = () => {
     datasets: [{
       label: 'Users',
       data: [totalLifetimeUsers.value],
-      backgroundColor: `${CHART_COLORS[0]}33`,
-      borderColor: CHART_COLORS[0],
+      backgroundColor: `${getChartColor(0)}99`,
+      borderColor: getChartColor(0),
       borderWidth: 1
     }]
   });
 };
 
-const handleDailyUsersClick = () => {
+const handleActiveUsersClick = () => {
   displayChart({
-    labels: ['Daily Users'],
+    labels: ['Active Users'],
     datasets: [{
       label: 'Users',
-      data: [totalDailySubstanceUsers.value],
-      backgroundColor: `${CHART_COLORS[0]}66`,
-      borderColor: CHART_COLORS[0],
+      data: [totalActiveUsers.value],
+      backgroundColor: `${getChartColor(0)}99`,
+      borderColor: getChartColor(0),
       borderWidth: 1
     }]
   });
@@ -179,7 +171,7 @@ onMounted(async () => {
   handleSubstanceSeverityClick();
 });
 
-watch([filteredSudData, filteredAssistMeasurementData, filteredReportData], () => {
+watch(filteredUserData, () => {
   handleSubstanceSeverityClick();
 }, { deep: true });
 
