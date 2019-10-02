@@ -26,15 +26,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
+import Chart from 'primevue/chart';
+
+const store = useCounselorDashboardStore();
+
+const {
+    filteredUserData,
+    agencyName,
+    isLoading,
+    error,
+    CHART_COLORS
+} = storeToRefs(store);
 
 const chartData = ref({
     'Male': 0,
     'Female': 0
 });
-
-const chartColors = ['#2c6975', '#64ac99'];
-const chartPseudoColors = ['#dedede', '#efefef'];
 
 const getPreviousYear = () => {
     return new Date().getFullYear() - 1;
@@ -52,73 +62,82 @@ const chartDisplayData = computed(() => ({
     labels: ['Male', 'Female'],
     datasets: [{
         data: isDataLoaded.value ? [chartData.value.Male, chartData.value.Female] : [1, 1],
-        backgroundColor: isDataLoaded.value ? chartColors : chartPseudoColors
+        backgroundColor: isDataLoaded.value ? CHART_COLORS.value : ['#dedede', '#efefef']
     }]
 }));
 
-const displayColors = computed(() => isDataLoaded.value ? chartColors : chartPseudoColors);
-
-const agencyName = ref('');
+const displayColors = computed(() => isDataLoaded.value ? CHART_COLORS.value : ['#dedede', '#efefef']);
 
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
         legend: {
-            display: true
+            display: false
         }
     },
 };
 
-onMounted(() => {
-    const fetchData = async () => {
-        try {
-            const storedReportData = sessionStorage.getItem('reportData');
-            const storedUserDetails = localStorage.getItem('userDetailsStore');
+const updateChartData = () => {
+    const previousYear = getPreviousYear();
 
-            if (storedReportData && storedUserDetails) {
-                const reportData = JSON.parse(storedReportData);
-                const userDetails = JSON.parse(storedUserDetails);
-                agencyName.value = userDetails.agency.agencyName;
-
-                const previousYear = getPreviousYear();
-
-                const userSubmissions = reportData.filter(submission => {
-                    return new Date(submission.original_submission_date).getFullYear() === previousYear;
-                });
-
-                let maleCount = 0;
-                let femaleCount = 0;
-
-                userSubmissions.forEach(submission => {
-                    const gender = submission.user.fields.gender;
-                    if (gender === 'Male') {
-                        maleCount++;
-                    } else if (gender === 'Female') {
-                        femaleCount++;
-                    }
-                });
-
-                chartData.value = {
-                    'Male': maleCount,
-                    'Female': femaleCount
-                };
-            }
-        } catch (error) {
-            console.error('Error fetching report data:', error);
+    const previousYearData = filteredUserData.value.filter(user => {
+        // Check if reportData exists and has original_submission_date
+        if (user.reportData && user.reportData.original_submission_date) {
+            const submissionDate = new Date(user.reportData.original_submission_date);
+            return submissionDate.getFullYear() === previousYear;
         }
-    };
+        // If no reportData or submission date, check serviceAndTreatment
+        if (user.serviceAndTreatment && user.serviceAndTreatment.length > 0) {
+            const treatmentDate = new Date(user.serviceAndTreatment[0].date);
+            return treatmentDate.getFullYear() === previousYear;
+        }
+        // If neither exists, exclude this user
+        return false;
+    });
 
-    fetchData();
+    let maleCount = 0;
+    let femaleCount = 0;
+
+    previousYearData.forEach(user => {
+        // Check multiple possible locations for gender information
+        const gender = user.gender?.toLowerCase() ||
+            user.sudData?.active?.sex?.toLowerCase() ||
+            user.serviceAndTreatment?.[0]?.user?.gender?.toLowerCase();
+
+        if (gender === 'male') {
+            maleCount++;
+        } else if (gender === 'female') {
+            femaleCount++;
+        }
+    });
+
+    chartData.value = {
+        'Male': maleCount,
+        'Female': femaleCount
+    };
+};
+
+onMounted(async () => {
+    try {
+        if (!store.isInitialized) {
+            await store.initializeStore();
+        }
+        updateChartData();
+    } catch (err) {
+        console.error('Error in onMounted:', err);
+    }
 });
 
+// Watch for changes in filteredUserData and update chart accordingly
+watch(filteredUserData, updateChartData);
 </script>
+
 
 <style scoped>
 .card {
     width: 100%;
     max-width: 400px;
-    /* Adjusted to match the image */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -141,7 +160,6 @@ onMounted(() => {
     position: relative;
     height: 0;
     padding-bottom: 100%;
-    /* This creates a 1:1 aspect ratio */
 }
 
 .card-footer {
@@ -163,6 +181,10 @@ onMounted(() => {
     height: 20px;
     margin-right: 5px;
     display: inline-block;
+}
+
+.hwss-primary {
+    color: #2c6975;
 }
 
 @media (max-width: 576px) {

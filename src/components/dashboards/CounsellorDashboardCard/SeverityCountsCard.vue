@@ -46,16 +46,16 @@ import SeverityIndicatorCard from '@/components/dashboards/CounsellorDashboardCa
 const store = useCounselorDashboardStore();
 
 // Use storeToRefs for reactive store properties
-const { filteredMeasurementData, filteredAssistMeasurementData, filteredSudData } = storeToRefs(store);
+const { filteredUserData, isInitialized } = storeToRefs(store);
 
 // Constants
-const SEVERITY_ITEMS = [
-  { count: '0', title: 'Suicidal Behavior', link: '/suicidal-behavior' },
-  { count: '0', title: 'Depression', link: '/depression' },
-  { count: '0', title: 'Anxiety', link: '/anxiety' },
-  { count: '0', title: 'ACE', link: '/ace' },
-  { count: '0', title: 'Assist', link: '/assist' }
-];
+const SEVERITY_ITEMS = ref([
+  { count: '0', title: 'Suicidal Behavior', field: 'suicidal_measurement' },
+  { count: '0', title: 'Depression', field: 'phq_measurement' },
+  { count: '0', title: 'Anxiety', field: 'gad_measurement' },
+  { count: '0', title: 'ACE', field: 'ace_measurement' },
+  { count: '0', title: 'Assist', field: 'assist' }
+]);
 
 const activeIndex = ref(0);
 
@@ -63,43 +63,59 @@ function isActive(index) {
   return index === activeIndex.value;
 }
 
-const activeItem = computed(() => SEVERITY_ITEMS[activeIndex.value]);
+const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
 
 onMounted(async () => {
-  if (!store.isInitialized) {
+  if (!isInitialized.value) {
     await store.initializeStore();
   }
+  updateSeverityCounts();
 });
 
 // Provide filtered data to child components
-provide('measurementData', filteredMeasurementData);
-provide('measurementAssistData', filteredAssistMeasurementData);
-provide('sudData', filteredSudData);
+provide('filteredUserData', filteredUserData);
 
 function setActiveIndex(index) {
   activeIndex.value = index;
-  store.setActiveCardIndex(index);
+  if (store.setActiveCardIndex) {
+    store.setActiveCardIndex(index);
+  }
+}
+
+// Function to update severity counts
+function updateSeverityCounts() {
+  if (filteredUserData.value) {
+    SEVERITY_ITEMS.value.forEach((item) => {
+      let count = 0;
+      filteredUserData.value.forEach(user => {
+        if (item.field === 'assist') {
+          // Check if any ASSIST measurement is not 'no risk'
+          const assistData = user.assistMeasurementData;
+          if (assistData) {
+            const hasRisk = Object.keys(assistData).some(key =>
+              key.includes('_measurement') && assistData[key] !== 'no risk' && assistData[key] !== null
+            );
+            if (hasRisk) count++;
+          }
+        } else {
+          // For other fields, check if measurement exists and is not null
+          const measurement = user.measurementData?.[item.field];
+          if (measurement !== undefined && measurement !== null) {
+            count++;
+          }
+        }
+      });
+      item.count = count.toString();
+    });
+  }
 }
 
 // Watch for changes in filtered data and update severity counts
-watch(
-  [filteredMeasurementData, filteredAssistMeasurementData],
-  () => {
-    store.updateSeverityCounts();
-    updateLocalSeverityCounts();
-  },
-  { deep: true }
-);
-
-// Function to update local severity counts
-function updateLocalSeverityCounts() {
-  SEVERITY_ITEMS.forEach((item, index) => {
-    item.count = store.countSeverity(item.title).toString();
-  });
-}
-
-// Initial update of local severity counts
-updateLocalSeverityCounts();
+watch(filteredUserData, () => {
+  if (isInitialized.value) {
+    updateSeverityCounts();
+  }
+}, { deep: true });
 </script>
 
 <style scoped>

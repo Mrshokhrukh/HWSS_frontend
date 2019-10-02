@@ -25,11 +25,14 @@
     </div>
   </div>
 </template>
-<script setup>
-import { ref, computed, inject } from 'vue';
 
-const measurementData = ref(inject('measurementData'));
-const measuremenAssisttData = ref(inject('measuremenAssisttData'));
+<script setup>
+import { ref, computed } from 'vue';
+import { useCounselorDashboardStore } from '@/stores/counselorDashboard'
+import { storeToRefs } from 'pinia'
+
+const store = useCounselorDashboardStore()
+const { filteredUserData } = storeToRefs(store)
 const maxButtonsInRow = 3;
 const selectedMeasurement = ref('');
 
@@ -37,7 +40,6 @@ const buttonData = computed(() => {
   const cardTitle = props.cardTitle.toLowerCase();
   let fieldToExtract = '';
 
-  // Adjusted the field extraction logic for "Assist"
   switch (cardTitle) {
     case 'suicidal behavior':
       fieldToExtract = 'suicidal_measurement';
@@ -52,8 +54,7 @@ const buttonData = computed(() => {
       fieldToExtract = 'ace_measurement';
       break;
     case 'assist':
-      // Handle multiple fields in the "Assist" case
-      fieldToExtract = ['alcoholic_measurement', 'tobacco_measurement', 'cannabis_measurement', 'cocaine_measurement', 'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement', 'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'];
+      fieldToExtract = 'assist';
       break;
     default:
       break;
@@ -61,31 +62,25 @@ const buttonData = computed(() => {
 
   const buttonDataMap = new Map();
 
-  // Choose the appropriate data source based on the cardTitle
-  const data = cardTitle === 'assist' ? measuremenAssisttData.value : measurementData.value;
-
-  data.forEach(entry => {
-    const measurement = cardTitle === 'assist' ? entry.measurement_assist : entry.measurement;
-
-    // Adjusted the field extraction for the "Assist" case
+  filteredUserData.value.forEach(user => {
+    let measurement;
     if (cardTitle === 'assist') {
-      fieldToExtract.forEach(field => {
-        const fieldValue = measurement[field];
-        if (fieldValue !== null) {
-          if (buttonDataMap.has(fieldValue)) {
-            buttonDataMap.set(fieldValue, buttonDataMap.get(fieldValue) + 1);
-          } else {
-            buttonDataMap.set(fieldValue, 1);
-          }
-        }
-      });
+      measurement = user.assistMeasurementData;
     } else {
-      const fieldValue = measurement[fieldToExtract];
-      if (fieldValue !== null) {
-        if (buttonDataMap.has(fieldValue)) {
-          buttonDataMap.set(fieldValue, buttonDataMap.get(fieldValue) + 1);
-        } else {
-          buttonDataMap.set(fieldValue, 1);
+      measurement = user.measurementData;
+    }
+
+    if (measurement) {
+      if (cardTitle === 'assist') {
+        const hasRisk = Object.keys(measurement).some(key =>
+          key.includes('_measurement') && measurement[key] !== 'no risk' && measurement[key] !== null
+        );
+        const value = hasRisk ? 'At Risk' : 'No Risk';
+        buttonDataMap.set(value, (buttonDataMap.get(value) || 0) + 1);
+      } else {
+        const fieldValue = measurement[fieldToExtract];
+        if (fieldValue !== null && fieldValue !== undefined) {
+          buttonDataMap.set(fieldValue, (buttonDataMap.get(fieldValue) || 0) + 1);
         }
       }
     }
@@ -105,7 +100,6 @@ const buttonData = computed(() => {
   return buttons;
 });
 
-
 const buttonRows = computed(() => {
   const rows = [];
   for (let i = 0; i < buttonData.value.length; i += maxButtonsInRow) {
@@ -119,24 +113,20 @@ const columnClass = computed(() => {
 });
 
 const determineFlag = (value) => {
-  if (value === 'nearly everyday' || value === 'red') return 'red';
-  else if (value === 'several days' || value === 'yellow') return 'yellow';
-  else if (value === 'severe' || value === 'red') return 'red';
+  if (value === 'nearly everyday' || value === 'red' || value === 'severe' || value === 'At Risk') return 'red';
+  else if (value === 'several days' || value === 'yellow' || value === 'moderate') return 'yellow';
   else if (value === 'moderately severe' || value === 'orange') return 'orange';
-  else if (value === 'moderate' || value === 'yellow') return 'yellow';
   else if (value === 'mild' || value === 'blue') return 'skyblue';
-  else if (value === 'minimal' || value === 'green') return 'green';
+  else if (value === 'minimal' || value === 'green' || value === 'No Risk') return 'green';
   else return 'blue';
 };
 
 const determineIcon = (buttonText) => {
-  if (buttonText === 'nearly everyday') return 'fas fa-biohazard';
-  else if (buttonText === 'several days') return 'fas fa-radiation';
-  else if (buttonText === 'severe') return 'fas fa-biohazard';
-  else if (buttonText === 'moderately severe') return 'fas fa-radiation';
+  if (buttonText === 'nearly everyday' || buttonText === 'severe' || buttonText === 'At Risk') return 'fas fa-biohazard';
+  else if (buttonText === 'several days' || buttonText === 'moderately severe') return 'fas fa-radiation';
   else if (buttonText === 'moderate') return 'fas fa-exclamation-triangle';
   else if (buttonText === 'mild') return 'fas fa-exclamation-circle';
-  else if (buttonText === 'minimal') return 'fas fa-thumbs-up';
+  else if (buttonText === 'minimal' || buttonText === 'No Risk') return 'fas fa-thumbs-up';
   else return 'fas fa-ban';
 };
 
@@ -152,7 +142,6 @@ const handleButtonClick = (data) => {
 };
 
 const determineMeasurement = (cardTitle) => {
-  // console.log('Card Title:', cardTitle);
   let measurement = '';
   switch (cardTitle.toLowerCase()) {
     case 'suicidal behavior':
@@ -167,11 +156,13 @@ const determineMeasurement = (cardTitle) => {
     case 'ace':
       measurement = 'ace_measurement';
       break;
+    case 'assist':
+      measurement = 'assist';
+      break;
     default:
       console.warn('No matching measurement found for card title:', cardTitle);
       break;
   }
-  // console.log('Measurement:', measurement);
   return measurement;
 };
 

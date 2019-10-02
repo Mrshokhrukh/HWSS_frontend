@@ -4,44 +4,29 @@
             <h4 class="text-center text-capitalize">Total screened for the year: {{ currentYear }}</h4>
         </div>
         <div class="card-body">
-            <template v-if="!isLoading">
-                <template v-if="!isDataEmpty">
-                    <Chart type="doughnut" :data="chartData" :options="chartOptions" class="w-75 mx-auto" />
-                    <div class="mt-4 text-center">
-                        <div class="hwss-primary text-capitalize font-italic">{{ agencyName }}</div>
-                    </div>
-                </template>
-                <template v-else>
-                    <div class="pseudo-chart">
-                        <p>No data available</p>
-                    </div>
-                </template>
-            </template>
-            <template v-else>
-                <div class="pseudo-chart">
-                    <p>Loading Data... {{ loadingStatus }}</p>
-                </div>
-            </template>
+            <div class="chart-container">
+                <Chart type="doughnut" :data="chartDisplayData" :options="chartOptions" />
+            </div>
+            <div class="mt-4 text-center">
+                <div class="hwss-primary text-capitalize font-italic">{{ agencyName }}</div>
+            </div>
         </div>
-        <div v-if="!isLoading && !isDataEmpty" class="card-footer">
+        <div class="card-footer">
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': store.CHART_COLORS[0] }"></span>
-                Male ({{ chartData.datasets[0]?.data[0] || 0 }})
+                <span class="legend-color" :style="{ 'background-color': displayColors[0] }"></span>
+                Male ({{ chartData.Male }})
             </span>
             <span class="legend-item">
-                <span class="legend-color" :style="{ 'background-color': store.CHART_COLORS[1] }"></span>
-                Female ({{ chartData.datasets[0]?.data[1] || 0 }})
+                <span class="legend-color" :style="{ 'background-color': displayColors[1] }"></span>
+                Female ({{ chartData.Female }})
             </span>
-            <span><strong>Total: {{ totalScreenedCount }}</strong></span>
-        </div>
-        <div v-if="error" class="error-message">
-            {{ error }}
+            <span><strong>Total: {{ getTotalCount }}</strong></span>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 import Chart from 'primevue/chart';
@@ -49,66 +34,143 @@ import Chart from 'primevue/chart';
 const store = useCounselorDashboardStore();
 
 const {
-    chartData,
     isLoading,
     error,
     agencyName,
-    totalScreenedCount,
     currentYear,
+    filteredUserData,
+    CHART_COLORS
 } = storeToRefs(store);
 
-const isDataEmpty = computed(() => {
-    return totalScreenedCount.value === 0 || !chartData.value || !chartData.value.datasets || chartData.value.datasets[0].data.length === 0;
+const chartData = ref({
+    'Male': 0,
+    'Female': 0
 });
 
-const loadingStatus = ref('');
+const chartColors = computed(() => CHART_COLORS?.value || ['#2c6975', '#F4A7B9']);
+const chartPseudoColors = ['#dedede', '#efefef'];
 
-const chartOptions = ref({
+const getTotalCount = computed(() => {
+    return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
+});
+
+const isDataLoaded = computed(() => {
+    return chartData.value.Male > 0 || chartData.value.Female > 0;
+});
+
+const chartDisplayData = computed(() => ({
+    labels: ['Male', 'Female'],
+    datasets: [{
+        data: isDataLoaded.value ? [chartData.value.Male, chartData.value.Female] : [1, 1],
+        backgroundColor: isDataLoaded.value ? chartColors.value : chartPseudoColors
+    }]
+}));
+
+const displayColors = computed(() => isDataLoaded.value ? chartColors.value : chartPseudoColors);
+
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
     plugins: {
         legend: {
             display: false
         }
     },
     cutout: '60%'
-});
+};
+
+const updateChartData = () => {
+    console.log('Updating chart data. Current year:', currentYear?.value);
+    console.log('Filtered user data:', filteredUserData?.value);
+    if (!filteredUserData?.value || !currentYear?.value) {
+        console.warn('filteredUserData or currentYear is undefined');
+        return;
+    }
+    const currentYearData = filteredUserData.value.filter(user => {
+        const submissionDate = user.reportData?.original_submission_date
+            ? new Date(user.reportData.original_submission_date)
+            : user.measurementData?.created_at
+                ? new Date(user.measurementData.created_at)
+                : null;
+        return submissionDate && submissionDate.getFullYear() === currentYear.value;
+    });
+
+    let maleCount = 0;
+    let femaleCount = 0;
+
+    currentYearData.forEach(user => {
+        const gender = user.reportData?.user?.fields?.gender || user.sudData?.active?.sex;
+        if (gender) {
+            if (gender.toLowerCase() === 'male') {
+                maleCount++;
+            } else if (gender.toLowerCase() === 'female') {
+                femaleCount++;
+            }
+        }
+    });
+
+    chartData.value = {
+        'Male': maleCount,
+        'Female': femaleCount
+    };
+};
 
 onMounted(async () => {
     try {
-        loadingStatus.value = 'Initializing...';
         if (!store.isInitialized) {
             await store.initializeStore();
         }
-        loadingStatus.value = 'Data loaded.';
+        updateChartData();
     } catch (err) {
-        loadingStatus.value = 'Error loading data. Please try again.';
+        console.error('Error in onMounted:', err);
     }
 });
+
+// Watch for changes in filteredUserData and update chart accordingly
+watch(() => filteredUserData?.value, updateChartData, { deep: true });
+watch(() => currentYear?.value, updateChartData);
 </script>
 
 <style scoped>
 .card {
-    width: 400px;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
     color: #2c6975;
-    padding: 10px;
+    padding: 15px;
 }
 
 .card-body {
     padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-container {
+    flex-grow: 1;
+    position: relative;
+    height: 0;
+    padding-bottom: 100%;
 }
 
 .card-footer {
-    padding: 10px;
+    padding: 15px;
     display: flex;
     justify-content: space-around;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
+    margin: 5px 10px;
 }
 
 .legend-color {
@@ -118,20 +180,18 @@ onMounted(async () => {
     display: inline-block;
 }
 
-.pseudo-chart {
-    text-align: center;
-    padding: 20px;
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-}
-
 .hwss-primary {
     color: #2c6975;
 }
 
-.error-message {
-    color: red;
-    text-align: center;
-    padding: 10px;
+@media (max-width: 576px) {
+    .card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .legend-item {
+        margin: 5px 0;
+    }
 }
 </style>
