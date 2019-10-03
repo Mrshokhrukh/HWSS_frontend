@@ -1,9 +1,9 @@
 <template>
-  <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+  <nav class="navbar navbar-expand-lg shadow-none">
     <div class="container-fluid">
       <!-- Navbar brand -->
       <a class="navbar-brand" href="#">
-        <span class="ms-2 fw-bold text-primary">The PEMA HWSS</span>
+        <span class="ms-2 fw-bold hwss-primary">The PEMA HWSS</span>
       </a>
 
       <!-- Navbar toggler -->

@@ -38,7 +38,7 @@
             <div class="row">
                 <!-- Profile Card -->
                 <aside class="col-4">
-                    <div class="profile-card card mt-3 pt-4 h-full" style="position: fixed; height: auto;">
+                    <div class="profile-card card mt-3 pt-4 h-full" style="position: fixed; height: auto">
                         <div class="card-img-top" :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
                         </div>
                         <div class="card-body">
@@ -46,19 +46,15 @@
                                 selectedUser.middle_name }} {{
                                     selectedUser.last_name }}</h5>
                             <ul class="list-unstyled ">
-                                <li class="mb-3"><strong>Age:</strong><br> {{ selectedUser.date_of_birth }}</li>
-                                <li class="mb-3"><strong>Sex:</strong><br> {{ selectedUser.gender }}</li>
-                                <li class="mb-3" v-if="selectedUser.role !== 'student'"><strong>Employee
-                                        ID:</strong><br> {{
-                                            selectedUser.academy_code }}</li>
-                                <li class="mb-3"><strong>Citizen ID:</strong><br> {{ selectedUser.identity_number }}
-                                </li>
-                                <li class="mb-3"><strong>Nationality:</strong><br> {{ selectedUser.nationality }}</li>
-                                <li class="mb-3"><strong>Phone Number:</strong><br> {{ selectedUser.mob_number }}</li>
-                                <li class="mb-3"><strong>Email:</strong><br> {{ selectedUser.email }}</li>
-                                <li class="mb-3"><strong>Role:</strong><br> {{ selectedUser.role }}</li>
-                                <li class="mb-3 text-truncate" v-if="selectedUser.active_agency !== null"><strong>Active
-                                        Agency:</strong><br> {{ selectedUser.active_agency }}</li>
+                                <li class="mb-3"><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
+                                <li class="mb-3"><strong>Sex:</strong> {{ selectedUser.gender }}</li>
+                                <li class="mb-3"><strong>Employee ID:</strong> {{ selectedUser.academy_code }}</li>
+                                <li class="mb-3"><strong>Citizen ID:</strong> {{ selectedUser.identity_number }}</li>
+                                <li class="mb-3"><strong>Nationality:</strong> {{ selectedUser.nationality }}</li>
+                                <li class="mb-3"><strong>Phone Number:</strong> {{ selectedUser.mob_number }}</li>
+                                <li class="mb-3"><strong>Email:</strong> {{ selectedUser.email }}</li>
+                                <li class="mb-3"><strong>Role:</strong> {{ selectedUser.role }}</li>
+                                <li class="mb-3"><strong>Active Agency:</strong> {{ selectedUser.active_agency }}</li>
                             </ul>
                         </div>
                     </div>
@@ -294,12 +290,7 @@
 import { ref, computed, onMounted, watchEffect } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
-import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
 import Swal from 'sweetalert2';
-
-
-const store = useCounselorDashboardStore();
-
 
 const showModal = ref(false);
 const selectedUser = ref(null);
@@ -327,12 +318,24 @@ const formatEmpty = (rowData, column) => {
     return rowData[column.field];
 };
 
-const filteredRows = computed(() => {
-    if (!searchQuery.value.trim() || !Array.isArray(store.serviceAndTreatmentList) || store.serviceAndTreatmentList.length === 0) {
-        return store.serviceAndTreatmentList;
+const myAgency = ref('');
+const filteredRowData = computed(() => {
+    if (!myAgency.value || !Array.isArray(rowData.value)) {
+        return rowData.value;
     }
 
-    return store.serviceAndTreatmentList.filter(row => {
+    return rowData.value.filter(row => {
+        const userAgency = row.user?.user_agency?.agency_name;
+        return userAgency === myAgency.value;
+    });
+});
+
+const filteredRows = computed(() => {
+    if (!searchQuery.value.trim() || !Array.isArray(filteredRowData.value) || filteredRowData.value.length === 0) {
+        return filteredRowData.value;
+    }
+
+    return filteredRowData.value.filter(row => {
         return selectedFields.value.some(field => {
             const fieldValue = row[field.split('.').pop()];
             return fieldValue !== undefined && fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
@@ -341,7 +344,17 @@ const filteredRows = computed(() => {
 });
 
 const getServiceList = async () => {
-    await store.fetchServiceAndTreatmentList();
+    try {
+        const response = await axios.get(endpoints.generateServiceAndTreatment);
+        if (response && response.data && Array.isArray(response.data.data)) {
+            console.log('service and treatment:', response.data);
+            rowData.value = response.data.data;
+        } else {
+            console.error('Invalid response format:', response);
+        }
+    } catch (error) {
+        console.error(error);
+    }
 };
 
 const openModal = async (user) => {
@@ -568,12 +581,13 @@ const referCase = async () => {
     });
 };
 
-onMounted(getServiceList);
+onMounted(async () => {
+    await getServiceList();
 
-onMounted(() => {
-    const self = JSON.parse(localStorage.getItem('userDetailsStore'));
-    if (self) {
-        selfRole.value = self.user.role;
+    // Get user's agency from localStorage
+    const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+    if (userDetails && userDetails.agency && userDetails.agency.agencyName) {
+        myAgency.value = userDetails.agency.agencyName;
     }
 });
 
