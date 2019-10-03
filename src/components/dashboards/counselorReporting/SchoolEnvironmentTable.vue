@@ -1,14 +1,10 @@
 <template>
   <div class="school-environment-table">
-    <DataTable :value="filteredData" :paginator="true" :rows="10" :globalFilterFields="globalFilterFields" resizableColumns columnResizeMode="fit">
+    <DataTable :value="tableData" :paginator="true" :rows="10" :globalFilterFields="globalFilterFields" resizableColumns
+      columnResizeMode="fit">
       <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true">
         <template #body="{ data }">
           <span>{{ data[field.key] }}</span>
-        </template>
-      </Column>
-      <Column>
-        <template #body="{ data }">
-          <Button label="Download" @click="downloadReport(data)" />
         </template>
       </Column>
     </DataTable>
@@ -16,23 +12,23 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 
-const reportData = ref([]);
-const globalFilter = ref('');
-const filteredData = ref([]);
+const schoolEnvData = ref(null);
+const tableData = ref([]);
+const loading = ref(false);
+const error = ref(null);
+
 const globalFilterFields = [
-  'username', 'present_dzongkhag', 'alcoholic_measurement', 'phq_measurement',
-  'assessment_status', 'counseling', 'follow_up', 'suicidal_measurement',
-  'tobacco_measurement', 'case_status', 'referral_status', 'rescreening_count',
   'I feel safe at school', 'My school is free of corporal punishment',
   'I feel motivated to come to school', 'My teachers and other staff are helpful and supportive',
   'My school is free of bullying', 'All the students receive fair treatment at school',
   'My school engages all the students in all school activities', 'Students get along well with each other in our school',
   'What do you like the most about your school?', 'What changes do you really wish to see in your school?'
 ];
+
 const tableFields = [
   { key: 'I feel safe at school', header: 'I feel safe at school' },
   { key: 'My school is free of corporal punishment', header: 'My school is free of corporal punishment' },
@@ -46,42 +42,39 @@ const tableFields = [
   { key: 'What changes do you really wish to see in your school?', header: 'What changes do you really wish to see in your school?' }
 ];
 
-// Fetch report data from API
-const fetchReportData = () => {
+const fetchSchoolEnvData = async () => {
+  loading.value = true;
+  error.value = null;
+
   try {
-    const storedReportData = JSON.parse(sessionStorage.getItem('reportData'));
-    if (storedReportData) {
-      reportData.value = storedReportData;
-      filteredData.value = storedReportData;
-    } else {
-      handleFetchError("No data found in sessionStorage.");
-    }
-  } catch (error) {
-    handleFetchError("Error parsing or retrieving data from sessionStorage:", error);
+    const response = await axios.get(endpoints.getSchoolEnvData);
+    schoolEnvData.value = response.data;
+    processData();
+  } catch (err) {
+    error.value = 'Failed to fetch school environment data';
+    console.error(err);
+  } finally {
+    loading.value = false;
   }
-}
+};
 
-console.log(reportData)
-// Handle fetch error
-const handleFetchError = () => {
-  reportData.value = [];
-  filteredData.value = [];
-}
+const processData = () => {
+  if (!schoolEnvData.value) return;
 
-// Filter data based on global filter
-const filterData = () => {
-  if (!globalFilter.value) {
-    filteredData.value = [...reportData.value];
-    return;
-  }
-  const filtered = reportData.value.filter(item => {
-    return Object.values(item).some(val => String(val).toLowerCase().includes(globalFilter.value.toLowerCase()));
+  tableData.value = Object.values(schoolEnvData.value).flatMap(responses => {
+    const rowData = {};
+    responses.forEach(response => {
+      if (tableFields.some(field => field.key === response.question)) {
+        rowData[response.question] = response.answer;
+      }
+    });
+    return rowData;
   });
-  filteredData.value = filtered;
-}
+};
 
-watch(globalFilter, filterData);
-onMounted(fetchReportData);
+onMounted(() => {
+  fetchSchoolEnvData();
+});
 </script>
 
 <style scoped>
