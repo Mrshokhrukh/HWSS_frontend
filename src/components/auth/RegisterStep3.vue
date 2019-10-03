@@ -282,8 +282,8 @@ const confirmDetails = async (isTrue) => {
 
         // API request to check if user exists based on email and CID
         try {
-          // const response = await axios.post(endpoints.confirmUser, {
-          const response = await axios.post('http://localhost:8123/api/v1/access/check_email_cid/', {
+          const response = await axios.post(endpoints.confirmUser, {
+          // const response = await axios.post('http://localhost:8123/api/v1/access/check_email_cid/', {
             email: regEmail.value,
             cid: parameterValue.value  // Assuming parameterValue contains CID
           });
