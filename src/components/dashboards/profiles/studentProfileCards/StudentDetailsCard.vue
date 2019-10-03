@@ -30,7 +30,7 @@
                     <div class="col-md-6">
                         <label for="mobile" class="form-label">Mobile</label>
                         <input type="text" id="mobile" class="form-control" :class="{'input-noneditable': !isEditing}"
-                            :readonly="!isEditing" :disabled="!isEditing" v-model="userDetails.user.mobile">
+                            :readonly="!isEditing" :disabled="!isEditing" v-model="userDetails.user.mobNumber">
                     </div>
                     <!-- Nationality -->
                     <div class="col-md-6">
@@ -75,13 +75,13 @@
                     <div class="col-md-6">
                         <label for="guardianName" class="form-label">Guardian Name (Optional)</label>
                         <input type="text" id="guardianName" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                            v-model="userDetails.user.guardianName">
+                            v-model="userDetails.userAgency.guardianName">
                     </div>
                     <!-- Guardian Occupation (Optional) -->
                     <div class="col-md-6">
                         <label for="guardianOccupation" class="form-label">Guardian Occupation (Optional)</label>
                         <input type="text" id="guardianOccupation" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                            v-model="userDetails.user.guardianOccupation">
+                            v-model="userDetails.userAgency.guardianOccupation">
                     </div>
                     <!-- Permanent Address -->
                     <div class="col-12">
@@ -113,7 +113,7 @@
                     <div class="col-md-6">
                         <label for="currentLivingWith" class="form-label">Currently Living With</label>
                         <select id="currentLivingWith" class="form-select" :disabled="!isEditing"
-                            v-model="userDetails.user.currentLivingWith">
+                            v-model="userDetails.userAgency.currentLivingWith">
                             <option value="parents">Parents</option>
                             <option value="guardian">Guardian</option>
                             <option value="sibling">Elder Sibling(s)</option>

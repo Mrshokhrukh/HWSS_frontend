@@ -1,79 +1,54 @@
 <template>
-  <div>
-    <DataTable v-model:filters="filters" :value="combinedReferrals" paginator showGridlines :rows="10" dataKey="id"
-      filterDisplay="menu" :loading="loading"
-      :globalFilterFields="['name', 'age', 'gender', 'date', 'referral_status', 'referred_by', 'referred_to', 'assessment_status', 'counseling_status', 'follow_up', 'comments']">
+  <div class="card">
+    <DataTable v-model:filters="filters" :value="acceptedReferrals" paginator :rows="10" dataKey="id"
+      filterDisplay="menu" :loading="loading" scrollable scrollHeight="400px"
+      :globalFilterFields="['name', 'age', 'gender', 'date', 'referral_status', 'referred_by', 'referred_to', 'assessment_status', 'counseling_status', 'follow_up', 'comments']"
+      tableStyle="min-width: 75rem" striped class="p-datatable-sm">
       <template #header>
         <div class="flex justify-content-between">
           <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined @click="clearFilter()" />
         </div>
       </template>
-      <template #empty> No referrals found. </template>
+      <template #empty> No accepted referrals found. </template>
       <template #loading> Loading referrals data. Please wait. </template>
-      <Column field="date" header="Date" :sortable="true" style="min-width: 10rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by date" />
+
+      <Column field="date" header="Date" :sortable="true">
+        <template #body="{ data }">
+          {{ new Date(data.date).toLocaleDateString() }}
         </template>
       </Column>
-      <Column field="name" header="Name" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by name" />
+      <Column field="name" header="Name" :sortable="true" />
+      <Column field="age" header="Age" :sortable="true" />
+      <Column field="gender" header="Gender" :sortable="true" />
+      <Column field="referred_to" header="Referred To" :sortable="true" />
+      <Column field="referred_by" header="Referred By" :sortable="true" />
+      <Column field="referral_status" header="Status" :sortable="true">
+        <template #body="{ data }">
+          <Tag :value="data.referral_status" :severity="getStatusSeverity(data.referral_status)" />
         </template>
       </Column>
-      <Column field="age" header="Age" :sortable="true" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by age" />
+      <Column field="assessment_status" header="Assessment" :sortable="true">
+        <template #body="{ data }">
+          <Tag :value="data.assessment_status" :severity="getStatusSeverity(data.assessment_status)" />
         </template>
       </Column>
-      <Column field="gender" header="Gender" :sortable="true" style="min-width: 8rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="genderOptions" optionLabel="gender"
-            placeholder="Search by gender" class="p-column-filter" />
+      <Column field="counseling_status" header="Counseling" :sortable="true">
+        <template #body="{ data }">
+          <Tag :value="data.counseling_status" :severity="getStatusSeverity(data.counseling_status)" />
         </template>
       </Column>
-      <Column field="referred_to" header="Referred To" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-            placeholder="Search by referred to" />
-        </template>
-      </Column>
-      <Column field="referred_by" header="Referred By" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-            placeholder="Search by referred by" />
-        </template>
-      </Column>
-      <Column field="referral_status" header="Referral Status" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="statusOptions" optionLabel="status"
-            placeholder="Search by status" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="assessment_status" header="Assessment Status" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="assessmentStatusOptions" optionLabel="status"
-            placeholder="Search by assessment status" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="counseling_status" header="Counseling Status" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <MultiSelect v-model="filterModel.value" :options="counselingStatusOptions" optionLabel="status"
-            placeholder="Search by counseling status" class="p-column-filter" />
-        </template>
-      </Column>
-      <Column field="follow_up" header="Follow-up" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter"
-            placeholder="Search by follow-up" />
-        </template>
-      </Column>
-      <Column field="comments" header="Comments" :sortable="true" style="min-width: 12rem">
-        <template #filter="{ filterModel }">
-          <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Search by comments" />
+      <Column field="follow_up" header="Follow-up" :sortable="true" />
+      <Column field="comments" header="Comments" :sortable="true">
+        <template #body="{ data }">
+          <Button icon="pi pi-comment" class="p-button-text" @click="showComments(data.comments)" />
         </template>
       </Column>
     </DataTable>
   </div>
+
+  <Dialog v-model:visible="commentsVisible" header="Comments" :style="{ width: '50vw' }">
+    <p>{{ selectedComments }}</p>
+  </Dialog>
 </template>
 
 <script setup>
@@ -83,13 +58,11 @@ import axios from 'axios';
 import endpoints from '@/api';
 
 const filters = ref({});
-const genderOptions = ref([]);
-const statusOptions = ref([]);
-const assessmentStatusOptions = ref([]);
-const counselingStatusOptions = ref([]);
 const loading = ref(true);
 const referralList = ref([]);
 const serviceAndTreatmentList = ref([]);
+const commentsVisible = ref(false);
+const selectedComments = ref('');
 
 const initFilters = () => {
   filters.value = {
@@ -108,9 +81,9 @@ const initFilters = () => {
   };
 };
 
-const clearFilter = () => {
-  initFilters();
-};
+const acceptedReferrals = computed(() => {
+  return combinedReferrals.value.filter(referral => referral.referral_status.toLowerCase() === 'accepted');
+});
 
 const combinedReferrals = computed(() => {
   return referralList.value.map(referral => {
@@ -132,11 +105,17 @@ const combinedReferrals = computed(() => {
   });
 });
 
-const updateFilterOptions = () => {
-  genderOptions.value = [...new Set(combinedReferrals.value.map(r => r.gender))].map(gender => ({ gender }));
-  statusOptions.value = [...new Set(combinedReferrals.value.map(r => r.referral_status))].map(status => ({ status }));
-  assessmentStatusOptions.value = [...new Set(combinedReferrals.value.map(r => r.assessment_status))].map(status => ({ status }));
-  counselingStatusOptions.value = [...new Set(combinedReferrals.value.map(r => r.counseling_status))].map(status => ({ status }));
+const getStatusSeverity = (status) => {
+  const statusLower = status.toLowerCase();
+  if (statusLower.includes('complete') || statusLower === 'accepted') return 'success';
+  if (statusLower.includes('progress') || statusLower === 'scheduled') return 'warning';
+  if (statusLower.includes('not') || statusLower === 'pending') return 'danger';
+  return 'info';
+};
+
+const showComments = (comments) => {
+  selectedComments.value = comments;
+  commentsVisible.value = true;
 };
 
 const fetchData = async () => {
@@ -165,7 +144,6 @@ onMounted(async () => {
   loading.value = true;
   try {
     await fetchData();
-    updateFilterOptions();
   } catch (error) {
     console.error('Error fetching data:', error);
   } finally {
@@ -173,3 +151,25 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style scoped>
+.p-datatable .p-datatable-thead>tr>th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+}
+
+.p-datatable .p-datatable-tbody>tr {
+  transition: box-shadow 0.2s;
+}
+
+.p-datatable .p-datatable-tbody>tr:hover {
+  background-color: #e9ecef;
+  cursor: pointer;
+}
+
+.p-tag {
+  width: 80px;
+  justify-content: center;
+}
+</style>

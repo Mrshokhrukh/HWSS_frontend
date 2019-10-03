@@ -1,12 +1,4 @@
 function getBaseUrl() {
-  console.log('Environment Variables:', import.meta.env);
-  console.log('VITE_DEVELOPMENT_MODE is expected to be defined in the .env file located at the root of the project.');
-  console.log('VITE_API_HOST:', import.meta.env.VITE_API_HOST, '-> Expected in .env');
-  console.log('VITE_API_PORT:', import.meta.env.VITE_API_PORT, '-> Expected in .env');
-  console.log('VITE_API_PROTOCOL:', import.meta.env.VITE_API_PROTOCOL, '-> Expected in .env');
-  console.log('VITE_API_PROTOCOL:', import.meta.env.VITE_DEVELOPMENT_MODE, '-> Expected in .env');
-  console.log('VITE_PRODUCTION_API_URL:', import.meta.env.VITE_PRODUCTION_API_URL, '-> Expected in .env');
-
   if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
     const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
     const apiPort = import.meta.env.VITE_API_PORT || '8123';
@@ -16,7 +8,6 @@ function getBaseUrl() {
     return import.meta.env.VITE_PRODUCTION_API_URL;
   }
 }
-
 
 function getScreeningBaseUrl() {
   if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {

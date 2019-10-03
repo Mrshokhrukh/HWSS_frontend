@@ -1,5 +1,5 @@
 <template>
-  <DataTable v-model:filters="filters" :value="rowData" :paginator="true" :rows="10" :dataKey="'id'" filterMode="menu"
+  <DataTable v-model:filters="filters" :value="filteredRowData" :paginator="true" :rows="10" :dataKey="'id'" filterMode="menu"
     :filters="{ 'global': { matchMode: 'contains' } }" :emptyMessage="'No referral requests found.'"
     :loading="rowData.length === 0">
     <template #header>
@@ -21,37 +21,71 @@
     <Column field="user_data.name" header="Name" :filterMatchMode="'contains'" :sortable="true"
       :style="{ 'min-width': '12rem' }">
       <template #body="{ data }">
-        {{ data.user_data.name }}
+        {{ data.user_data.name ? data.user_data.name : '-- No Data --' }}
       </template>
       <template #filter="{ filterModel }">
         <InputText v-model="filterModel['user_data.name']" type="text" class="p-column-filter"
           placeholder="Search by name" />
       </template>
     </Column>
-    <!-- Include additional columns -->
-
     <Column field="user_data.age" header="Age" :filterMatchMode="'equals'" :sortable="true"
-      :style="{ 'min-width': '8rem' }" />
-    <Column field="user_data.gender" header="Gender" :filterMatchMode="'equals'" :sortable="true"
-      :style="{ 'min-width': '8rem' }" />
-    <Column field="referred_to.name" header="Referred To" :filterMatchMode="'contains'" :sortable="true"
-      :style="{ 'min-width': '12rem' }" />
-    <Column field="referred_by.username" header="Referred By" :filterMatchMode="'contains'" :sortable="true"
-      :style="{ 'min-width': '12rem' }" />
-    <Column field="referral_status" header="Referral Status" :filterMatchMode="'equals'" :sortable="true"
-      :style="{ 'min-width': '10rem' }" />
-    <Column field="assessment_status" header="Assessment Status" :filterMatchMode="'equals'" :sortable="true"
-      :style="{ 'min-width': '12rem' }" />
-    <Column field="counseling_status" header="Counseling Status" :filterMatchMode="'equals'" :sortable="true"
-      :style="{ 'min-width': '12rem' }" />
-    <Column field="follow_up" header="Follow Up" :filterMatchMode="'equals'" :sortable="true"
-      :style="{ 'min-width': '12rem' }" />
-    <Column field="comments" header="Comments" :filterMatchMode="'contains'" :sortable="true"
-      :style="{ 'min-width': '12rem' }" />
-
-    <Column :style="{ 'min-width': '8rem' }" header="Actions">
+      :style="{ 'min-width': '8rem' }">
       <template #body="{ data }">
-        <Button type="button" icon="pi pi-pencil" label="View" class="btn hwss-btn"
+        {{ data.user_data.age || '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="user_data.gender" header="Gender" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '8rem' }">
+      <template #body="{ data }">
+        {{ data.user_data.gender ? data.user_data.gender : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="referred_to.name" header="Referred To" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.referred_to.name ? data.referred_to.name : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="referred_by.username" header="Referred By" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.referred_by.username ? data.referred_by.username : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="referral_status" header="Referral Status" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '10rem' }">
+      <template #body="{ data }">
+        {{ data.referral_status ? data.referral_status : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="assessment_status" header="Assessment Status" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.assessment_status ? data.assessment_status : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="counseling_status" header="Counseling Status" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.counseling_status ? data.counseling_status : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="follow_up" header="Follow Up" :filterMatchMode="'equals'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.follow_up ? data.follow_up : '-- No Data --' }}
+      </template>
+    </Column>
+    <Column field="comments" header="Comments" :filterMatchMode="'contains'" :sortable="true"
+      :style="{ 'min-width': '12rem' }">
+      <template #body="{ data }">
+        {{ data.comments ? data.comments : '-- No Data --' }}
+      </template>
+    </Column>
+
+    <Column :style="{ 'min-width': '8rem' }" header="ACTIONS">
+      <template #body="{ data }">
+        <Button type="button" icon="pi pi-check" label="Accept/Reject" class="btn hwss-btn"
           @click="showCustomConfirmDialog(data)" />
       </template>
     </Column>
@@ -60,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import Swal from 'sweetalert2';
@@ -69,10 +103,14 @@ const referrals = ref([]);
 const rowData = ref([]);
 const filters = ref({});
 
+const filteredRowData = computed(() => {
+  return rowData.value.filter(referral => referral.referral_status.toLowerCase() === 'awaiting');
+});
+
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) {
-    return '';
+    return '-- No Data --';
   } else {
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
   }
@@ -96,7 +134,12 @@ const clearFilter = () => {
 const showCustomConfirmDialog = async (referral) => {
   Swal.fire({
     title: 'Confirm Action',
-    text: 'Do you want to accept or reject this referral?',
+    html: `
+      <p><strong>Referred By:</strong> ${referral.referred_by.username || '-- No Data --'}</p>
+      <p><strong>Date of Referral:</strong> ${formatDate(referral.date)}</p>
+      <p><strong>Patient Name:</strong> ${referral.user_data.name || '-- No Data --'}</p>
+      <p>Do you want to accept or reject this referral?</p>
+    `,
     icon: 'question',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',

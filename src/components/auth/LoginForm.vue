@@ -53,6 +53,12 @@
                 </div>
             </div>
         </div>
+        <div v-if="loading"
+            class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-light bg-opacity-75">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -66,10 +72,10 @@ import Swal from 'sweetalert2';
 import loginLogo from '@/assets/images/seal.png';
 
 const router = useRouter();
+const userDetailsStore = useUserDetailsStore();
 
 const username = ref('');
 const password = ref('');
-const loginStatus = ref(null);
 const loading = ref(false);
 const tagline = ref('');
 
@@ -86,13 +92,36 @@ onMounted(async () => {
 const loginUser = async () => {
     loading.value = true;
     try {
-        const response = await axios.post(endpoints.loginUsers, {
+        const loginResponse = await axios.post(endpoints.loginUsers, {
             username: username.value,
             password: password.value,
         });
 
-        localStorage.setItem('authToken', response.data.token);
-        await fetchUserAndAgencyDetails(response.data.user_role, response.data.token);
+        const authToken = loginResponse.data.token;
+        localStorage.setItem('authToken', authToken);
+
+        // Fetch minimal user details needed for routing
+        const userDetailsResponse = await axios.get(endpoints.getUserDetails, {
+            headers: { Authorization: `Token ${authToken}` },
+        });
+
+        const { user } = userDetailsResponse.data;
+
+        // Show success message and redirect
+        Swal.fire({
+            title: 'Login Successful!',
+            text: 'Redirecting to dashboard...',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1000
+        });
+
+        // Redirect to dashboard
+        redirectToDashboard(user.role);
+
+        // Fetch full user details in the background
+        fetchFullUserDetails(authToken);
+
     } catch (error) {
         handleLoginError(error);
     } finally {
@@ -100,50 +129,20 @@ const loginUser = async () => {
     }
 };
 
-const fetchUserAndAgencyDetails = async (userRole, authToken) => {
+const fetchFullUserDetails = async (authToken) => {
     try {
-        // Fetch user details from the API
         const response = await axios.get(endpoints.getUserDetails, {
             headers: { Authorization: `Token ${authToken}` },
         });
 
-        // Destructure the response data
         const { user, agency, userAgency } = response.data;
         const userAgencyDetails = userAgency.length ? userAgency[0] : {};
 
-        // Access the userDetails store instance
-        const userDetailsStore = useUserDetailsStore();
-
-        // Call the setUserDetails action with the retrieved data
-        const storeResponse = await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails });
-
-        // Handle the response from the store
-        if (storeResponse.status === 'success') {
-            Swal.fire({
-                title: 'Login Successful!',
-                text: 'Your data has been successfully retrieved.',
-                icon: 'success',
-                showConfirmButton: false,
-                timer: 500
-            }).then(() => {
-                redirectToDashboard(userRole);
-            });
-        } else {
-            // Show error message based on the response message
-            if (storeResponse.message.includes('Invalid Credentials')) {
-                Swal.fire('Error', 'Invalid username or password.', 'error');
-            } else if (storeResponse.message.includes('User with username:')) {
-                Swal.fire('Error', 'User with the given username not found.', 'error');
-            } else {
-                Swal.fire('Error', 'Failed to fetch user details.', 'error');
-            }
-        }
+        await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails });
     } catch (error) {
-        console.error('Error fetching user details:', error);
-        Swal.fire('Error', 'Failed to fetch user details.', 'error');
+        console.error('Error fetching full user details:', error);
     }
 };
-
 
 const redirectToDashboard = (userRole) => {
     const dashboardRoutes = {
@@ -163,21 +162,17 @@ const redirectToDashboard = (userRole) => {
 };
 
 const handleLoginError = (error) => {
-    let errorMessage = 'Login failed';
+    let errorMessage = 'Login failed. Please try again.';
     if (error.response && error.response.data) {
-        const data = error.response.data.error;
-        if (data === 'Wrong password') {
-            errorMessage = 'The given password for your username is invalid.';
-        } else if (data === 'User not found') {
-            errorMessage = 'User with the given username was not found in our system.';
-        } else {
-            errorMessage = `Login failed: ${data.error}`;
+        const data = error.response.data;
+        if (data.error === 'Wrong password') {
+            errorMessage = 'Invalid password. Please try again.';
+        } else if (data.error === 'User not found') {
+            errorMessage = 'User not found. Please check your username.';
         }
     }
-    loginStatus.value = errorMessage;
     Swal.fire('Login Failed', errorMessage, 'error');
 };
-
 </script>
 
 <style scoped>
