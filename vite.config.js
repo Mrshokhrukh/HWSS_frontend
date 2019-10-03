@@ -5,11 +5,15 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
 import { PrimeVueResolver } from 'unplugin-vue-components/resolvers';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 
 export default defineConfig({
-  define: {
-    'process.env': process.env
-  },
   css: {
     devSourcemap: true,
   },

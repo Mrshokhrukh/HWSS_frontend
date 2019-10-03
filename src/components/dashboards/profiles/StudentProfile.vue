@@ -20,21 +20,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useUserDetailsStore } from '@/stores/userDetails';
 import StudentDetailsCard from './studentProfileCards/StudentDetailsCard.vue';
 import PersonalDetailsCard from './studentProfileCards/StudentPersonalDetailsCard.vue';
 import ChangePasswordCard from './studentProfileCards/StudentChangePasswordCard.vue';
 
-// eslint-disable-next-line no-unused-vars
-const userDetailsStore = useUserDetailsStore();
-const userDetails = ref({});
-
-onMounted(() => {
-    // console.log(userDetailsStore.$state);
-});
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
