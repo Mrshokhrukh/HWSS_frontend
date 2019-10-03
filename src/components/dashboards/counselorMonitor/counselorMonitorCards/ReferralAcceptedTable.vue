@@ -63,6 +63,7 @@ const referralList = ref([]);
 const serviceAndTreatmentList = ref([]);
 const commentsVisible = ref(false);
 const selectedComments = ref('');
+const currentUserId = ref(null);
 
 const initFilters = () => {
   filters.value = {
@@ -81,15 +82,36 @@ const initFilters = () => {
   };
 };
 
+const getUserDetailsFromLocalStorage = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+  if (userDetailsString) {
+    try {
+      const userDetails = JSON.parse(userDetailsString);
+      currentUserId.value = userDetails.user.id;
+      console.log('Current user ID:', currentUserId.value);
+    } catch (error) {
+      console.error('Error parsing user details from local storage:', error);
+    }
+  } else {
+    console.error('User details not found in local storage');
+  }
+};
+
+
 const acceptedReferrals = computed(() => {
-  return combinedReferrals.value.filter(referral => referral.referral_status.toLowerCase() === 'accepted');
+  console.log('Combined referrals:', combinedReferrals.value);
+  console.log('Current user ID:', currentUserId.value);
+  return combinedReferrals.value.filter(referral =>
+    referral.referral_status.toLowerCase() === 'accepted' &&
+    referral.referred_to_id === currentUserId.value
+  );
 });
 
 const combinedReferrals = computed(() => {
   return referralList.value.map(referral => {
-    const serviceData = serviceAndTreatmentList.value.find(service => service.user.id === referral.user_data.id) || {};
+    const serviceData = serviceAndTreatmentList.value.find(service => service.user.id === referral.user_data.patient_id) || {};
     return {
-      id: referral.id,
+      id: referral.user_data.patient_id,
       date: referral.date,
       name: referral.user_data.name,
       age: referral.user_data.age,
@@ -100,10 +122,12 @@ const combinedReferrals = computed(() => {
       assessment_status: serviceData.assessment_status || 'Not Available',
       counseling_status: serviceData.counseling || 'Not Available',
       follow_up: serviceData.follow_up || 'Not Available',
-      comments: serviceData.comments || 'No comments'
+      comments: serviceData.comments || 'No comments',
+      referred_to_id: referral.referred_to.user_id
     };
   });
 });
+
 
 const getStatusSeverity = (status) => {
   const statusLower = status.toLowerCase();
@@ -138,9 +162,11 @@ const fetchData = async () => {
     console.error('Error fetching data:', error);
   }
 };
-
+console.log("data referral", referralList)
+console.log("data service data", serviceAndTreatmentList)
 onMounted(async () => {
   initFilters();
+  getUserDetailsFromLocalStorage();
   loading.value = true;
   try {
     await fetchData();
