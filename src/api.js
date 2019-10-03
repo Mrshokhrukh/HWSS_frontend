@@ -58,6 +58,7 @@ const endpoints = {
   getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
   getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,
   authenticateToken: `${accessBaseUrl}/authenticate-token/`,
+  confirmUser: `${accessBaseUrl}/check_email_cid/`,
 
   verifyPreRecordedUser: `${accessBaseUrl}/verify-pre-recorded-user/`,
   registerPreRecordedUser: `${accessBaseUrl}/register-pre-recorded-user/`,
