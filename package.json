@@ -20,6 +20,7 @@
     "chart.js": "^4.4.2",
     "d3": "^7.9.0",
     "file-saver": "^2.0.5",
+    "hwss-frontend": "file:",
     "ionicons": "^7.2.2",
     "js-cookie": "^3.0.5",
     "jszip": "^3.10.1",
