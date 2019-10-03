@@ -74,7 +74,8 @@
         <Tag :value="data.referral_status" :severity="getStatusSeverity(data.referral_status)" />
       </template>
       <template #filter="{ filterModel }">
-        <Dropdown v-model="filterModel['referral_status']" :options="statusOptions" optionLabel="label" optionValue="value" placeholder="Select Status" class="p-column-filter" style="min-width: 12rem" />
+        <Dropdown v-model="filterModel['referral_status']" :options="statusOptions" optionLabel="label"
+          optionValue="value" placeholder="Select Status" class="p-column-filter" style="min-width: 12rem" />
       </template>
     </Column>
     <Column :style="{ 'min-width': '8rem' }">
@@ -92,7 +93,8 @@
         <div class="col-12 md:col-4 lg:col-3">
           <Card class="h-full">
             <template #header>
-              <img :src="selectedUser?.profile_picture || '/path/to/default/image.jpg'" alt="User Profile" class="w-full" />
+              <img :src="selectedUser?.profile_picture || '/path/to/default/image.jpg'" alt="User Profile"
+                class="w-full" />
             </template>
             <template #title>
               {{ `${selectedUser?.first_name} ${selectedUser?.middle_name} ${selectedUser?.last_name}` }}
@@ -176,30 +178,30 @@
               <div class="grid">
                 <div class="col-12 mb-3">
                   <h5>Case Status</h5>
-                  <Dropdown v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0"
-                    v-model="selectedUser.service_and_treatment_details[0].case_status"
-                    :options="caseStatusOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Select Case Status"
-                    class="w-full"
+                  <Dropdown
+                    v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0"
+                    v-model="selectedUser.service_and_treatment_details[0].case_status" :options="caseStatusOptions"
+                    optionLabel="label" optionValue="value" placeholder="Select Case Status" class="w-full"
                     :disabled="selfRole === 'trained_professional'" />
                 </div>
                 <div class="col-12 mb-3">
                   <h5>Severity</h5>
-                  <div v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0" class="flex flex-wrap gap-2">
-                    <Tag v-for="substance in selectedUser.substance_risk_measurement_details" 
-                         :key="substance.substance_name"
-                         :value="substance.substance_name.split('(')[0].trim()"
-                         :severity="getSeverity(substance.risk_flag)"
-                         v-if="substance.risk_flag !== 'none'" />
+                  <div v-if="selectedUser?.substance_risk_measurement_details?.length > 0" class="flex flex-wrap gap-2">
+                    <Tag v-for="substance in selectedUser.substance_risk_measurement_details"
+                      :key="substance?.substance_name || 'unknown'"
+                      :value="substance?.substance_name?.split('(')[0].trim() || 'Unknown'"
+                      :severity="getSeverity(substance?.risk_flag)"
+                      v-if="substance?.risk_flag && substance.risk_flag !== 'none'" />
                   </div>
                   <p v-else class="text-green-500">No ASSIST measurements found</p>
                 </div>
                 <div class="col-12 mb-3">
                   <h5>Additional Information</h5>
-                  <p><strong>Non-Medical Drug use through injection:</strong> {{ selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</p>
-                  <p><strong>Past Mental Health Disorder history:</strong> {{ selectedUser.past_disorder || 'No Diagnosis' }}</p>
+                  <p><strong>Non-Medical Drug use through injection:</strong> {{ selectedUser.injection_use ? 'YES' :
+                    'Not Applicable' }}</p>
+                  <p><strong>Past Mental Health Disorder history:
+                    </strong> {{ selectedUser.past_disorder || 'No Diagnosis'
+                    }}</p>
                 </div>
               </div>
             </TabPanel>
@@ -208,7 +210,8 @@
               <div class="grid">
                 <div class="col-12 md:col-6 mb-3">
                   <label for="assessmentStatus">Assessment Status:</label>
-                  <Dropdown id="assessmentStatus" v-model="selectedUser.service_and_treatment_details[0].assessment_status"
+                  <Dropdown id="assessmentStatus"
+                    v-model="selectedUser.service_and_treatment_details[0].assessment_status"
                     :options="assessmentStatusOptions" optionLabel="label" optionValue="value" class="w-full" />
                 </div>
                 <div class="col-12 md:col-6 mb-3">
@@ -223,7 +226,8 @@
                 </div>
                 <div class="col-12 mb-3">
                   <label for="comments">Comments:</label>
-                  <Textarea id="comments" v-model="selectedUser.service_and_treatment_details[0].comments" rows="5" class="w-full" />
+                  <Textarea id="comments" v-model="selectedUser.service_and_treatment_details[0].comments" rows="5"
+                    class="w-full" />
                 </div>
               </div>
               <div class="flex justify-content-end mt-4">
@@ -231,15 +235,18 @@
               </div>
             </TabPanel>
 
-            <TabPanel header="Referral" :disabled="selectedUser.service_and_treatment_details[0].referred !== 'Not Referred'">
+            <TabPanel header="Referral"
+              :disabled="selectedUser.service_and_treatment_details[0].referred !== 'Not Referred'">
               <div class="grid">
                 <div class="col-12 md:col-6 mb-3">
                   <label for="referTo">Refer To:</label>
-                  <Dropdown id="referTo" v-model="selectedUser.refer_to" :options="referToOptions" optionLabel="label" optionValue="value" class="w-full" />
+                  <Dropdown id="referTo" v-model="selectedUser.refer_to" :options="referToOptions" optionLabel="label"
+                    optionValue="value" class="w-full" />
                 </div>
                 <div class="col-12 md:col-6 mb-3">
                   <label for="official">Official:</label>
-                  <Dropdown id="official" v-model="selectedUser.official" :options="officialOptions" optionLabel="full_name" optionValue="id" class="w-full" />
+                  <Dropdown id="official" v-model="selectedUser.official" :options="officialOptions"
+                    optionLabel="full_name" optionValue="id" class="w-full" />
                 </div>
               </div>
               <div class="flex justify-content-end mt-4">
@@ -350,6 +357,7 @@ const getStatusSeverity = (status) => {
 };
 
 const getSeverity = (riskFlag) => {
+  if (!riskFlag) return null;
   switch (riskFlag.toLowerCase()) {
     case 'severe': return 'danger';
     case 'moderate': return 'warning';
