@@ -21,7 +21,7 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, watchEffect } from 'vue';
 
@@ -29,8 +29,8 @@ import ReferralListTable from './ReferralListTable.vue';
 import ReferralRequestsTable from './ReferralRequestsTable.vue';
 import ReferralAcceptedTable from './ReferralAcceptedTable.vue';
 
-const referrals = ref([]);  
-const selectedValue = ref('referralRequests');
+const referrals = ref([]);
+const selectedValue = ref('referralList');
 
 const selectedTable = ref(ReferralRequestsTable);
 
@@ -49,4 +49,3 @@ watchEffect(() => {
     }
 });
 </script>
-  
