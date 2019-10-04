@@ -155,6 +155,7 @@ const redirectToDashboard = (userRole) => {
         rd_admin: 'admin-dashboard',
         sud_admin: 'admin-dashboard',
         aaa_admin: 'admin-dashboard',
+        cecd_admin: 'admin-dashboard',
     };
 
     const routeName = dashboardRoutes[userRole] || 'public-dashboard';

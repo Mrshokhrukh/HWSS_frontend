@@ -15,23 +15,18 @@
 		</div>
 
 		<!-- Menu Items -->
-		<div v-if="isRNDAdmin === 'rd_admin'" class="menu-container">
+		<div class="menu-container">
 			<nav class="menu-items">
-				<router-link class="side-btn" :class="{ active: $route.path === '/rd-admin' }"
-					v-b-tooltip.hover.right="{ title: 'RD Admin Dashboard', disabled: sidebarStore.isOpen }">
-					<i class="fas fa-tachometer-alt link-icon"></i>
-					<span class="link-text" v-if="sidebarStore.isOpen">RD Admin Dashboard</span>
-				</router-link>
-			</nav>
-		</div>
-		<div v-else class="menu-container">
-			<nav class="menu-items">
-				<router-link v-for="(menu, index) in menus" :key="index" :to="menu.route" class="side-btn"
-					:class="{ active: $route.path === menu.route }"
-					v-b-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
-					<i :class="menu.iconClass" class="link-icon"></i>
-					<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
-				</router-link>
+				<template v-for="(menu, index) in filteredMenus" :key="index">
+					<router-link 
+						:to="menu.route" 
+						class="side-btn"
+						:class="{ active: $route.path === menu.route }"
+						v-b-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
+						<i :class="menu.iconClass" class="link-icon"></i>
+						<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
+					</router-link>
+				</template>
 			</nav>
 		</div>
 
@@ -39,11 +34,11 @@
 		<div class="sidebar-footer mt-auto">
 			<router-link to="#" class="side-btn logout-btn" @click="logout"
 				v-b-tooltip.hover.right="{ title: 'Log Out', disabled: sidebarStore.isOpen }">
-				<i class="fas fa-sign-out-alt"></i>
+				<i class="fas fa-sign-out-alt me-3"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
 			</router-link>
 
-			<button class="toggle-btn" @click="toggle"
+			<button class="toggle-btn d-none" @click="toggle"
 				v-b-tooltip.hover.right="{ title: sidebarStore.isOpen ? 'Collapse' : 'Expand', disabled: sidebarStore.isOpen }">
 				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
 				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
@@ -53,10 +48,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
-import axios from "axios";
-import endpoints from "@/api";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { useUserDetailsStore } from "@/stores/userDetails";
 import { useProgressStore } from "@/stores/progressStore";
@@ -67,6 +60,41 @@ const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
 
+// Static menu definitions
+const menuConfig = {
+  student: [
+    { text: "Dashboard", route: "/student-dashboard", iconClass: "fas fa-tachometer-alt" },
+    { text: "Screening", route: "/student-dashboard/screening", iconClass: "fas fa-question-circle" },
+    { text: "Profile", route: "/student-dashboard/profile", iconClass: "fas fa-user" }
+  ],
+  counselor: [
+    { text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
+    { text: "Screening", route: "/counselor-dashboard/counselor-screening", iconClass: "fa-solid fa-person-circle-question" },
+    { text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
+    { text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
+    { text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
+    { text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
+  ],
+  admin: [
+    { text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
+    { text: "Approval", route: "/admin-dashboard/admin-approval", iconClass: "fa-regular fa-thumbs-up" },
+    { text: "Reports", route: "/admin-dashboard/admin-report", iconClass: "fa-regular fa-file-lines" },
+    { text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
+    { text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
+  ],
+  limited_admin: [
+    { text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
+    { text: "Reports", route: "/admin-dashboard/admin-report", iconClass: "fa-regular fa-file-lines" },
+    { text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
+    { text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
+  ],
+  rnd_limited_admin: [
+    { text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
+    { text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
+    { text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
+  ]
+};
+
 const fullName = computed(() => {
 	const { firstName, middleName, lastName } = userDetailsStore.user;
 	return `${firstName} ${middleName ? middleName + ' ' : ''}${lastName}`.trim();
@@ -75,68 +103,59 @@ const fullName = computed(() => {
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
-	const role = userDetailsStore.user.role?.toLowerCase();
-	if (!role) return "Public User";
+  const role = userDetailsStore.user.role?.toLowerCase() || "public_user";
 
-	if (role.includes("admin")) return "Administrator";
-	if (role.includes("counselor") || role.includes("professional")) return "Counselor";
-	if (role === "student") return "Student";
-	return role.charAt(0).toUpperCase() + role.slice(1);
+  if (role.includes("admin")) {
+    return "Administrator";
+  }
+
+  switch (role) {
+    case "student":
+      return "Student";
+    default:
+      if (role.includes("counselor") || role.includes("professional")) {
+        return "Counselor";
+      }
+      return "Public User";
+  }
 });
 
-const fetchedMenus = ref([]);
-
-sidebarStore.initializeSidebarState();
-
-const toggle = () => {
-	sidebarStore.toggle();
-};
+const filteredMenus = computed(() => {
+  const role = userDetailsStore.user.role?.toLowerCase();
+  
+  // Special handling for CECD_ADMIN
+  if (role === 'cecd_admin') {
+    return menuConfig.limited_admin;
+	}
+  
+  // Special handling for RD_ADMIN
+  if (role === 'rd_admin') {
+    return menuConfig.rnd_limited_admin;
+  }
+  
+  // Regular role-based menu selection
+  if (role === 'student') return menuConfig.student;
+  if (role.includes('counselor')) return menuConfig.counselor;
+  if (role.includes('admin')) return menuConfig.admin;
+  
+  return []; // Default empty menu if no role matches
+});
 
 const profilePicClass = computed(() => {
 	return sidebarStore.isOpen ? "profile-pic" : "mini-profile-pic";
 });
 
-const menus = computed(() => {
-	const baseRoute = `/${userType.value.toLowerCase()}-dashboard`;
-
-	const staticMenuItems = [
-		{ text: "Dashboard", route: baseRoute, iconClass: "fas fa-tachometer-alt" },
-	];
-
-	const role = userType.value.toLowerCase();
-
-	const dynamicMenuItems = fetchedMenus.value
-		.filter((menu) => menu.roles.some((r) => r.name === role))
-		.map((menu) => ({
-			text: menu.name,
-			route: menu.route,
-			iconClass: menu.icon_class,
-		}));
-
-	return [...staticMenuItems, ...dynamicMenuItems];
-});
-
-const fetchMenuItems = async () => {
-	try {
-		const response = await axios.get(endpoints.menuItem);
-		fetchedMenus.value = response.data;
-	} catch (error) {
-		console.error("Error fetching menu items:", error);
-	}
-};
-
 const profilePictureUrl = computed(() => {
 	const baseUrl =
 		window.location.hostname === "localhost" && window.location.port === "5173"
 			? "http://localhost:8000"
-			: "https://app.thepemasystem.gov.bt";
+			: "https://thepemasystem.gov.bt";
 	return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
 });
 
-const adminRole = JSON.parse(localStorage.getItem('userDetailsStore'));
-const userOriginalRole = adminRole.user.role;
-
-const isRNDAdmin = computed(() => userOriginalRole === 'rd_admin');
+const toggle = () => {
+	sidebarStore.toggle();
+};
 
 const logout = async () => {
 	const progressStore = useProgressStore();
@@ -145,38 +164,29 @@ const logout = async () => {
 	}
 
 	try {
-		if (endpoints.logOutUser) {
-			const response = await axios.post(endpoints.logOutUser);
-			if (response && response.data) {
-				if (response.data.message === "Logout successful") {
-					if (localStorage) {
-						for (let key in localStorage) {
-							if (key !== 'userScreenedToday') {
-								localStorage.removeItem(key);
-							}
-						}
-					}
-					if (sessionStorage) {
-						sessionStorage.clear();
-					}
-					if (userDetailsStore) {
-						userDetailsStore.clearUserDetails();
-					}
-
-					await Swal.fire({
-						title: 'Logged Out',
-						text: 'You have been successfully logged out of the system.',
-						icon: 'success',
-						showConfirmButton: false,
-						timer: 1200
-					});
-
-					router.push("/login");
-				} else {
-					console.error("Logout failed:", response.data.message);
+		if (localStorage) {
+			for (let key in localStorage) {
+				if (key !== 'userScreenedToday') {
+					localStorage.removeItem(key);
 				}
 			}
 		}
+		if (sessionStorage) {
+			sessionStorage.clear();
+		}
+		if (userDetailsStore) {
+			userDetailsStore.clearUserDetails();
+		}
+
+		await Swal.fire({
+			title: 'Logged Out',
+			text: 'You have been successfully logged out of the system.',
+			icon: 'success',
+			showConfirmButton: false,
+			timer: 1200
+		});
+
+		router.push("/login");
 	} catch (error) {
 		console.error("Logout failed:", error);
 		await Swal.fire({
@@ -187,10 +197,6 @@ const logout = async () => {
 		});
 	}
 };
-
-onMounted(() => {
-	fetchMenuItems();
-});
 </script>
 
 <style scoped>
@@ -200,7 +206,7 @@ onMounted(() => {
 	transition: all 0.3s ease-in-out;
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 0;
+	padding: 1rem 0 0 0;
 	position: fixed;
 	z-index: 999;
 	height: 100vh;
@@ -308,7 +314,7 @@ onMounted(() => {
 
 .sidebar-footer {
 	margin-top: auto;
-	padding: 1rem;
+	padding: 0 1rem;
 }
 
 .logout-btn,

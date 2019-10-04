@@ -1,3 +1,4 @@
+<!-- eslint-disable no-unused-vars -->
 <template>
     <!-- template for Mental Health admin -->
     <div class="card admin-card p-4 mb-3 h-100 w-100">
@@ -86,6 +87,21 @@
                 <RnDDashboard />
             </div>
 
+            <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
+                <RndHelp />
+            </div>
+
+            <div v-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-setting">
+                <RnDSetting />
+            </div>
+        </div>
+
+        <!-- Template for CECD Admin -->
+        <div v-if="userRole === 'cecd_admin'">
+            <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
+                <RnDDashboard />
+            </div>
+
             <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
                 <AAAReport />
             </div>
@@ -135,8 +151,8 @@ import axios from 'axios';
 import endpoints from '@/api';
 import { useRoute } from 'vue-router';
 
-const reportData = ref([])
 const route = useRoute();
+const reportData = ref([])
 
 const currentRoute = computed(() => route.path);
 
@@ -164,7 +180,6 @@ const userDetailsInLocal = () => {
 
 const fetchReportData = async () => {
     try {
-        console.log('Function is triggered from admin dashboard 😊');
         const storedData = sessionStorage.getItem('reportData');
         const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
         const currentTime = new Date().getTime();
@@ -177,7 +192,6 @@ const fetchReportData = async () => {
 
             if (dataAge < maxDataAge) {
                 reportData.value = JSON.parse(storedData);
-                console.log('Using stored data:', reportData.value);
                 return;
             }
         }

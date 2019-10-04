@@ -16,7 +16,7 @@ export const useDashboardStore = defineStore('dashboard', {
       Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang', 'Gelephu Thromde'],
       Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Samdrup Jongkhar Thromde', 'Trashi Yangtse', 'Trashigang']
     },
-    
+
     isLoading: false,
     error: null,
     userRole: null,
@@ -29,7 +29,7 @@ export const useDashboardStore = defineStore('dashboard', {
     filteredData: (state) => {
       return state.reportData.filter((item) => {
         const itemDzongkhag = item.user?.fields?.ps_add_dzongkhag;
-        const itemRegion = Object.entries(state.dzongkhags).find(([_, dzongkhags]) => 
+        const itemRegion = Object.entries(state.dzongkhags).find(([dzongkhags]) =>
           dzongkhags.includes(itemDzongkhag)
         )?.[0];
 
@@ -63,14 +63,12 @@ export const useDashboardStore = defineStore('dashboard', {
       if (userDetails) {
         this.userAgencyName = userDetails.agency ? userDetails.agency.agencyName : null;
         this.userRole = userDetails.user ? userDetails.user.role : null;
-        console.log('agency name and role', this.userAgencyName, this.userRole);
       }
     },
     async fetchReportData() {
       this.isLoading = true;
       this.error = null;
       try {
-        console.log('Fetching report data...');
         const storedData = sessionStorage.getItem('reportData');
         const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
         const currentTime = new Date().getTime();
@@ -81,14 +79,12 @@ export const useDashboardStore = defineStore('dashboard', {
 
           if (dataAge < maxDataAge) {
             this.reportData = JSON.parse(storedData);
-            console.log('Using stored data:', this.reportData);
             this.isLoading = false;
             return;
           }
         }
 
         const reportResponse = await axios.get(endpoints.getReport);
-        console.log('Fetched data:', reportResponse.data);
         if (reportResponse.data && reportResponse.data.reporting_model_data) {
           let reportItems = reportResponse.data.reporting_model_data;
 
@@ -103,7 +99,6 @@ export const useDashboardStore = defineStore('dashboard', {
           this.reportData = reportItems;
           sessionStorage.setItem('reportData', JSON.stringify(this.reportData));
           sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
-          console.log('Stored new data in session storage:', this.reportData);
         } else {
           throw new Error('No data received from the API');
         }
