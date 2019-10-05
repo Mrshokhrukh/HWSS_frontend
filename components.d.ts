@@ -86,6 +86,7 @@ declare module 'vue' {
     MonitorFilterCard: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/MonitorFilterCard.vue')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     NewChatWidget: typeof import('./src/components/common/NewChatWidget.vue')['default']
+    ParticleBackground: typeof import('./src/components/ParticleBackground.vue')['default']
     PemaResponseServicesCard: typeof import('./src/components/dashboards/dashboardCard/PemaResponseServicesCard.vue')['default']
     PendingRequest: typeof import('./src/components/dashboards/Adminpages/Approval/PendingRequest.vue')['default']
     PersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/PersonalDetailsCard.vue')['default']

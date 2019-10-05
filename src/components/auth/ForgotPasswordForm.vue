@@ -1,78 +1,61 @@
 <template>
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-        <!-- This container centers its children -->
-        <div class="authbg cust-margin w-50">
-            <div class="card shadow-card my-5 shadow-lg bg-body rounded">
-                <div class="row g-0 loginbg">
-                    <div class="col-md-7">
-                        <div class="card-body d-flex flex-column justify-content-center align-items-center"
-                            style="min-height: 100%;">
-                            <div class="auth-form text-center w-100">
-                                <h1 class="text-center my-3 bold" style="color: #2B656F;">Forgot Password</h1>
-
-                                <form class="row justify-content-center align-items-center"
-                                    @submit.prevent="requestPasswordReset">
-                                    <div class="mb-3 mt-3 col-md-8">
+    <div class="vh-100 d-flex justify-content-center align-items-center authbg">
+        <div class="card shadow-card bg-body" style="width: 90%; max-width: 1000px;">
+            <div class="row g-0 h-100">
+                <div class="col-md-7 forgot-password-form-section">
+                    <div class="card-body d-flex flex-column justify-content-center h-100">
+                        <div class="auth-form text-center">
+                            <h1 class="text-center mb-4 bold forgot-password-title">Forgot Password</h1>
+                            <form class="row justify-content-center" @submit.prevent="requestPasswordReset">
+                                <div class="mb-3 col-md-10">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                                         <input v-model="email" type="email" class="form-control" placeholder="Email"
                                             required />
                                     </div>
-                                    <div class="text-center col-md-8">
-                                        <button type="submit" class="btn col-md-12 singin-button btnbg">Send Reset
-                                            Link</button>
-                                    </div>
-                                </form>
+                                </div>
+                                <div class="text-center col-md-10">
+                                    <button type="submit" class="btn col-12 reset-button btnbg">
+                                        Send Reset Link
+                                        <i class="fas fa-paper-plane ms-2"></i>
+                                    </button>
+                                </div>
+                            </form>
 
-                                <!-- Show status message based on resetStatus -->
-                                <div v-if="resetStatus === 'success'" class="alert alert-success mt-3" role="alert">
-                                    Password reset link sent! Please check your email.
-                                </div>
-                                <div v-if="resetStatus === 'failed'" class="alert alert-danger mt-3" role="alert">
-                                    Failed to send reset link. Please check the email provided and try again.
-                                </div>
-                                <br />
-                                <div>
-                                    <p class="text-center my-4">
-                                        <img src="@/assets/images/NDILogo.png" alt="NDI Logo" />
-                                        <a href="#" style="color: black; font-weight: bold"> Login with NDI</a>
-                                    </p>
-                                </div>
-                                <p class="text-center my-3" style="color: #2B656F;">
-                                    Don't have an account? <router-link to="/register"
-                                        style="color: #2B656F; font-weight: bold">Sign Up</router-link>
-                                </p>
-                                <!-- Add Forgot Password link -->
-                                <p class="text-center my-3">
-                                    <router-link to="/login" style="color: #2B656F; font-weight: bold;">Back to Sign
-                                        In</router-link>
-                                </p>
+                            <div v-if="resetStatus === 'success'" class="alert alert-success mt-3" role="alert">
+                                Password reset link sent! Please check your email.
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-5 custombg position-relative">
-                        <!-- Float-start image -->
-                        <img class="position-absolute bottom-0 start-0" src="../../assets/images/shape.png"
-                            alt="Shape Image">
+                            <div v-if="resetStatus === 'failed'" class="alert alert-danger mt-3" role="alert">
+                                Failed to send reset link. Please check the email provided and try again.
+                            </div>
 
-                        <!-- Logo and tagline container -->
-                        <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                            <!-- Bind src to the dynamic logo -->
-                            <img :src="loginLogo" alt="Logo" style="width: 350px;">
-                            <!-- Bind text to the dynamic tagline -->
-                            <h2 class="text-white display-7 mt-3 tag-line-login">{{ tagline }}</h2>
+                            <div class="mt-4">
+                                <a href="#" class="ndi-link" @click.prevent="showNDILoginAlert">
+                                    <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo me-2" />
+                                    Login with NDI
+                                </a>
+                            </div>
+                            <p class="mt-3 signup-link">
+                                Don't have an account? <router-link to="/register">Sign Up</router-link>
+                            </p>
+                            <p class="mt-2">
+                                <router-link to="/login" class="back-to-login-link">Back to Sign In</router-link>
+                            </p>
                         </div>
                     </div>
+                </div>
+                <div class="col-md-5 custombg d-flex flex-column justify-content-center align-items-center">
+                    <img class="position-absolute bottom-0 start-0 shape-img" src="../../assets/images/shape.png"
+                        alt="Shape Image">
+                    <img :src="loginLogo" alt="Logo" class="img-fluid logo-image mb-3">
+                    <h2 class="text-white text-center tag-line-login">{{ tagline }}</h2>
                 </div>
             </div>
-            <div v-if="loading === true" class="loader">
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </div>
+        <div v-if="loading"
+            class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-light bg-opacity-75">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
         </div>
     </div>
@@ -83,6 +66,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import loginLogo from '@/assets/images/seal.png';
+import Swal from 'sweetalert2';
 
 const email = ref('');
 const resetStatus = ref(null);
@@ -93,66 +77,165 @@ onMounted(async () => {
     try {
         const response = await axios.get(endpoints.settings);
         const settings = response.data[0];
-        tagline.value = settings.tagline; // Update the tagline
+        tagline.value = settings.tagline;
     } catch (error) {
         console.error('Error fetching settings:', error);
     }
 });
 
 const requestPasswordReset = async () => {
+    loading.value = true;
     try {
-        loading.value = true;
         await axios.post(endpoints.passwordResetRequest, { email: email.value });
         resetStatus.value = 'success';
+        Swal.fire({
+            title: 'Reset Link Sent',
+            text: 'Please check your email for the password reset link.',
+            icon: 'success',
+            confirmButtonColor: '#2B656F'
+        });
     } catch (error) {
         console.error('Failed to send password reset link:', error);
         resetStatus.value = 'failed';
+        Swal.fire({
+            title: 'Reset Failed',
+            text: 'Failed to send reset link. Please check the email provided and try again.',
+            icon: 'error',
+            confirmButtonColor: '#2B656F'
+        });
     } finally {
         loading.value = false;
     }
 };
+
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
+};
 </script>
 
-
 <style scoped>
-.tag-line-login {
-    font-family: "Boogaloo", sans-serif;
-    font-weight: 200;
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.loginbg {
+.forgot-password-form-section {
     background-image: url('@/assets/images/thePemabg2.png');
     background-size: cover;
-    height: 500px;
-    border-radius: 10px;
+    background-position: center;
 }
 
 .custombg {
-    background-color: #2C6975;
-    border-radius: 20% 10px 10px 20%;
-    height: 100%;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    position: relative;
+    overflow: hidden;
 }
 
-.auth-form .signin-button {
-    border-radius: 5px;
+.forgot-password-title {
+    color: #2B656F;
+    font-weight: 600;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-right: none;
+}
+
+.form-control {
+    border-left: none;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #ced4da;
+}
+
+.reset-button {
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
 .btnbg {
-    background-color: #2B656F;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     color: white;
 }
 
-.loader {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+.btnbg:hover {
+    background-color: #1e4a52;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ndi-logo {
+    max-height: 30px;
+}
+
+.ndi-link,
+.signup-link a,
+.back-to-login-link {
+    color: #2B656F;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.ndi-link:hover,
+.signup-link a:hover,
+.back-to-login-link:hover {
+    color: #1e4a52;
+    text-decoration: underline;
+}
+
+.shape-img {
+    max-width: 100%;
+    opacity: 0.1;
+}
+
+.logo-image {
+    max-width: 70%;
+    height: auto;
+    animation: float 6s ease-in-out infinite;
+}
+
+.tag-line-login {
+    font-family: "Boogaloo", sans-serif;
+    font-weight: 200;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@media (max-width: 768px) {
+    .custombg {
+        min-height: 200px;
+    }
+
+    .logo-image {
+        max-width: 50%;
+    }
+
+    .tag-line-login {
+        font-size: 1.5rem;
+    }
 }
 </style>

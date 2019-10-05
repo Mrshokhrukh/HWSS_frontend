@@ -1,63 +1,94 @@
 <template>
-	<div>
-		<div v-if="loading" class="loader"></div>
-		<div class="container">
-			<div class="row">
-				<div class="text-center col-md-8">
-					<h1 class=" my-3">
-						Hi, <span class="text-capitalized">{{ fullName }}</span>!
-					</h1>
-					<h3 class="my-4">
-						Welcome to <span class="text-capitalized">{{ appName }}</span> Dashboard!
-					</h3>
-					<div class="text-center">
-						<button class="btn text-center custom-btn arrow-button" @click="navigateToScreening">
-							Screen your mental Health
-						</button>
+	<div class="dashboard-container">
+		<div v-if="loading" class="loader-container">
+			<div class="modern-loader"></div>
+		</div>
+
+		<div class="dashboard-content" v-else>
+			<div class="welcome-card">
+				<div class="content-grid">
+					<div class="welcome-content">
+						<h1 class="greeting">
+							Hi, <span class="highlight">{{ fullName }}</span>!
+						</h1>
+						<h2 class="welcome-text">
+							Welcome to <span class="highlight">{{ appName }}</span> Dashboard!
+						</h2>
+						<div class="action-container">
+							<button class="screen-button" @click="navigateToScreening"
+								:class="{ 'animate-pulse': true }">
+								<span class="button-text">Screen your Mental Health</span>
+								<span class="button-icon">→</span>
+							</button>
+						</div>
 					</div>
-				</div>
-				<div class="col-md-4 d-flex align-items-center justify-content-center">
-					<div class="brain-icon-wrapper">
-						<img src="@/assets/images/brainicon.png" class="img-fluid animated-icon" alt="" />
+
+					<div class="brain-animation">
+						<img src="@/assets/images/brainicon.png" class="brain-icon" alt="Brain Health Icon" />
 					</div>
 				</div>
 			</div>
+		</div>
 
-			<!-- Modal Popup -->
-			<div v-if="showModal" class="modal-overlay" @click="showModal = false">
-				<div class="modal-content custom-modal-content" @click.stop>
-					<div class="modal-header">
-						<h5 class="modal-title">Hello {{ fullName }}!</h5>
-						<button type="button" class="close-button" @click="showModal = false">×</button>
+		<!-- Enhanced Modal -->
+		<div v-if="showModal" class="modal-backdrop" @click="showModal = false">
+			<div class="modal-window" @click.stop>
+				<div class="modal-header">
+					<h3>Hello {{ fullName }}!</h3>
+					<button class="close-btn" @click="showModal = false">
+						<span>×</span>
+					</button>
+				</div>
+
+				<div class="modal-body">
+					<p v-if="clusterTestStatus === 'inactive'" class="status-message">
+						Currently, there are no tests available. In the meantime, consider reading these articles
+						for mental health awareness:
+					</p>
+					<p v-if="clusterTestStatus === 'disabled'" class="status-message">
+						This test does not exist yet. Consider reading these articles for mental health awareness:
+					</p>
+
+					<div class="resources-list">
+						<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
+							target="_blank" class="resource-link">
+							<span>Understanding Depression</span>
+							<svg class="external-link-icon" viewBox="0 0 24 24" width="16" height="16">
+								<path fill="currentColor"
+									d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+							</svg>
+						</a>
+						<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank"
+							class="resource-link">
+							<span>Anxiety Disorders</span>
+							<svg class="external-link-icon" viewBox="0 0 24 24" width="16" height="16">
+								<path fill="currentColor"
+									d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+							</svg>
+						</a>
+						<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
+							target="_blank" class="resource-link">
+							<span>Coping with Drug Use and Addiction</span>
+							<svg class="external-link-icon" viewBox="0 0 24 24" width="16" height="16">
+								<path fill="currentColor"
+									d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+							</svg>
+						</a>
+						<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank"
+							class="resource-link">
+							<span>Mental Health and Wellness</span>
+							<svg class="external-link-icon" viewBox="0 0 24 24" width="16" height="16">
+								<path fill="currentColor"
+									d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+							</svg>
+						</a>
 					</div>
-					<div class="modal-body text-start">
-						<p v-if="clusterTestStatus === 'inactive'">
-							Currently, there are no tests available. In the mean time, consider reading these articles
-							for
-							mental health awareness:
-						</p>
-						<p v-if="clusterTestStatus === 'disabled'">
-							This test does not exist yet. Consider reading these articles for mental health awareness:
-						</p>
-						<ul>
-							<li><a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-									target="_blank">Understanding Depression <i
-										class="fas fa-external-link-alt"></i></a>
-							</li>
-							<li><a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders"
-									target="_blank">Anxiety
-									Disorders <i class="fas fa-external-link-alt"></i></a></li>
-							<li><a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
-									target="_blank">Coping with Drug Use and Addiction <i
-										class="fas fa-external-link-alt"></i></a></li>
-							<li><a href="https://www.mentalhealth.gov/basics/what-is-mental-health"
-									target="_blank">Mental
-									Health and Wellness <i class="fas fa-external-link-alt"></i></a></li>
-						</ul>
-					</div>
-					<div class="modal-footer">
-						<button class="btn custom-btn" @click="showModal = false">Close</button>
-					</div>
+				</div>
+
+				<div class="modal-footer">
+					<button class="close-modal-btn" @click="showModal = false">
+						Close
+					</button>
 				</div>
 			</div>
 		</div>
@@ -113,7 +144,6 @@ async function navigateToScreening() {
 	}
 }
 
-
 function showModalBasedOnStatus(status) {
 	if (status === "active") {
 		Swal.fire('Congratulations!', 'The questions are now available to screen.', 'success').then(() => {
@@ -130,151 +160,238 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.custom-modal-content {
-	border: 1px solid #ccc;
-	border-radius: 8px;
-	padding: 20px;
-	background-color: #fff;
-	/* Added background color for consistency */
-	box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.4);
+.dashboard-container {
+	background-color: #f8fafc;
 }
 
-.custom-btn {
-	background-color: #2b656f;
-	color: #fff;
-	font-size: inherit;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	transition: background-color 0.3s ease;
-	width: 100%;
+.dashboard-content {
+	max-width: 1200px;
+	margin: 0 auto;
 }
 
-span.text-capitalized {
-	color: #2b656f;
-	text-transform: uppercase;
+.welcome-card {
+	background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+	border-radius: 16px;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+		0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	overflow: hidden;
+	padding: 1rem;
 }
 
-.arrow-button {
-	position: relative;
-	display: flex;
+.content-grid {
+	display: grid;
+	grid-template-columns: 1.5fr 1fr;
+	gap: 2rem;
 	align-items: center;
-	padding: 10px 20px;
-	background-color: #2b656f;
-	color: #fff;
+}
+
+.welcome-content {
+	padding: 1rem;
+}
+
+.greeting {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: #1a202c;
+	margin-bottom: 0.5rem;
+}
+
+.welcome-text {
+	font-size: 1.75rem;
+	color: #4a5568;
+	margin-bottom: 2rem;
+}
+
+.highlight {
+	color: #2B656F;
+	font-weight: 700;
+}
+
+.action-container {
+	margin-top: 2rem;
+}
+
+.screen-button {
+	display: inline-flex;
+	align-items: center;
+	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+	color: white;
+	padding: 1rem 2rem;
 	border: none;
-	border-radius: 20px;
+	border-radius: 12px;
+	font-size: 1.125rem;
+	font-weight: 600;
 	cursor: pointer;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 6px -1px rgba(43, 101, 111, 0.2);
 }
 
-.arrow-button::after {
-	content: "\2192";
-	font-size: 25px;
-	font-weight: 800;
-	font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
-	position: absolute;
-	right: -10px;
+.button-text {
+	margin-right: 1rem;
 }
 
-.arrow-button::before {
-	content: "";
-	width: 40px;
-	height: 40px;
-	background-color: #2b656f;
-	border-radius: 50%;
-	position: absolute;
-	right: 0;
-	transform: translateX(50%);
+.button-icon {
+	font-size: 1.25rem;
+	transition: transform 0.3s ease;
+}
+
+.screen-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 15px -3px rgba(43, 101, 111, 0.2);
+}
+
+.screen-button:hover .button-icon {
+	transform: translateX(4px);
+}
+
+.brain-animation {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	border: 2px solid #fff;
 }
 
-.modal-overlay {
+.brain-icon {
+	max-width: 300px;
+	height: auto;
+	animation: float 6s ease-in-out infinite;
+}
+
+/* Modal Styles */
+.modal-backdrop {
 	position: fixed;
 	top: 0;
 	left: 0;
-	right: 0;
-	bottom: 0;
-	background-color: rgba(0, 0, 0, 0.6);
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(4px);
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	z-index: 999;
+	z-index: 1000;
+	animation: fadeIn 0.3s ease;
 }
 
-.modal-overlay {
-	animation: fadeIn 0.3s;
-}
-
-.modal-content {
-	padding: 1rem;
-	border-radius: 15px;
-	max-width: 600px;
+.modal-window {
 	background: white;
-	box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.4);
+	border-radius: 16px;
+	width: 90%;
+	max-width: 600px;
+	box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+		0 10px 10px -5px rgba(0, 0, 0, 0.04);
+	overflow: hidden;
+	animation: slideUp 0.3s ease;
 }
 
-.modal-content p {
-	font-size: 16px;
-	line-height: 1.6;
-	color: #333;
+.modal-header {
+	position: relative;
+	padding: 1.5rem;
+	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+	color: white;
 }
 
-.modal-header,
-.modal-body,
-.modal-footer {
-	padding: 20px;
-	text-align: center;
-}
-
-.modal-title {
+.modal-header h3 {
+	margin: 0;
 	font-size: 1.5rem;
-	color: #2b656f;
 }
 
-.close-button {
+.close-btn {
 	position: absolute;
-	top: 10px;
-	right: 15px;
-	background: #f44336;
+	top: 1rem;
+	right: 1rem;
+	background: rgba(255, 255, 255, 0.2);
+	border: none;
+	color: white;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+
+.close-btn:hover {
+	background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-body {
+	padding: 1.5rem;
+}
+
+.status-message {
+	color: #4a5568;
+	margin-bottom: 1.5rem;
+	line-height: 1.6;
+}
+
+.resources-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.resource-link {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1rem;
+	background: #f7fafc;
+	border-radius: 8px;
+	color: #2B656F;
+	text-decoration: none;
+	transition: all 0.3s ease;
+}
+
+.resource-link:hover {
+	background: #edf2f7;
+	transform: translateX(4px);
+}
+
+.external-link-icon {
+	opacity: 0.6;
+}
+
+.modal-footer {
+	padding: 1.5rem;
+	border-top: 1px solid #e2e8f0;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.close-modal-btn {
+	background: #2B656F;
 	color: white;
 	border: none;
-	border-radius: 50%;
-	width: 30px;
-	height: 30px;
+	padding: 0.75rem 1.5rem;
+	border-radius: 8px;
 	cursor: pointer;
+	transition: background-color 0.3s ease;
+}
+
+.close-modal-btn:hover {
+	background: #1D4851;
+}
+
+/* Loader */
+.loader-container {
 	display: flex;
-	align-items: center;
 	justify-content: center;
-	font-size: 20px;
+	align-items: center;
+	min-height: 400px;
 }
 
-.custom-btn:hover,
-.close-button:hover {
-	background-color: darken(#2b656f, 10%);
+.modern-loader {
+	width: 48px;
+	height: 48px;
+	border: 4px solid #e2e8f0;
+	border-top: 4px solid #2B656F;
+	border-radius: 50%;
+	animation: spin 1s linear infinite;
 }
 
-ul {
-	list-style-type: none;
-	padding: 0;
-}
-
-ul li a {
-	color: #2b656f;
-	text-decoration: none;
-	line-height: 2.2rem;
-}
-
-ul li a:hover {
-	text-decoration: underline;
-}
-
-.modal-overlay {
-	animation: fadeIn 0.3s;
-}
-
+/* Animations */
 @keyframes fadeIn {
 	from {
 		opacity: 0;
@@ -285,27 +402,31 @@ ul li a:hover {
 	}
 }
 
-.loader,
-.loader:after {
-	border-radius: 50%;
-	width: 10em;
-	height: 10em;
+@keyframes slideUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
 }
 
-.loader {
-	margin: 60px auto;
-	font-size: 10px;
-	position: relative;
-	text-indent: -9999em;
-	border-top: 1.1em solid rgba(255, 255, 255, 0.2);
-	border-right: 1.1em solid rgba(255, 255, 255, 0.2);
-	border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
-	border-left: 1.1em solid #2b656f;
-	transform: translateZ(0);
-	animation: load8 1.1s infinite linear;
+@keyframes float {
+
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+
+	50% {
+		transform: translateY(-20px);
+	}
 }
 
-@keyframes load8 {
+@keyframes spin {
 	0% {
 		transform: rotate(0deg);
 	}
@@ -315,9 +436,44 @@ ul li a:hover {
 	}
 }
 
-.row {
-	border-radius: 8px;
-	padding: 20px;
-	margin-bottom: 20px;
+@keyframes pulse {
+
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.7;
+	}
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+	.content-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.brain-animation {
+		order: -1;
+	}
+
+	.brain-icon {
+		max-width: 200px;
+	}
+
+	.greeting {
+		font-size: 2rem;
+	}
+
+	.welcome-text {
+		font-size: 1.5rem;
+	}
+
+	.screen-button {
+		width: 100%;
+		justify-content: center;
+		padding: 0.875rem 1.5rem;
+	}
 }
 </style>

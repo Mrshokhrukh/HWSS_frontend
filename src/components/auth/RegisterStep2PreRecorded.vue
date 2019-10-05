@@ -2,7 +2,7 @@
   <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
     <div class="col-md-8">
       <div class="card shadow">
-        <div class="logo-container card d-flex flex-row justify-content-center align-items-center">
+        <div class="logo-container card d-flex flex-row justify-content-center align-items-center" @click.prevent="showNDILoginAlert">
           <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
           <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
         </div>
@@ -140,6 +140,15 @@ const saveAgencyData = (agencyData) => {
 const saveUserAgencyData = (userAgencyData) => {
   // console.log('Saving user agency data to session storage:', userAgencyData);
   sessionStorage.setItem('user_agency_data', JSON.stringify(userAgencyData));
+};
+
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
 };
 </script>
 

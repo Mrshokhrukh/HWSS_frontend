@@ -6,7 +6,7 @@
                     <div class="card mb-5 p-3">
                         <div class="logo-container position-absolute top-0 end-0 mt-3 me-3">
                             <button
-                                class="card custom-btn d-flex flex-row justify-content-center align-items-center p-2">
+                                class="card custom-btn d-flex flex-row justify-content-center align-items-center p-2" @click.prevent="showNDILoginAlert">
                                 <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
                                 <a href="#" class="text-white font-weight-bold ms-2">Use Bhutan NDI</a>
                             </button>
@@ -475,6 +475,14 @@ const moveToStep3 = (citizenDetails) => {
     emit('go-to-next-step', 'step-three', citizenDetails);
 };
 
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
+};
 </script>
 
 

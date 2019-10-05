@@ -1,5 +1,6 @@
 <template>
   <div class="landing d-flex flex-column min-vh-100">
+    <Particles />
     <div class="container my-auto py-5">
       <div class="row align-items-center">
         <div class="col-lg-6 mb-5 mb-lg-0">
@@ -84,9 +85,25 @@
               HWSS - Health & Wellbeing Screening System
             </p>
           </div>
+          <!-- Social Media Icons -->
+          <div class="col-md-4 text-center text-md-end social-icons">
+            <a href="https://facebook.com" target="_blank">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://linkedin.com" target="_blank">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank">
+              <i class="fab fa-instagram"></i>
+            </a>
+          </div>
         </div>
       </div>
     </footer>
+
   </div>
 </template>
 
@@ -139,8 +156,79 @@ const stopLogoAnimation = () => {
 
 
 <style scoped>
+.social-icons a {
+  margin: 0 10px;
+  color: #ffffff;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.social-icons a:hover {
+  color: #f8f9fa;
+}
+
 .landing {
-  background-color: #FFFFFF;
+  background: linear-gradient(135deg, #9cbcc2, #f0f7f8);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite, gradientMorph 30s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing::before,
+.landing::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(220, 240, 235, 0.3) 0%, rgba(202, 232, 225, 0.1) 70%);
+  animation: radialMove 20s ease-in-out infinite;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+.landing::after {
+  animation: radialMove 30s ease-in-out infinite reverse;
+  background: radial-gradient(ellipse at center, rgba(203, 235, 226, 0.3) 0%, rgba(184, 226, 213, 0.1) 70%);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes gradientMorph {
+  0%, 100% {
+    background: linear-gradient(135deg, #9cbcc2, #f0f7f8);
+  }
+  25% {
+    background: radial-gradient(circle at top left, #9cbcc2, #f0f7f8);
+  }
+  50% {
+    background: linear-gradient(45deg, #f0f7f8, #9cbcc2);
+  }
+  75% {
+    background: radial-gradient(circle at bottom right, #f0f7f8, #9cbcc2);
+  }
+}
+
+@keyframes radialMove {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(10%, 10%); }
+  50% { transform: translate(-5%, 5%); }
+  75% { transform: translate(5%, -10%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Ensure content is above the background */
+.landing > * {
+  position: relative;
+  z-index: 2;
 }
 
 .content {
@@ -150,7 +238,7 @@ const stopLogoAnimation = () => {
 .quote {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-family: Sriracha, cursive;
-  color: #000;
+  color: #2b656f;
   font-weight: 300;
 }
 
@@ -167,8 +255,9 @@ const stopLogoAnimation = () => {
 }
 
 .get-started {
-  background-color: #2B656F;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   transition: background-color 0.3s ease;
+  border-radius: 20px;
 }
 
 .get-started:hover {
@@ -176,7 +265,8 @@ const stopLogoAnimation = () => {
 }
 
 .download-group-container {
-  background-color: #f8f9fa;
+  background-color: #f8f9fa38;
+  backdrop-filter: blur(10px);
 }
 
 .download-title {
@@ -223,9 +313,11 @@ const stopLogoAnimation = () => {
   0% {
     transform: translate(-50%, -50%) scale(1);
   }
+
   50% {
     transform: translate(-50%, -50%) scale(1.05);
   }
+
   100% {
     transform: translate(-50%, -50%) scale(1);
   }
@@ -254,11 +346,13 @@ const stopLogoAnimation = () => {
 
 .store-button {
   transition: all 0.3s ease;
+  background: #f0f7f8a8;
 }
 
 .store-button:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  background: #f0f7f8;
 }
 
 .image-background-container {
@@ -321,15 +415,9 @@ const stopLogoAnimation = () => {
   }
 }
 
-
 .footer {
-  background-color: #2B656F;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: #ffffff;
-}
-
-.footer-logo {
-  max-height: 50px;
-  width: auto;
 }
 
 .footer-text {

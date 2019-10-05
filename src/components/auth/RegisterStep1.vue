@@ -103,7 +103,7 @@ const continueToPage = () => {
     height: 100%;
     border-radius: 5px 80px 80px 5px;
     width: 100%;
-    background-color: #2b656f;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,7 +119,7 @@ const continueToPage = () => {
 }
 
 .continue-button {
-    background-color: #2b656f;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     color: #fff;
     width: 150px;
 }

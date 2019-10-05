@@ -30,7 +30,7 @@
                             </form>
 
                             <div class="mt-4">
-                                <a href="#" class="ndi-link">
+                                <a href="#" class="ndi-link" @click.prevent="showNDILoginAlert">
                                     <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo me-2" />
                                     Login with NDI
                                 </a>
@@ -174,6 +174,15 @@ const handleLoginError = (error) => {
     }
     Swal.fire('Login Failed', errorMessage, 'error');
 };
+
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
+};
 </script>
 
 <style scoped>
@@ -190,7 +199,7 @@ const handleLoginError = (error) => {
 }
 
 .custombg {
-    background-color: #2C6975;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     position: relative;
     overflow: hidden;
 }
@@ -222,7 +231,7 @@ const handleLoginError = (error) => {
 }
 
 .btnbg {
-    background-color: #2B656F;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     color: white;
 }
 

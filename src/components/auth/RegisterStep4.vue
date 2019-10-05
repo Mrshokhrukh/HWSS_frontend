@@ -4,6 +4,11 @@
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="card shadow p-3 mb-5">
+                        <div class="logo-container card d-flex flex-row justify-content-center align-items-center d-none"
+                            @click.prevent="showNDILoginAlert">
+                            <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+                            <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
+                        </div>
 
                         <div class="text-center mt-3">
                             <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
@@ -384,6 +389,15 @@ const createUser = async () => {
         }
         Swal.fire('Error', errorMessage.value, 'User cancelled the registration process.');
     }
+};
+
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
 };
 
 </script>

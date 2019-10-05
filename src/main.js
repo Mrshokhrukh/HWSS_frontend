@@ -13,6 +13,7 @@ import ToastService from 'primevue/toastservice';
 import ConfirmDialog from 'primevue/confirmdialog';
 import ConfirmationService from 'primevue/confirmationservice'; 
 import VueApexCharts from "vue3-apexcharts";
+import Particles from 'vue3-particles';
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -26,7 +27,7 @@ app.use(ConfirmationService);
 app.use(ToastService);
 app.use(ConfirmDialog)
 app.use(VueApexCharts);
-
+app.use(Particles);
 
 const router = createAppRouter(pinia);
 app.use(router);

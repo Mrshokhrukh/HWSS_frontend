@@ -17,8 +17,8 @@
                 <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'
                 ">
                     <!-- Existing layout for other question sets -->
-                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-green">
-                        <h4>
+                    <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-gradient-dark">
+                        <h4 class="text-white">
                             Over the last 2 weeks, how often have you been bothered by any of the
                             following problems:
                         </h4>
@@ -35,12 +35,16 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="answer-options d-flex flex-wrap justify-content-center">
-                            <div class="answer-option" v-for="option in currentQuestion.answers" :key="option.id">
-                                <button :class="{ selected: isSelectedAnswer(option) }"
-                                    @click="handleAnswerSelection(option)" class="btn btn-lg w-75 my-4 py-3">
-                                    {{ option.option }} <span class="d-none">{{ option.points }}</span>
-                                </button>
+                        <div class="answer-options">
+                            <div class="row justify-content-center">
+                                <div class="answer-option col-md-6 col-sm-12" v-for="(option) in currentQuestion.answers"
+                                    :key="option.id">
+                                    <button :class="{ selected: isSelectedAnswer(option) }"
+                                        @click="handleAnswerSelection(option)" class="btn btn-lg w-100 my-3">
+                                        {{ option.option }}
+                                        <span class="d-none">{{ option.points }}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -48,7 +52,7 @@
 
                 <!-- Layout for "ASSIST" question set -->
                 <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
-                    <h5 class="my-5 text-left text-black question">{{ currentQuestion.text }}</h5>
+                    <h5 class="my-3 text-left text-black question">{{ currentQuestion.text }}</h5>
                     <table class="table table-borderless">
                         <thead class="border-bottom align-middle">
                             <tr>
@@ -107,14 +111,13 @@
                                     <td v-if="requiresTextInput(question.id)">
                                         <input type="text" class="form-control" v-model="textResponses[question.id]"
                                             :required="requiresTextInput(question.id)" placeholder="Please Specify"
-                                            @change="
-                                                logQuestionAndResponseSchoolEnv(
-                                                    question.text,
-                                                    $event.target.value,
-                                                    question.id
-                                                )
-                                                " />
+                                            @change="logQuestionAndResponseSchoolEnv(
+                                                question.text,
+                                                textResponses[question.id],
+                                                question.id
+                                            )" @blur="saveTextResponse(question.id)" />
                                     </td>
+
                                 </template>
 
                                 <template v-else>
@@ -609,24 +612,24 @@ const showBgGreen = computed(() =>
     ["PHQ2", "PHQ9", "GAD2", "GAD7"].includes(currentQuestionSetName.value)
 );
 function getIconBaseUrl() {
-  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-    const iconHost = import.meta.env.VITE_ICON_HOST || 'localhost';
-    const iconPort = import.meta.env.VITE_ICON_PORT || '8686';
-    const iconProtocol = import.meta.env.VITE_ICON_PROTOCOL || 'http';
-    return `${iconProtocol}://${iconHost}:${iconPort}`;
-  } else {
-    return import.meta.env.VITE_PRODUCTION_ICON_URL || 'https://thepemasystem.gov.bt/api/screening';
-  }
+    if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+        const iconHost = import.meta.env.VITE_ICON_HOST || 'localhost';
+        const iconPort = import.meta.env.VITE_ICON_PORT || '8686';
+        const iconProtocol = import.meta.env.VITE_ICON_PROTOCOL || 'http';
+        return `${iconProtocol}://${iconHost}:${iconPort}`;
+    } else {
+        return import.meta.env.VITE_PRODUCTION_ICON_URL || 'https://thepemasystem.gov.bt/api/screening';
+    }
 }
 
 // Computed property for iconURL
 const iconURL = computed(() => {
-  const iconPath = currentQuestion.value?.icon || "";
-  if (iconPath) {
-    return `${getIconBaseUrl()}${iconPath}`;
-  } else {
-    return fallbackIcon;
-  }
+    const iconPath = currentQuestion.value?.icon || "";
+    if (iconPath) {
+        return `${getIconBaseUrl()}${iconPath}`;
+    } else {
+        return fallbackIcon;
+    }
 });
 
 const processedQuestionText = computed(() => {
@@ -1071,221 +1074,243 @@ const isSubstanceDisabled = (substance) => {
     );
     return foundSubstance ? foundSubstance.disabled : false;
 };
+
+function saveTextResponse(questionId) {
+    // Ensure the text response is saved without affecting the radio button selection
+    const questionText = currentQuestionText.value;
+    const value = textResponses[questionId] || "";
+    logQuestionAndResponseSchoolEnv(questionText, "Strongly Disagree", questionId, value);
+}
+
 </script>
 
 <style scoped>
-.border-div-test {
-    border: 1px solid #c9c9c9;
-    border-radius: 10px;
-}
-
-.message {
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: #5d5d5d;
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.emoji {
-    font-size: 40px;
-}
-
-.pride-message {
-    font-size: 28px;
-    margin-top: 10px;
-}
-
-input {
-    border-radius: 10px;
-}
-
-.bg-green {
-    background: #2c6975;
-    color: #fff;
-}
-
-.answer-option button,
-.next-button {
-    appearance: none;
-    background-color: #f0f0f0;
-    border: 2px solid #2c6975;
-    border-radius: 50px;
-    padding: 10px 20px;
-    margin: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: calc(50% - 10px);
-}
-
-.next-button {
-    appearance: none;
-    background-color: #2c6975;
-    /* Dark greenish-blue */
-    color: white;
-    border: 2px solid transparent;
-    border-radius: 20px;
-    padding: 10px 20px;
-    margin: 5px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.answer-option button.selected {
-    background-color: #2c6975;
-    /* Base color of the app */
-    color: white;
-    border-color: #2c6975;
-}
-
-.answer-options.d-flex>.answer-option {
-    flex: 1 0 45%;
-    /* Adjust based on preference for 2 per line */
-}
-
-textarea {
-    width: 100%;
-    margin-top: 10px;
-}
-
 .screening-test {
-    max-width: 80vw;
+    max-width: 90vw;
     margin: auto;
-    background-color: #ffffff;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 .progress-container .progress {
-    height: 10px;
-    /* Make the progress bar thicker */
-    border-radius: 5px;
-    /* Rounded corners for the progress bar */
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .progress-bar {
-    background-color: #2c6975;
-    /* Dark greenish-blue */
-    border-radius: 5px;
-    /* Ensure the fill also has rounded corners */
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-.question-area .row {
-    align-items: center;
-    /* Vertically center content */
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-.icon-container img {
-    display: block;
-    /* Ensure the image is block-level to center it if needed */
-    margin: 0 auto;
-    /* Center the icon horizontally within its container */
+.question-area .icon-container img {
     max-width: 100px;
-    /* Limit icon size */
+    transition: transform 0.3s ease;
 }
 
 .question-text h2 {
-    color: #333;
-    font-size: 24px;
+    color: #2B656F;
+    font-size: 22px;
     font-weight: 600;
-}
-
-.answer-options {
-    margin-bottom: 20px;
-}
-
-.answer-button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    background-color: #f5f5f5;
-    color: #333;
-    font-size: 18px;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.answer-button.selected {
-    background-color: #2c6975;
-    /* Dark greenish-blue */
-    color: #ffffff;
-}
-
-.back-button-area {
     margin-top: 20px;
 }
 
-.back-button {
-    background-color: transparent;
-    border: 2px solid #2c6975;
-    color: #2c6975;
+.answer-options {
+    margin: 30px 0;
+}
+
+.answer-option button {
+    background-color: #f0f7f8;
+    border: 2px solid #2B656F;
+    border-radius: 25px;
+    padding: 15px 25px;
+    margin: 10px;
     font-size: 14px;
-    cursor: pointer;
-    border-radius: 5rem;
-    transition: 800ms;
-    box-shadow: none;
+    transition: all 0.3s ease;
 }
 
-.back-button:hover {
-    background-color: #2c6975;
-    color: #fff;
+.answer-option button.selected,
+.answer-option button:hover {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
 }
 
-.submit-button {
-    background-color: #2c6975;
-    /* border: 2px solid #2c6975; */
-    color: #fff;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 5rem;
-    transition: 800ms;
-    box-shadow: none;
+.assist-container,
+.school-env-container {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
 }
 
-.submit-button:hover {
+.table {
     background-color: transparent;
-    color: #2c6975;
-    border: 2px solid #2c6975;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+.table thead th {
+    border: none;
+    padding: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.table tbody tr {
+    background-color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table td {
+    border: none;
+    padding: 15px;
+    vertical-align: middle;
+}
+
+.substance-name {
+    font-weight: 500;
+    color: #2B656F;
+}
+
+input[type="radio"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #2B656F;
+    border-radius: 50%;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input[type="radio"]:checked {
+    background-color: #2B656F;
+    box-shadow: 0 0 0 3px #f0f7f8 inset;
+}
+
+.question-column {
+    width: 30%;
+}
+
+.question-text {
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.form-control {
+    border: 2px solid #2B656F;
+    border-radius: 20px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.25);
 }
 
 .button-group {
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    /* Adjust the gap as needed */
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
 }
 
-textarea {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border: 2px solid #ccc;
-    /* Make border slightly thicker */
-    border-radius: 20px;
-    /* Rounded corners */
-    box-shadow: none;
-    /* Optional: remove or adjust box-shadow */
+.rounded-btn {
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-.col-auto .icon-container img {
-    max-width: 100px;
-    /* Limit the size of the icon */
-    margin-right: 20px;
-    /* Add some space between the icon and the text */
+.back-button {
+    background-color: transparent;
+    border: 2px solid #2B656F;
+    color: #2B656F;
 }
 
-input[type="radio"] {
-    transform: scale(1.5);
-    border: 2px solid #2c6975 !important;
+.back-button:hover {
+    background-color: #2B656F;
+    color: white;
 }
 
-.question {
-    line-height: 2.2rem;
+.submit-button {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    border: none;
+    color: white;
+}
+
+.submit-button:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .screening-test {
+        max-width: 95vw;
+        padding: 20px;
+    }
+
+    .question-text h2 {
+        font-size: 24px;
+    }
+
+    .answer-option button {
+        width: 100%;
+    }
+
+    .table thead {
+        display: none;
+    }
+
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table tr {
+        margin-bottom: 15px;
+    }
+
+    .table td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .rounded-btn {
+        width: 100%;
+    }
 }
 
 .table-row-disabled {

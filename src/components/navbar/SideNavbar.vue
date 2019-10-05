@@ -201,7 +201,7 @@ const logout = async () => {
 
 <style scoped>
 .sidebar {
-	background-color: #2c6975;
+	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 	color: white;
 	transition: all 0.3s ease-in-out;
 	display: flex;

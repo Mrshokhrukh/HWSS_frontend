@@ -4,6 +4,12 @@
       <div class="row justify-content-center">
         <div class="col-md-8">
           <div class="card shadow">
+            <div class="logo-container card d-flex flex-row justify-content-center align-items-center d-none"
+              @click.prevent="showNDILoginAlert">
+              <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+              <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
+            </div>
+
             <div class="text-center mt-3">
               <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
               <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
@@ -136,14 +142,14 @@ const createUser = async () => {
   }
 
   if (!disclaimerChecked.value || !termsAndPolicy.value) {
-        // Show an error message using SweetAlert
-        Swal.fire({
-            icon: 'warning',
-            title: 'Oops...',
-            text: 'Please agree to both the disclaimer and terms and policies before signing up.'
-        });
-        return;
-    }
+    // Show an error message using SweetAlert
+    Swal.fire({
+      icon: 'warning',
+      title: 'Oops...',
+      text: 'Please agree to both the disclaimer and terms and policies before signing up.'
+    });
+    return;
+  }
 
   try {
     let userData = JSON.parse(sessionStorage.getItem('user_data'));
@@ -180,6 +186,15 @@ const createUser = async () => {
   }
 };
 
+
+const showNDILoginAlert = () => {
+  Swal.fire({
+    title: 'Coming Soon!',
+    text: 'Login with NDI feature is coming soon. Stay tuned!',
+    icon: 'info',
+    confirmButtonColor: '#2B656F'
+  });
+};
 </script>
 
 <style scoped>
