@@ -98,7 +98,14 @@ const loginUser = async () => {
         });
 
         const authToken = loginResponse.data.token;
+
+        // Generate a token expiry time on the frontend (e.g., 1 hour from now)
+        const tokenExpiry = new Date();
+        tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Set expiry to 1 hour from now
+
+        // Store the token and expiry time in local storage
         localStorage.setItem('authToken', authToken);
+        localStorage.setItem('tokenExpiry', tokenExpiry.toISOString()); // Save in ISO 8601 format for easy parsing
 
         // Fetch minimal user details needed for routing
         const userDetailsResponse = await axios.get(endpoints.getUserDetails, {
@@ -113,7 +120,7 @@ const loginUser = async () => {
             text: 'Redirecting to dashboard...',
             icon: 'success',
             showConfirmButton: false,
-            timer: 1000
+            timer: 1000,
         });
 
         // Redirect to dashboard

@@ -17,26 +17,30 @@
         <ul class="navbar-nav align-items-center">
           <!-- Home icon -->
           <li class="nav-item">
-            <router-link class="nav-link" to="/" v-b-tooltip.hover title="Home">
+            <router-link class="nav-link" :to="homePath" v-b-tooltip.hover title="Home">
               <i class="fas fa-home fa-lg"></i>
             </router-link>
           </li>
 
           <!-- Notifications -->
           <li class="nav-item dropdown">
-            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" v-b-tooltip.hover title="Notifications">
+            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+              v-b-tooltip.hover title="Notifications">
               <i class="fas fa-bell fa-lg"></i>
-              <span v-if="unreadNotificationsCount > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              <span v-if="unreadNotificationsCount > 0"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                 {{ unreadNotificationsCount }}
                 <span class="visually-hidden">unread notifications</span>
               </span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
               <li v-for="(notification, index) in notifications" :key="index">
-                <a class="dropdown-item notification-item" href="#" :class="{ 'unread': !notification.read }" @click="handleNotificationClick(notification)">
+                <a class="dropdown-item notification-item" href="#" :class="{ 'unread': !notification.read }"
+                  @click="handleNotificationClick(notification)">
                   <div class="d-flex align-items-center">
                     <div class="flex-shrink-0">
-                      <img :src="notification.senderAvatar" alt="Sender Avatar" class="rounded-circle" width="40" height="40">
+                      <img :src="notification.senderAvatar" alt="Sender Avatar" class="rounded-circle" width="40"
+                        height="40">
                     </div>
                     <div class="flex-grow-1 ms-3">
                       <p class="mb-0 fw-bold">{{ notification.sender }}</p>
@@ -49,23 +53,39 @@
               <li v-if="notifications.length === 0">
                 <span class="dropdown-item text-muted">No notifications</span>
               </li>
-              <li><hr class="dropdown-divider"></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
               <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
             </ul>
           </li>
 
           <!-- User menu -->
           <li class="nav-item dropdown ms-3">
-            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
+              data-bs-toggle="dropdown" aria-expanded="false">
               <img :src="profilePictureUrl" alt="User" class="rounded-circle me-2" width="32" height="32">
               <span class="d-none d-lg-inline">{{ fullName }}</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-              <li><h6 class="dropdown-header">{{ userRole }}</h6></li>
-              <li><router-link class="dropdown-item" to="/profile"><i class="fas fa-user me-2"></i>Profile</router-link></li>
-              <li><router-link class="dropdown-item" to="/settings"><i class="fas fa-cog me-2"></i>Settings</router-link></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="#" @click="logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+              <li>
+                <span class="dropdown-item disabled">
+                  <i class="fas fa-user me-2"></i>{{ formattedUserRole }}
+                </span>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="settingsPath">
+                  <i class="fas fa-cog me-2"></i>Settings
+                </router-link>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li>
+                <a class="dropdown-item text-danger" href="#" @click="logout">
+                  <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+              </li>
             </ul>
           </li>
         </ul>
@@ -88,29 +108,21 @@ import profileIcon from '@/assets/images/icon.png';
 const router = useRouter();
 const userDetailsStore = useUserDetailsStore();
 
-const notifications = ref([
-  {
-    sender: 'Tashi Dorji',
-    senderAvatar: profileIcon,
-    message: 'New assignment submitted',
-    timestamp: new Date(2024, 3, 14, 10, 0, 0),
-    read: false
-  },
-  {
-    sender: 'Kinzang Dema',
-    senderAvatar: profileIcon,
-    message: 'Meeting rescheduled',
-    timestamp: new Date(2024, 3, 14, 11, 0, 0),
-    read: false
-  }
-]);
+const notifications = ref([]);
 
 const unreadNotificationsCount = computed(() => notifications.value.filter(n => !n.read).length);
 
 const handleNotificationClick = (notification) => {
   notification.read = true;
-  // Additional actions can be performed here, such as navigating to a specific page
 };
+
+const formattedUserRole = computed(() => {
+  // Replace underscores with spaces and capitalize each word
+  return userRole.value
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+});
 
 const formatTimestamp = (timestamp) => {
   return formatDistanceToNow(timestamp, { addSuffix: true });
@@ -163,6 +175,45 @@ const logout = async () => {
     });
   }
 };
+
+const homePath = computed(() => {
+  // Define mapping for user role to the respective dashboard route
+  const dashboardRoutes = {
+    student: 'student-dashboard',
+    school_counselor: 'counselor-dashboard',
+    gyalsung_counselor: 'counselor-dashboard',
+    clinical_counselor: 'counselor-dashboard',
+    trained_professional: 'counselor-dashboard',
+    mh_admin: 'admin-dashboard',
+    rd_admin: 'admin-dashboard',
+    sud_admin: 'admin-dashboard',
+    aaa_admin: 'admin-dashboard',
+    cecd_admin: 'admin-dashboard',
+  };
+
+  const role = userDetailsStore.user.role?.toLowerCase();
+  return { name: dashboardRoutes[role] || 'public-dashboard' }; // Default to public dashboard if no match
+});
+
+const settingsPath = computed(() => {
+  // Use the same mapping but add '-settings' to create the settings route
+  const settingsRoutes = {
+    student: 'student-dashboard/student-settings',
+    school_counselor: 'counselor-dashboard/counselor-settings',
+    gyalsung_counselor: 'counselor-dashboard/counselor-settings',
+    clinical_counselor: 'counselor-dashboard/counselor-settings',
+    trained_professional: 'counselor-dashboard/counselor-settings',
+    mh_admin: 'admin-dashboard/admin-setting',
+    rd_admin: 'admin-dashboard/admin-setting',
+    sud_admin: 'admin-dashboard/admin-setting',
+    aaa_admin: 'admin-dashboard/admin-setting',
+    cecd_admin: 'admin-dashboard/admin-setting',
+  };
+
+  const role = userDetailsStore.user.role?.toLowerCase();
+  return { path: `/${settingsRoutes[role]}` || '/public-dashboard/public-settings' }; // Default if no match
+});
+
 </script>
 
 <style scoped>
@@ -203,4 +254,10 @@ const logout = async () => {
     padding: 0 0.5rem;
   }
 }
+
+.dropdown-item.disabled {
+  cursor: default;
+  pointer-events: none; /* Make it non-clickable */
+}
+
 </style>

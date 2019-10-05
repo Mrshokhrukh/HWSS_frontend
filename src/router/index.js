@@ -184,14 +184,29 @@ const createAppRouter = () => {
 
   router.beforeEach(async (to, from, next) => {
     try {
-      // Retrieve authentication token from local storage
+      // Retrieve authentication token and expiry time from local storage
       const authToken = localStorage.getItem('authToken');
+      const tokenExpiry = localStorage.getItem('tokenExpiry');
       const isAuthenticated = authToken !== null;
-
-      if (isAuthenticated) {
+  
+      // Check if token has expired
+      const isTokenExpired = tokenExpiry && new Date(tokenExpiry) < new Date();
+  
+      // If token is expired, clear storage and redirect to login
+      if (isAuthenticated && isTokenExpired) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiry');
+        localStorage.removeItem('userDetailsStore');
+        localStorage.removeItem('userType');
+  
+        next({ name: ROUTE_LOGIN });
+        return;
+      }
+  
+      if (isAuthenticated && !isTokenExpired) {
         // Retrieve user type from local storage
         const userType = localStorage.getItem('userType');
-
+  
         // If the user is authenticated and trying to access non-authenticated pages
         if (!to.matched.some(record => record.meta.requiresAuth)) {
           // Redirect the user to their respective dashboard based on their user type
@@ -199,23 +214,21 @@ const createAppRouter = () => {
           return;
         }
       }
-
+  
       // If the route requires authentication, proceed with authentication logic
       if (to.matched.some(record => record.meta.requiresAuth)) {
         if (!isAuthenticated) {
           // Redirect to login page if the user is not authenticated
           next({ name: ROUTE_LOGIN });
         } else {
-          // Validate authentication token
+          // Validate authentication token by making an API call
           const response = await axios.post(endpoints.authenticateToken, null, {
-            headers: { 'Authorization': `Token ${authToken}` }
+            headers: { 'Authorization': `Token ${authToken}` },
           });
-
+  
           if (response.data.valid) {
-            // Retrieve user details from local storage
+            // Set user type and allow access
             const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
-
-            // Set user type only if it's not already set
             if (!localStorage.getItem('userType')) {
               const role = userDetailsStore?.user?.role?.toLowerCase() || "public";
               let userType;
@@ -230,12 +243,15 @@ const createAppRouter = () => {
               }
               localStorage.setItem('userType', userType);
             }
-
-            // User is authenticated, allow access
+  
             next();
           } else {
             // Remove invalid token from local storage
             localStorage.removeItem('authToken');
+            localStorage.removeItem('tokenExpiry');
+            localStorage.removeItem('userDetailsStore');
+            localStorage.removeItem('userType');
+  
             // Redirect to login page if token is invalid
             next({ name: ROUTE_LOGIN });
           }
@@ -247,11 +263,17 @@ const createAppRouter = () => {
     } catch (error) {
       // Handle errors
       console.error('Error validating token:', error);
-      // Redirect to login page if there's an error validating token
+  
+      // Clear storage and redirect to login page if there's an error validating token
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('tokenExpiry');
+      localStorage.removeItem('userDetailsStore');
+      localStorage.removeItem('userType');
+  
       next({ name: ROUTE_LOGIN });
     }
   });
-
+  
   return router;
 };
 export default createAppRouter;

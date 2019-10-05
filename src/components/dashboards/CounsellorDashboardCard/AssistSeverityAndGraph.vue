@@ -1,35 +1,37 @@
 <template>
-  <div class="row">
-    <div class="col-4">
-      <div class="card bg-light h-100">
-        <div class="card-header">
-          <h4 class="text-center">Assists</h4>
-        </div>
-        <div class="card-body d-flex flex-column">
-          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleLifetimeUserClick">
-            <h1>{{ totalLifetimeUsers }}</h1>
-            <p class="mb-0">Life Time User</p>
-          </button>
+  <div class="dashboard-container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-gradient-light">
+            <h4 class="text-center mb-0">Assists</h4>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <button class="btn btn-gradient mb-3 flex-fill" @click="handleLifetimeUserClick">
+              <h2 class="mb-0">{{ totalLifetimeUsers }}</h2>
+              <p class="mb-0">Lifetime Users</p>
+            </button>
 
-          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleActiveUsersClick">
-            <h1>{{ totalActiveUsers }}</h1>
-            <p class="mb-0">Active Substance Users</p>
-          </button>
+            <button class="btn btn-gradient mb-3 flex-fill" @click="handleActiveUsersClick">
+              <h2 class="mb-0">{{ totalActiveUsers }}</h2>
+              <p class="mb-0">Active Substance Users</p>
+            </button>
 
-          <button class="btn btn-primary btn-block mb-3 flex-fill" @click="handleSubstanceSeverityClick">
-            Each Substance Severity
-          </button>
+            <button class="btn btn-gradient flex-fill" @click="handleSubstanceSeverityClick">
+              Each Substance Severity
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="col-8">
-      <div class="card w-100 h-100">
-        <div class="card-header text-center">
-          <h4 class="graph-title">Assist Graph</h4>
-        </div>
-        <div class="card-body d-flex justify-content-center align-items-center w-100" style="height: 400px;">
-          <canvas ref="chartCanvas"></canvas>
+      <div class="col-lg-8">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-gradient-light">
+            <h4 class="text-center mb-0">{{ chartTitle }}</h4>
+          </div>
+          <div class="card-body d-flex justify-content-center align-items-center">
+            <canvas ref="chartCanvas" style="width: 100%; height: 400px;"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -176,3 +178,53 @@ watch(filteredUserData, () => {
 }, { deep: true });
 
 </script>
+
+<style scoped>
+.dashboard-container {
+  background: linear-gradient(135deg, #ffffff, #f0f7f8);
+  padding: 2rem;
+  border-radius: 1rem;
+}
+
+.card {
+  border: none;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  border-bottom: none;
+  padding: 1.5rem;
+}
+
+.bg-gradient-light {
+  background: linear-gradient(135deg, #ffffff, #f0f7f8);
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2, h4 {
+  color: #2B656F;
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+}
+</style>
