@@ -2,7 +2,7 @@
   <div class="personal-details-card">
     <div class="card-content">
       <div class="card-header">
-        <h5>Personal Details</h5>
+        <h5>User Profile</h5>
       </div>
       <div class="user-profile">
         <div class="profile-pic-container">

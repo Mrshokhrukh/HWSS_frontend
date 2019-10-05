@@ -180,7 +180,7 @@ onMounted(async () => {
 
 .content-grid {
 	display: grid;
-	grid-template-columns: 1.5fr 1fr;
+	grid-template-columns: 3fr 1fr;
 	gap: 2rem;
 	align-items: center;
 }
