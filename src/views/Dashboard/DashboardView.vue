@@ -67,6 +67,7 @@ const currentComponent = computed(() => {
     case 'sud_admin':
     case 'aaa_admin':
     case 'rd_admin':
+    case 'cecd_admin':
       return AdminDashboard;
     default:
       return PublicDashboard;
