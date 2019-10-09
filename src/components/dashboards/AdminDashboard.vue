@@ -99,19 +99,19 @@
         <!-- Template for CECD Admin -->
         <div v-if="userRole === 'cecd_admin'">
             <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
-                <RnDDashboard />
+                <cecdDashboard />
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-                <AAAReport />
+                <cecdReport />
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
-                <RndHelp />
+                <cecdHelp />
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-setting">
-                <RnDSetting />
+                <cecdSetting />
             </div>
         </div>
     </div>
@@ -147,6 +147,12 @@ import RnDDashboard from "@/components/dashboards/Adminpages/R&D/RnDDashboard.vu
 import RndHelp from "@/components/dashboards/Adminpages/R&D/RndHelp.vue"
 import RnDSetting from "@/components/dashboards/Adminpages/R&D/RnDProfile/RnDSetting.vue"
 // import ChartMakerAdmin from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue"
+import cecdDashboard from "@/components/dashboards/Adminpages/cecd/cecdDashboard.vue"
+import cecdReport from '@/components/dashboards/Adminpages/cecd/report/cecdReport.vue'
+import cecdSetting from '@/components/dashboards/Adminpages/cecd/cecdSetting.vue'
+import cecdHelp from '@/components/dashboards/Adminpages/cecd/cecdHelp.vue'
+
+
 import axios from 'axios';
 import endpoints from '@/api';
 import { useRoute } from 'vue-router';
