@@ -1,20 +1,20 @@
 <template>
 
     <div>
-        <CurrentStatus />
+        <cecdCurrentStatus />
     </div>
     <div>
-        <ScreeningData />
+        <cecdScreeningData />
     </div>
     <div>
-        <TestTypeScreening />
+        <cecdTestTypeScreening />
     </div>
 </template>
 
 <script setup>
-import CurrentStatus from "@/components/dashboards/Adminpages/AAA/dashboardcard/CurrentStatus.vue";
-import ScreeningData from "@/components/dashboards/Adminpages/AAA/dashboardcard/ScreeningData.vue";
-import TestTypeScreening from "@/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue";
+import cecdCurrentStatus from "@/components/dashboards/Adminpages/cecd/dashboardcard/cecdCurrentStatus.vue";
+import cecdScreeningData from "@/components/dashboards/Adminpages/cecd/dashboardcard/cecdScreeningData.vue";
+import cecdTestTypeScreening from "@/components/dashboards/Adminpages/cecd/dashboardcard/cecdTestTypeScreening.vue";
 </script>
 
 <style scoped></style>

@@ -31,7 +31,7 @@
           <apexchart type="bar" height="350" :options="barOptions" :series="barSeries"></apexchart>
         </div>
         <div v-if="activeButton === 'Table'">
-          <AAASUDSeverityTable :filteredData="filteredData" />
+          <cecdSUDSeverityTable :filteredData="filteredData" />
         </div>
       </div>
     </div>
@@ -41,7 +41,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
-import AAASUDSeverityTable from './cecdSUDSeverityTable.vue'
+import cecdSUDSeverityTable from './cecdSUDSeverityTable.vue'
 
 const props = defineProps({
   filteredData: {

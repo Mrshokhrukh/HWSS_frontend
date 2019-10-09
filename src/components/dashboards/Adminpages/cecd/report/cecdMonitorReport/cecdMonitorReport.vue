@@ -63,9 +63,9 @@
             </div>
 
             <div v-if="selectedOption === 'all'" class="showtable">
-              <AAATableLayer :filteredData="finalFilteredData" />
+              <cecdTableLayer :filteredData="finalFilteredData" />
             </div>
-            <AAAMonitorGraph v-else :chartData="processedChartData" :chartOptions="[selectedOption]" />
+            <cecdMonitorGraph v-else :chartData="processedChartData" :chartOptions="[selectedOption]" />
           </div>
         </div>
       </div>
@@ -75,8 +75,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import AAATableLayer from './cecdTableLayer.vue'
-import AAAMonitorGraph from './cecdMonitorGraph.vue'
+import cecdTableLayer from './cecdTableLayer.vue'
+import cecdMonitorGraph from './cecdMonitorGraph.vue'
 
 const props = defineProps({
   filteredData: {

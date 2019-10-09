@@ -63,9 +63,9 @@
             </div>
 
             <div v-if="selectedOption === 'all'" class="showtable">
-              <AAACasereportTable :filteredData="finalFilteredData" />
+              <cecdCasereportTable :filteredData="finalFilteredData" />
             </div>
-            <AAAChartComponent v-else :chartData="processedChartData" :chartOptions="['Male', 'Female', 'Other']" />
+            <cecdChartComponent v-else :chartData="processedChartData" :chartOptions="['Male', 'Female', 'Other']" />
           </div>
         </div>
       </div>
@@ -75,8 +75,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import AAACasereportTable from './cecdCasereportTable.vue'
-import AAAChartComponent from './cecdChartComponent.vue'
+import cecdCasereportTable from './cecdCasereportTable.vue'
+import cecdChartComponent from './cecdChartComponent.vue'
 
 const props = defineProps({
   filteredData: {
