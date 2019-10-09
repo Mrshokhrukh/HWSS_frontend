@@ -42,7 +42,7 @@
         </div>
         <div class="col">
           <div v-if="activeButton === 'Table'">
-            <AAASeverityTable :filteredData='filteredData' />
+            <cecdSeverityTable :filteredData='filteredData' />
           </div>
           <div v-else>
             <apexchart type="bar" height="350" :options="chartOptions" :series="series"></apexchart>
@@ -56,7 +56,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
-import AAASeverityTable from './cecdSeverityTable.vue'
+import cecdSeverityTable from './cecdSeverityTable.vue'
 
 const props = defineProps({
   filteredData: {

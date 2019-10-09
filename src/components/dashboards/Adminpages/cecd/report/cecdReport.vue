@@ -42,9 +42,9 @@
     </div>
 
     <div v-if="showReport">
-      <AAAMonitorReport v-if="showMonitorReport" :filteredData="filteredData" />
-      <CaseStatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
-      <AAASeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
+      <cecdMonitorReport v-if="showMonitorReport" :filteredData="filteredData" />
+      <cecdCaseStatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
+      <cecdSeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
     </div>
   </div>
 </template>
@@ -53,9 +53,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDashboardStore } from '@/stores/dashboardStore'
-import AAAMonitorReport from './AAAMonitorReport/AAAMonitorReport.vue';
-import CaseStatusReport from './AAACasestatusReport/CaseStatusReport.vue';
-import AAASeverityReport from './AAASeverityReport/AAASeverityReport.vue';
+import cecdMonitorReport from './cecdMonitorReport/cecdMonitorReport.vue';
+import cecdCaseStatusReport from './cecdCasestatusReport/cecdCaseStatusReport.vue';
+import cecdSeverityReport from './cecdSeverityReport/cecdSeverityReport.vue';
 
 const store = useDashboardStore()
 const { reportData, selectedReport, filters, regions, dzongkhags, filteredData, isLoading, error } = storeToRefs(store)

@@ -43,10 +43,10 @@
     </div>
 
     <div v-if="isDataLoaded" class="graph-section">
-      <AAASeverityGraph :filteredData='filteredDataComputed' />
+      <cecdSeverityGraph :filteredData='filteredDataComputed' />
     </div>
     <div v-if="isDataLoaded" class="graph-section">
-      <AAASUDSeverityGraph :filteredData='filteredDataComputed' />
+      <cecdSUDSeverityGraph :filteredData='filteredDataComputed' />
     </div>
     <div v-else class="loading-message">
       Loading data...
@@ -56,8 +56,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import AAASeverityGraph from './cecdSeverityGraph.vue'
-import AAASUDSeverityGraph from './cecdSUDSeverityGraph.vue'
+import cecdSeverityGraph from './cecdSeverityGraph.vue'
+import cecdSUDSeverityGraph from './cecdSUDSeverityGraph.vue'
 
 const props = defineProps({
   filteredData: {
