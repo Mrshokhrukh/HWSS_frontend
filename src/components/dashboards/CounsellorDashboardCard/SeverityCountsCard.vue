@@ -36,18 +36,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
+import { ref, computed, onMounted, provide, watch, inject } from 'vue';
 
 import SeverityGraphCard from '@/components/dashboards/CounsellorDashboardCard/SeverityGraphCard.vue';
 import AssistSeverityAndGraph from '@/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue';
 import SeverityIndicatorCard from '@/components/dashboards/CounsellorDashboardCard/SeverityIndicatorCard.vue';
 
-const store = useCounselorDashboardStore();
-
-// Use storeToRefs for reactive store properties
-const { filteredUserData, isInitialized } = storeToRefs(store);
+// Inject the filtered data from the parent component
+const filteredData = inject('filteredData');
 
 // Constants
 const SEVERITY_ITEMS = ref([
@@ -66,32 +62,26 @@ function isActive(index) {
 
 const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
 
-onMounted(async () => {
-  if (!isInitialized.value) {
-    await store.initializeStore();
-  }
+onMounted(() => {
   updateSeverityCounts();
 });
 
 // Provide filtered data to child components
-provide('filteredUserData', filteredUserData);
+provide('filteredUserData', filteredData);
 
 function setActiveIndex(index) {
   activeIndex.value = index;
-  if (store.setActiveCardIndex) {
-    store.setActiveCardIndex(index);
-  }
 }
 
 // Function to update severity counts
 function updateSeverityCounts() {
-  if (filteredUserData.value) {
+  if (filteredData.value) {
     SEVERITY_ITEMS.value.forEach((item) => {
       let count = 0;
-      filteredUserData.value.forEach(user => {
+      filteredData.value.forEach(user => {
         if (item.field === 'assist') {
           // Check if any ASSIST measurement is not 'no risk'
-          const assistData = user.assistMeasurementData;
+          const assistData = user.measurementAssist;
           if (assistData) {
             const hasRisk = Object.keys(assistData).some(key =>
               key.includes('_measurement') && assistData[key] !== 'no risk' && assistData[key] !== null
@@ -100,7 +90,7 @@ function updateSeverityCounts() {
           }
         } else {
           // For other fields, check if measurement exists and is not null
-          const measurement = user.measurementData?.[item.field];
+          const measurement = user.measurement?.[item.field];
           if (measurement !== undefined && measurement !== null) {
             count++;
           }
@@ -112,10 +102,8 @@ function updateSeverityCounts() {
 }
 
 // Watch for changes in filtered data and update severity counts
-watch(filteredUserData, () => {
-  if (isInitialized.value) {
-    updateSeverityCounts();
-  }
+watch(() => filteredData.value, () => {
+  updateSeverityCounts();
 }, { deep: true });
 </script>
 

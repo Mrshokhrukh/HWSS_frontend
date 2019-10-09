@@ -27,12 +27,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useCounselorDashboardStore } from '@/stores/counselorDashboard'
-import { storeToRefs } from 'pinia'
+import { ref, computed, inject } from 'vue';
 
-const store = useCounselorDashboardStore()
-const { filteredUserData } = storeToRefs(store)
+const props = defineProps({
+  cardTitle: String
+});
+
+// Inject the filtered data from the parent component
+const filteredData = inject('filteredData');
+
 const maxButtonsInRow = 3;
 const selectedMeasurement = ref('');
 
@@ -62,12 +65,12 @@ const buttonData = computed(() => {
 
   const buttonDataMap = new Map();
 
-  filteredUserData.value.forEach(user => {
+  filteredData.value.forEach(user => {
     let measurement;
     if (cardTitle === 'assist') {
-      measurement = user.assistMeasurementData;
+      measurement = user.measurementAssist;
     } else {
-      measurement = user.measurementData;
+      measurement = user.measurement;
     }
 
     if (measurement) {
@@ -129,10 +132,6 @@ const determineIcon = (buttonText) => {
   else if (buttonText === 'minimal' || buttonText === 'No Risk') return 'fas fa-thumbs-up';
   else return 'fas fa-ban';
 };
-
-const props = defineProps({
-  cardTitle: String
-});
 
 const selectedButtonData = ref(null);
 

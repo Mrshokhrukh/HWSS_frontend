@@ -89,7 +89,7 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch, provide } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import endpoints from "@/api";
@@ -105,7 +105,6 @@ import CounselorHelp from '@/components/dashboards/counselorHelp/CounselorHelp.v
 import CounselorSetting from '@/components/dashboards/counselorSetting/CounselorSetting.vue';
 import CounselorFlagReports from '@/components/dashboards/counselorReporting/CounselorFlagReports.vue';
 
-
 const route = useRoute();
 
 const currentRoute = computed(() => route.path);
@@ -113,138 +112,191 @@ const flag = computed(() => route.query.flag);
 
 // Dynamically get the current year
 const currentYear = new Date().getFullYear();
-
-// Dynamically populate website name
 const websiteName = "The PEMA HWSS";
+
+
 const sudData = ref(null);
+const assistMeasurementData = ref(null);
+const measurementData = ref(null);
+const userRole = ref(null);
+const agencyName = ref(null);
+const mappedData = ref([]);
+const userDzongkhag = ref(null);
 
-const reportData = ref([])
-
-const userDetailsInLocal = () => {
-  const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
-  if (userDetails) {
-    const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
-    const roleName = userDetails.user ? userDetails.user.role : null;
-    console.log('agency name and role', agencyName, roleName);
-    return { agencyName, roleName };
-  }
-  return { agencyName: null, roleName: null };
-}
-
-const fetchReportData = async () => {
+const fetchData = async () => {
   try {
-    console.log('function is triggered from counselor dashboard😊');
+    const [assistMeasurementResponse, measurementResponse, sudResponse] = await Promise.all([
+      axios.get(endpoints.getAssistMeasurement),
+      axios.get(endpoints.getMeasurement),
+      axios.get(endpoints.getSUDData)
+    ]);
 
-    // Check if report data exists in sessionStorage and is recent
-    const storedData = sessionStorage.getItem('reportData');
-    const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
-    const currentTime = new Date().getTime();
+    assistMeasurementData.value = assistMeasurementResponse.data;
+    measurementData.value = measurementResponse.data;
+    sudData.value = sudResponse.data;
 
-    if (storedData && storedTimestamp) {
-      const dataAge = currentTime - parseInt(storedTimestamp);
-      const maxDataAge = 600000;
-      if (dataAge < maxDataAge) {
-        reportData.value = JSON.parse(storedData);
-        return;
-      }
-    }
+    console.log('Assist Measurement Data:', assistMeasurementData.value);
+    console.log('Measurement Data:', measurementData.value);
+    console.log('SUD Data:', sudData.value);
 
-    // Get current user's agency name and role from localStorage
-    const { agencyName: userAgencyName, roleName: userRole } = userDetailsInLocal();
-
-    if (userAgencyName && userRole) {
-      const reportResponse = await axios.get(endpoints.getReport);
-      console.log('report response 🎉', reportResponse);
-      if (reportResponse.data) {
-        let reportItems = reportResponse.data.reporting_model_data;
-        const gyalsungUserProfiles = reportResponse.data.gyalsung_user_profiles;
-
-        // Logic based on user role
-        if (userRole === 'clinical_counselor') {
-          // Set agencies to "Case Base Clients" and "Event Base Clients"
-          const agencyToFilter1 = 'Case Base Clients'.toLowerCase();
-          const agencyToFilter2 = 'Event Base Clients'.toLowerCase();
-          reportItems = reportItems.filter(item => {
-            const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
-            if (itemAgencyName === agencyToFilter1 || itemAgencyName === agencyToFilter2) {
-              return true;
-            }
-            for (const key in item) {
-              if (item[key] && typeof item[key] === 'object' && item[key].agency_name) {
-                const nestedAgencyName = item[key].agency_name.toLowerCase();
-                if (nestedAgencyName === agencyToFilter1 || nestedAgencyName === agencyToFilter2) {
-                  return true;
-                }
-              }
-            }
-            return false;
-          });
-        } else if (userRole === 'gyalsung_counselor') {
-          // Filter by user agency
-          reportItems = reportItems.filter(item => {
-            const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
-            if (itemAgencyName === userAgencyName.toLowerCase()) {
-              return true;
-            }
-            for (const key in item) {
-              if (item[key] && typeof item[key] === 'object' && item[key].agency_name) {
-                const nestedAgencyName = item[key].agency_name.toLowerCase();
-                if (nestedAgencyName === userAgencyName.toLowerCase()) {
-                  return true;
-                }
-              }
-            }
-            return false;
-          });
-
-          // Save GyalsungUserProfiles in sessionStorage
-          sessionStorage.setItem('gyalsungUserProfiles', JSON.stringify(gyalsungUserProfiles));
-        } else if (userRole === 'school_counselor' || userRole === 'trained_professional') {
-          // Existing filtering logic
-          reportItems = reportItems.filter(item => {
-            const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
-            if (itemAgencyName === userAgencyName.toLowerCase()) {
-              return true;
-            }
-            for (const key in item) {
-              if (item[key] && typeof item[key] === 'object' && item[key].agency_name) {
-                const nestedAgencyName = item[key].agency_name.toLowerCase();
-                if (nestedAgencyName === userAgencyName.toLowerCase()) {
-                  return true;
-                }
-              }
-            }
-            return false;
-          });
-        }
-
-        if (reportItems.length > 0) {
-          // Set the filtered items to reportData
-          reportData.value = reportItems;
-          sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
-          sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
-        }
-      }
-    }
+    mapData();
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching data:', error);
   }
 };
 
-fetchReportData();
-
-onMounted(async () => {
-  try {
-    const sudResponse = await axios.get(endpoints.getSUDData);
-    if (sudResponse.data.success) {
-      localStorage.setItem('SUDData', JSON.stringify(sudResponse.data.data));
-      sudData.value = sudResponse.data.data;
+const getUserDetails = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+  if (userDetailsString) {
+    try {
+      const userDetails = JSON.parse(userDetailsString);
+      userRole.value = userDetails.user.role;
+      agencyName.value = userDetails.agency.agencyName;
+      userDzongkhag.value = userDetails.user.psAddDzongkhag; // Assuming this is the correct field
+      console.log('User Role:', userRole.value);
+      console.log('Agency Name:', agencyName.value);
+      console.log('User Dzongkhag:', userDzongkhag.value);
+    } catch (error) {
+      console.error('Error parsing user details:', error);
     }
-  } catch (error) {
-    console.error("Error fetching data:", error);
+  } else {
+    console.log('User details not found in local storage');
   }
+};
+
+const mapData = () => {
+  const userMap = new Map();
+
+  // Helper function to get or create a user entry
+  const getOrCreateUser = (userId) => {
+    if (!userMap.has(userId)) {
+      userMap.set(userId, {
+        userId,
+        measurement: null,
+        measurementAssist: null,
+        sudData: { lifetime: null, active: null },
+        userDetails: null
+      });
+    }
+    return userMap.get(userId);
+  };
+
+  // Map measurement data
+  measurementData.value.forEach(item => {
+    const user = getOrCreateUser(item.measurement.user);
+    user.measurement = item.measurement;
+    user.userDetails = item.user_details;
+  });
+
+  // Map measurement assist data
+  assistMeasurementData.value.forEach(item => {
+    const user = getOrCreateUser(item.measurement_assist.user);
+    user.measurementAssist = item.measurement_assist;
+    if (!user.userDetails) {
+      user.userDetails = item.user_details;
+    }
+  });
+
+  // Map SUD data
+  if (sudData.value) {
+    sudData.value.lifetime_users.forEach(user => {
+      const mappedUser = getOrCreateUser(user.user_id);
+      mappedUser.sudData.lifetime = user;
+    });
+    sudData.value.active_users.forEach(user => {
+      const mappedUser = getOrCreateUser(user.user_id);
+      mappedUser.sudData.active = user;
+    });
+  }
+
+  mappedData.value = Array.from(userMap.values());
+  console.log('Mapped Data:', mappedData.value);
+};
+
+const filteredData = computed(() => {
+  console.log('Filtering data for role:', userRole.value);
+  console.log('User Agency Name:', agencyName.value);
+  console.log('User Dzongkhag:', userDzongkhag.value);
+  
+  let filtered;
+  switch(userRole.value) {
+    case 'school_counselor':
+    case 'trained_professional':
+    case 'gyalsung_counselor':
+      filtered = mappedData.value.filter(user => 
+        user.userDetails?.active_agency?.agency_name === agencyName.value
+      );
+      console.log(`Filtered ${filtered.length} users for ${userRole.value} based on agency name`);
+      break;
+    case 'clinical_counselor':
+      filtered = mappedData.value.filter(user => 
+        user.userDetails?.active_agency?.present_dzongkhag === userDzongkhag.value ||
+        user.userDetails?.ps_add_dzongkhag === userDzongkhag.value ||
+        user.sudData?.active?.ps_dzongkhag === userDzongkhag.value ||
+        user.sudData?.lifetime?.ps_dzongkhag === userDzongkhag.value
+      );
+      console.log(`Filtered ${filtered.length} users for clinical_counselor based on dzongkhag`);
+      break;
+    default:
+      filtered = [];
+      console.log('No matching role, returning empty array');
+  }
+  
+  // Log a sample of filtered data (first 3 items)
+  console.log('Filtered data sample:', filtered.slice(0, 3));
+  
+  return filtered;
 });
 
+const validateFilteredData = () => {
+  console.log('Validating filtered data...');
+  const totalUsers = mappedData.value.length;
+  const filteredUsers = filteredData.value.length;
+  
+  console.log(`Total users: ${totalUsers}`);
+  console.log(`Filtered users: ${filteredUsers}`);
+  
+  if (userRole.value === 'clinical_counselor') {
+    const uniqueDzongkhags = new Set(filteredData.value.map(user => user.userDetails?.active_agency?.present_dzongkhag));
+    console.log('Unique Dzongkhags in filtered data:', Array.from(uniqueDzongkhags));
+    if (uniqueDzongkhags.size > 1) {
+      console.warn('Warning: Multiple Dzongkhags found for clinical_counselor');
+    }
+  } else if (['school_counselor', 'trained_professional', 'Gyalsung Counselor'].includes(userRole.value)) {
+    const uniqueAgencies = new Set(filteredData.value.map(user => user.userDetails?.active_agency?.agency_name));
+    console.log('Unique Agencies in filtered data:', Array.from(uniqueAgencies));
+    if (uniqueAgencies.size > 1) {
+      console.warn('Warning: Multiple Agencies found for school_counselor/trained_professional/Gyalsung Counselor');
+    }
+  }
+  
+  console.log('Validation complete');
+};
+
+// Provide filteredData to descendant components
+provide('filteredData', filteredData);
+// Watch for changes in filteredData and validate
+watch(filteredData, validateFilteredData);
+
+onMounted(async () => {
+  console.log('Component mounted');
+  getUserDetails();
+  await fetchData();
+  validateFilteredData(); // Initial validation after data is fetched
+});
+
+// Expose variables and functions
+defineExpose({
+  sudData,
+  assistMeasurementData,
+  measurementData,
+  userRole,
+  agencyName,
+  mappedData,
+  filteredData,
+  fetchData,
+  getUserDetails,
+});
 </script>
 
 <style scoped>

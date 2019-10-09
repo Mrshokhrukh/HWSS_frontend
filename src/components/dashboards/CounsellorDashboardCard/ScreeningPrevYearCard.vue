@@ -1,10 +1,16 @@
 <template>
     <div class="card w-100">
         <div class="card-header">
-            <h4 class="text-center text-capitalize">Total screened for the year: {{ getPreviousYear() }}</h4>
+            <h4 class="text-center text-capitalize">Total screened for the year: {{ previousYear }}</h4>
         </div>
         <div class="card-body">
-            <div class="chart-container">
+            <div v-if="error" class="error-message">
+                {{ error }}
+            </div>
+            <div v-else-if="isLoading" class="loading-message">
+                Loading data...
+            </div>
+            <div v-else class="chart-container">
                 <Chart type="doughnut" :data="chartDisplayData" :options="chartOptions" />
             </div>
             <div class="mt-4 text-center">
@@ -26,29 +32,36 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
+import { ref, computed, inject, onMounted, watch } from 'vue';
 import Chart from 'primevue/chart';
 
-const store = useCounselorDashboardStore();
+const filteredData = inject('filteredData');
+const referenceDate = inject('referenceDate', () => new Date());
 
-const {
-    filteredUserData,
-    agencyName,
-    isLoading,
-    error,
-    CHART_COLORS
-} = storeToRefs(store);
+const CHART_COLORS = ['#2c6975', '#33d4b9'];
+
+const agencyName = computed(() => {
+    if (filteredData.value && filteredData.value.length > 0) {
+        return filteredData.value[0]?.userDetails?.active_agency?.agency_name || 'N/A';
+    }
+    return 'N/A';
+});
 
 const chartData = ref({
     'Male': 0,
     'Female': 0
 });
 
-const getPreviousYear = () => {
-    return new Date().getFullYear() - 1;
-};
+const error = ref(null);
+const isLoading = ref(true);
+
+const chartColors = computed(() => CHART_COLORS);
+const chartPseudoColors = ['#dedede', '#efefef'];
+
+const previousYear = computed(() => {
+    const refDate = referenceDate();
+    return refDate.getFullYear() - 1;
+});
 
 const getTotalCount = computed(() => {
     return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
@@ -62,53 +75,66 @@ const chartDisplayData = computed(() => ({
     labels: ['Male', 'Female'],
     datasets: [{
         data: isDataLoaded.value ? [chartData.value.Male, chartData.value.Female] : [1, 1],
-        backgroundColor: isDataLoaded.value ? CHART_COLORS.value : ['#dedede', '#efefef']
+        backgroundColor: isDataLoaded.value ? chartColors.value : chartPseudoColors
     }]
 }));
 
-const displayColors = computed(() => isDataLoaded.value ? CHART_COLORS.value : ['#dedede', '#efefef']);
+const displayColors = computed(() => isDataLoaded.value ? chartColors.value : chartPseudoColors);
 
-const chartOptions = {
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
         legend: {
             display: false
+        },
+        tooltip: {
+            enabled: isDataLoaded.value
         }
     },
-};
+    cutout: '60%',
+    events: isDataLoaded.value ? ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'] : []
+}));
 
 const updateChartData = () => {
-    const previousYear = getPreviousYear();
+    console.log('Updating chart data. Previous year:', previousYear.value);
+    isLoading.value = true;
+    error.value = null;
 
-    const previousYearData = filteredUserData.value.filter(user => {
-        // Check if reportData exists and has original_submission_date
-        if (user.reportData && user.reportData.original_submission_date) {
-            const submissionDate = new Date(user.reportData.original_submission_date);
-            return submissionDate.getFullYear() === previousYear;
-        }
-        // If no reportData or submission date, check serviceAndTreatment
-        if (user.serviceAndTreatment && user.serviceAndTreatment.length > 0) {
-            const treatmentDate = new Date(user.serviceAndTreatment[0].date);
-            return treatmentDate.getFullYear() === previousYear;
-        }
-        // If neither exists, exclude this user
-        return false;
+    if (!filteredData || !filteredData.value) {
+        console.error('filteredData is not available:', filteredData);
+        error.value = 'Data is not available. Please try again later.';
+        isLoading.value = false;
+        return;
+    }
+
+    console.log('Filtered data:', filteredData.value);
+
+    if (!Array.isArray(filteredData.value)) {
+        console.error('filteredData.value is not an array:', filteredData.value);
+        error.value = 'Data is not in the expected format. Please try again later.';
+        isLoading.value = false;
+        return;
+    }
+
+    const previousYearData = filteredData.value.filter(user => {
+        const submissionDate = user.measurement?.created_at
+            ? new Date(user.measurement.created_at)
+            : null;
+        return submissionDate && submissionDate.getFullYear() === previousYear.value;
     });
 
     let maleCount = 0;
     let femaleCount = 0;
 
     previousYearData.forEach(user => {
-        // Check multiple possible locations for gender information
-        const gender = user.gender?.toLowerCase() ||
-            user.sudData?.active?.sex?.toLowerCase() ||
-            user.serviceAndTreatment?.[0]?.user?.gender?.toLowerCase();
-
-        if (gender === 'male') {
-            maleCount++;
-        } else if (gender === 'female') {
-            femaleCount++;
+        const gender = user.userDetails?.gender || user.sudData?.active?.sex;
+        if (gender) {
+            if (gender.toLowerCase() === 'male') {
+                maleCount++;
+            } else if (gender.toLowerCase() === 'female') {
+                femaleCount++;
+            }
         }
     });
 
@@ -116,23 +142,16 @@ const updateChartData = () => {
         'Male': maleCount,
         'Female': femaleCount
     };
+
+    isLoading.value = false;
 };
 
-onMounted(async () => {
-    try {
-        if (!store.isInitialized) {
-            await store.initializeStore();
-        }
-        updateChartData();
-    } catch (err) {
-        console.error('Error in onMounted:', err);
-    }
+onMounted(() => {
+    updateChartData();
 });
 
-// Watch for changes in filteredUserData and update chart accordingly
-watch(filteredUserData, updateChartData);
+watch([() => filteredData.value, referenceDate], updateChartData, { deep: true });
 </script>
-
 
 <style scoped>
 .card {

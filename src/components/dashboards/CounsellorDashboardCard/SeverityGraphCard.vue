@@ -12,16 +12,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watchEffect, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useCounselorDashboardStore } from '@/stores/counselorDashboard';
-
-const store = useCounselorDashboardStore();
-const { filteredUserData, isInitialized } = storeToRefs(store);
+import { ref, watchEffect, onMounted, inject } from 'vue';
 
 const props = defineProps({
     cardTitle: String
 });
+
+// Inject the filtered data from the parent component
+const filteredData = inject('filteredData');
 
 const chartData = ref([]);
 const chartCategories = ref([]);
@@ -47,12 +45,12 @@ const countSeverityByGender = (data, cardTitle) => {
         let measurement, gender;
 
         if (cardTitle === 'Assist') {
-            measurement = user.assistMeasurementData;
+            measurement = user.measurementAssist;
             gender = user.sudData?.active?.sex?.toLowerCase() ||
-                user.reportData?.user?.fields?.gender?.toLowerCase() || 'unknown';
+                user.userDetails?.gender?.toLowerCase() || 'unknown';
         } else {
-            measurement = user.measurementData;
-            gender = user.reportData?.user?.fields?.gender?.toLowerCase() ||
+            measurement = user.measurement;
+            gender = user.userDetails?.gender?.toLowerCase() ||
                 user.sudData?.active?.sex?.toLowerCase() || 'unknown';
         }
 
@@ -90,8 +88,8 @@ const countSeverityByGender = (data, cardTitle) => {
 };
 
 const updateChartData = () => {
-    if (filteredUserData.value && filteredUserData.value.length > 0) {
-        const { maleData, femaleData } = countSeverityByGender(filteredUserData.value, props.cardTitle);
+    if (filteredData.value && filteredData.value.length > 0) {
+        const { maleData, femaleData } = countSeverityByGender(filteredData.value, props.cardTitle);
         const allSeverities = new Set([...Object.keys(maleData), ...Object.keys(femaleData)]);
 
         chartData.value = [
@@ -113,13 +111,11 @@ const updateChartData = () => {
 };
 
 onMounted(() => {
-    if (!isInitialized.value) {
-        store.initializeStore();
-    }
+    updateChartData();
 });
 
 watchEffect(() => {
-    if (isInitialized.value && filteredUserData.value) {
+    if (filteredData.value) {
         updateChartData();
     }
 });

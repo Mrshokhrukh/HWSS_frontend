@@ -51,7 +51,7 @@ const router = useRouter();
 const users = ref([]);
 const tableSearch = ref('');
 const loadingPatients = ref(false);
-const myAgency = ref('');
+
 
 const columns = ref([
   { header: 'Date', field: 'date', frozen: true },
