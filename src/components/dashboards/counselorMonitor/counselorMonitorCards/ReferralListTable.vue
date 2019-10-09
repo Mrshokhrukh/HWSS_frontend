@@ -219,7 +219,7 @@
           </div>
 
 
-          <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'trained_professional' }"
+          <!-- <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'trained_professional' }"
             v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
             <div class="col-md-12">
               <h4 class="hwss-primary">Services and Treatment</h4>
@@ -319,7 +319,7 @@
             <h5 class="text-warning text-center">
               User Already Referred
             </h5>
-          </div>
+          </div> -->
 
         </main>
       </div>
