@@ -39,7 +39,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
-import SchoolEnvironmentTable from "./SchoolEnvironmentTable.vue"
+import axios from 'axios';
+import endpoints from '@/api';
+import SchoolEnvironmentTable from "./SchoolEnvironmentTable.vue";
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 
@@ -47,10 +49,15 @@ const reportData = ref([]);
 const globalFilter = ref('');
 const filteredData = ref([]);
 
+const userRole = ref('');
+const agencyName = ref('');
+const userDzongkhag = ref('');
+
 const globalFilterFields = [
   'date', 'username', 'age', 'sex', 'past_diagnosis',
   'gad_measurement', 'phq_measurement', 'ace_measurement', 'suicidal_measurement',
-  'tobacco_measurement', 'alcoholic_measurement', 'cannabis_measurement', 'cocaine_measurement', 'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement',
+  'tobacco_measurement', 'alcoholic_measurement', 'cannabis_measurement', 'cocaine_measurement',
+  'amphetamine_measurement', 'inhalants_measurement', 'sedatives_measurement',
   'hallucinogens_measurement', 'opioids_measurement', 'other_measurement', 'injection_measurement'
 ];
 
@@ -106,80 +113,97 @@ const options = [
 ];
 
 const isSchoolCounselor = computed(() => {
-  return true; // For demonstration purposes
+  return true; // For demonstration purposes; adjust as needed
 });
 
-const fetchReportDataFromSessionStorage = () => {
-  const storedReportData = sessionStorage.getItem('reportData');
-  if (storedReportData) {
-    try {
-      const parsedData = JSON.parse(storedReportData);
-      if (Array.isArray(parsedData)) {
-        reportData.value = parsedData.map(transformData);
-        filteredData.value = reportData.value;
-      } else {
-        handleFetchError();
-      }
-    } catch (error) {
+const fetchReportDataFromAPI = async () => {
+  try {
+    const response = await axios.get(endpoints.getReport);
+    console.log('API Response:', response);
+
+    // Access the array from the appropriate property
+    const dataArray = response.data.reporting_model_data;
+
+    if (Array.isArray(dataArray)) {
+      reportData.value = dataArray.map(transformData);
+      filteredData.value = [...reportData.value];
+    } else {
+      console.error('API response does not contain expected data array:', dataArray);
       handleFetchError();
     }
-  } else {
-    console.log('No data found in sessionStorage under the key "reportData".');
+  } catch (error) {
+    console.error('Error fetching report data:', error);
     handleFetchError();
   }
 };
 
 const transformData = (item) => {
-  const user = item.user.fields;
-  const userAgency = item.user_agency.fields;
-  const measurement = item.measurement.fields;
-  const measurementAssist = item.measurement_assist.fields;
-  const serviceAndTreatment = item.service_and_treatment;
+  try {
+    // Accessing fields safely using optional chaining and default values
+    const userFields = item.user?.fields || {};
+    const userAgencyFields = item.user_agency?.fields || {};
+    const measurementFields = item.measurement?.fields || {};
+    const measurementAssistFields = item.measurement_assist?.fields || {};
+    const serviceAndTreatment = item.service_and_treatment || {};
 
-  return {
-    date: item.original_submission_date,
-    username: `${user.first_name} ${user.middle_name} ${user.last_name}`.trim(),
-    age: calculateAge(user.date_of_birth),
-    sex: user.gender,
-    present_dzongkhag: user.ps_add_dzongkhag,
-    present_gewog: user.ps_add_gewog,
-    present_village: user.ps_add_village,
-    user_code: userAgency.user_code,
-    parent_occupation: userAgency.parent_occupation,
-    guardian_name: userAgency.guardian_name,
-    guardian_occupation: userAgency.guardian_occupation,
-    parent_status: userAgency.parent_status,
-    current_living_with: userAgency.current_living_with,
-    user_role_agency: userAgency.user_role_agency,
-    user_class: userAgency.user_class,
-    user_stream: userAgency.user_stream,
-    user_sub_class: userAgency.user_sub_class,
-    past_diagnosis: user.past_diagnosis,
-    suicidal_measurement: measurement.suicidal_measurement,
-    gad_measurement: measurement.gad_measurement,
-    phq_measurement: measurement.phq_measurement,
-    ace_measurement: measurement.ace_measurement,
-    alcoholic_measurement: measurementAssist.alcoholic_measurement,
-    tobacco_measurement: measurementAssist.tobacco_measurement,
-    cannabis_measurement: measurementAssist.cannabis_measurement,
-    cocaine_measurement: measurementAssist.cocaine_measurement,
-    amphetamine_measurement: measurementAssist.amphetamine_measurement,
-    inhalants_measurement: measurementAssist.inhalants_measurement,
-    sedatives_measurement: measurementAssist.sedatives_measurement,
-    hallucinogens_measurement: measurementAssist.hallucinogens_measurement,
-    opioids_measurement: measurementAssist.opioids_measurement,
-    injection_measurement: measurementAssist.injection_measurement,
-    other_measurement: measurementAssist.other_measurement,
-    other_name: measurementAssist.other_name,
-    assessment_status: serviceAndTreatment.assessment_status,
-    case_status: serviceAndTreatment.case_status,
-    counseling: serviceAndTreatment.counseling,
-    follow_up: serviceAndTreatment.follow_up,
-    comments: serviceAndTreatment.comments,
-    referral_status: serviceAndTreatment.referred,
-    referral_remarks: ''  // This field is not present in the provided data structure
-  };
+    // Format the date to yyyy-mm-dd
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-CA'); // Formats to yyyy-mm-dd
+      }
+      return '';
+    };
+
+    return {
+      date: formatDate(item.original_submission_date),
+      username: `${userFields.first_name || ''} ${userFields.middle_name || ''} ${userFields.last_name || ''}`.trim(),
+      age: calculateAge(userFields.date_of_birth),
+      sex: userFields.gender || '',
+      present_dzongkhag: userFields.ps_add_dzongkhag || '',
+      present_gewog: userFields.ps_add_gewog || '',
+      present_village: userFields.ps_add_village || '',
+      user_code: userAgencyFields.user_code || '',
+      parent_occupation: userAgencyFields.parent_occupation || '',
+      guardian_name: userAgencyFields.guardian_name || '',
+      guardian_occupation: userAgencyFields.guardian_occupation || '',
+      parent_status: userAgencyFields.parent_status || '',
+      current_living_with: userAgencyFields.current_living_with || '',
+      user_role_agency: userAgencyFields.user_role_agency || '',
+      user_class: userAgencyFields.user_class || '',
+      user_stream: userAgencyFields.user_stream || '',
+      user_sub_class: userAgencyFields.user_sub_class || '',
+      past_diagnosis: userFields.past_diagnosis || '',
+      suicidal_measurement: measurementFields.suicidal_measurement || '',
+      gad_measurement: measurementFields.gad_measurement || '',
+      phq_measurement: measurementFields.phq_measurement || '',
+      ace_measurement: measurementFields.ace_measurement || '',
+      alcoholic_measurement: measurementAssistFields.alcoholic_measurement || '',
+      tobacco_measurement: measurementAssistFields.tobacco_measurement || '',
+      cannabis_measurement: measurementAssistFields.cannabis_measurement || '',
+      cocaine_measurement: measurementAssistFields.cocaine_measurement || '',
+      amphetamine_measurement: measurementAssistFields.amphetamine_measurement || '',
+      inhalants_measurement: measurementAssistFields.inhalants_measurement || '',
+      sedatives_measurement: measurementAssistFields.sedatives_measurement || '',
+      hallucinogens_measurement: measurementAssistFields.hallucinogens_measurement || '',
+      opioids_measurement: measurementAssistFields.opioids_measurement || '',
+      injection_measurement: measurementAssistFields.injection_measurement || '',
+      other_measurement: measurementAssistFields.other_measurement || '',
+      other_name: measurementAssistFields.other_name || '',
+      assessment_status: serviceAndTreatment.assessment_status || '',
+      case_status: serviceAndTreatment.case_status || '',
+      counseling: serviceAndTreatment.counseling || '',
+      follow_up: serviceAndTreatment.follow_up || '',
+      comments: serviceAndTreatment.comments || '',
+      referral_status: serviceAndTreatment.referred || '',
+      referral_remarks: serviceAndTreatment.referral_remarks || '',
+    };
+  } catch (error) {
+    console.error('Error transforming data item:', item, error);
+    return {};
+  }
 };
+
 
 const calculateAge = (birthDate) => {
   const today = new Date();
@@ -219,9 +243,9 @@ const bulkDownload = () => {
   const currentYear = new Date().getFullYear();
   const password = `${username}@${currentYear}#`;
 
-  console.log(password);
+  console.log('Password for ZIP file:', password);
 
-  zip.generateAsync({ type: 'blob', compression: 'DEFLATE', password: 'password' })
+  zip.generateAsync({ type: 'blob', compression: 'DEFLATE' })
     .then(function (blob) {
       saveAs(blob, 'reports.zip');
     })
@@ -235,17 +259,59 @@ const filterData = () => {
     filteredData.value = [...reportData.value];
     return;
   }
-  const filtered = reportData.value.filter(item => {
-    return Object.values(item).some(val =>
-      val && String(val).toLowerCase().includes(globalFilter.value.toLowerCase())
-    );
+  const filterValue = globalFilter.value.toLowerCase();
+  filteredData.value = reportData.value.filter(item => {
+    return globalFilterFields.some(field => {
+      const fieldValue = item[field];
+      return fieldValue && fieldValue.toString().toLowerCase().includes(filterValue);
+    });
   });
-  filteredData.value = filtered;
 };
 
-const filteredPatients = computed(() => {
-  let filtered = filteredData.value;
+// New computed property for filtered data based on user role
+const roleFilteredData = computed(() => {
+  if (!userRole.value) return reportData.value;
 
+  switch (userRole.value) {
+    case 'school_counselor':
+    case 'trained_professional':
+    case 'gyalsung_counselor':
+      return reportData.value.filter(user =>
+        user.user_role_agency === agencyName.value
+      );
+    case 'clinical_counselor':
+      return reportData.value.filter(user =>
+        user.present_dzongkhag === userDzongkhag.value ||
+        user.ps_add_dzongkhag === userDzongkhag.value
+      );
+    default:
+      return reportData.value;
+  }
+});
+
+const filteredPatients = computed(() => {
+  let filtered = roleFilteredData.value;
+
+  // Debugging: Check if roleFilteredData contains data
+  console.log('roleFilteredData:', roleFilteredData.value);
+
+  // Apply global filter if there is a value
+  if (globalFilter.value) {
+    const filterValue = globalFilter.value.toLowerCase();
+
+    filtered = filtered.filter(item => {
+      return globalFilterFields.some(field => {
+        const fieldValue = item[field];
+        // Safely check if the field exists and includes the filter value
+        return fieldValue && fieldValue.toString().toLowerCase().includes(filterValue);
+      });
+    });
+
+    // Debugging: Check filtered results after global filtering
+    console.log('Filtered after global filter:', filtered);
+  }
+
+  // Define risk columns to sort by risk level
   const riskColumns = [
     'tobacco_measurement',
     'alcoholic_measurement',
@@ -259,6 +325,7 @@ const filteredPatients = computed(() => {
     'other_measurement'
   ];
 
+  // Sort by risk levels
   filtered.sort((a, b) => {
     const riskOrder = ['high risk', 'moderate risk', 'low risk', 'no risk'];
     const getRiskIndex = (risk) => riskOrder.indexOf((risk || '').toLowerCase());
@@ -275,10 +342,24 @@ const filteredPatients = computed(() => {
     return 0;
   });
 
+  // Debugging: Check final filtered data
+  console.log('Final filtered data:', filtered);
+
   return filtered;
 });
 
 watch(globalFilter, filterData);
+
+// Function to get user details from localStorage
+const getUserDetailsFromStorage = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+  if (userDetailsString) {
+    const userDetails = JSON.parse(userDetailsString);
+    userRole.value = userDetails.user.role;
+    agencyName.value = userDetails.agency?.agencyName || '';
+    userDzongkhag.value = userDetails.user.ps_add_dzongkhag || '';
+  }
+};
 
 const severityClass = (value) => {
   if (!value) return 'info';
@@ -304,7 +385,9 @@ const severityClass = (value) => {
 };
 
 onMounted(() => {
-  fetchReportDataFromSessionStorage();
+  fetchReportDataFromAPI();
+  // getUserDetailsFromStorage();
+
 });
 </script>
 
