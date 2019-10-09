@@ -20,7 +20,7 @@
             </div>
             <div class="mt-4 text-center">
                 <div class="hwss-primary text-capitalize font-italic font-weight-bold">
-                    {{ agencyName }}
+                    {{ agencyOrDzongkhag }}
                 </div>
             </div>
         </div>
@@ -31,7 +31,7 @@
                         :style="{ 'background-color': getColor(key) }"></span>
                     {{ key }} ({{ value }})
                 </span>
-                <span class="font-weight-bold mt-2">Total: {{ getTotalCount }}</span>
+                <span class="font-weight-bold pb-2">Total: {{ getTotalCount }}</span>
             </div>
         </div>
     </div>
@@ -46,14 +46,33 @@ const currentYear = inject('currentYear', new Date().getFullYear());
 
 const CHART_COLORS = {
     Male: '#2c6975',
-    Female: '#33d4b9'
+    Female: '#33d4b9',
+    PseudoMale: '#dedede',
+    PseudoFemale: '#efefef'
 };
 
-const agencyName = computed(() => {
-    if (filteredData.value && filteredData.value.length > 0) {
-        return filteredData.value[0]?.userDetails?.active_agency?.agency_name || 'N/A';
+const agencyOrDzongkhag = computed(() => {
+    try {
+        const userDetailsStoreString = localStorage.getItem('userDetailsStore');
+        if (!userDetailsStoreString) {
+            console.error('userDetailsStore not found in localStorage');
+            return 'User details not available';
+        }
+
+        const userDetailsStore = JSON.parse(userDetailsStoreString);
+        const role = userDetailsStore.user?.role;
+
+        if (['trained_professional', 'school_counselor', 'gyelsung_counselor'].includes(role)) {
+            return userDetailsStore.agency?.agencyName || 'Agency Not Available';
+        } else if (role === 'clinical_counselor') {
+            return userDetailsStore.user?.psAddDzongkhag || 'Dzongkhag Not Available';
+        } else {
+            return '';
+        }
+    } catch (error) {
+        console.error('Error in agencyOrDzongkhag computed property:', error);
+        return 'Error retrieving user details';
     }
-    return 'N/A';
 });
 
 const chartData = ref({
@@ -68,16 +87,32 @@ const getTotalCount = computed(() => {
     return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
 });
 
-const chartDisplayData = computed(() => ({
-    labels: Object.keys(chartData.value),
-    datasets: [{
-        data: Object.values(chartData.value),
-        backgroundColor: Object.keys(chartData.value).map(key => CHART_COLORS[key]),
-        borderWidth: 0
-    }]
-}));
+const isDataLoaded = computed(() => {
+    return chartData.value.Male > 0 || chartData.value.Female > 0;
+});
 
-const chartOptions = {
+const chartDisplayData = computed(() => {
+    if (!isDataLoaded.value) {
+        return {
+            labels: ['Male', 'Female'],
+            datasets: [{
+                data: [1, 1],
+                backgroundColor: [CHART_COLORS.PseudoMale, CHART_COLORS.PseudoFemale],
+                borderWidth: 0
+            }]
+        };
+    }
+    return {
+        labels: Object.keys(chartData.value),
+        datasets: [{
+            data: Object.values(chartData.value),
+            backgroundColor: Object.keys(chartData.value).map(key => CHART_COLORS[key]),
+            borderWidth: 0
+        }]
+    };
+});
+
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
@@ -85,6 +120,7 @@ const chartOptions = {
             display: false
         },
         tooltip: {
+            enabled: isDataLoaded.value,
             callbacks: {
                 label: (context) => {
                     const label = context.label || '';
@@ -97,7 +133,7 @@ const chartOptions = {
         }
     },
     cutout: '70%'
-};
+}));
 
 const getColor = (key) => CHART_COLORS[key];
 
@@ -105,23 +141,9 @@ const updateChartData = () => {
     isLoading.value = true;
     error.value = null;
 
-    if (!filteredData || !filteredData.value) {
-        console.error('filteredData is not available:', filteredData);
-        error.value = 'Data is not available. Please try again later.';
-        isLoading.value = false;
-        return;
-    }
-
-    if (!Array.isArray(filteredData.value)) {
-        console.error('filteredData.value is not an array:', filteredData.value);
-        error.value = 'Data is not in the expected format. Please try again later.';
-        isLoading.value = false;
-        return;
-    }
-
-    if (!currentYear) {
-        console.warn('currentYear is undefined');
-        error.value = 'Current year is not set. Please try again later.';
+    if (!filteredData.value || !Array.isArray(filteredData.value)) {
+        console.error('filteredData is not available or not an array:', filteredData.value);
+        error.value = 'Data is not available or in the wrong format. Please try again later.';
         isLoading.value = false;
         return;
     }
@@ -194,7 +216,7 @@ watch(() => currentYear, updateChartData);
 .legend-item {
     display: flex;
     align-items: center;
-    margin: 0 10px;
+    margin-bottom: 0.5rem;
     font-size: 0.9rem;
 }
 
@@ -202,20 +224,33 @@ watch(() => currentYear, updateChartData);
     width: 16px;
     height: 16px;
     display: inline-block;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    width: 60px;
+    /* Adjust this value to ensure alignment */
+    margin-right: 0.5rem;
+}
+
+.legend-count {
+    flex-grow: 1;
+    text-align: left;
 }
 
 .hwss-primary {
     color: #2c6975;
 }
 
-@media (max-width: 576px) {
-    .card-footer .d-flex {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+.total {
+    margin-top: 0.5rem;
+}
 
-    .legend-item {
-        margin: 5px 0;
+@media (max-width: 576px) {
+    .legend-label {
+        width: auto;
+        margin-right: 0.5rem;
     }
 }
 </style>

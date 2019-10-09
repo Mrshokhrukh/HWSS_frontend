@@ -20,7 +20,7 @@
             </div>
             <div class="mt-4 text-center">
                 <div class="hwss-primary text-capitalize font-italic font-weight-bold">
-                    {{ agencyName }}
+                    {{ agencyOrDzongkhag }}
                 </div>
             </div>
         </div>
@@ -31,7 +31,7 @@
                         :style="{ 'background-color': getColor(key) }"></span>
                     {{ key }} ({{ value }})
                 </span>
-                <span class="font-weight-bold mt-2">Total: {{ getTotalCount }}</span>
+                <span class="font-weight-bold pb-1">Total: {{ getTotalCount }}</span>
             </div>
         </div>
     </div>
@@ -44,17 +44,34 @@ import Chart from 'primevue/chart';
 const filteredData = inject('filteredData');
 
 const CHART_COLORS = {
-    Male: '#2c6975', // Normal color for males
-    Female: '#33d4b9', // Normal color for females
-    PseudoMale: '#d3d3d3', // Light gray for pseudo male
-    PseudoFemale: '#a9a9a9' // Darker gray for pseudo female
+    Male: '#2c6975',
+    Female: '#33d4b9',
+    PseudoMale: '#d3d3d3',
+    PseudoFemale: '#a9a9a9'
 };
 
-const agencyName = computed(() => {
-    if (filteredData.value && filteredData.value.length > 0) {
-        return filteredData.value[0]?.userDetails?.active_agency?.agency_name || 'N/A';
+const agencyOrDzongkhag = computed(() => {
+    try {
+        const userDetailsStoreString = localStorage.getItem('userDetailsStore');
+        if (!userDetailsStoreString) {
+            console.error('userDetailsStore not found in localStorage');
+            return 'User details not available';
+        }
+
+        const userDetailsStore = JSON.parse(userDetailsStoreString);
+        const role = userDetailsStore.user?.role;
+
+        if (['trained_professional', 'school_counselor', 'gyelsung_counselor'].includes(role)) {
+            return userDetailsStore.agency?.agencyName || 'Agency Not Available';
+        } else if (role === 'clinical_counselor') {
+            return userDetailsStore.user?.psAddDzongkhag || 'Dzongkhag Not Available';
+        } else {
+            return '';
+        }
+    } catch (error) {
+        console.error('Error in agencyOrDzongkhag computed property:', error);
+        return 'Error retrieving user details';
     }
-    return 'N/A';
 });
 
 const chartData = ref({
@@ -75,11 +92,10 @@ const isDataLoaded = computed(() => {
 
 const chartDisplayData = computed(() => {
     if (!isDataLoaded.value) {
-        // Use pseudo counts and gray colors when no data is available
         return {
             labels: ['Male', 'Female'],
             datasets: [{
-                data: [1, 1], // Pseudo counts
+                data: [1, 1],
                 backgroundColor: [CHART_COLORS.PseudoMale, CHART_COLORS.PseudoFemale],
                 borderWidth: 0
             }]
@@ -103,7 +119,7 @@ const chartOptions = computed(() => ({
             display: false
         },
         tooltip: {
-            enabled: isDataLoaded.value, // Disable tooltips if using pseudo data
+            enabled: isDataLoaded.value,
             callbacks: {
                 label: (context) => {
                     const label = context.label || '';
@@ -184,7 +200,6 @@ watch(() => filteredData.value, updateChartData, { deep: true });
 watch(() => currentYear, updateChartData);
 </script>
 
-
 <style scoped>
 .card {
     max-width: 450px;
@@ -224,6 +239,7 @@ watch(() => currentYear, updateChartData);
     width: 16px;
     height: 16px;
     display: inline-block;
+    margin-right: 0.5rem;
 }
 
 .hwss-primary {
