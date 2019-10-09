@@ -97,7 +97,7 @@ const chartOptions = computed(() => ({
 }));
 
 const updateChartData = () => {
-    console.log('Updating chart data. Previous year:', previousYear.value);
+    
     isLoading.value = true;
     error.value = null;
 
@@ -108,7 +108,7 @@ const updateChartData = () => {
         return;
     }
 
-    console.log('Filtered data:', filteredData.value);
+    
 
     if (!Array.isArray(filteredData.value)) {
         console.error('filteredData.value is not an array:', filteredData.value);
