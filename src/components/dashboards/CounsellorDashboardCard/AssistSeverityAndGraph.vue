@@ -3,22 +3,23 @@
     <div class="row g-4">
       <div class="col-lg-4">
         <div class="card h-100 shadow-sm">
-          <div class="card-header bg-gradient-light">
-            <h4 class="text-center mb-0">Substance Use</h4>
+          <div class="card-header bg-gradient-dark">
+            <h4 class="text-center mb-0 text-white">Substance Use</h4>
           </div>
           <div class="card-body d-flex flex-column">
-            <button class="btn btn-gradient mb-3 flex-fill" @click="handleLifetimeUsersClick">
+            <button class="btn btn-gradient-light mb-3 flex-fill" @click="handleLifetimeUsersClick">
               <h2 class="mb-0">{{ totalLifetimeUsers }}</h2>
               <p class="mb-0">Lifetime Users</p>
             </button>
 
-            <button class="btn btn-gradient mb-3 flex-fill" @click="handleActiveUsersClick">
+            <button class="btn btn-gradient-light mb-3 flex-fill" @click="handleActiveUsersClick">
               <h2 class="mb-0">{{ totalActiveUsers }}</h2>
               <p class="mb-0">Active Users</p>
             </button>
 
-            <button class="btn btn-gradient flex-fill" @click="handleSubstanceRiskClick">
-              Substance Risk Levels
+            <button class="btn btn-gradient-light flex-fill" @click="handleSubstanceRiskClick">
+              <h2 class="mb-0">{{ totalRiskUsers }}</h2>
+              <p class="mb-0">Substance Risk Levels</p>
             </button>
           </div>
         </div>
@@ -26,18 +27,21 @@
 
       <div class="col-lg-8">
         <div class="card h-100 shadow-sm">
-          <div class="card-header bg-gradient-light">
-            <h4 class="text-center mb-0">{{ chartTitle }}</h4>
+          <div class="card-header bg-gradient-dark">
+            <h4 class="text-center mb-0 text-white">{{ chartTitle }}</h4>
           </div>
-          <div class="card-body d-flex justify-content-center align-items-center">
-            <canvas ref="chartCanvas" style="width: 100%; height: 400px;"></canvas>
+          <div class="card-body d-flex justify-content-center align-items-center chart-container">
+            <canvas ref="chartCanvas"></canvas>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div v-else class="loading-container">
-    <p>Loading data...</p>
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3">Loading data...</p>
   </div>
 </template>
 
@@ -52,11 +56,11 @@ let myChart = null;
 const chartTitle = ref('Substance Use Overview');
 
 const CHART_COLORS = {
-  male: '#2c6975',
-  female: '#3d7a86',
-  lowRisk: '#6da5b1',
-  moderateRisk: '#4c8d9a',
-  highRisk: '#2c6975'
+  male: 'rgba(43, 101, 111, 0.8)',
+  female: 'rgba(29, 72, 81, 0.8)',
+  lowRisk: 'rgba(120, 224, 143, 0.8)',
+  moderateRisk: 'rgba(255, 190, 118, 0.8)',
+  highRisk: 'rgba(235, 77, 75, 0.8)'
 };
 
 const isDataAvailable = computed(() => Array.isArray(filteredData.value) && filteredData.value.length > 0);
@@ -69,6 +73,12 @@ const totalLifetimeUsers = computed(() => {
 const totalActiveUsers = computed(() => {
   if (!isDataAvailable.value) return 0;
   return filteredData.value.filter(user => user.sudData?.active?.substances_used?.length > 0).length;
+});
+
+const totalRiskUsers = computed(() => {
+  if (!isDataAvailable.value) return 0;
+  return Object.values(substanceRiskLevels.value).reduce((total, risks) => 
+    total + risks['low risk'] + risks['moderate risk'] + risks['high risk'], 0);
 });
 
 const substanceUsage = computed(() => {
@@ -126,7 +136,7 @@ const displayChart = (data) => {
     data: data,
     options: {
       scales: {
-        y: { 
+        y: {
           beginAtZero: true,
           title: {
             display: true,
@@ -138,10 +148,21 @@ const displayChart = (data) => {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'top' },
+        legend: { 
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
         title: {
           display: true,
           text: chartTitle.value
+        }
+      },
+      elements: {
+        bar: {
+          borderRadius: 8,
         }
       }
     }
@@ -199,7 +220,7 @@ const handleActiveUsersClick = () => {
 const handleSubstanceRiskClick = () => {
   chartTitle.value = 'Substance Risk Levels';
   const substances = Object.keys(substanceRiskLevels.value);
-  
+
   const datasets = [
     {
       label: 'Low Risk',
@@ -241,12 +262,9 @@ watch(filteredData, (newData) => {
 
 </script>
 
-
-
 <style scoped>
 .dashboard-container {
-  background: linear-gradient(135deg, #ffffff, #f0f7f8);
-  padding: 2rem;
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
   border-radius: 1rem;
 }
 
@@ -255,6 +273,8 @@ watch(filteredData, (newData) => {
   border-radius: 1rem;
   overflow: hidden;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: white;
 }
 
 .card:hover {
@@ -267,20 +287,32 @@ watch(filteredData, (newData) => {
   padding: 1.5rem;
 }
 
-.bg-gradient-light {
-  background: linear-gradient(135deg, #ffffff, #f0f7f8);
+.bg-gradient-dark {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-.btn-gradient {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+.btn-gradient-light {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  color: #2B656F !important;
+}
+
+.btn {
   border: none;
   color: white;
   transition: all 0.3s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 0.5rem;
 }
 
-.btn-gradient:hover {
+.btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-gradient-dark {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
 h2, h4 {
@@ -290,5 +322,24 @@ h2, h4 {
 .chart-container {
   position: relative;
   height: 400px;
+  padding: 1rem;
+  border-radius: 0 0 1rem 1rem;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  background-color: #f0f7f8;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+  color: #2B656F;
 }
 </style>

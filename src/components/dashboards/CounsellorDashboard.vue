@@ -1,22 +1,10 @@
 <template>
   <div class="container-fluid bg-color">
     <div class="row my-2" v-if="currentRoute === '/counselor-dashboard'">
+
       <div class="col-md-4 mb-4">
-        <div class="card h-100">
-          <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs">
-              <li class="nav-item">
-                <a class="nav-link active" id="quickToolTab" data-bs-toggle="tab" href="#quickToolContent">Quick Tool</a>
-              </li>
-            </ul>
-          </div>
-          <div class="card-body align-items-center bg-white d-flex">
-            <div class="tab-content">
-              <div class="tab-pane fade show active" id="quickToolContent" role="tabpanel" aria-labelledby="quickToolTab">
-                <QuickToolCard />
-              </div>
-            </div>
-          </div>
+        <div class="h-100">
+          <QuickToolCard />
         </div>
       </div>
 
@@ -182,16 +170,16 @@ const mapData = () => {
 
 const filteredData = computed(() => {
   let filtered;
-  switch(userRole.value) {
+  switch (userRole.value) {
     case 'school_counselor':
     case 'trained_professional':
     case 'gyalsung_counselor':
-      filtered = mappedData.value.filter(user => 
+      filtered = mappedData.value.filter(user =>
         user.userDetails?.active_agency?.agency_name === agencyName.value
       );
       break;
     case 'clinical_counselor':
-      filtered = mappedData.value.filter(user => 
+      filtered = mappedData.value.filter(user =>
         user.userDetails?.active_agency?.present_dzongkhag === userDzongkhag.value ||
         user.userDetails?.ps_add_dzongkhag === userDzongkhag.value ||
         user.sudData?.active?.ps_dzongkhag === userDzongkhag.value ||
@@ -201,7 +189,7 @@ const filteredData = computed(() => {
     default:
       filtered = [];
   }
-  
+
   return filtered;
 });
 

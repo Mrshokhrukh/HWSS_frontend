@@ -1,32 +1,36 @@
 <template>
-    <div>
-        <div class="row p-4 bg-light">
-            <div class="col-3 left-selectors">
-                <div class="card bg-white h-100 p-4">
-                    <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
-                    <div>
+    <div class="screening-container">
+        <div class="screening-layout">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-card">
+                    <h4 class="sidebar-title">Selected Assessment:</h4>
+                    <nav class="assessment-navigation">
                         <ul>
                             <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
                                 :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
-                                <a href="#" class="p-3">
-                                    <input type="checkbox" class="form-check-input" :checked="menu.completed"
-                                        :disabled="menu.completed">
-                                    <span class="ms-2">{{ menu.name }}</span>
+                                <a href="#" class="nav-link">
+                                    <div class="checkbox-wrapper">
+                                        <input type="checkbox" :checked="menu.completed" :disabled="menu.completed">
+                                        <div class="checkbox-indicator"></div>
+                                    </div>
+                                    <span>{{ menu.name }}</span>
+                                    <div class="nav-indicator"></div>
                                 </a>
                             </li>
                         </ul>
-                    </div>
+                    </nav>
                 </div>
             </div>
 
-            <div class="col-9">
-                <div class="card p-4 h-100">
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="content-card">
                     <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
-                        @goToNext="handleChangeComponent"></component>
-                    <div v-else>
-                        <div class="d-flex justify-content-center">
-                            <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
-                        </div>
+                        @goToNext="handleChangeComponent">
+                    </component>
+                    <div v-else class="empty-state">
+                        <h4>Select the Assessment Tool you want to begin with!</h4>
                     </div>
                 </div>
             </div>
@@ -49,7 +53,6 @@ const router = useRouter();
 
 const emit = defineEmits(['goBackToSelectTools', 'goToNext']);
 
-// Define reactive variables
 // Define reactive variables
 const currentScreeningComponent = ref(null);
 const selectedMenu = ref(null);
@@ -80,13 +83,13 @@ onMounted(() => {
         menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
     } else {
-        console.error('No menu saved');
+        // console.log('No menu saved');
     }
 });
 
 // Watch for changes in selected menu and save to local storage
 watch(selectedMenu, (newValue) => {
-    localStorage.setItem('selectedMenu', JSON.stringify([newValue])); // Store selected menu as an array
+    localStorage.setItem('selectedMenu', JSON.stringify([newValue]));
 });
 
 const handleChangeComponent = (nextMenuName) => {
@@ -108,6 +111,7 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
+                // console.log('this function is read');
                 submitAssessments();
             }
         });
@@ -132,122 +136,48 @@ const handleChangeComponent = (nextMenuName) => {
 };
 
 
-const rescreeningUserIDs = JSON.parse(sessionStorage.getItem('RescreeningUserIDs')) || [];
-const currentUserIdIndex = ref(0);
+const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || [];
 
 const submitAssessments = async () => {
-    if (currentUserIdIndex.value >= rescreeningUserIDs.length) {
-        // All users' assessments have been submitted
-        Swal.fire({
-            icon: 'success',
-            title: 'All Assessments Submitted Successfully',
-            text: 'Thank you for submitting all assessments.',
-            confirmButtonText: 'OK'
-        }).then(() => {
-            router.push('/counselor-dashboard');
-        });
-        return;
-    }
+    try {
 
-    const userId = rescreeningUserIDs[currentUserIdIndex.value];
+        const userId = ClientUserIdCaseBase;
 
-    // Gather data from localStorage
-    const getDataFromLocalStorage = (key) => {
-        try {
-            const data = localStorage.getItem(`${key}_set_counselor_screening`);
-            return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
-        } catch (error) {
-            console.error(`Error parsing ${key} data:`, error);
-            return {}; // Return an empty object if parsing fails
-        }
-    };
-
-    const gadData = getDataFromLocalStorage('GAD');
-    const phqData = getDataFromLocalStorage('PHQ');
-    const aceData = getDataFromLocalStorage('ACE');
-    const assistData = getDataFromLocalStorage('ASSIST');
-    const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
-
-    // Function to calculate risk severity for each substance
-    let assistRiskSeverity = {}; // Move the declaration outside the block
-    if (assistData !== null && assistData.length > 0) {
-        const calculateRiskSeverity = (assistData) => {
-            const substanceScores = {};
-            // Loop through ASSIST data and calculate scores for each substance
-            assistData.forEach(entry => {
-                const substanceName = entry.substance;
-                const point = entry.point;
-                // Add point to the substance's total score
-                substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
-            });
-
-            // Define threshold values for risk severity
-            const thresholds = {
-                mild: 3,
-                moderate: 5,
-                moderatelySevere: 8,
-                severe: 11
-            };
-
-            // Determine risk severity for each substance
-            const substanceRiskSeverity = {};
-            for (const substanceName in substanceScores) {
-                const score = substanceScores[substanceName];
-                if (score >= thresholds.severe) {
-                    substanceRiskSeverity[substanceName] = 'severe';
-                } else if (score >= thresholds.moderatelySevere) {
-                    substanceRiskSeverity[substanceName] = 'moderately severe';
-                } else if (score >= thresholds.moderate) {
-                    substanceRiskSeverity[substanceName] = 'moderate';
-                } else if (score >= thresholds.mild) {
-                    substanceRiskSeverity[substanceName] = 'mild';
-                } else {
-                    substanceRiskSeverity[substanceName] = 'none';
-                }
-                // Append the total score to the substance's risk severity
-                substanceRiskSeverity[substanceName] += ` (${score})`; // Use the total score directly
+        // Gather data from localStorage
+        const getDataFromLocalStorage = (key) => {
+            try {
+                const data = localStorage.getItem(`${key}_set_counselor_screening`);
+                return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
+            } catch (error) {
+                console.error(`Error parsing ${key} data:`, error);
+                return {}; // Return an empty object if parsing fails
             }
-
-            return substanceRiskSeverity;
         };
 
-        // Calculate risk severity for ASSIST data
-        assistRiskSeverity = calculateRiskSeverity(assistData);
-        // console.log('Assist Risk Severity:', assistRiskSeverity);
-    }
+        const gadData = getDataFromLocalStorage('GAD');
+        const phqData = getDataFromLocalStorage('PHQ');
+        const aceData = getDataFromLocalStorage('ACE');
+        const assistData = getDataFromLocalStorage('ASSIST');
+        const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
 
-    // Construct form data
-    const formData = new FormData();
-    formData.append('userId', userId);
-    formData.append('gadData', JSON.stringify(gadData));
-    formData.append('phqData', JSON.stringify(phqData));
-    formData.append('aceData', JSON.stringify(aceData));
-    // Include the filtered and processed ASSIST data
-    formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
-    formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+        // Construct form data
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('gadData', JSON.stringify(gadData));
+        formData.append('phqData', JSON.stringify(phqData));
+        formData.append('aceData', JSON.stringify(aceData));
 
-    // console.log('Form data:', formData);
+        // Calculate risk severity for ASSIST data if available
+        if (assistData && assistData.length > 0) {
+            const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
+            formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
+        }
 
-    try {
-        // Submit data to endpoint
-        // eslint-disable-next-line no-unused-vars
-        const response = await axios.post(endpoints.rescreenSubmission, formData);
-        // console.log('Response:', response);
+        formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+        const response = await axios.post(endpoints.caseScreenSubmission, formData);
+        sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
 
-        // Remove user ID from rescreening list
-        rescreeningUserIDs.shift();
-        // Update sessionStorage
-        sessionStorage.setItem('RescreeningUserIDs', JSON.stringify(rescreeningUserIDs));
-        // Increment index for next user
-        currentUserIdIndex.value++;
-
-        // Clear localStorage data for assessments
-        ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
-            localStorage.removeItem(`${key}_set_counselor_screening`);
-        });
-        localStorage.removeItem('answeredSubstances');
-        localStorage.removeItem('selectedMenu');
-        localStorage.removeItem('selectedTools');
+        clearLocalStorageData();
 
         // Show success message
         Swal.fire({
@@ -256,12 +186,9 @@ const submitAssessments = async () => {
             text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            // Check if there are remaining user IDs
-            if (rescreeningUserIDs.length > 0) {
-                // Stay on rescreening route
+            if (ClientUserIdCaseBase.length > 0) {
                 window.location.reload();
             } else {
-                // All assessments submitted, redirect to counselor dashboard
                 router.push('/counselor-dashboard');
             }
         });
@@ -277,54 +204,205 @@ const submitAssessments = async () => {
     }
 };
 
+const calculateAssistRiskSeverity = (assistData) => {
+    const substanceScores = {};
+    assistData.forEach(entry => {
+        const substanceName = entry.substance;
+        const point = entry.point;
+        substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+    });
+
+    const thresholds = {
+        mild: 3,
+        moderate: 5,
+        moderatelySevere: 8,
+        severe: 11
+    };
+
+    const assistRiskSeverity = {};
+    for (const substanceName in substanceScores) {
+        const score = substanceScores[substanceName];
+        if (score >= thresholds.severe) {
+            assistRiskSeverity[substanceName] = 'severe';
+        } else if (score >= thresholds.moderatelySevere) {
+            assistRiskSeverity[substanceName] = 'moderately severe';
+        } else if (score >= thresholds.moderate) {
+            assistRiskSeverity[substanceName] = 'moderate';
+        } else if (score >= thresholds.mild) {
+            assistRiskSeverity[substanceName] = 'mild';
+        } else {
+            assistRiskSeverity[substanceName] = 'none';
+        }
+        assistRiskSeverity[substanceName] += ` (${score})`;
+    }
+
+
+    return assistRiskSeverity;
+};
+
+// Function to clear localStorage data for assessments
+const clearLocalStorageData = () => {
+    ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
+        localStorage.removeItem(`${key}_set_counselor_screening`);
+    });
+    localStorage.removeItem('answeredSubstances');
+    localStorage.removeItem('selectedMenu');
+    localStorage.removeItem('selectedTools');
+};
 </script>
 
-
 <style scoped>
-.hwss-icon {
-    font-size: 5rem;
-    color: #2B656F;
+.screening-container {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(43, 101, 111, 0.08);
+    min-height: 600px;
 }
 
-.tick-area {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    z-index: 10;
-    border-radius: 50%;
+.screening-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    height: 100%;
 }
 
-.tick-area input[type="checkbox"] {
-    border: 2px solid #2B656F !important;
-    border-radius: 50%;
-    scale: 1.5;
+/* Sidebar Styles */
+.sidebar-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
 }
 
-.selectable-card {
-    text-align: center;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.left-selectors ul {
-    padding: 0;
-}
-
-.left-selectors ul li {
-    list-style: none;
-    margin-bottom: 1.5rem;
-}
-
-.left-selectors ul li a {
-    text-decoration: none;
-    color: #5d5d5d;
-    font-weight: 500;
-    position: relative;
-    /* Add relative positioning */
-}
-
-.left-selectors ul li.active a {
+.sidebar-title {
     color: #2B656F;
     font-weight: 600;
+    margin-bottom: 2rem;
+    padding-left: 0.5rem;
+}
+
+.assessment-navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #1D4851;
+    text-decoration: none;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.nav-link:hover {
+    background: rgba(43, 101, 111, 0.05);
+}
+
+.active .nav-link {
+    color: #2B656F;
+    font-weight: 600;
+    background: rgba(43, 101, 111, 0.08);
+}
+
+.nav-indicator {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0;
+    background: #2B656F;
+    transition: all 0.3s ease;
+}
+
+.active .nav-indicator {
+    width: 100%;
+}
+
+/* Checkbox Styles */
+.checkbox-wrapper {
+    margin-right: 0.75rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #2B656F;
+    border-radius: 50%;
+    appearance: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked {
+    background-color: #2B656F;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Main Content Styles */
+.main-content {
+    height: 100%;
+}
+
+.content-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 2rem;
+    height: 100%;
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.1);
+}
+
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.empty-state h4 {
+    color: #2B656F;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .screening-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar-card {
+        margin-bottom: 1rem;
+    }
+
+    .assessment-navigation {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+
+    .assessment-navigation ul {
+        display: flex;
+        gap: 1rem;
+        min-width: max-content;
+    }
+
+    .nav-link {
+        white-space: nowrap;
+    }
 }
 </style>

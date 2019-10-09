@@ -1,120 +1,89 @@
 <template>
-    <div class="card custom-card p-3 h-100">
-        <div class="card-header">
-            <h5 class="header-title">Personal Details</h5>
-        </div>
-        <div class="card-body">
-            <!-- Notification -->
-            <!-- <div class="notification" :class="notification.type" v-if="notification.show">
-                {{ notification.message }}
-            </div> -->
-
-            <!-- Personal Details Form -->
-            <form @submit.prevent>
-                <div class="row g-3">
-
-
-
-                    <!-- Citizenship Identity Number -->
-                    <div class="row mb-5">
-                        <div class="col-md-6 mb-4">
-                            <label>Citizenship Identity Number</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.identityNumber">
-                        </div>
-                        <!-- Nationality -->
-                        <div class="col-md-6 mb-4">
-                            <label>Nationality</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.nationality">
-                        </div>
-                        <!-- Phone -->
-                        <div class="col-md-6 mb-4">
-                            <label>Phone</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.mobNumber">
-                        </div>
-                        <!-- Email -->
-                        <div class="col-md-6 mb-4">
-                            <label>Email</label>
-                            <input type="email" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.email">
-                        </div>
+    <div class="personal-details-card">
+        <div class="card-content">
+            <div class="card-header">
+                <h5>Personal Details</h5>
+            </div>
+            <div class="card-body">
+                <!-- Notification -->
+                <transition name="fade">
+                    <div v-if="notification.show" :class="['notification', notification.type]">
+                        {{ notification.message }}
                     </div>
+                </transition>
 
-
-
-                    <!-- Permanent Address -->
-                    <div class="row mb-5">
-                        <div class="col-md-12">
-                            <div class="card-header">
-                                <h5 class="header-title">Permanent Address</h5>
+                <!-- Personal Details Form -->
+                <form @submit.prevent="saveChanges">
+                    <div class="detail-section">
+                        <div class="detail-grid">
+                            <div class="detail-row">
+                                <label for="identityNumber">Citizenship Identity Number</label>
+                                <input type="text" id="identityNumber" class="detail-input" readonly
+                                    :value="userDetails.user.identityNumber">
+                            </div>
+                            <div class="detail-row">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" class="detail-input" readonly
+                                    :value="userDetails.user.email">
+                            </div>
+                            <div class="detail-row">
+                                <label for="mobile">Mobile</label>
+                                <input type="text" id="mobile" class="detail-input" :class="{ 'editable': isEditing }"
+                                    :readonly="!isEditing" v-model="userDetails.user.mobNumber">
+                            </div>
+                            <div class="detail-row">
+                                <label for="nationality">Nationality</label>
+                                <input type="text" id="nationality" class="detail-input" readonly
+                                    :value="userDetails.user.nationality">
                             </div>
                         </div>
-                        <!-- Dzongkhag -->
-                        <div class="col-md-6 mb-4">
-                            <label>Dzongkhag</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddDzongkhag">
-                        </div>
-                        <!-- Gewog -->
-                        <div class="col-md-6 mb-4">
-                            <label>Gewog</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddGewog">
-                        </div>
-                        <!-- Village -->
-                        <div class="col-md-6 mb-4">
-                            <label>Village</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddVillage">
-                        </div>
                     </div>
 
 
 
-                    <!-- Present Address -->
-                    <div class="row mb-5">
-                        <div class="col-md-12">
-                            <div class="card-header">
-                                <h5 class="header-title">Present Address</h5>
+                    <div class="detail-section">
+                        <h6 class="section-title">Permanent Address</h6>
+                        <div class="detail-grid">
+                            <div class="detail-row">
+                                <label for="permAddVillage">Village</label>
+                                <input type="text" id="permAddVillage" class="detail-input" readonly
+                                    :value="userDetails.user.permAddVillage">
+                            </div>
+                            <div class="detail-row">
+                                <label for="permAddGewog">Gewog</label>
+                                <input type="text" id="permAddGewog" class="detail-input" readonly
+                                    :value="userDetails.user.permAddGewog">
+                            </div>
+                            <div class="detail-row">
+                                <label for="permAddDzongkhag">Dzongkhag</label>
+                                <input type="text" id="permAddDzongkhag" class="detail-input" readonly
+                                    :value="userDetails.user.permAddDzongkhag">
                             </div>
                         </div>
-                        <!-- Present Address -->
-                        <!-- <div :class="{ 'col-md-6 mb-4': userDetails.user.currentLivingWith !== 'others', 'col-md-12': userDetails.user.currentLivingWith === 'others' }">
-                            <label>Present Address</label>
-                            <input type="text" class="form-control" :readonly="!isEditing" :disabled="!isEditing"
-                                v-model="userDetails.user.psAddDzongkhag">
-                        </div> -->
-                        <!-- Dzongkhag -->
-                        <div class="col-md-6 mb-4">
-                            <label>Dzongkhag</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddDzongkhag">
-                        </div>
-                        <!-- Gewog -->
-                        <div class="col-md-6 mb-4">
-                            <label>Gewog</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddGewog">
-                        </div>
-                        <!-- Village -->
-                        <div class="col-md-6 mb-4">
-                            <label>Village</label>
-                            <input type="text" class="form-control input-noneditable" readonly disabled
-                                v-model="userDetails.user.permAddVillage">
-                        </div>
                     </div>
 
-
-
-                </div>
-            </form>
-        </div>
-        <div class="card-footer text-end">
-            <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
-            <button v-if="isEditing" class="btn custom-btn" type="submit" @click="saveChanges">Save Changes</button>
-            <button v-else class="btn custom-btn" @click="enableEdit">Edit Profile</button>
+                    <div class="detail-section">
+                        <h6 class="section-title">Present Address</h6>
+                        <div class="detail-grid">
+                            <div class="detail-row">
+                                <label for="permAddVillage">Village</label>
+                                <input type="text" id="permAddVillage" class="detail-input" readonly
+                                    :value="userDetails.user.permAddVillage">
+                            </div>
+                            <div class="detail-row">
+                                <label for="permAddGewog">Gewog</label>
+                                <input type="text" id="permAddGewog" class="detail-input" readonly
+                                    :value="userDetails.user.permAddGewog">
+                            </div>
+                            <div class="detail-row">
+                                <label for="permAddDzongkhag">Dzongkhag</label>
+                                <input type="text" id="permAddDzongkhag" class="detail-input" readonly
+                                    :value="userDetails.user.permAddDzongkhag">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </template>
@@ -122,6 +91,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import endpoints from '@/api';
 import { useUserDetailsStore } from '@/stores/userDetails';
 
@@ -133,50 +103,73 @@ const originalUserDetails = ref({ ...userDetailsStore.$state });
 const notification = ref({
     show: false,
     message: '',
-    type: '', // 'success' or 'error'
+    type: '',
 });
-
 
 const enableEdit = () => {
     isEditing.value = true;
 };
 
+const getEditableFields = () => {
+    return {
+        user: {
+            mob_number: userDetails.value.user.mobNumber,
+            father_name: userDetails.value.user.fatherName,
+            mother_name: userDetails.value.user.motherName,
+        },
+        userAgency: {
+            parent_occupation: userDetails.value.userAgency.parentOccupation,
+            parent_status: userDetails.value.userAgency.parentStatus,
+            guardian_name: userDetails.value.userAgency.guardianName,
+            guardian_occupation: userDetails.value.userAgency.guardianOccupation,
+            current_living_with: userDetails.value.userAgency.currentLivingWith,
+        }
+    };
+};
+
 const saveChanges = async () => {
     try {
         const authToken = localStorage.getItem('authToken');
-        const response = await axios.post(endpoints.updateUserInfo, userDetails.value, {
+        const editableData = getEditableFields();
+        const response = await axios.post(endpoints.updateUserInfo, editableData, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Token ${authToken}`,
             },
         });
+
         userDetailsStore.setUserDetails(response.data);
         originalUserDetails.value = { ...response.data };
         isEditing.value = false;
-        // Set success notification
-        notification.value = {
-            show: true,
-            message: 'Profile updated successfully!',
-            type: 'success',
-        };
+
+        showNotification('Profile updated successfully!', 'success');
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Profile updated successfully!',
+        });
     } catch (error) {
-        console.error('Error saving changes:', error);
-        // Set error notification
-        notification.value = {
-            show: true,
-            message: 'Failed to update profile. Please try again.',
-            type: 'error',
-        };
+        showNotification('Failed to update profile. Please try again.', 'error');
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Failed to update profile. Please try again.',
+        });
     }
-    // Hide notification after 5 seconds
-    setTimeout(() => {
-        notification.value.show = false;
-    }, 5000);
 };
 
 const cancelChanges = () => {
     userDetails.value = { ...originalUserDetails.value };
     isEditing.value = false;
+};
+
+const showNotification = (message, type) => {
+    notification.value = { show: true, message, type };
+    setTimeout(() => {
+        notification.value.show = false;
+    }, 3000);
 };
 
 watch(() => userDetailsStore.$state, (newState) => {
@@ -185,38 +178,120 @@ watch(() => userDetailsStore.$state, (newState) => {
 </script>
 
 <style scoped>
-.input-editable {
-    background-color: #fff;
+.personal-details-card {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    height: 100%;
 }
 
-.input-noneditable {
-    background-color: #68B2A03D;
+.personal-details-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
-.if-others {
-    display: none;
+.card-header {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem;
+    border-radius: 10px 10px 0 0;
 }
 
-.if-others[editing]:not([readonly]) {
+.card-header h5 {
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.card-body {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #2B656F;
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #c2dada;
+    padding-bottom: 0.5rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.detail-row label {
+    color: #2B656F;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
     display: block;
 }
 
-
-/* Add border and adjust spacing */
-.custom-card {
+.detail-input {
+    width: 100%;
+    padding: 0.3rem 1rem;
+    border: none;
+    background-color: #c2dadafa;
+    color: #666;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
 }
 
-.border {
-    border: 1px solid #939393;
-    border-radius: 10px;
+.detail-input:focus {
+    outline: none;
+    border-color: #2B656F;
+    box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
 }
 
-.header-title {
-    color: #2B656F;
+.detail-input.editable {
+    background-color: #ffffff;
+}
+
+.card-footer {
+    background: transparent;
+    border-top: none;
+    text-align: right;
+    padding: 1rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
     font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #2B656F;
+    border-color: #2B656F;
+}
+
+.btn-primary:hover {
+    background-color: #1D4851;
+    border-color: #1D4851;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    margin-right: 0.5rem;
+    color: white;
 }
 
 .notification {
@@ -240,11 +315,31 @@ watch(() => userDetailsStore.$state, (newState) => {
     border-color: #f5c6cb;
 }
 
-.custom-btn {
-    background-color: #2B656F;
-    color: #fff;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-left: 0.5rem;
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s;
+}
+
+.fade-enter,
+.fade-leave-to {
+    opacity: 0;
+}
+
+@media (max-width: 768px) {
+    .card-content {
+        padding: 1rem;
+    }
+
+    .card-header h5 {
+        font-size: 1.3rem;
+    }
+
+    .detail-input {
+        font-size: 0.9rem;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

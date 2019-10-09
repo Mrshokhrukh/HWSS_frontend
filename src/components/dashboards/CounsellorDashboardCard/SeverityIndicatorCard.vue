@@ -1,21 +1,25 @@
 <template>
-  <div class="card text-center card-bg h-100">
-    <div class="card-header">
-      <h4 class="severity-title">{{ props.cardTitle }}</h4>
+  <div class="card text-center h-100 shadow-sm">
+    <div class="card-header bg-gradient-dark">
+      <h4 class="severity-title text-white mb-0">{{ props.cardTitle }}</h4>
     </div>
     <div class="card-body p-4">
-      <div class="row">
+      <div class="row g-3">
         <div :class="columnClass" v-for="(buttonRow, index) in buttonRows" :key="index">
-          <div v-for="(data, dataIndex) in buttonRow" :key="dataIndex" class="my-3">
+          <div v-for="(data, dataIndex) in buttonRow" :key="dataIndex" class="mb-3">
             <router-link
               :to="`/counselor-dashboard/counselor-reports?flag=${data.text.toLowerCase()}&measurement=${selectedMeasurement}`"
-              class="card bg-hwss" @click="handleButtonClick(data)">
-              <div class="card-body d-flex align-items-center justify-content-center p-3">
-                <div class="color-dot" :style="{ background: determineFlag(data.flag) }"></div>
-                <h5 class="card-title mx-2 text-capitalize">{{ data.text }}</h5>
-                <i :class="data.icon"></i>
-                <div class="count-number p-2">
-                  <h1>{{ data.count }}</h1>
+              class="card bg-hwss hover-effect" @click="handleButtonClick(data)">
+              <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div class="d-flex align-items-center">
+                  <div class="color-dot" :style="{ background: determineFlag(data.flag) }"></div>
+                  <h5 class="card-title mb-0 text-capitalize">{{ data.text }}</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                  <i :class="[data.icon, 'me-2']"></i>
+                  <div class="count-number">
+                    <h2 class="mb-0">{{ data.count }}</h2>
+                  </div>
                 </div>
               </div>
             </router-link>
@@ -168,23 +172,75 @@ const determineMeasurement = (cardTitle) => {
 </script>
 
 <style scoped>
+.card {
+  border: none;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.card-header {
+  border-bottom: none;
+  padding: 1.5rem;
+}
+
+.bg-gradient-dark {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+}
+
+.severity-title {
+  color: white;
+}
+
+.bg-hwss {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  color: #2b656f;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.hover-effect:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 .color-dot {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   margin-right: 10px;
 }
 
 .count-number {
-  margin-left: auto;
+  font-weight: bold;
 }
 
-.bg-hwss {
-  background-color: #dde7e9;
-  color: #2b656f;
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.severity-title {
-  color: #2b656f;
+i {
+  font-size: 1.2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+
+  .count-number h2 {
+    font-size: 1.5rem;
+  }
+
+  i {
+    font-size: 1rem;
+  }
 }
 </style>

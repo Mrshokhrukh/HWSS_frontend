@@ -1,112 +1,127 @@
 <template>
-    <div class="bg-white p-4">
-        <div class="mb-3 text-center">
-            <h4 class="mb-3">Description</h4>
-            <h6 class="hwss-primary">*** This tool is for Case Screening Only ***</h6>
+    <div class="screening-form-container">
+        <!-- Header Section -->
+        <div class="form-header">
+            <h3 class="title">Description</h3>
+            <div class="warning-badge">
+                *** This tool is for Case Screening Only ***
+            </div>
         </div>
+
         <form @submit.prevent="submitForm" :disabled="isFormDeactivated">
-            <div class="px-5">
-                <!-- Case Details Section -->
-                <div class="mb-4 p-3">
-                    <h4 class="mb-3">Case Details</h4>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label for="caseName" class="form-label">Case Name (Presenting Issue)</label>
-                            <input type="text" class="form-control hwss-primary w-50" id="caseName" v-model="caseName"
-                                required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="purpose" class="form-label">Purpose</label>
-                            <select class="form-select hwss-primary" id="purpose" v-model="purpose" required>
-                                <option value="" disabled selected>Select Purpose</option>
-                                <option value="assessment">Assessment</option>
-                                <option value="intervention">Intervention</option>
-                                <option value="follow_up">Follow up</option>
-                                <option value="termination">Termination</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="dzongkhag" class="form-label">Dzongkhag</label>
-                            <select class="form-select hwss-primary" id="dzongkhag" v-model="dzongkhag" required>
-                                <option value="" disabled selected>Select Dzongkhag</option>
-                                <!-- Dynamically generate options for all 20 dzongkhags of Bhutan -->
-                                <option v-for="dzongkhag in dzongkhags" :key="dzongkhag" :value="dzongkhag">{{ dzongkhag
-                                    }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 col-md-offset-2 mb-3">
-                            <label for="userScreenedToday" class="form-label">User Screened Today</label>
-                            <input type="text" class="form-control hwss-primary w-50" id="userScreenedToday"
-                                v-model="userScreenedToday" readonly disabled>
-                        </div>
+            <!-- Case Details Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>Case Details</h4>
+                    <div class="section-divider"></div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="caseName">Case Name (Presenting Issue)</label>
+                        <input type="text" id="caseName" v-model="caseName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="purpose">Purpose</label>
+                        <select id="purpose" v-model="purpose" required>
+                            <option value="" disabled selected>Select Purpose</option>
+                            <option value="assessment">Assessment</option>
+                            <option value="intervention">Intervention</option>
+                            <option value="follow_up">Follow up</option>
+                            <option value="termination">Termination</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dzongkhag">Dzongkhag</label>
+                        <select id="dzongkhag" v-model="dzongkhag" required>
+                            <option value="" disabled selected>Select Dzongkhag</option>
+                            <option v-for="dzongkhag in dzongkhags" :key="dzongkhag" :value="dzongkhag">
+                                {{ dzongkhag }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userScreenedToday">User Screened Today</label>
+                        <input type="text" id="userScreenedToday" v-model="userScreenedToday" readonly disabled>
                     </div>
                 </div>
-                <!-- Client Details Section -->
-                <div class="mb-4 p-3">
-                    <h4 class="mb-3">Client Details (Ensure all details are correct)</h4>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="CID" class="form-label">CID / Student Code / Work Permit / etc...</label>
-                            <input type="text" class="form-control hwss-primary" id="CID" v-model="CID" required
-                                min="11">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="clientFullName" class="form-label">Full Name</label>
-                            <input type="text" class="form-control hwss-primary" id="clientFullName"
-                                v-model="clientFullName" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="DOB" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control hwss-primary" id="DOB" v-model="DOB" required>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select hwss-primary" id="gender" v-model="gender" required>
-                                <option value="" disabled selected>Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="parentalStatus" class="form-label">Parental Status</label>
-                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus"
-                                required>
-                                <option value="" disabled selected>Select Parental Status</option>
-                                <option value="Married">Married</option>
-                                <option value="Divorce">Divorce</option>
-                                <option value="Single Parent">Single Parent</option>
-                                <option value="One Deceased">One Deceased</option>
-                                <!-- Add more options as needed -->
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="currentAddress" class="form-label">Current Address</label>
-                            <textarea class="form-control hwss-primary" id="currentAddress" v-model="currentAddress"
-                                rows="3" required></textarea>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control hwss-primary" id="phoneNumber" v-model="phoneNumber"
-                                required maxlength="8">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="email" class="form-label">Email address</label>
-                            <input type="email" class="form-control hwss-primary" id="email" v-model="email" required>
-                        </div>
+            </div>
+
+            <!-- Client Details Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <h4>Client Details</h4>
+                    <p class="section-subtitle">Ensure all details are correct</p>
+                    <div class="section-divider"></div>
+                </div>
+
+                <div class="form-grid pb-4">
+                    <div class="form-group">
+                        <label for="CID">CID / Student Code / Work Permit</label>
+                        <input type="text" id="CID" v-model="CID" required min="11">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="clientFullName">Full Name</label>
+                        <input type="text" id="clientFullName" v-model="clientFullName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="DOB">Date of Birth</label>
+                        <input type="date" id="DOB" v-model="DOB" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" v-model="gender" required>
+                            <option value="" disabled selected>Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="parentalStatus">Parental Status</label>
+                        <select id="parentalStatus" v-model="parentalStatus" required>
+                            <option value="" disabled selected>Select Parental Status</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorce">Divorce</option>
+                            <option value="Single Parent">Single Parent</option>
+                            <option value="One Deceased">One Deceased</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentAddress">Current Address</label>
+                        <textarea id="currentAddress" v-model="currentAddress" rows="3" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number</label>
+                        <input type="tel" id="phoneNumber" v-model="phoneNumber" required maxlength="8">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" v-model="email" required>
                     </div>
                 </div>
             </div>
         </form>
+
         <!-- Button Section -->
-        <div class="d-flex justify-content-end">
-            <button type="button" class="btn hwss-btn" :disabled="!isProceedButtonActive" @click="proceedToSelectTools">
-                Proceed to Select Tools <i class="fas fa-arrow-right"></i>
+        <div class="form-actions">
+            <button type="button" class="proceed-button" :disabled="!isProceedButtonActive"
+                @click="proceedToSelectTools">
+                Proceed to Select Tools
+                <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
-    <div ref="swalDialog"></div>
 </template>
 
 <script setup>
@@ -394,15 +409,174 @@ onMounted(() => {
 </script>
 
 <style scoped>
-input,
-select,
-textarea {
-    border-radius: 10px;
-    border: 1px solid #c9c9c9;
-    padding: 0.5rem;
+.screening-form-container {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(43, 101, 111, 0.08);
 }
 
-.hwss-btn {
-    border-radius: 50px;
+.form-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.title {
+    color: #2B656F;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.warning-badge {
+    display: inline-block;
+    background: rgba(43, 101, 111, 0.1);
+    color: #2B656F;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.form-section {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(43, 101, 111, 0.1);
+    box-shadow: 0 2px 10px rgba(43, 101, 111, 0.05);
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-header h4 {
+    color: #2B656F;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.section-subtitle {
+    color: #1D4851;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+.section-divider {
+    height: 2px;
+    background: linear-gradient(to right, rgba(43, 101, 111, 0.2), transparent);
+    margin-top: 0.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+label {
+    display: block;
+    color: #1D4851;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+input, select, textarea {
+    width: 100%;
+    background: white;
+    border: 1px solid rgba(43, 101, 111, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #1D4851;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2B656F;
+    box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
+}
+
+input:hover, select:hover, textarea:hover {
+    border-color: rgba(43, 101, 111, 0.4);
+}
+
+input:disabled {
+    background: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232B656F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1.5em;
+    padding-right: 2.5rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.proceed-button {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.proceed-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(43, 101, 111, 0.2);
+}
+
+.proceed-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Placeholder styling */
+::placeholder {
+    color: rgba(29, 72, 81, 0.5);
+}
+
+/* Additional hover effects for form sections */
+.form-section:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.08);
+}
+
+@media (max-width: 768px) {
+    .screening-form-container {
+        padding: 1rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-section {
+        padding: 1rem;
+    }
 }
 </style>

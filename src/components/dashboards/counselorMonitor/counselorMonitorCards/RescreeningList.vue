@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid">
     <!-- Title -->
-    <h4 class="mt-2 text-center mb-3">Refine Results</h4>
+    <h4 class="mt-2 text-center mb-3">Rescreening List</h4>
 
     <!-- Filters -->
     <div class="row d-flex align-items-center mb-4">

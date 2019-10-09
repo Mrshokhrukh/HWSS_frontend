@@ -1,38 +1,39 @@
 <template>
-  <div class="card p-4">
-    <div class="p-field p-grid row">
-      <div class="col-5 p-md-4">
-        <span class="p-input-icon-left">
-          <InputText v-model="globalFilter" placeholder="Search Reports..." class="ms-2  w-100" icon="pi pi-search" />
-        </span>
-      </div>
-      <div v-if="isSchoolCounselor" class="col-5 p-md-4">
-        <Dropdown v-model="selectedOption" :options="options" placeholder="Select Report Type" class="ms-2 w-100" />
+  <div class="card-container">
+    <div class="card p-4">
+      <div class="p-field p-grid row mb-4">
+        <div class="col-12 col-md-4 mb-2 mb-md-0">
+          <span class="p-input-icon-left w-100">
+            <InputText v-model="globalFilter" placeholder="Search Reports..." class="w-100" />
+          </span>
+        </div>
+        <div v-if="isSchoolCounselor" class="col-12 col-md-4 mb-2 mb-md-0">
+          <Dropdown v-model="selectedOption" :options="options" placeholder="Select Report Type" class="w-100" />
+        </div>
+        <div class="col-12 col-md-4">
+          <Button label="Bulk Download All" @click="bulkDownload" class="btn hwss-btn w-100" icon="pi pi-download" />
+        </div>
       </div>
 
-      <div class="col-2 p-md-4">
-        <Button label="Bulk Download All" @click="bulkDownload" class="btn hwss-btn" icon="pi pi-download" />
+      <!-- General Report Table -->
+      <div v-if="selectedOption === 'general Report' || !isSchoolCounselor" class="table-container">
+        <DataTable :value="filteredPatients" :paginator="true" :rows="10" :resizableColumns="true"
+          sortField="suicidal_measurement" :sortOrder="-1" class="custom-table">
+          <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
+            :style="field.width ? { width: field.width } : {}">
+            <template #body="{ data }">
+              <Tag class="w-100" v-if="field.taggable" :value="data[field.key]"
+                :severity="severityClass(data[field.key])" />
+              <span v-else>{{ data[field.key] }}</span>
+            </template>
+          </Column>
+        </DataTable>
       </div>
-    </div>
 
-    <!-- General Report Table -->
-    <div v-if="selectedOption === 'general Report' || !isSchoolCounselor">
-      <DataTable :value="filteredPatients" :paginator="true" :rows="10" :resizableColumns="true"
-        sortField="suicidal_measurement" :sortOrder="-1">
-        <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
-          :style="field.width ? { width: field.width } : {}">
-          <template #body="{ data }">
-            <Tag class="w-100" v-if="field.taggable" :value="data[field.key]"
-              :severity="severityClass(data[field.key])" />
-            <span v-else>{{ data[field.key] }}</span>
-          </template>
-        </Column>
-      </DataTable>
-    </div>
-
-    <!-- School Environment Report Table -->
-    <div v-else-if="selectedOption === 'school' && isSchoolCounselor">
-      <SchoolEnvironmentTable />
+      <!-- School Environment Report Table -->
+      <div v-else-if="selectedOption === 'school' && isSchoolCounselor" class="table-container">
+        <SchoolEnvironmentTable />
+      </div>
     </div>
   </div>
 </template>
@@ -128,6 +129,8 @@ const fetchReportDataFromSessionStorage = () => {
     handleFetchError();
   }
 };
+
+
 
 const transformData = (item) => {
   const user = item.user.fields;
@@ -309,8 +312,83 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.card-container {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.card {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table-container {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.custom-table {
+  font-family: 'Arial', sans-serif;
+}
+
+.custom-table th {
+  background-color: #2B656F;
+  color: white;
+  font-weight: bold;
+}
+
+.custom-table tr:nth-child(even) {
+  background-color: rgba(43, 101, 111, 0.05);
+}
+
+.custom-table tr:hover {
+  background-color: rgba(43, 101, 111, 0.1);
+}
+
+.hwss-btn {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.hwss-btn:hover {
+  background: linear-gradient(135deg, #1D4851 0%, #2B656F 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.p-inputtext,
+.p-dropdown {
+  border: 1px solid #2B656F;
+  border-radius: 4px;
+}
+
+.p-inputtext:focus,
+.p-dropdown:focus {
+  border-color: #1D4851;
+  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
+}
+
 .danger {
-  background-color: #e6142d40;
-  color: #e6142d40;
+  background-color: rgba(230, 20, 45, 0.2);
+  color: #e6142d;
+}
+
+.warning {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.success {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.info {
+  background-color: rgba(23, 162, 184, 0.2);
+  color: #17a2b8;
 }
 </style>

@@ -1,32 +1,36 @@
 <template>
-    <div>
-        <div class="row p-4 bg-light">
-            <div class="col-3 left-selectors">
-                <div class="card bg-white h-100 p-4">
-                    <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
-                    <div>
+    <div class="screening-container">
+        <div class="screening-layout">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-card">
+                    <h4 class="sidebar-title">Selected Assessment:</h4>
+                    <nav class="assessment-navigation">
                         <ul>
                             <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
                                 :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
-                                <a href="#" class="p-3">
-                                    <input type="checkbox" class="form-check-input" :checked="menu.completed"
-                                        :disabled="menu.completed">
-                                    <span class="ms-2">{{ menu.name }}</span>
+                                <a href="#" class="nav-link">
+                                    <div class="checkbox-wrapper">
+                                        <input type="checkbox" :checked="menu.completed" :disabled="menu.completed">
+                                        <div class="checkbox-indicator"></div>
+                                    </div>
+                                    <span>{{ menu.name }}</span>
+                                    <div class="nav-indicator"></div>
                                 </a>
                             </li>
                         </ul>
-                    </div>
+                    </nav>
                 </div>
             </div>
 
-            <div class="col-9">
-                <div class="card p-4 h-100">
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="content-card">
                     <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
-                        @goToNext="handleChangeComponent"></component>
-                    <div v-else>
-                        <div class="d-flex justify-content-center">
-                            <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
-                        </div>
+                        @goToNext="handleChangeComponent">
+                    </component>
+                    <div v-else class="empty-state">
+                        <h4>Select the Assessment Tool you want to begin with!</h4>
                     </div>
                 </div>
             </div>
@@ -170,19 +174,9 @@ const submitAssessments = async () => {
         }
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
-
-        // console.log('Submitting assessments for user:', userId);
-
-        // Submit data to endpoint
-        // console.log('Form Data:', formData);
-        // eslint-disable-next-line no-unused-vars
         const response = await axios.post(endpoints.caseScreenSubmission, formData);
-        // console.log('Response:', response);
-
-        // Update sessionStorage
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
 
-        // Clear localStorage data for assessments
         clearLocalStorageData();
 
         // Show success message
@@ -192,12 +186,9 @@ const submitAssessments = async () => {
             text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            // Check if there are remaining user IDs
             if (ClientUserIdCaseBase.length > 0) {
-                // Stay on rescreening route
                 window.location.reload();
             } else {
-                // All assessments submitted, redirect to counselor dashboard
                 router.push('/counselor-dashboard');
             }
         });
@@ -213,18 +204,14 @@ const submitAssessments = async () => {
     }
 };
 
-// Function to calculate risk severity for ASSIST data
 const calculateAssistRiskSeverity = (assistData) => {
     const substanceScores = {};
-    // Loop through ASSIST data and calculate scores for each substance
     assistData.forEach(entry => {
         const substanceName = entry.substance;
         const point = entry.point;
-        // Add point to the substance's total score
         substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
     });
 
-    // Define threshold values for risk severity
     const thresholds = {
         mild: 3,
         moderate: 5,
@@ -232,7 +219,6 @@ const calculateAssistRiskSeverity = (assistData) => {
         severe: 11
     };
 
-    // Determine risk severity for each substance
     const assistRiskSeverity = {};
     for (const substanceName in substanceScores) {
         const score = substanceScores[substanceName];
@@ -247,11 +233,9 @@ const calculateAssistRiskSeverity = (assistData) => {
         } else {
             assistRiskSeverity[substanceName] = 'none';
         }
-        // Append the total score to the substance's risk severity
         assistRiskSeverity[substanceName] += ` (${score})`;
     }
 
-    // console.log('Assist Risk Severity:', assistRiskSeverity);
 
     return assistRiskSeverity;
 };
@@ -268,50 +252,157 @@ const clearLocalStorageData = () => {
 </script>
 
 <style scoped>
-.hwss-icon {
-    font-size: 5rem;
-    color: #2B656F;
+.screening-container {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(43, 101, 111, 0.08);
+    min-height: 600px;
 }
 
-.tick-area {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    z-index: 10;
-    border-radius: 50%;
+.screening-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    height: 100%;
 }
 
-.tick-area input[type="checkbox"] {
-    border: 2px solid #2B656F !important;
-    border-radius: 50%;
-    scale: 1.5;
+/* Sidebar Styles */
+.sidebar-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
 }
 
-.selectable-card {
-    text-align: center;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.left-selectors ul {
-    padding: 0;
-}
-
-.left-selectors ul li {
-    list-style: none;
-    margin-bottom: 1.5rem;
-}
-
-.left-selectors ul li a {
-    text-decoration: none;
-    color: #5d5d5d;
-    font-weight: 500;
-    position: relative;
-    /* Add relative positioning */
-}
-
-.left-selectors ul li.active a {
+.sidebar-title {
     color: #2B656F;
     font-weight: 600;
+    margin-bottom: 2rem;
+    padding-left: 0.5rem;
+}
+
+.assessment-navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    color: #1D4851;
+    text-decoration: none;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.nav-link:hover {
+    background: rgba(43, 101, 111, 0.05);
+}
+
+.active .nav-link {
+    color: #2B656F;
+    font-weight: 600;
+    background: rgba(43, 101, 111, 0.08);
+}
+
+.nav-indicator {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0;
+    background: #2B656F;
+    transition: all 0.3s ease;
+}
+
+.active .nav-indicator {
+    width: 100%;
+}
+
+/* Checkbox Styles */
+.checkbox-wrapper {
+    margin-right: 0.75rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #2B656F;
+    border-radius: 50%;
+    appearance: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked {
+    background-color: #2B656F;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Main Content Styles */
+.main-content {
+    height: 100%;
+}
+
+.content-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 2rem;
+    height: 100%;
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.1);
+}
+
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.empty-state h4 {
+    color: #2B656F;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .screening-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar-card {
+        margin-bottom: 1rem;
+    }
+
+    .assessment-navigation {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+
+    .assessment-navigation ul {
+        display: flex;
+        gap: 1rem;
+        min-width: max-content;
+    }
+
+    .nav-link {
+        white-space: nowrap;
+    }
 }
 </style>

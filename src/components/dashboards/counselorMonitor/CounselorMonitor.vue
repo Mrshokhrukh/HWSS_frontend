@@ -1,41 +1,34 @@
 <template>
-    <div class="container-fluid">
-        <div class="row mb-5">
-            <div class="col-6 mx-auto">
-                <nav>
-                    <div class="nav nav-tabs nav-fill" role="tablist">
-                        <button v-for="(tab, index) in tabs" :key="index"
-                            :class="{ 'nav-link': true, 'active': activeTab === tab.key }" @click="changeTab(tab.key)">
-                            {{ tab.label }}
-                        </button>
-                    </div>
+    <div class="container-fluid gradient-background p-5">
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-10 col-lg-10">
+                <nav class="tab-container">
+                    <button v-for="(tab, index) in tabs" :key="index"
+                        :class="['tab-button', { active: activeTab === tab.key }]" @click="changeTab(tab.key)">
+                        {{ tab.label }}
+                    </button>
                 </nav>
             </div>
         </div>
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card p-4">
-                    <div v-for="tab in tabs" :key="tab.key">
-                        <div v-if="activeTab === tab.key">
-                            <component :is="tab.component" />
-                        </div>
-                    </div>
+        <div class="row justify-content-center">
+            <div class="col-md-12 col-lg-12">
+                <div class="content-card">
+                    <transition name="fade" mode="out-in">
+                        <component :is="activeComponent" />
+                    </transition>
                 </div>
             </div>
         </div>
     </div>
 </template>
-  
-  
+
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import RescreeningList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/RescreeningList.vue";
 import ServiceAndTreatmentList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/ServiceAndTreatmentList.vue";
 import ReferralList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/ReferralList.vue";
 
 const activeTab = ref('RescreeningList');
-
 const tabs = [
     { key: 'RescreeningList', label: 'Rescreening', component: RescreeningList },
     { key: 'ServiceAndTreatmentList', label: 'Service & Treatment', component: ServiceAndTreatmentList },
@@ -44,27 +37,61 @@ const tabs = [
 
 const changeTab = (tabName) => {
     activeTab.value = tabName;
-}
+};
+
+const activeComponent = computed(() => {
+    return tabs.find(tab => tab.key === activeTab.value)?.component;
+});
 </script>
-  
+
 <style scoped>
-.nav-link {
-    background-color: transparent;
-    color: #000;
+.gradient-background {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    min-height: 100vh;
+    border-radius:15px;
+}
+
+.tab-container {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 0.5rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
     border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    transition: all 0.3s ease;
     border-radius: 10px;
+    cursor: pointer;
 }
 
-.nav-link.active {
-    background-color: #fff;
-    color: #000;
+.tab-button.active {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    color: #2B656F;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.nav-tabs {
-    padding: 0.4rem;
-    border-radius: 10px;
-    background-color: #2c697552;
-    backdrop-filter: blur(5px);
+.content-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 </style>
-  

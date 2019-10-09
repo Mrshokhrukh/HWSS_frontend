@@ -1,12 +1,19 @@
 <template>
-    <div class="card w-100 card-bg h-100">
-        <div class="card-header">
-            <h4 class="graph-title text-center">Screening by Gender for: {{ props.cardTitle }}</h4>
+    <div class="card w-100 h-100 shadow-sm">
+        <div class="card-header bg-gradient-dark">
+            <h4 class="graph-title text-center text-white mb-0">Screening by Gender for: {{ props.cardTitle }}</h4>
         </div>
-        <div class="card-body">
-            <column-chart v-if="chartDataReady" :data="chartData" :colors="chartColors" :xtitle="'Severity'"
-                :ytitle="'Count'" :borderSkipped="true" />
-            <p v-else>Loading chart data...</p>
+        <div class="card-body p-4">
+            <div v-if="chartDataReady" class="chart-container">
+                <column-chart :data="chartData" :colors="chartColors" :xtitle="'Severity'" :ytitle="'Count'"
+                    :borderSkipped="true" :library="chartOptions" />
+            </div>
+            <div v-else class="loading-container">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading chart data...</p>
+            </div>
         </div>
     </div>
 </template>
@@ -23,8 +30,64 @@ const filteredData = inject('filteredData');
 
 const chartData = ref([]);
 const chartCategories = ref([]);
-const chartColors = ['#2c6975', '#64ac99'];
+const chartColors = ['#2B656F', '#64ac99'];
 const chartDataReady = ref(false);
+
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'top',
+            labels: {
+                usePointStyle: true,
+                pointStyle: 'circle',
+                padding: 20,
+                font: {
+                    size: 12
+                }
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            titleColor: '#2B656F',
+            bodyColor: '#2B656F',
+            borderColor: '#2B656F',
+            borderWidth: 1,
+            cornerRadius: 8,
+            padding: 10,
+            usePointStyle: true
+        }
+    },
+    scales: {
+        x: {
+            grid: {
+                display: false
+            },
+            ticks: {
+                font: {
+                    size: 12
+                }
+            }
+        },
+        y: {
+            grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+                font: {
+                    size: 12
+                }
+            }
+        }
+    },
+    elements: {
+        bar: {
+            borderRadius: 8,
+            borderSkipped: 'bottom'
+        }
+    }
+};
 
 // Define a function to count occurrences of severity levels by gender
 const countSeverityByGender = (data, cardTitle) => {
@@ -122,7 +185,59 @@ watchEffect(() => {
 </script>
 
 <style scoped>
+.card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.card-header {
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+}
+
 .graph-title {
-    color: #2c6975;
+    color: white;
+    font-weight: 600;
+}
+
+.chart-container {
+    height: auto;
+    position: relative;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: #2B656F;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .graph-title {
+        font-size: 1.2rem;
+    }
 }
 </style>
