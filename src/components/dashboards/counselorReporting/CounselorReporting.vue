@@ -45,6 +45,10 @@ import SchoolEnvironmentTable from "./SchoolEnvironmentTable.vue";
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 
+
+
+
+
 const reportData = ref([]);
 const globalFilter = ref('');
 const filteredData = ref([]);
