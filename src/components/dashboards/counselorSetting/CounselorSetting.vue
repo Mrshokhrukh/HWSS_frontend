@@ -20,19 +20,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useUserDetailsStore } from '@/stores/userDetails';
+import { ref } from 'vue';
 import CounselorDetailsCard from './counselorProfileCard/CounselorDetailsCard.vue';
 import PersonalDetailsCard from './counselorProfileCard/CounselorPersonalDetailsCard.vue';
 import ChangePasswordCard from './counselorProfileCard/CounselorChangePasswordCard.vue';
 
-const userDetailsStore = useUserDetailsStore();
 const userDetails = ref({});
 
-onMounted(() => {
-    // Initialize userDetails if needed
-    // userDetails.value = userDetailsStore.getUserDetails();
-});
 </script>
 
 <style scoped>
@@ -48,29 +42,33 @@ onMounted(() => {
 }
 
 .profile-column-left {
-    flex: 0 0 66.666%;
-    /* Equivalent to col-lg-8 */
+    flex: 0 0 66.666%; /* Equivalent to col-lg-8 */
 }
 
 .profile-column-right {
-    flex: 0 0 33.333%;
-    /* Equivalent to col-lg-4 */
+    flex: 0 0 33.333%; /* Equivalent to col-lg-4 */
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
 .card-wrapper {
-    flex: 1;
-    min-height: 0;
-    /* This allows the card to shrink if needed */
-}
-
-.card-full-height,
-.card-half-height {
-    height: 100%;
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
+}
+
+.card-full-height {
+    height: 100%; /* Full height for left column cards */
+    display: flex;
+    flex-direction: column;
+}
+
+.card-half-height {
+    height: auto; /* Let the cards adjust their height based on content */
+    display: flex;
+    flex-direction: column;
+    min-height: 200px; /* Optional: set a minimum height for half-height cards */
 }
 
 /* Responsive adjustments */
@@ -89,4 +87,5 @@ onMounted(() => {
         margin-bottom: 1.5rem;
     }
 }
+
 </style>

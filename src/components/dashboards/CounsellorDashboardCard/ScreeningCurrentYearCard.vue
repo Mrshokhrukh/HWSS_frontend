@@ -47,8 +47,8 @@ const currentYear = inject('currentYear', new Date().getFullYear());
 const CHART_COLORS = {
     Male: '#2c6975',
     Female: '#33d4b9',
-    PseudoMale: '#dedede',
-    PseudoFemale: '#efefef'
+    PseudoMale: '#d3d3d3',
+    PseudoFemale: '#a9a9a9'
 };
 
 const agencyOrDzongkhag = computed(() => {

@@ -48,7 +48,7 @@ const profilePictureUrl = computed(() => {
   const baseUrl =
     window.location.hostname === "localhost" && window.location.port === "5173"
       ? "http://localhost:8000"
-      : "https://app.thepemasystem.gov.bt";
+      : "https://thepemasystem.gov.bt/api/core";
   return profilePicture.value ? baseUrl + profilePicture.value : defaultProfilePic;
 });
 

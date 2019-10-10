@@ -20,11 +20,12 @@
         </div>
         <div class="col-md-12 mb-3">
           <label>Employee ID</label>
-          <input type="text" class="detail-input" readonly disabled v-model="userDetailsStore.userAgency.userCode">
+          <input type="text" class="detail-input" readonly disabled :value="userDetailsStore.userAgency.userCode">
         </div>
         <div class="detail-row">
           <label>School/Agency/Gyalsung Academy</label>
-          <input type="text" class="detail-input" readonly :value="userDetailsStore.agency.agencyName">
+          <input type="text" class="detail-input" readonly
+            :value="userDetailsStore.agency?.gender || 'Not Available'">
         </div>
       </div>
     </div>
@@ -33,10 +34,9 @@
 
 <script setup>
 import { computed, onMounted } from 'vue';
-import { useUserDetailsStore } from '@/stores/userDetails';
 import defaultProfilePic from "@/assets/images/icon.png";
 
-const userDetailsStore = useUserDetailsStore();
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore')) || {};
 
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
@@ -44,7 +44,7 @@ const profilePictureUrl = computed(() => {
   const baseUrl =
     window.location.hostname === "localhost" && window.location.port === "5173"
       ? "http://localhost:8000"
-      : "https://app.thepemasystem.gov.bt";
+      : "https://thepemasystem.gov.bt/api/core";
   return profilePicture.value ? baseUrl + profilePicture.value : defaultProfilePic;
 });
 
