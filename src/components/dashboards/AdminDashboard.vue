@@ -40,9 +40,15 @@
         <!-- Template for SUD Admin -->
         <div v-if="userRole === 'sud_admin'">
             <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
-                <SudDahsboard />
-                <SudTotalScreening />
-                <SudSubstanceCard />
+                <div class="mb-4">
+                    <SudDahsboard />
+                </div>
+                <div class="mb-4">
+                    <SudTotalScreening />
+                </div>
+                <div class="mb-4">
+                    <SudSubstanceCard />
+                </div>
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-approval'" class="admin-approval">

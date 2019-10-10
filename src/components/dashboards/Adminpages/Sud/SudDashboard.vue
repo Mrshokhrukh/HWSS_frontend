@@ -1,5 +1,5 @@
 <template>
-  <h1 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Current Status in Bhutan</h1>
+  <h1 class="text-center fw-bold mb-4" style="color: #2c6975;">Current Status in Bhutan</h1>
   <div v-if="isLoading" class="text-center">
     <p>Loading...</p> 
   </div>

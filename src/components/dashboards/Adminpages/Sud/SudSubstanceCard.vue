@@ -1,96 +1,44 @@
 <template>
-  <div class="card mt-5 b-0">
-    <h3 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Risk Level</h3>
-    <div class="card-body">
-      <div class="row">
-        <div class="col">
-          <div class="d-flex flex-column">
-            <div class="row">
-              <div class="col">
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Tobacco' }"
-                  @click="setActiveButton('Tobacco')">Tobacco</button>
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Alcohol' }"
-                  @click="setActiveButton('Alcohol')">Alcohol</button>
-              </div>
-            </div>
-            <div class="row">
-              <div class="col">
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Cannabis' }"
-                  @click="setActiveButton('Cannabis')">Cannabis</button>
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Cocaine' }"
-                  @click="setActiveButton('Cocaine')">Cocaine</button>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col">
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Amphetamine-type' }"
-                  @click="setActiveButton('Amphetamine-type')">Amphetamine-type</button>
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Inhalant' }"
-                  @click="setActiveButton('Inhalant')">Inhalant</button>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col">
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Sedative' }"
-                  @click="setActiveButton('Sedative')">Sedative</button>
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Hallucinate' }"
-                  @click="setActiveButton('Hallucinate')">Hallucinate</button>
-              </div>
-            </div>
-
-
-            <div class="row">
-              <div class="col">
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Opioids' }"
-                  @click="setActiveButton('Opioids')">Opioids</button>
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Others' }"
-                  @click="setActiveButton('Others')">Others</button>
-              </div>
-            </div>
-
-          </div>
+  <div class="risk-level-container">
+    <h2 class="main-title">Risk Level Analysis</h2>
+    <div class="content-wrapper">
+      <div class="buttons-section">
+        <h3 class="section-title">Substances</h3>
+        <div class="button-grid">
+          <button v-for="substance in substances" :key="substance" @click="setActiveButton(substance)"
+            :class="['substance-btn', { active: activeButton === substance }]">
+            {{ substance }}
+          </button>
         </div>
-        <div class="col text-center">
-          <h4 class="text-capitalize">High Risk Count by gender</h4>
-          <div class="w-100">
-            <canvas id="donutChartTotal" class="h-100"></canvas>
-          </div>
+      </div>
+      <div class="charts-section">
+        <div class="chart-card">
+          <h4 class="chart-title">High Risk Count by Gender</h4>
+          <canvas id="donutChartTotal"></canvas>
         </div>
-        <div class="col text-center">
-          <h4 class="text-capitalize">Moderate Risk Count by gender</h4>
-          <div class="w-100">
-            <canvas id="donutChartModerate" class="h-100"></canvas>
-          </div>
+        <div class="chart-card">
+          <h4 class="chart-title">Moderate Risk Count by Gender</h4>
+          <canvas id="donutChartModerate"></canvas>
         </div>
-        <div class="col">
-          <canvas id="barChart" width="100" height="50"></canvas>
+        <div class="chart-card full-width">
+          <h4 class="chart-title">Risk Comparison</h4>
+          <canvas id="barChart"></canvas>
         </div>
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import Chart from 'chart.js/auto';
 
 const activeButton = ref(null);
-
 const substances = [
-  'Tobacco',
-  'Alcohol',
-  'Cannabis',
-  'Cocaine',
-  'Amphetamine-type',
-  'Inhalant',
-  'Sedative',
-  'Hallucinate',
-  'Opioids',
-  'Others'
+  'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
+  'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
 ];
+
 const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
 const riskCounts = ref(Array(substances.length).fill({ low: 0, moderate: 0, high: 0 }));
 function extractMeasurementData(reportData) {
@@ -121,7 +69,6 @@ function extractMeasurementData(reportData) {
   return results;
 }
 const extractedData = extractMeasurementData(reportData);
-console.log("extracted data", extractedData);
 
 // Function to count risk levels for each substance
 function countRiskLevels(data) {
@@ -251,18 +198,26 @@ const mapCountsToDummyData = (counts) => {
 
 const dummyData = mapCountsToDummyData(counts);
 
-
-// Call countRiskLevels with your extracted data and log the result
-
+let donutChartTotalInstance = null;
+let donutChartModerateInstance = null;
+let barChartInstance = null;
 
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        color: '#333',
+        font: {
+          size: 12,
+          family: "'Arial', sans-serif"
+        }
+      }
+    }
+  }
 };
-
-let donutChartTotalInstance = null;
-let donutChartModerateInstance = null;
-let barChartInstance = null;
 
 const renderDonutChart = (canvasId, data) => {
   if (canvasId === 'donutChartTotal' && donutChartTotalInstance) {
@@ -272,13 +227,18 @@ const renderDonutChart = (canvasId, data) => {
     donutChartModerateInstance.destroy();
   }
   const ctx = document.getElementById(canvasId).getContext('2d');
-  if (ctx) {
-    return new Chart(ctx, {
-      type: 'doughnut',
-      data: data,
-      options: chartOptions,
-    });
-  }
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      ...data,
+      datasets: [{
+        ...data.datasets[0],
+        backgroundColor: ['#2B656F', '#1D4851'],
+        hoverBackgroundColor: ['#3a8a9e', '#2a6470']
+      }]
+    },
+    options: chartOptions
+  });
 };
 
 const renderBarChart = (data) => {
@@ -286,30 +246,34 @@ const renderBarChart = (data) => {
     barChartInstance.destroy();
   }
   const ctx = document.getElementById('barChart').getContext('2d');
-  if (ctx) {
-    return new Chart(ctx, {
-      type: 'bar',
-      data: data,
-      options: {
-        ...chartOptions,
-        scales: {
-          x: {
-            stacked: true,
-          },
-          y: {
-            stacked: true,
-          },
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      ...data,
+      datasets: [
+        {
+          ...data.datasets[0],
+          backgroundColor: '#2B656F'
         },
-      },
-    });
-  }
+        {
+          ...data.datasets[1],
+          backgroundColor: '#1D4851'
+        }
+      ]
+    },
+    options: {
+      ...chartOptions,
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true }
+      }
+    }
+  });
 };
 
 const setActiveButton = (buttonName) => {
   activeButton.value = buttonName;
-  if (buttonName) {
-    updateCharts();
-  }
+  updateCharts();
 };
 
 const updateCharts = () => {
@@ -349,19 +313,106 @@ const updateCharts = () => {
   donutChartModerateInstance = renderDonutChart('donutChartModerate', donutDataModerate);
   barChartInstance = renderBarChart(barData);
 };
+onMounted(() => {
+  setActiveButton(substances[0]); // Set first substance as active by default
+});
 </script>
 
 <style scoped>
-.custom-card {
-  background-color: #d3e2e4;
+.risk-level-container {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border-radius: 15px;
+  padding: 2rem;
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-.btn {
-  height: 50px;
-  width: 150px;
+.main-title {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-primary {
-  background-color: #2c6975 !important;
+.content-wrapper {
+  display: flex;
+  gap: 2rem;
+}
+
+.buttons-section {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.substance-btn {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: #2B656F;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.substance-btn:hover, .substance-btn.active {
+  background: #2B656F;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border:1px solid #e6f3f5
+}
+
+.charts-section {
+  flex: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.chart-card {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 10px;
+  padding: 1rem;
+  flex: 1 1 calc(50% - 0.5rem);
+  min-width: 250px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card.full-width {
+  flex-basis: 100%;
+}
+
+.chart-title {
+  color: #2B656F;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+canvas {
+  width: 100% !important;
+  height: 200px !important;
+}
+
+@media (max-width: 1024px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+  
+  .chart-card {
+    flex-basis: 100%;
+  }
 }
 </style>
