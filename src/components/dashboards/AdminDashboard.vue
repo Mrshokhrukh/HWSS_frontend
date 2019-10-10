@@ -242,7 +242,8 @@ onMounted(() => {
 
 <style>
 .admin-card {
-    background-color: #d3e2e4;
+    background: linear-gradient(135deg, #d3e2e4 0%, #b3c7c9 50%, #8fa8ac 100%);
+
 }
 
 .header {

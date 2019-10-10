@@ -1,9 +1,9 @@
 <template>
-  <nav class="navbar navbar-expand-lg shadow-none">
+  <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
       <!-- Navbar brand -->
       <a class="navbar-brand" href="#">
-        <span class="ms-2 fw-bold hwss-primary">The PEMA HWSS</span>
+        <span class="brand-text">The PEMA HWSS</span>
       </a>
 
       <!-- Navbar toggler -->
@@ -17,20 +17,18 @@
         <ul class="navbar-nav align-items-center">
           <!-- Home icon -->
           <li class="nav-item">
-            <router-link class="nav-link" :to="homePath" v-b-tooltip.hover title="Home">
-              <i class="fas fa-home fa-lg"></i>
+            <router-link class="nav-link nav-icon" :to="homePath" v-b-tooltip.hover title="Home">
+              <i class="fas fa-home"></i>
             </router-link>
           </li>
 
           <!-- Notifications -->
           <li class="nav-item dropdown">
-            <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-              v-b-tooltip.hover title="Notifications">
-              <i class="fas fa-bell fa-lg"></i>
-              <span v-if="unreadNotificationsCount > 0"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            <a class="nav-link nav-icon position-relative" href="#" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false" v-b-tooltip.hover title="Notifications">
+              <i class="fas fa-bell"></i>
+              <span v-if="unreadNotificationsCount > 0" class="notification-badge">
                 {{ unreadNotificationsCount }}
-                <span class="visually-hidden">unread notifications</span>
               </span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
@@ -43,9 +41,9 @@
                         height="40">
                     </div>
                     <div class="flex-grow-1 ms-3">
-                      <p class="mb-0 fw-bold">{{ notification.sender }}</p>
-                      <p class="mb-0 text-muted">{{ notification.message }}</p>
-                      <small class="text-muted">{{ formatTimestamp(notification.timestamp) }}</small>
+                      <p class="notification-sender">{{ notification.sender }}</p>
+                      <p class="notification-message">{{ notification.message }}</p>
+                      <small class="notification-time">{{ formatTimestamp(notification.timestamp) }}</small>
                     </div>
                   </div>
                 </a>
@@ -65,11 +63,11 @@
             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
               data-bs-toggle="dropdown" aria-expanded="false">
               <img :src="profilePictureUrl" alt="User" class="rounded-circle me-2" width="32" height="32">
-              <span class="d-none d-lg-inline">{{ fullName }}</span>
+              <span class="d-none d-lg-inline user-name">{{ fullName }}</span>
             </a>
-            <ul class="dropdown-menu dropdown-menu-end">
+            <ul class="dropdown-menu dropdown-menu-end user-dropdown">
               <li>
-                <span class="dropdown-item disabled">
+                <span class="dropdown-item disabled user-role">
                   <i class="fas fa-user me-2"></i>{{ formattedUserRole }}
                 </span>
               </li>
@@ -82,7 +80,7 @@
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <a class="dropdown-item text-danger" href="#" @click="logout">
+                <a class="dropdown-item logout-item" href="#" @click="logout">
                   <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </a>
               </li>
@@ -217,14 +215,45 @@ const settingsPath = computed(() => {
 </script>
 
 <style scoped>
-.navbar {
-  padding: 0.5rem 1rem;
+
+.brand-text {
+  color: #1D4851;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.nav-link {
+  color: #1D4851;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #64ac99;
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  padding: 0.5rem;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #ff4757;
+  color: white;
+  border-radius: 50%;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
 }
 
 .notification-dropdown {
   width: 300px;
   max-height: 400px;
   overflow-y: auto;
+  border: none;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 .notification-item {
@@ -241,8 +270,43 @@ const settingsPath = computed(() => {
   background-color: #e9ecef;
 }
 
-.notification-item:last-child {
-  border-bottom: none;
+.notification-sender {
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.notification-message {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.2rem;
+}
+
+.notification-time {
+  font-size: 0.8rem;
+  color: #adb5bd;
+}
+
+.user-dropdown {
+  border: none;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-role {
+  font-weight: 600;
+  color: #2B656F;
+}
+
+.logout-item {
+  color: #ff4757;
+}
+
+.logout-item:hover {
+  background-color: #ffe5e5;
 }
 
 @media (max-width: 991px) {
@@ -254,10 +318,4 @@ const settingsPath = computed(() => {
     padding: 0 0.5rem;
   }
 }
-
-.dropdown-item.disabled {
-  cursor: default;
-  pointer-events: none; /* Make it non-clickable */
-}
-
 </style>
