@@ -1,65 +1,59 @@
 <template>
-    <div class="vh-100 d-flex justify-content-center align-items-center authbg">
-        <div class="card shadow-card bg-body" style="width: 90%; max-width: 1000px;">
-            <div class="row g-0 h-100">
-                <div class="col-md-7 forgot-password-form-section">
-                    <div class="card-body d-flex flex-column justify-content-center h-100">
-                        <div class="auth-form text-center">
-                            <h1 class="text-center mb-4 bold forgot-password-title">Forgot Password</h1>
-                            <form class="row justify-content-center" @submit.prevent="requestPasswordReset">
-                                <div class="mb-3 col-md-10">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                        <input v-model="email" type="email" class="form-control" placeholder="Email"
-                                            required />
-                                    </div>
-                                </div>
-                                <div class="text-center col-md-10">
-                                    <button type="submit" class="btn col-12 reset-button btnbg">
-                                        Send Reset Link
-                                        <i class="fas fa-paper-plane ms-2"></i>
-                                    </button>
-                                </div>
-                            </form>
-
-                            <div v-if="resetStatus === 'success'" class="alert alert-success mt-3" role="alert">
-                                Password reset link sent! Please check your email.
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-content">
+                <!-- Forgot Password Form Section -->
+                <div class="login-form-section">
+                    <div class="form-container">
+                        <h1 class="login-title">Forgot Password</h1>
+                        <form @submit.prevent="requestPasswordReset" class="login-form">
+                            <div class="input-group">
+                                <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                                <input v-model="email" type="email" class="form-input" placeholder="Email" required />
                             </div>
-                            <div v-if="resetStatus === 'failed'" class="alert alert-danger mt-3" role="alert">
-                                Failed to send reset link. Please check the email provided and try again.
-                            </div>
-
-                            <div class="mt-4">
-                                <a href="#" class="ndi-link" @click.prevent="showNDILoginAlert">
-                                    <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo me-2" />
-                                    Login with NDI
-                                </a>
-                            </div>
-                            <p class="mt-3 signup-link">
-                                Don't have an account? <router-link to="/register">Sign Up</router-link>
-                            </p>
-                            <p class="mt-2">
-                                <router-link to="/login" class="back-to-login-link">Back to Sign In</router-link>
-                            </p>
+                            <button type="submit" class="signin-button">
+                                Send Reset Link
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                        <!-- Reset Status Messages -->
+                        <div v-if="resetStatus === 'success'" class="alert alert-success mt-3" role="alert">
+                            Password reset link sent! Please check your email.
                         </div>
+                        <div v-if="resetStatus === 'failed'" class="alert alert-danger mt-3" role="alert">
+                            Failed to send reset link. Please check the email provided and try again.
+                        </div>
+                        <!-- NDI Login Link -->
+                        <div class="ndi-login">
+                            <a @click.prevent="showNDILoginAlert" href="#" class="ndi-link">
+                                <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+                                Login with NDI
+                            </a>
+                        </div>
+                        <!-- Sign Up and Back to Login Links -->
+                        <p class="signup-link">
+                            Don't have an account? <router-link to="/register">Sign Up</router-link>
+                        </p>
+                        <p class="forgot-password-link">
+                            <router-link to="/login">Back to Sign In</router-link>
+                        </p>
                     </div>
                 </div>
-                <div class="col-md-5 custombg d-flex flex-column justify-content-center align-items-center">
-                    <img class="position-absolute bottom-0 start-0 shape-img" src="../../assets/images/shape.png"
-                        alt="Shape Image">
-                    <img :src="loginLogo" alt="Logo" class="img-fluid logo-image mb-3">
-                    <h2 class="text-white text-center tag-line-login">{{ tagline }}</h2>
+                <!-- Logo and Tagline Section -->
+                <div class="logo-section">
+                    <img class="shape-img" src="../../assets/images/shape.png" alt="Shape Image">
+                    <img :src="loginLogo" alt="Logo" class="logo-image">
+                    <h2 class="tagline">{{ tagline }}</h2>
                 </div>
             </div>
         </div>
-        <div v-if="loading"
-            class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-light bg-opacity-75">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+        <!-- Loading Overlay -->
+        <div v-if="loading" class="loading-overlay">
+            <div class="spinner"></div>
         </div>
     </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from 'vue';
@@ -119,123 +113,215 @@ const showNDILoginAlert = () => {
 </script>
 
 <style scoped>
-.card {
+@import url('https://fonts.googleapis.com/css2?family=Boogaloo&display=swap');
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 1000px;
+    background-image: url('@/assets/images/thePemabg2.png');
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.forgot-password-form-section {
-    background-image: url('@/assets/images/thePemabg2.png');
-    background-size: cover;
-    background-position: center;
+.login-content {
+    display: flex;
+    flex-direction: column;
 }
 
-.custombg {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    position: relative;
-    overflow: hidden;
+.login-form-section {
+    flex: 1;
+    padding: 2rem;
 }
 
-.forgot-password-title {
-    color: #2B656F;
-    font-weight: 600;
+.form-container {
+    max-width: 400px;
+    margin: 0 auto;
 }
 
-.input-group-text {
-    background-color: #f8f9fa;
-    border-right: none;
-}
-
-.form-control {
-    border-left: none;
-}
-
-.form-control:focus {
-    box-shadow: none;
-    border-color: #ced4da;
-}
-
-.reset-button {
-    border-radius: 30px;
-    padding: 10px 20px;
+.login-title {
+    font-size: 2rem;
     font-weight: bold;
-    transition: all 0.3s ease;
+    text-align: center;
+    color: #2B656F;
+    margin-bottom: 2rem;
 }
 
-.btnbg {
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #2B656F;
+}
+
+.signin-button {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     color: white;
+    font-weight: bold;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.btnbg:hover {
-    background-color: #1e4a52;
+.signin-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.ndi-logo {
-    max-height: 30px;
+.ndi-login {
+    margin-top: 2rem;
+    text-align: center;
 }
 
-.ndi-link,
-.signup-link a,
-.back-to-login-link {
+.ndi-link {
+    display: inline-flex;
+    align-items: center;
     color: #2B656F;
     font-weight: bold;
     text-decoration: none;
-    transition: color 0.3s ease;
 }
 
-.ndi-link:hover,
+.ndi-logo {
+    height: 1.5rem;
+    margin-right: 0.5rem;
+}
+
+.signup-link,
+.forgot-password-link {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.signup-link a,
+.forgot-password-link a {
+    color: #2B656F;
+    font-weight: bold;
+    text-decoration: none;
+}
+
 .signup-link a:hover,
-.back-to-login-link:hover {
-    color: #1e4a52;
+.forgot-password-link a:hover {
     text-decoration: underline;
 }
 
+.logo-section {
+    flex: 1;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 80px 15px 15px 80px;
+}
+
 .shape-img {
-    max-width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     opacity: 0.1;
 }
 
 .logo-image {
-    max-width: 70%;
-    height: auto;
+    width: 70%;
+    max-width: 300px;
+    margin-bottom: 2rem;
     animation: float 6s ease-in-out infinite;
 }
 
-.tag-line-login {
+.tagline {
     font-family: "Boogaloo", sans-serif;
+    font-size: 2rem;
+    color: white;
+    text-align: center;
     font-weight: 200;
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-@keyframes float {
-    0% {
-        transform: translateY(0px);
-    }
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2B656F;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
     50% {
         transform: translateY(-10px);
     }
+}
 
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
     100% {
-        transform: translateY(0px);
+        transform: rotate(360deg);
     }
 }
 
-@media (max-width: 768px) {
-    .custombg {
-        min-height: 200px;
+@media (min-width: 768px) {
+    .login-content {
+        flex-direction: row;
     }
-
-    .logo-image {
-        max-width: 50%;
-    }
-
-    .tag-line-login {
-        font-size: 1.5rem;
+    .login-form-section,
+    .logo-section {
+        width: 50%;
     }
 }
 </style>
