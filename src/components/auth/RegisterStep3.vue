@@ -284,12 +284,17 @@ const confirmDetails = async (isTrue) => {
       if (result.isConfirmed) {
         detailsConfirmed.value = true;
 
-        // API request to check if user exists based on email and CID
+        let userData = JSON.parse(sessionStorage.getItem('user_data'));
+
+        userData.email = regEmail.value;
+
+        sessionStorage.setItem('user_data', JSON.stringify(userData));
+
+        // API request to check if user exists based on the updated email and CID
         try {
           const response = await axios.post(endpoints.confirmUser, {
-            // const response = await axios.post('http://localhost:8123/api/v1/access/check_email_cid/', {
-            email: regEmail.value,
-            cid: parameterValue.value  // Assuming parameterValue contains CID
+            email: userData.email,   
+            cid: parameterValue.value 
           });
 
           if (response.data.exists) {
