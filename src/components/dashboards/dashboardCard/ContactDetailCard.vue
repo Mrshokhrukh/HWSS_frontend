@@ -57,7 +57,7 @@ onMounted(async () => {
                 {
                     number: data.helpline_number_1,
                     name: "PEMA Helpline",
-                    description: "24/7 Emergency Assistance and Support Services",
+                    description: "24/7 Mental Health Support Services",
                     icon: imgIcon
                 },
                 {

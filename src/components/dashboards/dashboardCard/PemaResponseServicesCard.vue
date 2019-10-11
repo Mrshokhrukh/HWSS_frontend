@@ -32,24 +32,19 @@ import { ref } from 'vue';
 import logoUrl from '@/assets/images/HWSS-logoAsset 1.png'
 
 const isHovered = ref(null);
-const companyName = ref('The Pema Services');
+const companyName = ref('The PEMA Services');
 const serviceSections = ref([
     {
-        title: "Response Services",
+        title: "All Services",
         services: [
-            "Helpline Service",
-            "Case Management Services",
-            "Post-vention Services to Families and Friends Affected by Suicide",
-            "Adoption and Alternative Care Services"
-        ]
-    },
-    {
-        title: "Restorative and Rehabilitation Services",
-        services: [
-            "Treatment and Rehabilitation Services",
-            "Protection and Reintegration Services",
-            "Community and Outreach Services",
-            "Referral Directory for SUD Services"
+            "Helpline Services",
+            "Protection Services",
+            "Counselling Services",
+            "Adoption and Alternative Care Services",
+            "PEMA Home",
+            "The PEMA Centre",
+            "Mitshey Yarab Lamzang",
+            "Reintegration and Aftercare Services"
         ]
     }
 ]);
@@ -68,6 +63,7 @@ const serviceSections = ref([
     justify-content: center;
     gap: 1rem;
     padding: 0.5rem;
+    margin-bottom: 2rem;
 }
 
 .logo {

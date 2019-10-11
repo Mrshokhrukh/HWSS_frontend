@@ -18,7 +18,7 @@
             <div v-else class="chart-container">
                 <Chart type="doughnut" :data="chartDisplayData" :options="chartOptions" />
             </div>
-            <div class="mt-4 text-center">
+            <div v-if="isSchoolCounselor" class="text-center">
                 <div class="hwss-primary text-capitalize font-italic font-weight-bold">
                     {{ agencyOrDzongkhag }}
                 </div>
@@ -43,6 +43,7 @@ import Chart from 'primevue/chart';
 
 const filteredData = inject('filteredData');
 const currentYear = inject('currentYear', new Date().getFullYear());
+const isSchoolCounselor = ref(false);
 
 const CHART_COLORS = {
     Male: '#2c6975',
@@ -177,8 +178,34 @@ const updateChartData = () => {
     isLoading.value = false;
 };
 
+// Fetch user details from localStorage
+const getUserDetailsFromStorage = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+
+  if (userDetailsString) {
+    const userDetails = JSON.parse(userDetailsString);
+    const {
+      user: { role = 'Unknown Role' } = {},
+      agency: { agencyName = 'Unknown Agency', presentDzongkhag = '' } = {}
+    } = userDetails;
+
+    const roleFlags = {
+      school_counselor: () => (isSchoolCounselor.value = true),
+    };
+
+    if (roleFlags[role]) {
+      roleFlags[role]();
+    }
+
+    return { userRole: role, agencyName, userDzongkhag: presentDzongkhag };
+  }
+
+  return { userRole: 'Unknown Role', agencyName: 'Unknown Agency', userDzongkhag: '' };
+};
+
 onMounted(() => {
     updateChartData();
+    getUserDetailsFromStorage()
 });
 
 watch(() => filteredData.value, updateChartData, { deep: true });

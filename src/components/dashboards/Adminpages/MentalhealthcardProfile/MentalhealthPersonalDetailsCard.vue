@@ -1,37 +1,32 @@
 <template>
-  <div class="card p-3">
-    <div class="card-header">
-      <h5 style="color: #2B656F; font-weight: bold" class="text-center">Personal Details</h5>
-    </div>
-    <div class="user-profile text-center">
-      <img :src="profilePictureUrl" alt="User" class="profile-pic" />
-      <button class="edit-button" @click="openFileSelection">
-        <i class="fas fa-edit"></i>
-      </button>
-    </div>
-
-    <div class="card-body p-1 h-100">
-      <!-- Example content -->
-      <div class="col-md-12 mb-3">
-        <label>User name</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.username">
+  <div class="personal-details-card">
+    <div class="card-content">
+      <div class="card-header">
+        <h5>User Profile</h5>
       </div>
-      <div class="col-md-12 mb-3">
-        <label>Gender</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.user.gender">
+      <div class="user-profile">
+        <div class="profile-pic-container">
+          <img :src="profilePictureUrl" alt="User" class="profile-pic" />
+        </div>
       </div>
-      <div class="col-md-12 mb-3">
-        <label>Employee ID</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.userAgency.userCode">
-      </div>
-
-      <div class="col-md-12 mb-3">
-        <label>School/Agency/Gyalsung Academy</label>
-        <input type="text" class="form-control input-noneditable" readonly disabled
-          v-model="userDetailsStore.agency.agencyName">
+      <div class="card-body">
+        <div class="detail-row">
+          <label>User Name</label>
+          <input type="text" class="detail-input" readonly :value="userDetailsStore.user?.username">
+        </div>
+        <div class="detail-row">
+          <label>Gender</label>
+          <input type="text" class="detail-input" readonly :value="userDetailsStore.user?.gender">
+        </div>
+        <div class="col-md-12 mb-3">
+          <label>Employee ID</label>
+          <input type="text" class="detail-input" readonly disabled :value="userDetailsStore.userAgency?.userCode">
+        </div>
+        <div class="detail-row">
+          <label>School/Agency/Gyalsung Academy</label>
+          <input type="text" class="detail-input" readonly
+            :value="userDetailsStore.agency?.agencyName || 'Not Available'">
+        </div>
       </div>
     </div>
   </div>
@@ -39,10 +34,9 @@
 
 <script setup>
 import { computed, onMounted } from 'vue';
-import { useUserDetailsStore } from '@/stores/userDetails';
-import deFaultProfilePic from "@/assets/images/icon.png";
+import defaultProfilePic from "@/assets/images/icon.png";
 
-const userDetailsStore = useUserDetailsStore();
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore')) || {};
 
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
@@ -51,12 +45,12 @@ const profilePictureUrl = computed(() => {
     window.location.hostname === "localhost" && window.location.port === "5173"
       ? "http://localhost:8000"
       : "https://thepemasystem.gov.bt/api/core";
-  return profilePicture.value ? baseUrl + profilePicture.value : deFaultProfilePic;
+  return profilePicture.value ? baseUrl + profilePicture.value : defaultProfilePic;
 });
 
 const userAge = computed(() => {
   const dob = userDetailsStore.user.dateOfBirth;
-  if (!dob) return ''; // Handle case where date of birth is not available
+  if (!dob) return '';
   const dobDate = new Date(dob);
   const today = new Date();
   let age = today.getFullYear() - dobDate.getFullYear();
@@ -78,57 +72,117 @@ const userAgeGroup = computed(() => {
   }
 });
 
-const openFileSelection = () => {
-  // Implement the logic to open file selection dialog here
-};
-
 onMounted(() => {
   localStorage.setItem('userAge', userAge.value.toString());
   localStorage.setItem('userAgeGroup', userAgeGroup.value);
 });
-
 </script>
 
 <style scoped>
-.border-div-personal {
-  border: 1px solid #c9c9c9;
-  border-radius: 10px;
+.personal-details-card {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-.input-noneditable {
-  background-color: #68B2A03D;
+.personal-details-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
-.profile-pic {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  border: 5px solid #2c6975;
-  object-fit: cover;
-  object-position: top;
-  margin: 10px auto;
+.card-header {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  border-bottom: none;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 10px 10px 0 0;
+}
+
+.card-header h5 {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.5rem;
+  margin: 0;
 }
 
 .user-profile {
-  position: relative;
-  padding: 0.5rem 0;
-  transition: all 0.3s ease-in-out;
-  overflow: hidden;
-  height: auto;
+  text-align: center;
 }
 
-.edit-button {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background-color: transparent;
+.profile-pic-container {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  border-radius: 50%;
+  padding: 5px;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+}
+
+.profile-pic {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  border: 3px solid white;
+}
+
+.card-body {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.detail-row {
+  margin-bottom: 1rem;
+}
+
+.detail-row label {
+  color: #2B656F;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.detail-input {
+  width: 100%;
+  padding: 0.3rem 1rem;
   border: none;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
+  background-color: #c2dadafa;
+  color: #666;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.edit-button:hover {
-  color: #2c6975;
+.detail-input:focus {
+  outline: none;
+  border-color: #2B656F;
+  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
+}
+
+@media (max-width: 768px) {
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .profile-pic-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .card-header h5 {
+    font-size: 1.3rem;
+  }
+
+  .detail-input {
+    font-size: 0.9rem;
+  }
 }
 </style>

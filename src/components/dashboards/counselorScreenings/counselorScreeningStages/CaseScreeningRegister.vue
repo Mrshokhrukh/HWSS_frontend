@@ -163,7 +163,6 @@ const resetIfNewDay = () => {
     if (!storedDate || storedDate !== today) {
         resetUserScreenedToday();
         localStorage.setItem(`screeningDate_${userId}`, today);
-        disableFormFields(); // Disable the form fields at the beginning of each new day
     }
 };
 

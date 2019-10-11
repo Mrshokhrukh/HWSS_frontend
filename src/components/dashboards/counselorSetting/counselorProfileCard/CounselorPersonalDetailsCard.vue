@@ -12,20 +12,20 @@
       <div class="card-body">
         <div class="detail-row">
           <label>User Name</label>
-          <input type="text" class="detail-input" readonly :value="userDetailsStore.user.username">
+          <input type="text" class="detail-input" readonly :value="userDetailsStore.user?.username">
         </div>
         <div class="detail-row">
           <label>Gender</label>
-          <input type="text" class="detail-input" readonly :value="userDetailsStore.user.gender">
+          <input type="text" class="detail-input" readonly :value="userDetailsStore.user?.gender">
         </div>
         <div class="col-md-12 mb-3">
           <label>Employee ID</label>
-          <input type="text" class="detail-input" readonly disabled :value="userDetailsStore.userAgency.userCode">
+          <input type="text" class="detail-input" readonly disabled :value="userDetailsStore.userAgency?.userCode">
         </div>
         <div class="detail-row">
           <label>School/Agency/Gyalsung Academy</label>
           <input type="text" class="detail-input" readonly
-            :value="userDetailsStore.agency?.gender || 'Not Available'">
+            :value="userDetailsStore.agency?.agencyName || 'Not Available'">
         </div>
       </div>
     </div>

@@ -1,293 +1,307 @@
 <template>
     <div>
-        <div class="row">
-            <div class="d-flex justify-content-end">
-                <div class="col-1 ms-auto">
-                    <Button label="Refresh List" @click="getServiceList" class="btn hwss-btn" />
+        <div v-if="isLoading">Loading...</div>
+        <div v-else-if="hasError">Error loading data...</div>
+        <div v-else>
+            <div class="row">
+                <div class="d-flex justify-content-end">
+                    <div class="col-1 ms-auto">
+                        <Button label="Refresh List" @click="getServiceList" class="btn hwss-btn" />
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="card-header text-center">
-                <h5 class="card-title">Service and Treatment List</h5>
-            </div>
-            <DataTable :value="filteredRows" :paginator="true" :rows="10" :paginatorTemplate="paginatorTemplate"
-                :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
-                columnResizeMode="fit">
-                <Column field="date" header="Date" sortable :body="formatDate"></Column>
-                <Column field="user.full_name" header="Name" sortable></Column>
-                <Column field="user.age" header="Age" sortable></Column>
-                <Column field="user.gender" header="Sex" sortable></Column>
-                <Column field="assessment_status" header="Assessment Status" sortable :body="formatEmpty"></Column>
-                <Column field="case_status" header="Case Status" sortable :body="formatEmpty"></Column>
-                <Column field="counseling" header="Counseling" sortable :body="formatEmpty"></Column>
-                <Column field="follow_up" header="Follow Up" sortable :body="formatEmpty"></Column>
-                <Column field="comments" header="Comments" sortable :body="formatEmpty"></Column>
-                <Column header="Actions">
-                    <template #body="rowData">
-                        <Button label="View Details" class="p-button-primary hwss-btn" @click="viewDetails(rowData)" />
-                    </template>
-                </Column>
-            </DataTable>
-
-        </div>
-    </div>
-    <Dialog v-model:visible="showModal" maximizable modal header="User Records" @hide="handleModalClose"
-        :style="{ width: '80rem', minHeight: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
-        <div class="container-fluid mx-0 px-0">
             <div class="row">
-                <!-- Profile Card -->
-                <aside class="col-4">
-                    <div class="profile-card card mt-3 pt-4 h-full" style="position: fixed; height: auto">
-                        <div class="card-img-top" :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title mb-3 hwss-primary">{{ selectedUser.first_name }} {{
-                                selectedUser.middle_name }} {{
-                                    selectedUser.last_name }}</h5>
-                            <ul class="list-unstyled ">
-                                <li class="mb-3"><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
-                                <li class="mb-3"><strong>Sex:</strong> {{ selectedUser.gender }}</li>
-                                <li class="mb-3"><strong>Employee ID:</strong> {{ selectedUser.academy_code }}</li>
-                                <li class="mb-3"><strong>Citizen ID:</strong> {{ selectedUser.identity_number }}</li>
-                                <li class="mb-3"><strong>Nationality:</strong> {{ selectedUser.nationality }}</li>
-                                <li class="mb-3"><strong>Phone Number:</strong> {{ selectedUser.mob_number }}</li>
-                                <li class="mb-3"><strong>Email:</strong> {{ selectedUser.email }}</li>
-                                <li class="mb-3"><strong>Role:</strong> {{ selectedUser.role }}</li>
-                                <li class="mb-3"><strong>Active Agency:</strong> {{ selectedUser.active_agency }}</li>
-                            </ul>
-                        </div>
-                    </div>
-                </aside>
+                <div class="card-header text-center">
+                    <h5 class="card-title">Service and Treatment List</h5>
+                </div>
+                <DataTable :value="filteredRows" :paginator="true" :rows="10" :paginatorTemplate="paginatorTemplate"
+                    :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
+                    columnResizeMode="fit">
+                    <Column field="date" header="Date" sortable :body="formatDate"></Column>
+                    <Column field="user.full_name" header="Name" sortable></Column>
+                    <Column field="user.age" header="Age" sortable></Column>
+                    <Column field="user.gender" header="Sex" sortable></Column>
+                    <Column field="assessment_status" header="Assessment Status" sortable :body="formatEmpty"></Column>
+                    <Column field="case_status" header="Case Status" sortable :body="formatEmpty"></Column>
+                    <Column field="counseling" header="Counseling" sortable :body="formatEmpty"></Column>
+                    <Column field="follow_up" header="Follow Up" sortable :body="formatEmpty"></Column>
+                    <Column field="comments" header="Comments" sortable :body="formatEmpty"></Column>
+                    <Column header="Actions">
+                        <template #body="rowData">
+                            <Button label="View Details" class="p-button-primary hwss-btn"
+                                @click="viewDetails(rowData)" />
+                        </template>
+                    </Column>
+                </DataTable>
 
-                <!-- Main Content -->
-                <main class="col-md-8">
-                    <div class="row mb-4 card p-4 bg-white">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Personal Details</h4>
-                            <div class="row">
-                                <div class="col-6">Mother's Name: <input type="text" class="form-control"
-                                        v-model="selectedUser.mother_name" readonly disabled></div>
-                                <div class="col-6">Father's Name: <input type="text" class="form-control"
-                                        v-model="selectedUser.father_name" readonly disabled></div>
-                                <div class="col-6">Parents' Occupation: <input type="text" class="form-control"
-                                        v-model="selectedUser.parents_occupation" readonly disabled></div>
-                                <div class="col-6">Parental Status: <input type="text" class="form-control"
-                                        v-model="selectedUser.parental_status" readonly disabled></div>
-                                <div class="col-6">Phone: <input type="text" class="form-control"
-                                        v-model="selectedUser.mob_number" readonly disabled></div>
+            </div>
+        </div>
+        <Dialog v-model:visible="showModal" maximizable modal header="User Records" @hide="handleModalClose"
+            :style="{ width: '80rem', minHeight: '40rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+            <div class="container-fluid mx-0 px-0">
+                <div class="row">
+                    <!-- Profile Card -->
+                    <aside class="col-4">
+                        <div class="profile-card card mt-3 pt-4 h-full" style="position: fixed; height: auto">
+                            <div class="card-img-top"
+                                :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title mb-3 hwss-primary">{{ selectedUser.first_name }} {{
+                                    selectedUser.middle_name }} {{
+                                        selectedUser.last_name }}</h5>
+                                <ul class="list-unstyled ">
+                                    <li class="mb-3"><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
+                                    <li class="mb-3"><strong>Sex:</strong> {{ selectedUser.gender }}</li>
+                                    <li class="mb-3"><strong>Employee ID:</strong> {{ selectedUser.academy_code }}</li>
+                                    <li class="mb-3"><strong>Citizen ID:</strong> {{ selectedUser.identity_number }}
+                                    </li>
+                                    <li class="mb-3"><strong>Nationality:</strong> {{ selectedUser.nationality }}</li>
+                                    <li class="mb-3"><strong>Phone Number:</strong> {{ selectedUser.mob_number }}</li>
+                                    <li class="mb-3"><strong>Email:</strong> {{ selectedUser.email }}</li>
+                                    <li class="mb-3"><strong>Role:</strong> {{ selectedUser.role }}</li>
+                                    <li class="mb-3"><strong>Active Agency:</strong> {{ selectedUser.active_agency }}
+                                    </li>
+                                </ul>
                             </div>
                         </div>
-                    </div>
-                    <div class="row mb-4 card p-4 bg-white">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Permanent Address</h4>
-                            <div class="row">
-                                <div class="col-6">Village: <input type="text" class="form-control"
-                                        v-model="selectedUser.perm_add_village" readonly disabled></div>
-                                <div class="col-6">Gewog: <input type="text" class="form-control"
-                                        v-model="selectedUser.perm_add_gewog" readonly disabled></div>
-                                <div class="col-6">Dzongkhag: <input type="text" class="form-control"
-                                        v-model="selectedUser.perm_add_dzongkhag" readonly disabled></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-4 card p-4 bg-white">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Present Address</h4>
-                            <div class="row">
-                                <div class="col-6">Village: <input type="text" class="form-control"
-                                        v-model="selectedUser.ps_add_village" readonly disabled></div>
-                                <div class="col-6">Gewog: <input type="text" class="form-control"
-                                        v-model="selectedUser.ps_add_gewog" readonly disabled></div>
-                                <div class="col-6">Dzongkhag: <input type="text" class="form-control"
-                                        v-model="selectedUser.ps_add_dzongkhag" readonly disabled></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-4 card p-4 bg-white">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Case Status</h4>
-                            <div class="row">
-                                <div class="col-6"
-                                    v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
-                                    <label for="caseStatus">Case Status:</label>
-                                    <select class="form-control"
-                                        v-model="selectedUser.service_and_treatment_details[0].case_status"
-                                        :disabled="selfRole === 'trained_professional'">
-                                        <option :value="null" disabled>Select Case Status</option>
-                                        <option value="On Going">On Going</option>
-                                        <option value="Case Closed">Case Closed</option>
-                                        <option value="Case Discontinued">Case Discontinued</option>
-                                    </select>
+                    </aside>
+
+                    <!-- Main Content -->
+                    <main class="col-md-8">
+                        <div class="row mb-4 card p-4 bg-white">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Personal Details</h4>
+                                <div class="row">
+                                    <div class="col-6">Mother's Name: <input type="text" class="form-control"
+                                            v-model="selectedUser.mother_name" readonly disabled></div>
+                                    <div class="col-6">Father's Name: <input type="text" class="form-control"
+                                            v-model="selectedUser.father_name" readonly disabled></div>
+                                    <div class="col-6">Parents' Occupation: <input type="text" class="form-control"
+                                            v-model="selectedUser.parents_occupation" readonly disabled></div>
+                                    <div class="col-6">Parental Status: <input type="text" class="form-control"
+                                            v-model="selectedUser.parental_status" readonly disabled></div>
+                                    <div class="col-6">Phone: <input type="text" class="form-control"
+                                            v-model="selectedUser.mob_number" readonly disabled></div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row mb-4 card p-4 bg-white"
-                        v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Severity</h4>
-                            <div class="row">
-                                <template v-for="(substance, index) in selectedUser.substance_risk_measurement_details"
-                                    :key="index">
-                                    <div v-if="substance.risk_flag !== 'none'" class="col-4 mb-2">
-                                        <span class="substance">{{ substance.substance_name.split('(')[0].trim()
-                                            }}:</span>
-                                        <Tag class="ms-2 px-2 py-1" :value="substance.risk_flag"
-                                            :style="getSeverityStyles(substance.risk_flag)" rounded></Tag>
+                        <div class="row mb-4 card p-4 bg-white">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Permanent Address</h4>
+                                <div class="row">
+                                    <div class="col-6">Village: <input type="text" class="form-control"
+                                            v-model="selectedUser.perm_add_village" readonly disabled></div>
+                                    <div class="col-6">Gewog: <input type="text" class="form-control"
+                                            v-model="selectedUser.perm_add_gewog" readonly disabled></div>
+                                    <div class="col-6">Dzongkhag: <input type="text" class="form-control"
+                                            v-model="selectedUser.perm_add_dzongkhag" readonly disabled></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4 card p-4 bg-white">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Present Address</h4>
+                                <div class="row">
+                                    <div class="col-6">Village: <input type="text" class="form-control"
+                                            v-model="selectedUser.ps_add_village" readonly disabled></div>
+                                    <div class="col-6">Gewog: <input type="text" class="form-control"
+                                            v-model="selectedUser.ps_add_gewog" readonly disabled></div>
+                                    <div class="col-6">Dzongkhag: <input type="text" class="form-control"
+                                            v-model="selectedUser.ps_add_dzongkhag" readonly disabled></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4 card p-4 bg-white">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Case Status</h4>
+                                <div class="row">
+                                    <div class="col-6"
+                                        v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
+                                        <label for="caseStatus">Case Status:</label>
+                                        <select class="form-control"
+                                            v-model="selectedUser.service_and_treatment_details[0].case_status"
+                                            :disabled="selfRole === 'trained_professional'">
+                                            <option :value="null" disabled>Select Case Status</option>
+                                            <option value="On Going">On Going</option>
+                                            <option value="Case Closed">Case Closed</option>
+                                            <option value="Case Discontinued">Case Discontinued</option>
+                                        </select>
                                     </div>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div class="row mb-4 card p-4" v-else>
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Severity</h4>
-                            <div class="row">
-                                <div class="col-4 mb-2">
-                                    <span class="substance text-success">No ASSIST measurements found</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Additional fields -->
-                    <div class="mb-4 card p-4 mx-0 bg-white" v-if="selectedUser">
-                        <div class="col-12">
-                            <h6>Non-Medical Drug use through injection: <span class="text-primary">{{
-                                selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></h6>
-                        </div>
-                        <div class="col-12 mt-3">
-                            <h6>Past Mental Health Disorder history: <span class="text-primary">{{
-                                selectedUser.past_disorder ?
-                                    selectedUser.past_disorder : 'No Diagnosis' }}</span></h6>
-                        </div>
-                    </div>
-
-
-                    <div class="row mb-4 card p-4 bg-white" :class="{ 'greyout': selfRole === 'trained_professional' }"
-                        v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Services and Treatment</h4>
-                            <div class="row">
-                                <div class="col-6 mb-3">
-                                    <label for="assessmentStatus">Assessment Status:</label>
-                                    <select class="form-control" id="assessmentStatus"
-                                        v-model="selectedUser.service_and_treatment_details[0].assessment_status">
-                                        <option value="Not Conducted">Not Conducted</option>
-                                        <option value="Conducted">Conducted</option>
-                                    </select>
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label for="counselingStatus">Counseling Status:</label>
-                                    <select class="form-control" id="counselingStatus"
-                                        v-model="selectedUser.service_and_treatment_details[0].counseling">
-                                        <option value="Availed">Availed</option>
-                                        <option value="Not Required">Not Required</option>
-                                        <option value="Waiting List">Waiting List</option>
-                                    </select>
-                                </div>
-                                <div class="col-6 mb-3">
-                                    <label for="followUpStatus">Follow Up Status:</label>
-                                    <select class="form-control" id="followUpStatus"
-                                        v-model="selectedUser.service_and_treatment_details[0].follow_up">
-                                        <option value="Treatment Completed">Treatment Completed</option>
-                                        <option value="Undergoing Treatment">Undergoing Treatment</option>
-                                        <option value="Completed Counselling Sessions">Completed Counselling Sessions
-                                        </option>
-                                        <option value="Unwilling to Undergo Treatment">Unwilling to Undergo Treatment
-                                        </option>
-                                        <option value="Undergone Rehabilitation">Undergone Rehabilitation</option>
-                                        <option value="Undergoing Rehabilitation">Undergoing Rehabilitation</option>
-                                        <option
-                                            value="Hospital-based Outpatient SUD Treatment and Care (Primary Phase)">
-                                            Hospital-based Outpatient SUD Treatment and Care (Primary Phase)</option>
-                                        <option
-                                            value="Hospital-based Outpatient SUD Treatment and Care (Continuing Care)">
-                                            Hospital-based Outpatient SUD Treatment and Care (Continuing Care)</option>
-                                        <option value="School-based SUD Treatment and Care">School-based SUD Treatment
-                                            and
-                                            Care</option>
-                                        <option value="Institution-based SUD Treatment and Care">Institution-based SUD
-                                            Treatment and Care</option>
-                                        <option value="Follow-up Drug Test Conducted">Follow-up Drug Test Conducted
-                                        </option>
-                                        <option value="Detention-based SUD Treatment and Care">Detention-based SUD
-                                            Treatment
-                                            and Care</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-12">
-                                    <label for="comments">Comments:</label>
-                                    <textarea class="form-control" id="comments"
-                                        v-model="selectedUser.service_and_treatment_details[0].comments"></textarea>
+                        <div class="row mb-4 card p-4 bg-white"
+                            v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Severity</h4>
+                                <div class="row">
+                                    <template
+                                        v-for="(substance, index) in selectedUser.substance_risk_measurement_details"
+                                        :key="index">
+                                        <div v-if="substance.risk_flag !== 'none'" class="col-4 mb-2">
+                                            <span class="substance">{{ substance.substance_name.split('(')[0].trim()
+                                                }}:</span>
+                                            <Tag class="ms-2 px-2 py-1" :value="substance.risk_flag"
+                                                :style="getSeverityStyles(substance.risk_flag)" rounded></Tag>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                         </div>
-                        <div class="row d-flex mt-4 justify-content-end">
-                            <div class="ms-auto">
-                                <Button label="Save" class="p-button-rounded hwss-btn mx-2" icon="pi pi-save"
-                                    @click="saveChanges" />
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row mb-4 card p-4"
-                        :class="{ 'greyout': selectedUser.service_and_treatment_details[0].referred !== 'Not Referred' }">
-                        <div class="col-md-12">
-                            <h4 class="hwss-primary">Referral Status</h4>
-                            <div class="row">
-                                <div class="col-6">
-                                    <label for="referTo">Refer To:</label>
-                                    <select class="form-control" id="referTo" v-model="selectedUser.refer_to">
-                                        <option value="clinical_counselor">Clinical Counselor</option>
-                                        <option value="school_counselor">School Counselor</option>
-                                        <option value="mh_admin">Mental Health Counselor</option>
-                                        <option value="mh_admin">Medical Officer</option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label for="official">Official:</label>
-                                    <select class="form-control" id="official" v-model="selectedUser.official">
-                                        <option v-for="option in officialOptions" :key="option.id" :value="option.id"
-                                            :placeholder="option.full_name">{{
-                                                option.full_name }}, {{ option.active_agency }}</option>
-                                    </select>
+
+                        <div class="row mb-4 card p-4" v-else>
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Severity</h4>
+                                <div class="row">
+                                    <div class="col-4 mb-2">
+                                        <span class="substance text-success">No ASSIST measurements found</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="row d-flex justify-co mt-4">
-                            <div class=" ms-auto">
-                                <Button label="Refer Case" class="p-button-secondary p-mr-2 hwss-btn"
-                                    icon="pi pi-external-link" @click="referCase" />
+
+                        <!-- Additional fields -->
+                        <div class="mb-4 card p-4 mx-0 bg-white" v-if="selectedUser">
+                            <div class="col-12">
+                                <h6>Non-Medical Drug use through injection: <span class="text-primary">{{
+                                    selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></h6>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <h6>Past Mental Health Disorder history: <span class="text-primary">{{
+                                    selectedUser.past_disorder ?
+                                        selectedUser.past_disorder : 'No Diagnosis' }}</span></h6>
                             </div>
                         </div>
-                    </div>
-                    <div class="my-4" v-if="selectedUser.service_and_treatment_details[0].referred !== 'Not Referred'">
-                        <h5 class="text-warning text-center">
-                            User Already Referred
-                        </h5>
-                    </div>
 
-                </main>
+
+                        <div class="row mb-4 card p-4 bg-white"
+                            :class="{ 'greyout': selfRole === 'trained_professional' }"
+                            v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Services and Treatment</h4>
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label for="assessmentStatus">Assessment Status:</label>
+                                        <select class="form-control" id="assessmentStatus"
+                                            v-model="selectedUser.service_and_treatment_details[0].assessment_status">
+                                            <option value="Not Conducted">Not Conducted</option>
+                                            <option value="Conducted">Conducted</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label for="counselingStatus">Counseling Status:</label>
+                                        <select class="form-control" id="counselingStatus"
+                                            v-model="selectedUser.service_and_treatment_details[0].counseling">
+                                            <option value="Availed">Availed</option>
+                                            <option value="Not Required">Not Required</option>
+                                            <option value="Waiting List">Waiting List</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label for="followUpStatus">Follow Up Status:</label>
+                                        <select class="form-control" id="followUpStatus"
+                                            v-model="selectedUser.service_and_treatment_details[0].follow_up">
+                                            <option value="Treatment Completed">Treatment Completed</option>
+                                            <option value="Undergoing Treatment">Undergoing Treatment</option>
+                                            <option value="Completed Counselling Sessions">Completed Counselling
+                                                Sessions
+                                            </option>
+                                            <option value="Unwilling to Undergo Treatment">Unwilling to Undergo
+                                                Treatment
+                                            </option>
+                                            <option value="Undergone Rehabilitation">Undergone Rehabilitation</option>
+                                            <option value="Undergoing Rehabilitation">Undergoing Rehabilitation</option>
+                                            <option
+                                                value="Hospital-based Outpatient SUD Treatment and Care (Primary Phase)">
+                                                Hospital-based Outpatient SUD Treatment and Care (Primary Phase)
+                                            </option>
+                                            <option
+                                                value="Hospital-based Outpatient SUD Treatment and Care (Continuing Care)">
+                                                Hospital-based Outpatient SUD Treatment and Care (Continuing Care)
+                                            </option>
+                                            <option value="School-based SUD Treatment and Care">School-based SUD
+                                                Treatment
+                                                and
+                                                Care</option>
+                                            <option value="Institution-based SUD Treatment and Care">Institution-based
+                                                SUD
+                                                Treatment and Care</option>
+                                            <option value="Follow-up Drug Test Conducted">Follow-up Drug Test Conducted
+                                            </option>
+                                            <option value="Detention-based SUD Treatment and Care">Detention-based SUD
+                                                Treatment
+                                                and Care</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="comments">Comments:</label>
+                                        <textarea class="form-control" id="comments"
+                                            v-model="selectedUser.service_and_treatment_details[0].comments"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row d-flex mt-4 justify-content-end">
+                                <div class="ms-auto">
+                                    <Button label="Save" class="p-button-rounded hwss-btn mx-2" icon="pi pi-save"
+                                        @click="saveChanges" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4 card p-4"
+                            :class="{ 'greyout': selectedUser.service_and_treatment_details[0].referred !== 'Not Referred' }">
+                            <div class="col-md-12">
+                                <h4 class="hwss-primary">Referral Status</h4>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="referTo">Refer To:</label>
+                                        <select class="form-control" id="referTo" v-model="selectedUser.refer_to">
+                                            <option value="clinical_counselor">Clinical Counselor</option>
+                                            <option value="school_counselor">School Counselor</option>
+                                            <option value="mh_admin">Mental Health Counselor</option>
+                                            <option value="mh_admin">Medical Officer</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="official">Official:</label>
+                                        <select class="form-control" id="official" v-model="selectedUser.official">
+                                            <option v-for="option in officialOptions" :key="option.id"
+                                                :value="option.id" :placeholder="option.full_name">{{
+                                                    option.full_name }}, {{ option.active_agency }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row d-flex justify-co mt-4">
+                                <div class=" ms-auto">
+                                    <Button label="Refer Case" class="p-button-secondary p-mr-2 hwss-btn"
+                                        icon="pi pi-external-link" @click="referCase" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="my-4"
+                            v-if="selectedUser.service_and_treatment_details[0].referred !== 'Not Referred'">
+                            <h5 class="text-warning text-center">
+                                User Already Referred
+                            </h5>
+                        </div>
+
+                    </main>
+                </div>
             </div>
-        </div>
 
-        <div class="mt-4 d-flex justify-content-end">
-            <div>
-                <Button label="Close" class="p-button-secondary p-mr-2 mx-2" @click="handleModalClose" />
+            <div class="mt-4 d-flex justify-content-end">
+                <div>
+                    <Button label="Close" class="p-button-secondary p-mr-2 mx-2" @click="handleModalClose" />
+                </div>
             </div>
-        </div>
-    </Dialog>
+        </Dialog>
+    </div>
 </template>
-
-
-
 
 <script setup>
 import { ref, computed, onMounted, watchEffect } from 'vue';
@@ -299,6 +313,8 @@ const showModal = ref(false);
 const selectedUser = ref(null);
 const officialOptions = ref([]);
 const selfRole = ref('');
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const rowData = ref([]);
 const searchQuery = ref('');
@@ -348,6 +364,8 @@ const filteredRows = computed(() => {
 
 const getServiceList = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         const response = await axios.get(endpoints.generateServiceAndTreatment);
         if (response && response.data && Array.isArray(response.data.data)) {
             console.log('service and treatment:', response.data);
@@ -356,7 +374,10 @@ const getServiceList = async () => {
             console.error('Invalid response format:', response);
         }
     } catch (error) {
+        hasError.value = true;
         console.error(error);
+    } finally {
+        isLoading.value = false;
     }
 };
 

@@ -13,8 +13,8 @@
         <div class="row justify-content-center">
             <div class="col-md-12 col-lg-12">
                 <div class="content-card">
-                    <transition name="fade" mode="out-in">
-                        <component :is="activeComponent" />
+                    <transition name="fade" mode="in-out">
+                        <component :is="activeComponent" v-if="activeComponent" />
                     </transition>
                 </div>
             </div>
@@ -40,15 +40,16 @@ const changeTab = (tabName) => {
 };
 
 const activeComponent = computed(() => {
-    return tabs.find(tab => tab.key === activeTab.value)?.component;
+    const currentTab = tabs.find(tab => tab.key === activeTab.value);
+    return currentTab ? currentTab.component : null;
 });
 </script>
 
 <style scoped>
 .gradient-background {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    min-height: 100vh;
-    border-radius:15px;
+    height: auto;
+    border-radius: 15px;
 }
 
 .tab-container {

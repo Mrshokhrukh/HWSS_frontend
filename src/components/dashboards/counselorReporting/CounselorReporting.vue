@@ -312,7 +312,7 @@ onMounted(() => {
 <style scoped>
 .card-container {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-  padding: 20px;
+  padding: 2rem;
   border-radius: 10px;
 }
 
