@@ -1,32 +1,40 @@
 <template>
-  <h1 class="text-center fw-bold mb-4" style="color: #2c6975;">Current Status in Bhutan</h1>
-  <div v-if="isLoading" class="text-center">
-    <p>Loading...</p> 
-  </div>
-  <div v-else-if="error" class="text-center text-danger">
-    <p>{{ error }}</p>
-  </div>
-  <div v-else>
-    <canvas ref="chartCanvas"></canvas> 
+  <div class="screening-data-container">
+    <h1 class="text-center fw-bold mb-4" style="color: #2c6975;">Current Status in Bhutan</h1>
+    <div class="card shadow-sm outer-card">
+      <div class="card-body">
+        <div class="card inner-card">
+          <div class="card-body">
+            <div v-if="isLoading" class="text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+            <div v-else-if="error" class="alert alert-danger" role="alert">
+              {{ error }}
+            </div>
+            <div v-else class="chart-container">
+              <canvas ref="chartCanvas"></canvas> 
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watchEffect, nextTick } from 'vue';
 import Chart from 'chart.js/auto';
 import axios from 'axios';
 import endpoints from '@/api';
 
-// Local state variables for loading, error, and report data
-const isLoading = ref(false);
+const isLoading = ref(true);
 const error = ref(null);
-const reportData = ref([]);
-
-// Canvas reference
+const chartData = ref(null);
 const chartCanvas = ref(null);
 let chart = null;
 
-// Define a set of colors for the chart
 const backgroundColors = [
   'rgba(44, 105, 117, 1)', 'rgba(114, 190, 203, 1)', 'rgba(104, 178, 160, 1)', 'rgba(180, 213, 191, 1)',
   'rgba(0, 0, 0, 1)', 'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
@@ -35,63 +43,60 @@ const backgroundColors = [
   'rgba(214, 133, 159, 1)', 'rgba(64, 66, 255, 1)', 'rgba(192, 192, 192, 1)', 'rgba(64, 64, 199, 1)'
 ];
 
-// Function to count occurrences of each follow_up value from the fetched data
 function countFollowUpValues(data) {
-  const counts = {};
-  data.forEach(item => {
-    if (item.service_and_treatment?.follow_up) {
-      const value = item.service_and_treatment.follow_up;
+  return data.reduce((counts, item) => {
+    const value = item.service_and_treatment?.follow_up;
+    if (value) {
       counts[value] = (counts[value] || 0) + 1;
     }
-  });
-  return counts;
+    return counts;
+  }, {});
 }
 
-// Function to create or update the chart
-function createOrUpdateChart(data) {
-  const followUpCounts = countFollowUpValues(data);
-  const labels = Object.keys(followUpCounts);
-  const chartData = Object.values(followUpCounts);
-  
-  const dynamicColors = backgroundColors.slice(0, labels.length);
-  
-  const ctx = chartCanvas.value.getContext('2d');
-  
-  const chartConfig = {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Follow Up Data',
-        data: chartData,
-        backgroundColor: dynamicColors,
-        borderWidth: 1,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
+function createOrUpdateChart() {
+  if (!chartData.value || !chartCanvas.value) return;
+
+  nextTick(() => {
+    const ctx = chartCanvas.value.getContext('2d');
+    const config = {
+      type: 'doughnut',
+      data: chartData.value,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    };
+
+    if (chart) {
+      chart.data = chartData.value;
+      chart.update();
+    } else {
+      chart = new Chart(ctx, config);
     }
-  };
-
-  if (chart) {
-    chart.data = chartConfig.data;
-    chart.update();
-  } else {
-    chart = new Chart(ctx, chartConfig);
-  }
+  });
 }
 
-// Fetch report data directly in the component
 async function fetchReportData() {
   isLoading.value = true;
   error.value = null;
 
   try {
-    const response = await axios.get(endpoints.getReport); // Replace with actual API endpoint
+    const response = await axios.get(endpoints.getReport);
+    console.log('API response:', response.data);
+
     if (response.data && response.data.reporting_model_data) {
-      reportData.value = response.data.reporting_model_data;
-      createOrUpdateChart(reportData.value); // Call the chart update function after data fetch
+      const followUpCounts = countFollowUpValues(response.data.reporting_model_data);
+      const labels = Object.keys(followUpCounts);
+      const data = Object.values(followUpCounts);
+      
+      chartData.value = {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: backgroundColors.slice(0, labels.length),
+          borderWidth: 1,
+        }]
+      };
     } else {
       throw new Error('No data received from the API');
     }
@@ -103,22 +108,57 @@ async function fetchReportData() {
   }
 }
 
-// Fetch data and render chart on component mount
 onMounted(() => {
   fetchReportData();
 });
 
-// Watch for changes in reportData and update the chart accordingly
-watch(reportData, (newData) => {
-  if (newData.length) {
-    createOrUpdateChart(newData);
+watchEffect(() => {
+  if (chartData.value) {
+    createOrUpdateChart();
   }
-}, { deep: true });
+});
 </script>
 
 <style scoped>
-canvas {
+.outer-card {
+  background-color: #28565f;
+  padding: 20px;
+ 
+}
+
+.inner-card {
+  background-color: #ecf5f7;
+  height: 400px;
+}
+
+.chart-container {
+  height: 100%;
   width: 100%;
-  height: 400px; /* Adjust size as necessary */
+}
+
+canvas {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .outer-card {
+    padding-left: 60px;
+    padding-right: 60px;
+  }
+}
+
+@media (min-width: 992px) {
+  .outer-card {
+    padding-left: 120px;
+    padding-right: 120px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .outer-card {
+    padding-left: 260px;
+    padding-right: 260px;
+  }
 }
 </style>
