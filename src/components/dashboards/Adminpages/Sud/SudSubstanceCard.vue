@@ -39,17 +39,30 @@ const substances = [
   'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
 ];
 
-const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
-const riskCounts = ref(Array(substances.length).fill({ low: 0, moderate: 0, high: 0 }));
-function extractMeasurementData(reportData) {
-  const results = [];
+// Mapping of substance names to their data keys
+const substanceKeyMapping = {
+  'Tobacco': 'tobacco',
+  'Alcohol': 'alcoholic',
+  'Cannabis': 'cannabis',
+  'Cocaine': 'cocaine',
+  'Amphetamine-type': 'amphetamine',
+  'Inhalant': 'inhalants',
+  'Sedative': 'sedatives',
+  'Hallucinate': 'hallucinogens',
+  'Opioids': 'opioids',
+  'Others': 'other'
+};
 
-  reportData.forEach(person => {
-    const measurementAssist = person.measurement_assist?.fields; // Safe navigation to avoid null/undefined errors
+const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
+
+function extractMeasurementData(reportData) {
+  return reportData.reduce((results, person) => {
+    const measurementAssist = person.measurement_assist?.fields;
     const gender = person.user?.fields?.gender || "unknown";
+    
     if (measurementAssist) {
-      const data = {
-        gender: gender,
+      results.push({
+        gender,
         alcoholic: measurementAssist.alcoholic_measurement || "no data",
         amphetamine: measurementAssist.amphetamine_measurement || "no data",
         cannabis: measurementAssist.cannabis_measurement || "no data",
@@ -60,141 +73,50 @@ function extractMeasurementData(reportData) {
         sedatives: measurementAssist.sedatives_measurement || "no data",
         tobacco: measurementAssist.tobacco_measurement || "no data",
         other: measurementAssist.other_measurement || "no data"
-      };
-
-      results.push(data);
+      });
     }
+    return results;
+  }, []);
+}
+
+function countRiskLevels(data) {
+  const initialCounts = {};
+  
+  // Initialize counts for all substances
+  Object.values(substanceKeyMapping).forEach(substance => {
+    initialCounts[`${substance}_moderate_male`] = 0;
+    initialCounts[`${substance}_moderate_female`] = 0;
+    initialCounts[`${substance}_high_male`] = 0;
+    initialCounts[`${substance}_high_female`] = 0;
   });
 
-  return results;
-}
-const extractedData = extractMeasurementData(reportData);
-
-// Function to count risk levels for each substance
-function countRiskLevels(data) {
-  const counts = {
-    tobacco_moderate_male: 0, tobacco_moderate_female: 0,
-    tobacco_high_male: 0, tobacco_high_female: 0,
-
-    alcoholic_moderate_male: 0, alcoholic_moderate_female: 0,
-    alcoholic_high_male: 0, alcoholic_high_female: 0,
-
-    cannabis_moderate_male: 0, cannabis_moderate_female: 0,
-    cannabis_high_male: 0, cannabis_high_female: 0,
-
-    cocaine_moderate_male: 0, cocaine_moderate_female: 0,
-    cocaine_high_male: 0, cocaine_high_female: 0,
-
-    amphetamine_moderate_male: 0, amphetamine_moderate_female: 0,
-    amphetamine_high_male: 0, amphetamine_high_female: 0,
-
-    inhalant_moderate_male: 0, inhalant_moderate_female: 0,
-    inhalant_high_male: 0, inhalant_high_female: 0,
-
-    sedative_moderate_male: 0, sedative_moderate_female: 0,
-    sedative_high_male: 0, sedative_high_female: 0,
-
-    hallucinate_moderate_male: 0, hallucinate_moderate_female: 0,
-    hallucinate_high_male: 0, hallucinate_high_female: 0,
-
-    opioids_moderate_male: 0, opioids_moderate_female: 0,
-    opioids_high_male: 0, opioids_high_female: 0,
-
-    others_moderate_male: 0, others_moderate_female: 0,
-    others_high_male: 0, others_high_female: 0,
-  };
-
-  // Iterate over each object in the array
-  data.forEach(personData => {
-    // Iterate over each key (substance) in the object
-    Object.keys(personData).forEach(substance => {
-      const riskLevel = personData[substance]; // Get the risk level for the current substance
-      const substanceKey = substance.toLowerCase().replace('-', '_'); // Convert substance name to lower case and replace '-' with '_'
-
-      // Determine gender-specific keys based on risk level and substance
+  // Count risk levels
+  return data.reduce((counts, personData) => {
+    Object.entries(substanceKeyMapping).forEach(([_, substanceKey]) => {
+      const riskLevel = personData[substanceKey];
       if (riskLevel === 'moderate risk' || riskLevel === 'high risk') {
-        const genderKeyModerate = `${substanceKey}_moderate`;
-        const genderKeyHigh = `${substanceKey}_high`;
-
-        // Increment the appropriate counter based on the risk level and gender
-        if (personData.gender === 'Male') {
-          if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_male`]++;
-          if (riskLevel === 'high risk') counts[`${genderKeyHigh}_male`]++;
-        } else if (personData.gender === 'Female') {
-          if (riskLevel === 'moderate risk') counts[`${genderKeyModerate}_female`]++;
-          if (riskLevel === 'high risk') counts[`${genderKeyHigh}_female`]++;
-        }
+        const key = `${substanceKey}_${riskLevel.split(' ')[0]}_${personData.gender.toLowerCase()}`;
+        counts[key]++;
       }
     });
-  });
-
-  return counts;
+    return counts;
+  }, initialCounts);
 }
+
+const extractedData = extractMeasurementData(reportData);
 const counts = countRiskLevels(extractedData);
-const mapCountsToDummyData = (counts) => {
-  return {
-    Tobacco: {
-      'High-risk total male': counts.tobacco_high_male || 0,
-      'High-risk total female': counts.tobacco_high_female || 0,
-      'Moderate-risk total male': counts.tobacco_moderate_male || 0,
-      'Moderate-risk total female': counts.tobacco_moderate_female || 0,
-    },
-    Alcohol: {
-      'High-risk total male': counts.alcoholic_high_male || 0,
-      'High-risk total female': counts.alcoholic_high_female || 0,
-      'Moderate-risk total male': counts.alcoholic_moderate_male || 0,
-      'Moderate-risk total female': counts.alcoholic_moderate_female || 0,
-    },
-    Cannabis: {
-      'High-risk total male': counts.cannabis_high_male || 0,
-      'High-risk total female': counts.cannabis_high_female || 0,
-      'Moderate-risk total male': counts.cannabis_moderate_male || 0,
-      'Moderate-risk total female': counts.cannabis_moderate_female || 0,
-    },
-    Cocaine: {
-      'High-risk total male': counts.cocaine_high_male || 0,
-      'High-risk total female': counts.cocaine_high_female || 0,
-      'Moderate-risk total male': counts.cocaine_moderate_male || 0,
-      'Moderate-risk total female': counts.cocaine_moderate_female || 0,
-    },
-    'Amphetamine-type': {
-      'High-risk total male': counts.amphetamine_high_male || 0,
-      'High-risk total female': counts.amphetamine_high_female || 0,
-      'Moderate-risk total male': counts.amphetamine_moderate_male || 0,
-      'Moderate-risk total female': counts.amphetamine_moderate_female || 0,
-    },
-    Inhalant: {
-      'High-risk total male': counts.inhalant_high_male || 0,
-      'High-risk total female': counts.inhalant_high_female || 0,
-      'Moderate-risk total male': counts.inhalant_moderate_male || 0,
-      'Moderate-risk total female': counts.inhalant_moderate_female || 0,
-    },
-    Sedative: {
-      'High-risk total male': counts.sedative_high_male || 0,
-      'High-risk total female': counts.sedative_high_female || 0,
-      'Moderate-risk total male': counts.sedative_moderate_male || 0,
-      'Moderate-risk total female': counts.sedative_moderate_female || 0,
-    },
-    Hallucinate: {
-      'High-risk total male': counts.hallucinate_high_male || 0,
-      'High-risk total female': counts.hallucinate_high_female || 0,
-      'Moderate-risk total male': counts.hallucinate_moderate_male || 0,
-      'Moderate-risk total female': counts.hallucinate_moderate_female || 0,
-    },
-    Opioids: {
-      'High-risk total male': counts.opioids_high_male || 0,
-      'High-risk total female': counts.opioids_high_female || 0,
-      'Moderate-risk total male': counts.opioids_moderate_male || 0,
-      'Moderate-risk total female': counts.opioids_moderate_female || 0,
-    },
-    Others: {
-      'High-risk total male': counts.others_high_male || 0,
-      'High-risk total female': counts.others_high_female || 0,
-      'Moderate-risk total male': counts.others_moderate_male || 0,
-      'Moderate-risk total female': counts.others_moderate_female || 0,
-    },
-  };
-};
+
+function mapCountsToDummyData(counts) {
+  return Object.entries(substanceKeyMapping).reduce((acc, [displayName, dataKey]) => {
+    acc[displayName] = {
+      'High-risk total male': counts[`${dataKey}_high_male`] || 0,
+      'High-risk total female': counts[`${dataKey}_high_female`] || 0,
+      'Moderate-risk total male': counts[`${dataKey}_moderate_male`] || 0,
+      'Moderate-risk total female': counts[`${dataKey}_moderate_female`] || 0,
+    };
+    return acc;
+  }, {});
+}
 
 const dummyData = mapCountsToDummyData(counts);
 
@@ -219,83 +141,67 @@ const chartOptions = {
   }
 };
 
-const renderDonutChart = (canvasId, data) => {
-  if (canvasId === 'donutChartTotal' && donutChartTotalInstance) {
-    donutChartTotalInstance.destroy();
+function renderChart(type, canvasId, data, options) {
+  const existingChart = type === 'donut' ? 
+    (canvasId === 'donutChartTotal' ? donutChartTotalInstance : donutChartModerateInstance) : 
+    barChartInstance;
+
+  if (existingChart) {
+    existingChart.destroy();
   }
-  if (canvasId === 'donutChartModerate' && donutChartModerateInstance) {
-    donutChartModerateInstance.destroy();
-  }
+
   const ctx = document.getElementById(canvasId).getContext('2d');
-  return new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      ...data,
-      datasets: [{
-        ...data.datasets[0],
-        backgroundColor: ['#2B656F', '#1D4851'],
-        hoverBackgroundColor: ['#3a8a9e', '#2a6470']
-      }]
-    },
-    options: chartOptions
+  const chart = new Chart(ctx, {
+    type: type === 'donut' ? 'doughnut' : 'bar',
+    data,
+    options
   });
-};
 
-const renderBarChart = (data) => {
-  if (barChartInstance) {
-    barChartInstance.destroy();
+  // Add empty state text if needed
+  if (type === 'donut' && data.datasets[0].data.length === 1 && data.datasets[0].data[0] === 1 ||
+      type === 'bar' && !data.datasets.some(dataset => dataset.data.some(value => value > 0))) {
+    const chartArea = chart.chartArea;
+    const centerX = (chartArea.left + chartArea.right) / 2;
+    const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#666';
+    ctx.fillText('No data available', centerX, centerY);
+    ctx.restore();
   }
-  const ctx = document.getElementById('barChart').getContext('2d');
-  return new Chart(ctx, {
-    type: 'bar',
-    data: {
-      ...data,
-      datasets: [
-        {
-          ...data.datasets[0],
-          backgroundColor: '#2B656F'
-        },
-        {
-          ...data.datasets[1],
-          backgroundColor: '#1D4851'
-        }
-      ]
-    },
-    options: {
-      ...chartOptions,
-      scales: {
-        x: { stacked: true },
-        y: { stacked: true }
-      }
-    }
-  });
-};
 
-const setActiveButton = (buttonName) => {
-  activeButton.value = buttonName;
-  updateCharts();
-};
+  return chart;
+}
 
-const updateCharts = () => {
+function updateCharts() {
   const data = dummyData[activeButton.value];
-  if (!data) return; // Return if data is not available for the selected button
+  if (!data) return;
 
+  const totalHighRisk = data['High-risk total male'] + data['High-risk total female'];
+  const totalModerateRisk = data['Moderate-risk total male'] + data['Moderate-risk total female'];
+
+  // Configure chart data
   const donutDataTotal = {
     labels: ['Male', 'Female'],
     datasets: [{
-      data: [data['High-risk total male'], data['High-risk total female']],
-      backgroundColor: ['#2c6975', '#00000'],
-      hoverBackgroundColor: ['#2c6975', '#00000'],
-    }],
+      data: totalHighRisk === 0 ? [1] : [data['High-risk total male'], data['High-risk total female']],
+      backgroundColor: totalHighRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+      hoverBackgroundColor: totalHighRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+    }]
   };
+
   const donutDataModerate = {
     labels: ['Male', 'Female'],
     datasets: [{
-      data: [data['Moderate-risk total male'], data['Moderate-risk total female']],
-      backgroundColor: ['#2c6975', '#00000'],
-      hoverBackgroundColor: ['#2c6975', '#00000'],
-    }],
+      data: totalModerateRisk === 0 ? [1] : [data['Moderate-risk total male'], data['Moderate-risk total female']],
+      backgroundColor: totalModerateRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+      hoverBackgroundColor: totalModerateRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+    }]
   };
+
   const barData = {
     labels: ['High Risk', 'Moderate Risk'],
     datasets: [{
@@ -306,15 +212,64 @@ const updateCharts = () => {
       label: 'Female',
       backgroundColor: '#00000',
       data: [data['High-risk total female'], data['Moderate-risk total female']],
-    }],
+    }]
   };
 
-  donutChartTotalInstance = renderDonutChart('donutChartTotal', donutDataTotal);
-  donutChartModerateInstance = renderDonutChart('donutChartModerate', donutDataModerate);
-  barChartInstance = renderBarChart(barData);
+  // Configure chart options
+  const donutOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            if (context.chart.data.datasets[0].data.length === 1 && 
+                context.chart.data.datasets[0].data[0] === 1) {
+              return 'No data available';
+            }
+            return `${context.label}: ${context.raw}`;
+          }
+        }
+      }
+    }
+  };
+
+  const barOptions = {
+    ...chartOptions,
+    scales: {
+      x: { stacked: true },
+      y: { 
+        stacked: true,
+        min: 0,
+        ticks: { stepSize: 1 }
+      }
+    },
+    plugins: {
+      ...chartOptions.plugins,
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            if (context.raw === 0) return `${context.dataset.label}: No data`;
+            return `${context.dataset.label}: ${context.raw}`;
+          }
+        }
+      }
+    }
+  };
+
+  // Render all charts
+  donutChartTotalInstance = renderChart('donut', 'donutChartTotal', donutDataTotal, donutOptions);
+  donutChartModerateInstance = renderChart('donut', 'donutChartModerate', donutDataModerate, donutOptions);
+  barChartInstance = renderChart('bar', 'barChart', barData, barOptions);
+}
+
+const setActiveButton = (buttonName) => {
+  activeButton.value = buttonName;
+  updateCharts();
 };
+
 onMounted(() => {
-  setActiveButton(substances[0]); // Set first substance as active by default
+  setActiveButton(substances[0]);
 });
 </script>
 
@@ -371,7 +326,7 @@ onMounted(() => {
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border:1px solid #e6f3f5
+  border: 1px solid #e6f3f5;
 }
 
 .charts-section {

@@ -87,7 +87,7 @@ const endpoints = {
   getMeasurement: `${measurementBaseUrl}/get-measurement/`,
   getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
-  getSUDData: `${measurementBaseUrl}/get-sud-data/`,
+  getSUDData: `${measurementBaseUrl}/get-sud-data/`,//life time use current
   getSchoolEnvData: `${measurementBaseUrl}/get-school-env-data/`,
 
   // Monitoring endpoints
