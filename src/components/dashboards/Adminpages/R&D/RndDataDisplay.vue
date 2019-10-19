@@ -2,10 +2,10 @@
     <div class="dashboard">
         <div class="row g-4 mt-1 mx-auto d-flex align-items-stretch">
             <div class="col-md-3 d-flex" v-for="(card, index) in countCards" :key="index">
-                <div class="card flex-fill">
+                <div class="card flex-fill count-card">
                     <div class="card-body text-center">
-                        <h3 class="display-4 fw-bold mb-0 text-primary">{{ card.value }}</h3>
-                        <p class="text-uppercase mb-0 text-muted">{{ card.label }}</p>
+                        <h3 class="display-4 fw-bold mb-2">{{ card.value }}</h3>
+                        <p class="text-uppercase mb-0">{{ card.label }}</p>
                     </div>
                 </div>
             </div>
@@ -14,8 +14,8 @@
         <div class="row g-4 mt-4 d-flex align-items-stretch">
             <div class="col-md-6 d-flex">
                 <div class="card flex-fill">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">No. of Students Screened (Per School)</h3>
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">No. of Students Screened (Per School)</h5>
                     </div>
                     <div class="card-body">
                         <apexchart type="bar" height="300" :options="schoolsChartOptions" :series="schoolsChartSeries">
@@ -25,8 +25,8 @@
             </div>
             <div class="col-md-6 d-flex">
                 <div class="card flex-fill">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">Event-based vs Case-based Screenings</h3>
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Event-based vs Case-based Screenings</h5>
                     </div>
                     <div class="card-body">
                         <apexchart type="pie" height="300" :options="screeningTypeChartOptions"
@@ -39,8 +39,8 @@
         <div class="row g-4 mt-4 d-flex align-items-stretch">
             <div class="col-md-6 d-flex">
                 <div class="card flex-fill">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">Mental Health Status (PHQ and GAD)</h3>
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Mental Health Status (PHQ and GAD)</h5>
                     </div>
                     <div class="card-body">
                         <apexchart type="bar" height="300" :options="mentalHealthChartOptions"
@@ -50,8 +50,8 @@
             </div>
             <div class="col-md-6 d-flex">
                 <div class="card flex-fill">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title mb-0">Substance Use Disorder (SUD) Status</h3>
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Substance Use Disorder (SUD) Status</h5>
                     </div>
                     <div class="card-body">
                         <apexchart type="bar" height="300" :options="sudChartOptions" :series="sudChartSeries">
@@ -309,43 +309,80 @@ onMounted(() => {
 }
 
 .card {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
     border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
     transition: all 0.3s ease;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     border-bottom: none;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    padding: 15px 20px;
+    padding: 1rem;
+    border-radius: 15px 15px 0 0;
+}
+
+.card-header h5 {
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.2rem;
+    margin: 0;
 }
 
 .card-body {
-    padding: 20px;
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    padding: 1.5rem;
 }
 
-.text-primary {
-    color: #275D67 !important;
+.count-card {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
 }
 
-.bg-primary {
-    background-color: #275D67 !important;
+.count-card .card-body {
+    background: transparent;
+}
+
+.count-card h3 {
+    color: white !important;
+    font-size: 2.5rem;
+}
+
+.count-card p {
+    color: #A3CDB8 !important;
+    font-size: 0.9rem;
 }
 
 .btn-primary {
-    background-color: #275D67;
-    border-color: #275D67;
+    background-color: #2B656F;
+    border-color: #2B656F;
 }
 
 .btn-primary:hover {
-    background-color: #1e4b54;
-    border-color: #1e4b54;
+    background-color: #1D4851;
+    border-color: #1D4851;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header h5 {
+        font-size: 1rem;
+    }
+
+    .count-card h3 {
+        font-size: 2rem;
+    }
+
+    .count-card p {
+        font-size: 0.8rem;
+    }
 }
 </style>
