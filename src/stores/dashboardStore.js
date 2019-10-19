@@ -90,9 +90,16 @@ export const useDashboardStore = defineStore('dashboard', {
 
           // Apply filtering based on user role
           if (this.userRole === 'aaa_admin') {
+            // For 'aaa_admin', filter by agency name matching user's agency
             reportItems = reportItems.filter(item => {
               const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
               return itemAgencyName === this.userAgencyName.toLowerCase();
+            });
+          } else if (this.userRole === 'cecd_admin') {
+            // For 'cecd_admin', filter by agency name containing 'school'
+            reportItems = reportItems.filter(item => {
+              const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+              return itemAgencyName && itemAgencyName.includes('school');
             });
           }
 

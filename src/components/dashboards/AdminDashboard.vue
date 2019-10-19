@@ -105,11 +105,11 @@
         <!-- Template for CECD Admin -->
         <div v-if="userRole === 'cecd_admin'">
             <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
-                <cecdDashboard />
+                <cecdDashboard :reportData="reportData"/>
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-                <cecdReport />
+                <cecdReport :reportData="reportData" />
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
