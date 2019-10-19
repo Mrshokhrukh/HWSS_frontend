@@ -1,78 +1,62 @@
 <template>
-    <div class="row g-4 mt-1 mx-auto d-flex align-items-stretch">
-        <div class="col-md-4 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">No. of Schools</h3>
-                </div>
-                <div class="card-body bg-info">
-                    <p class="card-text display-3">{{ noOfSchools }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">No. of Agency</h3>
-                </div>
-                <div class="card-body bg-info">
-                    <p class="card-text display-3">{{ noOfAgencies }}</p>
+    <div class="dashboard">
+        <div class="row g-4 mt-1 mx-auto d-flex align-items-stretch">
+            <div class="col-md-3 d-flex" v-for="(card, index) in countCards" :key="index">
+                <div class="card flex-fill">
+                    <div class="card-body text-center">
+                        <h3 class="display-4 fw-bold mb-0 text-primary">{{ card.value }}</h3>
+                        <p class="text-uppercase mb-0 text-muted">{{ card.label }}</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">Individuals with Suicidal Behavior</h3>
-                </div>
-                <div class="card-body bg-info">
-                    <p class="card-text display-3">{{ noOfIndividualsWithSuicidalBehavior }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row g-5 mt-1 d-flex align-items-stretch">
-        <div class="col-md-6 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">No. of Students Screened (Per School)</h3>
+        <div class="row g-4 mt-4 d-flex align-items-stretch">
+            <div class="col-md-6 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">No. of Students Screened (Per School)</h3>
+                    </div>
+                    <div class="card-body">
+                        <apexchart type="bar" height="300" :options="schoolsChartOptions" :series="schoolsChartSeries">
+                        </apexchart>
+                    </div>
                 </div>
-                <div class="card-body hwss-primary">
-                    <canvas ref="schoolsChart"></canvas>
+            </div>
+            <div class="col-md-6 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">Event-based vs Case-based Screenings</h3>
+                    </div>
+                    <div class="card-body">
+                        <apexchart type="pie" height="300" :options="screeningTypeChartOptions"
+                            :series="screeningTypeChartSeries"></apexchart>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">Event-based vs Case-based Screenings</h3>
-                </div>
-                <div class="card-body">
-                    <canvas ref="screeningTypeChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="row g-5 mt-1 d-flex align-items-stretch">
-        <div class="col-md-6 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">Mental Health Status (PHQ and GAD)</h3>
-                </div>
-                <div class="card-body">
-                    <canvas ref="mentalHealthChart"></canvas>
+        <div class="row g-4 mt-4 d-flex align-items-stretch">
+            <div class="col-md-6 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">Mental Health Status (PHQ and GAD)</h3>
+                    </div>
+                    <div class="card-body">
+                        <apexchart type="bar" height="300" :options="mentalHealthChartOptions"
+                            :series="mentalHealthChartSeries"></apexchart>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header hwss-primary text-white">
-                    <h3 class="card-title mb-3 text-start">Substance Use Disorder (SUD) Status</h3>
-                </div>
-                <div class="card-body">
-                    <canvas ref="sudChart"></canvas>
+            <div class="col-md-6 d-flex">
+                <div class="card flex-fill">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">Substance Use Disorder (SUD) Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <apexchart type="bar" height="300" :options="sudChartOptions" :series="sudChartSeries">
+                        </apexchart>
+                    </div>
                 </div>
             </div>
         </div>
@@ -80,21 +64,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
-import Chart from 'chart.js/auto';
+import { ref, computed, onMounted } from 'vue';
+import VueApexCharts from "vue3-apexcharts";
 
 const props = defineProps({
-    finalFilteredData: {
+    filteredData: {
         type: Array,
         required: true
     }
 });
 
-console.log("Filtered Data:", props.finalFilteredData);
+const primaryColor = '#275D67';
+const secondaryColor = '#A3CDB8';
+const accentColors = ['#4A8895', '#6CB3A5', '#8EDDC8', '#B0F7EB'];
 
 const uniqueSchools = computed(() => {
     const schools = new Set();
-    props.finalFilteredData.forEach(item => {
+    props.filteredData.forEach(item => {
         if (item.agency_name && item.agency_name !== "Case Base Clients" && item.agency_name !== "Event Base Clients") {
             schools.add(item.agency_name.toLowerCase());
         }
@@ -103,26 +89,16 @@ const uniqueSchools = computed(() => {
 });
 
 const noOfIndividualsWithSuicidalBehavior = computed(() => {
-    return props.finalFilteredData.filter(item =>
+    return props.filteredData.filter(item =>
         item.measurement?.fields?.suicidal_measurement === "nearly everyday"
     ).length;
 });
 
 const noOfSchools = computed(() => uniqueSchools.value.size);
 
-const schoolsChart = ref(null);
-const screeningTypeChart = ref(null);
-const mentalHealthChart = ref(null);
-const sudChart = ref(null);
-
-onMounted(() => {
-    nextTick(() => {
-        createCharts();
-    });
-});
 const uniqueAgencies = computed(() => {
     const agencies = new Set();
-    props.finalFilteredData.forEach(item => {
+    props.filteredData.forEach(item => {
         if (item.agency_name &&
             !item.agency_name.toLowerCase().includes('school') &&
             item.agency_name !== "Case Base Clients" &&
@@ -133,176 +109,243 @@ const uniqueAgencies = computed(() => {
     });
     return agencies;
 });
+
 const noOfAgencies = computed(() => uniqueAgencies.value.size);
 
-const createCharts = () => {
-    const schoolsData = {
-        labels: Array.from(uniqueSchools.value),
-        datasets: [{
-            label: 'No. of Students Screened',
-            data: Array.from(uniqueSchools.value).map(school => {
-                return props.finalFilteredData.filter(item =>
-                    item.agency_name && item.agency_name.toLowerCase() === school
-                ).length;
-            }),
-            backgroundColor: '#87ceeb',
-            borderColor: '#87ceeb',
-            borderWidth: 1
-        }]
-    };
+const totalScreenings = computed(() => props.filteredData.length);
 
-    const screeningTypeData = {
-        labels: ['Event-based Screenings', 'Case-based Screenings'],
-        datasets: [{
-            label: 'Number of Screenings',
-            data: [
-                props.finalFilteredData.filter(item => item.agency_name === "Event Base Clients").length,
-                props.finalFilteredData.filter(item => item.agency_name === "Case Base Clients").length
-            ],
-            backgroundColor: ['#FF9F40', '#4BC0C0'],
-            borderColor: ['#FF9F40', '#4BC0C0'],
-            borderWidth: 1
-        }]
-    };
+const countCards = computed(() => [
+    { label: 'Schools', value: noOfSchools.value },
+    { label: 'Agencies', value: noOfAgencies.value },
+    { label: 'Suicidal Behavior', value: noOfIndividualsWithSuicidalBehavior.value },
+    { label: 'Total Screenings', value: totalScreenings.value }
+]);
 
-    const mentalHealthData = {
-        labels: ['Minimal', 'Mild', 'Moderate', 'Moderately Severe', 'Severe'],
-        datasets: [{
-            label: 'PHQ-9 Severity',
-            data: [
-                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'minimal').length,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'mild').length,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderate').length,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderately severe').length,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.phq_measurement === 'severe').length
-            ],
-            backgroundColor: '#36A2EB'
-        }, {
-            label: 'GAD-7 Severity',
-            data: [
-                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'minimal').length,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'mild').length,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'moderate').length,
-                0,
-                props.finalFilteredData.filter(item => item.measurement?.fields?.gad_measurement === 'severe').length
-            ],
-            backgroundColor: '#FF6384'
-        }]
-    };
-
-
-    const sudData = {
-        labels: ['No Risk', 'Low Risk', 'Moderate Risk', 'High Risk'],
-        datasets: [{
-            label: 'SUD Risk Level',
-            data: [
-                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'no risk').length,
-                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'low risk').length,
-                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'moderate risk').length,
-                props.finalFilteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'high risk').length
-            ],
-            backgroundColor: ['#4BC0C0', '#36A2EB', '#FFCE56', '#FF6384']
-        }]
-    };
-
-    createChart(schoolsChart.value, 'bar', schoolsData, {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            title: { display: true, text: 'No. of Students Screened' }
+const commonChartOptions = {
+    chart: {
+        toolbar: {
+            show: false
         },
-        scales: {
-            y: { beginAtZero: true }
-        }
-    });
-
-    createChart(screeningTypeChart.value, 'pie', screeningTypeData, {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom' },
-            title: { display: true, text: 'Event-based vs Case-based Screenings' }
-        }
-    });
-
-
-    createChart(mentalHealthChart.value, 'bar', mentalHealthData, {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Mental Health Status (PHQ-9 and GAD-7)' }
-        },
-        scales: {
-            x: { stacked: false },
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Number of Individuals'
-                }
+        fontFamily: 'inherit'
+    },
+    dataLabels: {
+        enabled: false
+    },
+    xaxis: {
+        labels: {
+            style: {
+                colors: primaryColor
             }
         }
-    });
-
-    createChart(sudChart.value, 'bar', sudData, {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false },
-            title: { display: true, text: 'Substance Use Disorder (SUD) Status' }
-        },
-        scales: {
-            y: { beginAtZero: true }
+    },
+    yaxis: {
+        labels: {
+            style: {
+                colors: primaryColor
+            }
         }
-    });
-};
-
-const createChart = (ctx, type, data, options) => {
-    if (ctx) {
-        new Chart(ctx, { type, data, options });
-    } else {
-        console.error(`Canvas context is null for ${type} chart`);
+    },
+    grid: {
+        show: false
+    },
+    theme: {
+        mode: 'light'
     }
 };
+
+// Schools Chart
+const schoolsChartOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'bar'
+    },
+    xaxis: {
+        ...commonChartOptions.xaxis,
+        categories: Array.from(uniqueSchools.value)
+    },
+    yaxis: {
+        ...commonChartOptions.yaxis,
+        title: {
+            text: 'Number of Students',
+            style: {
+                color: primaryColor
+            }
+        }
+    },
+    colors: [primaryColor]
+});
+
+const schoolsChartSeries = computed(() => [{
+    name: 'Students Screened',
+    data: Array.from(uniqueSchools.value).map(school => {
+        return props.filteredData.filter(item =>
+            item.agency_name && item.agency_name.toLowerCase() === school
+        ).length;
+    })
+}]);
+
+// Screening Type Chart
+const screeningTypeChartOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'pie'
+    },
+    labels: ['Event-based', 'Case-based'],
+    colors: [primaryColor, secondaryColor],
+    legend: {
+        position: 'bottom',
+        labels: {
+            colors: primaryColor
+        }
+    }
+});
+
+const screeningTypeChartSeries = computed(() => [
+    props.filteredData.filter(item => item.agency_name === "Event Base Clients").length,
+    props.filteredData.filter(item => item.agency_name === "Case Base Clients").length
+]);
+
+// Mental Health Chart
+const mentalHealthChartOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'bar',
+        stacked: true
+    },
+    xaxis: {
+        ...commonChartOptions.xaxis,
+        categories: ['Minimal', 'Mild', 'Moderate', 'Moderately Severe', 'Severe']
+    },
+    yaxis: {
+        ...commonChartOptions.yaxis,
+        title: {
+            text: 'Number of Individuals',
+            style: {
+                color: primaryColor
+            }
+        }
+    },
+    colors: [primaryColor, secondaryColor],
+    legend: {
+        position: 'bottom',
+        labels: {
+            colors: primaryColor
+        }
+    }
+});
+
+const mentalHealthChartSeries = computed(() => [
+    {
+        name: 'PHQ-9',
+        data: [
+            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'minimal').length,
+            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'mild').length,
+            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderate').length,
+            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderately severe').length,
+            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'severe').length
+        ]
+    },
+    {
+        name: 'GAD-7',
+        data: [
+            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'minimal').length,
+            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'mild').length,
+            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'moderate').length,
+            0,
+            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'severe').length
+        ]
+    }
+]);
+
+// SUD Chart
+const sudChartOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'bar'
+    },
+    xaxis: {
+        ...commonChartOptions.xaxis,
+        categories: ['No Risk', 'Low Risk', 'Moderate Risk', 'High Risk']
+    },
+    yaxis: {
+        ...commonChartOptions.yaxis,
+        title: {
+            text: 'Number of Individuals',
+            style: {
+                color: primaryColor
+            }
+        }
+    },
+    colors: accentColors,
+    legend: {
+        show: false
+    }
+});
+
+const sudChartSeries = computed(() => [{
+    name: 'SUD Risk Level',
+    data: [
+        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'no risk').length,
+        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'low risk').length,
+        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'moderate risk').length,
+        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'high risk').length
+    ]
+}]);
+
+onMounted(() => {
+    // Any initialization if needed
+});
 </script>
 
 <style scoped>
+.dashboard {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    padding: 20px;
+}
+
 .card {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .card-header {
-    padding: 10px;
-    font-weight: bold;
-    text-align: center;
-    background-color: #fff;
+    border-bottom: none;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    padding: 15px 20px;
 }
 
 .card-body {
-    padding: 10px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    padding: 20px;
 }
 
-.bg-info {
-    background-color: #A3CDB8 !important;
+.text-primary {
+    color: #275D67 !important;
 }
 
-canvas {
-    width: 100% !important;
-    height: 500px !important;
+.bg-primary {
+    background-color: #275D67 !important;
 }
 
-.row:first-child .card-body {
-    height: 150px;
+.btn-primary {
+    background-color: #275D67;
+    border-color: #275D67;
+}
+
+.btn-primary:hover {
+    background-color: #1e4b54;
+    border-color: #1e4b54;
 }
 </style>

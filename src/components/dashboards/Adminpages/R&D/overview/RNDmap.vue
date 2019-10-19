@@ -1,11 +1,17 @@
 <template>
   <div class="regional-user-distribution-map">
-    <h3 class="mb-4 text-center">User Distribution Across Bhutan</h3>
+    <h3 class="mb-4 text-center text-2xl font-bold text-gray-800">User Distribution Across Bhutan</h3>
     <div class="bhutan-map-container">
       <div class="map-wrapper" v-html="svgContent" ref="mapWrapper"></div>
-      <div v-if="selectedArea" class="tooltip" :style="tooltipStyle">
-        <h4>{{ selectedArea.name }}</h4>
-        <p>Users: {{ selectedArea.users }}</p>
+      <div v-if="hoveredArea" class="hover-info" :style="hoverInfoStyle">
+        <h4 class="font-bold text-lg">{{ hoveredArea.name }}</h4>
+        <p class="text-md">Users: {{ hoveredArea.users }}</p>
+      </div>
+    </div>
+    <div class="legend mt-4 flex justify-center items-center">
+      <div v-for="(color, index) in legendColors" :key="index" class="flex items-center mr-4">
+        <div :style="{ backgroundColor: color }" class="w-4 h-4 mr-2"></div>
+        <span class="text-sm">{{ legendLabels[index] }}</span>
       </div>
     </div>
   </div>
@@ -22,8 +28,8 @@ const props = defineProps({
   }
 });
 
-const selectedArea = ref(null);
-const tooltipStyle = ref({
+const hoveredArea = ref(null);
+const hoverInfoStyle = ref({
   display: 'none',
   position: 'absolute',
   top: '0px',
@@ -32,6 +38,9 @@ const tooltipStyle = ref({
 const svgContent = ref('');
 const mapWrapper = ref(null);
 const userDistribution = ref({});
+
+const legendColors = ['#666', '#E1EDF0', '#B3D5DD', '#85BDC9', '#57A5B6', '#2C6975'];
+const legendLabels = ['No users', '1-20%', '21-40%', '41-60%', '61-80%', '81-100%'];
 
 const processUserData = (filteredData) => {
   const distribution = {};
@@ -45,7 +54,7 @@ const processUserData = (filteredData) => {
 };
 
 const getColorByUserCount = (count, maxCount) => {
-  if (count === 0) return '#666';  // White for no users
+  if (count === 0) return '#666';  // Gray for no users
 
   const percentage = count / maxCount;
 
@@ -56,26 +65,38 @@ const getColorByUserCount = (count, maxCount) => {
   return '#2C6975';  // Darkest shade for highest counts
 };
 
-const showTooltip = (event) => {
+const showHoverInfo = (event) => {
   const dzongkhagName = event.target.getAttribute('title');
   const userCount = userDistribution.value[dzongkhagName] || 0;
 
-  selectedArea.value = {
+  hoveredArea.value = {
     name: dzongkhagName,
     users: userCount
   };
 
-  tooltipStyle.value = {
+  const rect = event.target.getBoundingClientRect();
+  const mapRect = mapWrapper.value.getBoundingClientRect();
+
+  hoverInfoStyle.value = {
     display: 'block',
     position: 'absolute',
-    top: `${event.clientY + 10}px`,
-    left: `${event.clientX + 10}px`
+    top: `${rect.top - mapRect.top + rect.height / 2}px`,
+    left: `${rect.left - mapRect.left + rect.width / 2}px`,
+    transform: 'translate(-50%, -50%)'
   };
+
+  // Highlight the hovered path
+  event.target.setAttribute('stroke-width', '2');
+  event.target.setAttribute('stroke', '#FFD700');  // Gold color for highlight
 };
 
-const hideTooltip = () => {
-  selectedArea.value = null;
-  tooltipStyle.value.display = 'none';
+const hideHoverInfo = (event) => {
+  hoveredArea.value = null;
+  hoverInfoStyle.value.display = 'none';
+
+  // Remove highlight
+  event.target.setAttribute('stroke-width', '0.5');
+  event.target.setAttribute('stroke', '#000');
 };
 
 const updateMapColors = () => {
@@ -96,18 +117,8 @@ const updateMapColors = () => {
       existingText.remove();
     }
 
-    // Add text element for user count
-    const bbox = path.getBBox();
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute('x', bbox.x + bbox.width / 2);
-    text.setAttribute('y', bbox.y + bbox.height / 2);
-    text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('dominant-baseline', 'middle');
-    text.setAttribute('fill', '#FFF');
-    text.setAttribute('font-size', '10');
-    text.setAttribute('data-name', dzongkhagName);
-    text.textContent = userCount;
-    path.parentNode.appendChild(text);
+    // Add transition for smooth color changes
+    path.style.transition = 'fill 0.3s ease-in-out';
   });
 };
 
@@ -130,8 +141,17 @@ onMounted(async () => {
     // Add event listeners to the SVG paths
     const paths = mapWrapper.value.querySelectorAll('path');
     paths.forEach(path => {
-      path.addEventListener('mouseover', showTooltip);
-      path.addEventListener('mouseout', hideTooltip);
+      path.addEventListener('mouseover', showHoverInfo);
+      path.addEventListener('mouseout', hideHoverInfo);
+
+      // Add subtle animation on hover
+      path.style.transition = 'all 0.3s ease-in-out';
+      path.addEventListener('mouseover', () => {
+        path.style.transform = 'scale(1.02)';
+      });
+      path.addEventListener('mouseout', () => {
+        path.style.transform = 'scale(1)';
+      });
     });
 
     // Initial color update
@@ -145,9 +165,9 @@ onMounted(async () => {
 <style scoped>
 .regional-user-distribution-map {
   background-color: #FFF;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .bhutan-map-container {
@@ -165,23 +185,34 @@ onMounted(async () => {
 .map-wrapper :deep(svg) {
   width: 100%;
   height: auto;
+  filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.1));
 }
 
-.tooltip {
-  background-color: white;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.hover-info {
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #E2E8F0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   z-index: 1000;
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
 }
 
-.tooltip h4 {
-  margin-top: 0;
-  margin-bottom: 5px;
+.hover-info h4 {
+  margin: 0;
+  color: #2D3748;
 }
 
-.tooltip p {
-  margin: 3px 0;
+.hover-info p {
+  margin: 4px 0 0;
+  color: #4A5568;
+}
+
+.legend {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 </style>
