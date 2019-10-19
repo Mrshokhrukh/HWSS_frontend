@@ -114,6 +114,8 @@ const endpoints = {
   eventScreenSubmission: `${counselorScreeningBaseUrl}/submit-event-screening/`,
   getEventScreeningList: `${counselorScreeningBaseUrl}/get-event-screenings/`,
   updateEventScreeningList: `${counselorScreeningBaseUrl}/update-event-screening/`,
+  getCaseRecords: `${counselorScreeningBaseUrl}/case-records/`,
+  getEventRecords: `${counselorScreeningBaseUrl}/event-records/`,
 };
 
 export default endpoints;

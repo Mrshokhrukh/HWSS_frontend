@@ -77,7 +77,7 @@
     <footer class="footer py-4">
       <div class="container">
         <div class="row align-items-center justify-content-between">
-          <div class="col-md-8 text-center text-md-end">
+          <div class="col-md-8 text-center text-md-start">
             <p class="mb-0 footer-text">
               &copy; {{ currentYear }} The PEMA Secretariat. All rights reserved.
             </p>
@@ -85,25 +85,24 @@
               HWSS - Health & Wellbeing Screening System
             </p>
           </div>
-          <!-- Social Media Icons -->
+          <!-- Updated Social Media Icons -->
           <div class="col-md-4 text-center text-md-end social-icons">
-            <a href="https://facebook.com" target="_blank">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
               <i class="fab fa-facebook-f"></i>
             </a>
-            <a href="https://twitter.com" target="_blank">
-              <i class="fab fa-twitter"></i>
+            <a href="https://x.com" target="_blank" aria-label="X (formerly Twitter)">
+              <i class="fab fa-x-twitter"></i>
             </a>
-            <a href="https://linkedin.com" target="_blank">
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
               <i class="fab fa-linkedin-in"></i>
             </a>
-            <a href="https://instagram.com" target="_blank">
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
               <i class="fab fa-instagram"></i>
             </a>
           </div>
         </div>
       </div>
     </footer>
-
   </div>
 </template>
 
@@ -197,36 +196,63 @@ const stopLogoAnimation = () => {
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes gradientMorph {
-  0%, 100% {
+
+  0%,
+  100% {
     background: linear-gradient(135deg, #9cbcc2, #f0f7f8);
   }
+
   25% {
     background: radial-gradient(circle at top left, #9cbcc2, #f0f7f8);
   }
+
   50% {
     background: linear-gradient(45deg, #f0f7f8, #9cbcc2);
   }
+
   75% {
     background: radial-gradient(circle at bottom right, #f0f7f8, #9cbcc2);
   }
 }
 
 @keyframes radialMove {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(10%, 10%); }
-  50% { transform: translate(-5%, 5%); }
-  75% { transform: translate(5%, -10%); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(10%, 10%);
+  }
+
+  50% {
+    transform: translate(-5%, 5%);
+  }
+
+  75% {
+    transform: translate(5%, -10%);
+  }
+
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 /* Ensure content is above the background */
-.landing > * {
+.landing>* {
   position: relative;
   z-index: 2;
 }
@@ -418,33 +444,6 @@ const stopLogoAnimation = () => {
 .footer {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: #ffffff;
-}
-
-.footer-text {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.footer-app-name {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-@media (max-width: 768px) {
-  .footer-logo {
-    max-height: 40px;
-    margin-bottom: 1rem;
-  }
-
-  .footer-text,
-  .footer-app-name {
-    font-size: 0.8rem;
-  }
-}
-
-/* Add a subtle hover effect to the footer */
-.footer {
   position: relative;
   overflow: hidden;
 }
@@ -462,6 +461,46 @@ const stopLogoAnimation = () => {
 
 .footer:hover::before {
   top: 0;
+}
+
+.footer-text {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.3rem;
+}
+
+.footer-app-name {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.social-icons a {
+  display: inline-block;
+  margin: 0 10px;
+  color: #ffffff;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.social-icons a:hover {
+  color: #f8f9fa;
+  transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+  .footer-text,
+  .footer-app-name {
+    font-size: 0.8rem;
+  }
+  
+  .social-icons {
+    margin-top: 1rem;
+  }
+  
+  .social-icons a {
+    margin: 0 8px;
+    font-size: 1rem;
+  }
 }
 
 /* Add a subtle animation to the download buttons */

@@ -66,7 +66,7 @@ const isCounselor = ref(false) // Placeholder, set this based on your auth logic
 const toggleChat = () => {
     isChatOpen.value = !isChatOpen.value
     if (isChatOpen.value && messages.value.length === 0) {
-        messages.value.push({ text: "Hi there! How can I assist you today?", sentByUser: false })
+        messages.value.push({ text: "Kuzu zangpo La! I am The PEMA ChatBot. How can I assist you today?", sentByUser: false })
     }
 }
 

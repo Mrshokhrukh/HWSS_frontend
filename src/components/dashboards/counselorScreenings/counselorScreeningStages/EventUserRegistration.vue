@@ -140,6 +140,8 @@ const submitForm = async () => {
 
         // Ensure getCounselorName is not null and user is defined
         if (getCounselorName && getCounselorName.user) {
+            const userAgency = getCounselorName.agency?.agencyName || 'Unknown Agency'; // Handle case where agency is undefined
+            const userAgencyCode = getCounselorName.agency?.agencyCode || 'Unknown Code'; // Handle case where agencyCode is undefined
             const formData = {
                 userData: {
                     username: username,
@@ -155,11 +157,11 @@ const submitForm = async () => {
                     dzongkhag: dzongkhag.value,
                 },
                 userAgencyData: {
-                    agency: "22002",
+                    agency: userAgencyCode,
                 },
                 agencyData: {
-                    agency_code: "22002",
-                    agency_name: "Event Base Clients"
+                    agency_code: userAgencyCode,
+                    agency_name: userAgency
                 },
             };
             // Send a submit request to the endpoint

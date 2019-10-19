@@ -23,7 +23,7 @@
           </div>
           <div v-else>
             <!-- Additional filters -->
-            <div class="row mb-3">
+            <div class="row mb-3 d-none">
               <div class="col-md-2">
                 <label for="yearFilter" class="form-label">Year</label>
                 <select id="yearFilter" v-model="additionalFilters.year" class="form-select">
