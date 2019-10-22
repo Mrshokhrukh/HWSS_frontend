@@ -8,12 +8,12 @@
         <p class="text-md">Users: {{ hoveredArea.users }}</p>
       </div>
     </div>
-    <div class="legend mt-4 flex justify-center items-center">
+    <!-- <div class="legend mt-4 flex justify-center items-center">
       <div v-for="(color, index) in legendColors" :key="index" class="flex items-center mr-4">
         <div :style="{ backgroundColor: color }" class="w-4 h-4 mr-2"></div>
         <span class="text-sm">{{ legendLabels[index] }}</span>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
