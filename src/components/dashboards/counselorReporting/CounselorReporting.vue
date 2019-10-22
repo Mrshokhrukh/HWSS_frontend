@@ -42,12 +42,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue';
 import { saveAs } from 'file-saver';
-import JSZip from 'jszip';
+import { jsPDF } from 'jspdf';
+import * as XLSX from 'xlsx';
+import { BlobWriter, BlobReader, Uint8ArrayReader, ZipWriter } from "@zip.js/zip.js";
+import 'jspdf-autotable'; 
 
 // Data refs
 const reportData = ref([]);
@@ -55,6 +58,10 @@ const globalFilter = ref('');
 const isClinicalCounselor = ref(false);
 const isGyalsungCounselor = ref(false);
 const isSchoolCounselor = ref(false);
+
+// Option selectors
+const selectedOption = ref('general Report');
+const options = ['general Report', 'school'];
 
 const tableFields = [
   { key: 'date', header: 'Date' },
@@ -99,10 +106,6 @@ const tableFields = [
   { key: 'referral_remarks', header: 'Referral Remarks' },
 ];
 
-// Option selectors
-const selectedOption = ref('general Report');
-const options = ['general Report', 'school'];
-
 // Fetch user details from localStorage
 const getUserDetailsFromStorage = () => {
   const userDetailsString = localStorage.getItem('userDetailsStore');
@@ -130,6 +133,76 @@ const getUserDetailsFromStorage = () => {
   return { userRole: 'Unknown Role', agencyName: 'Unknown Agency', userDzongkhag: '' };
 };
 
+// Step 3: ZIP the files and add password protection
+const bulkDownload = async () => {
+  try {
+    const blobWriter = new BlobWriter("application/zip");
+    const zipWriter = new ZipWriter(blobWriter, {
+      password: getPassword(),
+      encryptionStrength: 3 
+    });
+
+    // Generate PDF
+    const pdfBlob = await generatePDF();
+    if (!(pdfBlob instanceof Blob)) {
+      throw new Error("PDF generation failed");
+    }
+
+    // Generate Excel
+    const excelBlob = await generateExcel();
+    if (!(excelBlob instanceof Blob)) {
+      throw new Error("Excel generation failed");
+    }
+
+    // Add PDF to zip
+    await zipWriter.add("reports.pdf", new BlobReader(pdfBlob));
+
+    // Add Excel to zip
+    await zipWriter.add("reports.xlsx", new BlobReader(excelBlob));
+
+    await zipWriter.close();
+    const zipBlob = await blobWriter.getData();
+
+    const currentDate = new Date().toISOString().slice(0, 10);
+    const fileName = `${currentDate}_hwss_report.zip`;
+    saveAs(zipBlob, fileName);
+  } catch (error) {
+    console.error("Error in bulkDownload:", error);
+    // Handle the error appropriately (e.g., show an error message to the user)
+  }
+};
+
+// Ensure these functions return Promises
+const generatePDF = async () => {
+  const doc = new jsPDF();
+  doc.text("Report Data", 10, 10);
+  const headers = Object.keys(reportData.value[0] || {}).map(key => key.toUpperCase());
+  const rows = reportData.value.map(item => headers.map(header => item[header.toLowerCase()]));
+  doc.autoTable({
+    head: [headers],
+    body: rows,
+  });
+  return new Promise((resolve) => {
+    resolve(doc.output('blob'));
+  });
+};
+
+const generateExcel = async () => {
+  const ws = XLSX.utils.json_to_sheet(reportData.value);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Reports");
+
+  // Generate Excel file as Blob
+  const excelArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  return new Blob([excelArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+};
+
+
+// Function to generate password dynamically
+const getPassword = () => {
+  const { username } = JSON.parse(localStorage.getItem('userDetailsStore'))?.user || { username: 'defaultUser' };
+  return `${username}@${new Date().getFullYear()}#`;
+};
 
 // Fetch report data from the API and filter based on agency
 const fetchReportDataFromAPI = async () => {
@@ -279,27 +352,6 @@ const severityClass = (value) => {
   } else {
     return 'info'; // No risk
   }
-};
-
-// Download filtered data as CSV
-const bulkDownload = () => {
-  const csvData = convertToCSV(reportData.value);
-  const zip = new JSZip();
-  zip.folder('reports').file('reports.csv', csvData);
-
-  const { username } = JSON.parse(localStorage.getItem('userDetailsStore'))?.user || { username: 'defaultUser' };
-  const password = `${username}@${new Date().getFullYear()}#`;
-
-  zip.generateAsync({ type: 'blob', compression: 'DEFLATE' })
-    .then(blob => saveAs(blob, 'reports.zip'))
-    .catch(error => console.error('Error generating ZIP file:', error));
-};
-
-// Convert data to CSV format
-const convertToCSV = (data) => {
-  if (!data.length) return '';
-  const header = Object.keys(data[0]);
-  return [header.join(','), ...data.map(row => header.map(field => JSON.stringify(row[field] || '')).join(','))].join('\n');
 };
 
 // On component mount, fetch data and user details
