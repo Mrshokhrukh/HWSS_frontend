@@ -49,7 +49,7 @@ import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue';
 import { saveAs } from 'file-saver';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
-import { BlobWriter, BlobReader, Uint8ArrayReader, ZipWriter } from "@zip.js/zip.js";
+import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
 import 'jspdf-autotable'; 
 
 // Data refs

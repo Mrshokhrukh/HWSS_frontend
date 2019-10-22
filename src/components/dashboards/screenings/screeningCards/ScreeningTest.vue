@@ -265,12 +265,29 @@ const showMessage = ref(false);
 const answeredSubstances = ref({});
 // const answeredQ2Substances = ref({});
 
-const userAgeData = JSON.parse(sessionStorage.getItem("userAgeData"));
-const userAgeGroup = userAgeData ? userAgeData.ageGroup : null;
+// Get user age from localStorage
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userAge = userDetailsStore?.user?.age || null;
+
+// Function to determine the age group
+function getAgeGroup(age) {
+    if (age === null) return null; 
+    if (age <= 14) {
+        return "Below 14";
+    } else if (age >= 15 && age <= 17) {
+        return "15 to 17";
+    } else if (age >= 18) {
+        return "Above 18";
+    }
+    return null;
+}
+
+const userAgeGroup = getAgeGroup(userAge);
 
 function isUserAgeGroupIncluded(ageGroupTags) {
-    return ageGroupTags.includes(userAgeGroup);
+    return userAgeGroup && ageGroupTags.includes(userAgeGroup);
 }
+
 
 onMounted(async () => {
     progressStore.loadProgress();
@@ -305,6 +322,7 @@ onMounted(async () => {
     }
 });
 
+
 const allSubstancesNo = computed(() => {
     if (!answeredSubstances.value) return false;
 
@@ -326,7 +344,7 @@ watch(allSubstancesNo, (allNo) => {
 watch(currentQuestionIndex, (newIndex) => {
     if (currentQuestionSetName.value === "ASSIST") {
         const currentQuestion = questions.value[newIndex];
-        if (currentQuestion && (currentQuestion.id === 68 || currentQuestion.id === 69)) {
+        if (currentQuestion && (currentQuestion.id === 54 || currentQuestion.id === 55)) {
             const ageGroupTags = currentQuestion.age_group_tags;
             const includeUserAgeGroup = isUserAgeGroupIncluded(ageGroupTags);
             if (!includeUserAgeGroup) {
