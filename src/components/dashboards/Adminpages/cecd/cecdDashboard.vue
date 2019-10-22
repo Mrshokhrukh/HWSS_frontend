@@ -1,9 +1,9 @@
 <template>
 
-    <div>
+    <div class="mb-4">
         <cecdCurrentStatus />
     </div>
-    <div>
+    <div class="mb-4">
         <cecdScreeningData />
     </div>
     <div>

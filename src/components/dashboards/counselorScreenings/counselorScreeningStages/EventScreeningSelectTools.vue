@@ -2,14 +2,17 @@
     <div class="tool-selector-container">
         <!-- Tool Selector Layout -->
         <div class="tool-selector-layout">
-            <!-- Left Sidebar -->
-            <div class="sidebar">
+           <!-- Left Sidebar -->
+           <div class="sidebar">
                 <h4 class="sidebar-title">Screening Tools</h4>
                 <nav class="tool-navigation">
                     <ul>
                         <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
                             :class="{ 'active': index === selectedMenuIndex }">
-                            <a href="#">{{ menu.name }}</a>
+                            <a href="#" class="nav-link">
+                                {{ menu.name }}
+                                <div class="nav-indicator"></div>
+                            </a>
                         </li>
                     </ul>
                 </nav>
@@ -81,10 +84,7 @@ const menus = ref([
     },
     {
         name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
-    },
-    {
-        name: 'School Environment Tools', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
-    },
+    }
 ]);
 
 const selectedMenuIndex = ref(0);

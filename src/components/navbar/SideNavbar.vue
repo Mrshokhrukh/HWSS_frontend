@@ -18,10 +18,7 @@
 		<div class="menu-container">
 			<nav class="menu-items">
 				<template v-for="(menu, index) in filteredMenus" :key="index">
-					<router-link 
-						:to="menu.route" 
-						class="side-btn"
-						:class="{ active: $route.path === menu.route }"
+					<router-link :to="menu.route" class="side-btn" :class="{ active: $route.path === menu.route }"
 						v-b-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
 						<i :class="menu.iconClass" class="link-icon"></i>
 						<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
@@ -62,37 +59,37 @@ const userDetailsStore = useUserDetailsStore();
 
 // Static menu definitions
 const menuConfig = {
-  student: [
-    { text: "Dashboard", route: "/student-dashboard", iconClass: "fas fa-tachometer-alt" },
-    { text: "Screening", route: "/student-dashboard/screening", iconClass: "fas fa-question-circle" },
-    { text: "Profile", route: "/student-dashboard/profile", iconClass: "fas fa-user" }
-  ],
-  counselor: [
-    { text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
-    { text: "Screening", route: "/counselor-dashboard/counselor-screening", iconClass: "fa-solid fa-person-circle-question" },
-    { text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
-    { text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
-    { text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
-    { text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
-  ],
-  admin: [
-    { text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
-    { text: "Approval", route: "/admin-dashboard/admin-approval", iconClass: "fa-regular fa-thumbs-up" },
-    { text: "Reports", route: "/admin-dashboard/admin-report", iconClass: "fa-regular fa-file-lines" },
-    { text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
-    { text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
-  ],
-  limited_admin: [
-    { text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
-    { text: "Reports", route: "/admin-dashboard/admin-report", iconClass: "fa-regular fa-file-lines" },
-    { text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
-    { text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
-  ],
-  rnd_limited_admin: [
-    { text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
-    { text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
-    { text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
-  ]
+	student: [
+		{ text: "Dashboard", route: "/student-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Screening", route: "/student-dashboard/screening", iconClass: "fas fa-question-circle" },
+		{ text: "Profile", route: "/student-dashboard/profile", iconClass: "fas fa-user" }
+	],
+	counselor: [
+		{ text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Screening", route: "/counselor-dashboard/counselor-screening", iconClass: "fa-solid fa-person-circle-question" },
+		{ text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
+		{ text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
+		{ text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
+		{ text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
+	],
+	admin: [
+		{ text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Approval", route: "/admin-dashboard/admin-approval", iconClass: "fa-regular fa-thumbs-up" },
+		{ text: "Reports", route: "/admin-dashboard/admin-report", iconClass: "fa-regular fa-file-lines" },
+		{ text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
+		{ text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
+	],
+	limited_admin: [
+		{ text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Reports", route: "/admin-dashboard/admin-report", iconClass: "fa-regular fa-file-lines" },
+		{ text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
+		{ text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
+	],
+	rnd_limited_admin: [
+		{ text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
+		{ text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
+	]
 };
 
 const fullName = computed(() => {
@@ -103,42 +100,42 @@ const fullName = computed(() => {
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
-  const role = userDetailsStore.user.role?.toLowerCase() || "public_user";
+	const role = userDetailsStore.user.role?.toLowerCase() || "public_user";
 
-  if (role.includes("admin")) {
-    return "Administrator";
-  }
+	if (role.includes("admin")) {
+		return "Administrator";
+	}
 
-  switch (role) {
-    case "student":
-      return "Student";
-    default:
-      if (role.includes("counselor") || role.includes("professional")) {
-        return "Counselor";
-      }
-      return "Public User";
-  }
+	switch (role) {
+		case "student":
+			return "Student";
+		default:
+			if (role.includes("counselor") || role.includes("professional")) {
+				return "Counselor";
+			}
+			return "Public User";
+	}
 });
 
 const filteredMenus = computed(() => {
-  const role = userDetailsStore.user.role?.toLowerCase();
-  
-  // Special handling for CECD_ADMIN
-  if (role === 'cecd_admin') {
-    return menuConfig.limited_admin;
+	const role = userDetailsStore.user.role?.toLowerCase();
+
+	// Special handling for CECD_ADMIN
+	if (role === 'cecd_admin') {
+		return menuConfig.limited_admin;
 	}
-  
-  // Special handling for RD_ADMIN
-  if (role === 'rd_admin') {
-    return menuConfig.rnd_limited_admin;
-  }
-  
-  // Regular role-based menu selection
-  if (role === 'student') return menuConfig.student;
-  if (role.includes('counselor')) return menuConfig.counselor;
-  if (role.includes('admin')) return menuConfig.admin;
-  
-  return []; // Default empty menu if no role matches
+
+	// Special handling for RD_ADMIN
+	if (role === 'rd_admin') {
+		return menuConfig.rnd_limited_admin;
+	}
+
+	// Regular role-based menu selection
+	if (role === 'student') return menuConfig.student;
+	if (role.includes('counselor') || role.includes('trained')) return menuConfig.counselor;
+	if (role.includes('admin')) return menuConfig.admin;
+
+	return []; // Default empty menu if no role matches
 });
 
 const profilePicClass = computed(() => {

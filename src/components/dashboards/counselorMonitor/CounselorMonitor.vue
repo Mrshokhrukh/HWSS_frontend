@@ -3,7 +3,7 @@
         <div class="row justify-content-center mb-5">
             <div class="col-md-10 col-lg-10">
                 <nav class="tab-container">
-                    <button v-for="(tab, index) in tabs" :key="index"
+                    <button v-for="(tab, index) in filteredTabs" :key="index"
                         :class="['tab-button', { active: activeTab === tab.key }]" @click="changeTab(tab.key)">
                         {{ tab.label }}
                     </button>
@@ -23,27 +23,57 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import RescreeningList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/RescreeningList.vue";
 import ServiceAndTreatmentList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/ServiceAndTreatmentList.vue";
 import ReferralList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/ReferralList.vue";
 
-const activeTab = ref('RescreeningList');
+// Default tab is set to ServiceAndTreatmentList
+const activeTab = ref('ServiceAndTreatmentList');
+
+// Tab configuration
 const tabs = [
     { key: 'RescreeningList', label: 'Rescreening', component: RescreeningList },
     { key: 'ServiceAndTreatmentList', label: 'Service & Treatment', component: ServiceAndTreatmentList },
     { key: 'ReferralList', label: 'Referrals', component: ReferralList }
 ];
 
+// User role from localStorage
+const userRole = ref(null);
+
+// Fetch user role from localStorage and set default tab if necessary
+onMounted(() => {
+    const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+    if (userDetails && userDetails.user) {
+        userRole.value = userDetails.user.role;
+    }
+    
+    // If the role is clinical_counselor, default the tab to ServiceAndTreatmentList
+    if (userRole.value === 'clinical_counselor') {
+        activeTab.value = 'ServiceAndTreatmentList';
+    }
+});
+
+// Filter out Rescreening tab if role is clinical_counselor
+const filteredTabs = computed(() => {
+    if (userRole.value === 'clinical_counselor') {
+        return tabs.filter(tab => tab.key !== 'RescreeningList');
+    }
+    return tabs;
+});
+
+// Change the active tab
 const changeTab = (tabName) => {
     activeTab.value = tabName;
 };
 
+// Compute the active component based on the active tab
 const activeComponent = computed(() => {
-    const currentTab = tabs.find(tab => tab.key === activeTab.value);
+    const currentTab = filteredTabs.value.find(tab => tab.key === activeTab.value);
     return currentTab ? currentTab.component : null;
 });
 </script>
+
 
 <style scoped>
 .gradient-background {

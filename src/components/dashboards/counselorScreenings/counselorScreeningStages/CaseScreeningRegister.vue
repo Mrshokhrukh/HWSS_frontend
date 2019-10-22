@@ -264,10 +264,14 @@ const submitForm = async () => {
     try {
         // Await the username generation
         const username = await makeUserName();
-        const getCounselorName = JSON.parse(localStorage.getItem('userDetailsStore'));
+        const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
 
-        // Ensure getCounselorName is not null and user is defined
-        if (getCounselorName && getCounselorName.user) {
+        // Ensure userDetails and its user and agency properties exist
+        if (userDetails && userDetails.user) {
+            const getCounselorName = userDetails;
+            const userAgency = userDetails.agency?.agencyName || 'Unknown Agency'; // Handle case where agency is undefined
+            const userAgencyCode = userDetails.agency?.agencyCode || 'Unknown Code'; // Handle case where agencyCode is undefined
+
             const formData = {
                 userData: {
                     caseName: caseName.value,
@@ -286,13 +290,14 @@ const submitForm = async () => {
                     counselorName: `${getCounselorName.user.firstName} ${getCounselorName.user.lastName}`,
                 },
                 userAgencyData: {
-                    agency: "11001",
+                    agency: userAgency,
                 },
                 agencyData: {
-                    agency_code: "11001",
-                    agency_name: "Case Base Clients"
+                    agency_code: userAgencyCode,
+                    agency_name: userAgency
                 },
             };
+
             // Send a submit request to the endpoint
             const response = await axios.post(endpoints.registerCounselorCaseUser, formData);
 
@@ -302,13 +307,10 @@ const submitForm = async () => {
         } else {
             throw new Error('User details not found in localStorage');
         }
-
     } catch (error) {
-        // Handle errors
         console.error('Error submitting form:', error);
 
         if (error.response && error.response.data && error.response.data.error.includes('Duplicate entry')) {
-            // Show a confirmation dialog using SweetAlert
             const confirmDuplicate = await Swal.fire({
                 icon: 'warning',
                 title: 'Duplicate Entry',
@@ -321,31 +323,26 @@ const submitForm = async () => {
             if (confirmDuplicate.isConfirmed) {
                 try {
                     const response = await axios.post(endpoints.registerCounselorUser, this.formData);
-
-                    // console.log('Form submitted successfully:', response.data);
                     const userId = response.data.userId;
                     localStorage.setItem('ClientUserIdCaseBase', userId);
-                    return response.data; // Return the response data
+                    return response.data;
                 } catch (resendError) {
-                    // Handle errors during resend
                     console.error('Error resending form:', resendError);
-                    throw resendError; // Re-throw the error to be caught by the caller
+                    throw resendError;
                 }
             }
         } else {
-            // Display error message to the user using SweetAlert
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: `Mobile number too long, please use Bhutanese standard mobile number excluding country code.`,
             });
 
-            // Re-throw the error to be caught by the caller
             throw error;
         }
+    }
+};
 
-    };
-}
 
 const makeUserName = () => {
     return new Promise((resolve) => {

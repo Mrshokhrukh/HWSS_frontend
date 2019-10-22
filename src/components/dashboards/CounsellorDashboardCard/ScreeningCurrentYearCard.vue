@@ -40,6 +40,8 @@
 <script setup>
 import { ref, computed, inject, onMounted, watch } from 'vue';
 import Chart from 'primevue/chart';
+import axios from 'axios';
+import endpoints from '@/api'
 
 const filteredData = inject('filteredData');
 const currentYear = inject('currentYear', new Date().getFullYear());
@@ -83,6 +85,69 @@ const chartData = ref({
 
 const error = ref(null);
 const isLoading = ref(true);
+
+const getUserFullName = () => {
+    const userDetailsString = localStorage.getItem('userDetailsStore');
+    if (userDetailsString) {
+        const userDetails = JSON.parse(userDetailsString);
+        const { firstName = '', lastName = '' } = userDetails.user || {};
+        return `${firstName} ${lastName}`.trim();
+    }
+    return '';
+};
+
+const fetchDataForClinicalCounselor = async () => {
+    try {
+        isLoading.value = true;
+        const counselorName = getUserFullName(); // Get logged-in counselor's full name
+
+        // Fetch both case records and event records
+        const [caseRecordsResponse, eventRecordsResponse] = await Promise.all([
+            axios.get(endpoints.getCaseRecords),
+            axios.get(endpoints.getEventRecords),
+        ]);
+
+        // Combine the responses (using `.data` to extract actual data from axios responses)
+        const caseRecords = caseRecordsResponse.data;
+        const eventRecords = eventRecordsResponse.data;
+        
+        // Combine both datasets into one array
+        const combinedData = [...caseRecords, ...eventRecords];
+
+        console.log('Combined data:', combinedData); // Debugging: log the combined data
+
+        // Filter data where the counselor name matches the logged-in user
+        const filteredData = combinedData.filter(record => {
+            const counselorInRecord = record.case?.counselor || record.event?.counselor;
+            return counselorInRecord === counselorName;
+        });
+
+        // Process the filtered data to count Male and Female
+        let maleCount = 0;
+        let femaleCount = 0;
+
+        filteredData.forEach(record => {
+            const gender = record.user?.gender?.toLowerCase();
+            if (gender === 'male') {
+                maleCount++;
+            } else if (gender === 'female') {
+                femaleCount++;
+            }
+        });
+
+        // Update chart data
+        chartData.value = {
+            Male: maleCount,
+            Female: femaleCount,
+        };
+    } catch (err) {
+        console.error('Error fetching data:', err);
+        error.value = 'Error fetching data. Please try again later.';
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 
 const getTotalCount = computed(() => {
     return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
@@ -135,6 +200,7 @@ const chartOptions = computed(() => ({
     },
     cutout: '70%'
 }));
+
 
 const getColor = (key) => CHART_COLORS[key];
 
@@ -192,20 +258,30 @@ const getUserDetailsFromStorage = () => {
     const roleFlags = {
       school_counselor: () => (isSchoolCounselor.value = true),
     };
-
     if (roleFlags[role]) {
       roleFlags[role]();
     }
-
     return { userRole: role, agencyName, userDzongkhag: presentDzongkhag };
   }
-
   return { userRole: 'Unknown Role', agencyName: 'Unknown Agency', userDzongkhag: '' };
 };
 
 onMounted(() => {
-    updateChartData();
-    getUserDetailsFromStorage()
+    const userDetailsString = localStorage.getItem('userDetailsStore');
+    if (userDetailsString) {
+        const userDetails = JSON.parse(userDetailsString);
+        const userRole = userDetails.user?.role || '';
+
+        if (userRole === 'clinical_counselor') {
+            fetchDataForClinicalCounselor();
+        } else {
+            updateChartData();
+            getUserDetailsFromStorage()
+        }
+    } else {
+        error.value = 'User details not available.';
+        isLoading.value = false;
+    }
 });
 
 watch(() => filteredData.value, updateChartData, { deep: true });

@@ -14,7 +14,7 @@
                     <i class="bi bi-x-lg" @click="closeChat"></i>
                 </div>
             </div>
-            <div class="card-body chat-messages">
+            <div class="card-body chat-messages" ref="chatMessagesRef">
                 <div v-for="(message, index) in messages" :key="index" :class="getMessageClass(message)">
                     <p>{{ message.text }}</p>
                 </div>
@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -55,17 +55,17 @@ const messages = ref([])
 const newMessage = ref('')
 const messageCount = ref(0)
 const showCounselorLink = ref(false)
+const chatMessagesRef = ref(null)
 
-// User type flags (you'll need to implement the logic to set these based on your authentication system)
-const isStudent = ref(true) // Placeholder, set this based on your auth logic
-const isPublic = ref(false) // Placeholder, set this based on your auth logic
-const isAdmin = ref(false) // Placeholder, set this based on your auth logic
-const isCounselor = ref(false) // Placeholder, set this based on your auth logic
+const isStudent = ref(true)
+const isPublic = ref(false)
+const isAdmin = ref(false)
+const isCounselor = ref(false)
 
 const toggleChat = () => {
     isChatOpen.value = !isChatOpen.value
     if (isChatOpen.value && messages.value.length === 0) {
-        messages.value.push({ text: "Hi there! How can I assist you today?", sentByUser: false })
+        messages.value.push({ text: "Kuzu zangpo La! I am The PEMA ChatBot. How can I assist you today?", sentByUser: false })
     }
 }
 
@@ -96,7 +96,7 @@ const sendMessage = () => {
 
         if (messageCount.value === 1) {
             setTimeout(() => {
-                messages.value.push({ text: "I'm still learning and may not have all the answers. Is there anything specific you'd like to know?", sentByUser: false })
+                messages.value.push({ text: "I'm still in the process of learning and might not have all the answers yet. Is there something specific you'd like help with?", sentByUser: false })
             }, 1000)
         } else if (messageCount.value === 2) {
             setTimeout(() => {
@@ -106,6 +106,18 @@ const sendMessage = () => {
     }
 }
 
+const scrollToBottom = () => {
+    if (chatMessagesRef.value) {
+        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+    }
+}
+
+watch(messages, () => {
+    nextTick(() => {
+        scrollToBottom()
+    })
+}, { deep: true })
+
 onMounted(() => {
     watch(() => route.path, (newPath) => {
         const lowercasePath = newPath.toLowerCase();
@@ -114,7 +126,6 @@ onMounted(() => {
         showWidget.value = pathsToCheck.some(path => lowercasePath.includes(path));
     }, { immediate: true });
 });
-
 </script>
 
 <style scoped>
