@@ -77,6 +77,11 @@
 <script setup>
 import { ref, computed, inject } from 'vue';
 
+
+const props = defineProps({
+  currentQuestionSetName: String 
+});
+
 const emit = defineEmits(['goToNext', 'goBack']);
 
 // Define reactive variables for storing selected options for static questions
@@ -86,8 +91,6 @@ const question2 = ref(null);
 // Compute total score based on selected options for all questions
 const totalScore = computed(() => {
     let score = 0;
-
-    // Add scores for static questions
     score += parseInt(question1.value);
     score += parseInt(question2.value);
 
@@ -146,26 +149,8 @@ const interpretationClass = computed(() => {
 
 // Proceed to the next step
 const proceed = () => {
-    const responses = [];
-    for (const text of currentQuestion.value) {
-        const response = {
-            question: text.text,
-            selectedOption: text.selectedOption ? text.selectedOption.option : null,
-            score: text.selectedOption ? text.selectedOption.points : 0
-        };
-        responses.push(response);
-    }
-
-    // Get total score and interpretation from computed properties
-    const totalScoreValue = totalScore.value;
-    const interpretationValue = interpretation.value;
-
-    // Save responses, total score, and interpretation to local storage
-    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
-    localStorage.setItem('PHQ_set_counselor_screening', JSON.stringify(data));
-
-    // Emit the goToNext event
-    emit('goToNext', 'PHQ');
+    localStorage.setItem(`${props.currentQuestionSetName}_set_counselor_screening`, JSON.stringify({}));
+    emit('goToNext', props.currentQuestionSetName); 
 };
 </script>
 

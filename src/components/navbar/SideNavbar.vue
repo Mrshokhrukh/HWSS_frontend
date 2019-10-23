@@ -200,7 +200,6 @@ const logout = async () => {
 .sidebar {
 	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 	color: white;
-	transition: all 0.3s ease-in-out;
 	display: flex;
 	flex-direction: column;
 	padding: 1rem 0 0 0;

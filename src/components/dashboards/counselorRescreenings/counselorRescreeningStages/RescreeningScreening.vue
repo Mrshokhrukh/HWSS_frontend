@@ -26,9 +26,9 @@
             <!-- Main Content -->
             <div class="main-content">
                 <div class="content-card">
+                    <!-- Dynamically render the current screening component -->
                     <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
-                        @goToNext="handleChangeComponent">
-                    </component>
+                        :current-question-set-name="selectedMenu?.name" @goToNext="handleChangeComponent" />
                     <div v-else class="empty-state">
                         <h4>Select the Assessment Tool you want to begin with!</h4>
                     </div>
@@ -40,10 +40,10 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import ScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningGAD.vue';
-import ScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningPHQ.vue';
-import ScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningASSIST.vue';
-import ScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningACE.vue';
+import RescreeningGAD from './RescreeningGAD.vue';
+import RescreeningPHQ from './RescreeningPHQ.vue';
+import RescreeningASSIST from './RescreeningASSIST.vue';
+import RescreeningACE from './RescreeningACE.vue';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -61,47 +61,71 @@ const nextMenu = ref(null);
 
 // Define component mapping
 const componentMap = {
-    'GAD7': ScreeningGAD,
-    'PHQ9': ScreeningPHQ,
-    'ASSIST': ScreeningASSIST,
-    'ACE': ScreeningACE,
+    'PHQ9': RescreeningPHQ,
+    'GAD7': RescreeningGAD,
+    'ASSIST': RescreeningASSIST,
+    'ACE': RescreeningACE,
 };
-
 // Method to select menu
 const selectMenu = (menu) => {
     selectedMenu.value = menu;
     const nextMenuIndex = menus.value.findIndex(item => item.id === menu.id) + 1;
     nextMenu.value = nextMenuIndex < menus.value.length ? menus.value[nextMenuIndex] : null;
-    emit('goToNext', nextMenu.value); // Pass the value of nextMenu
+    emit('goToNext', nextMenu.value);
     currentScreeningComponent.value = componentMap[menu.name];
 };
 
 // Initialize selected menu on component mount
 onMounted(() => {
-    const savedMenus = JSON.parse(localStorage.getItem('selectedTools'));
-    if (savedMenus) {
-        menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
-        selectedMenu.value = menus.value[0];
-    } else {
-        // console.log('No menu saved');
+    const savedTools = JSON.parse(localStorage.getItem('selectedTools'));
+    if (savedTools && savedTools.length) {
+        menus.value = savedTools.map(tool => ({ ...tool, completed: false }));  // Initialize as not completed
+        selectedMenu.value = menus.value[0];  // Start with the first tool
+        currentScreeningComponent.value = componentMap[selectedMenu.value.name];  // Load the first component
     }
 });
+
 
 // Watch for changes in selected menu and save to local storage
 watch(selectedMenu, (newValue) => {
     localStorage.setItem('selectedMenu', JSON.stringify([newValue]));
 });
 
-const handleChangeComponent = (nextMenuName) => {
-    const selectedToolsStr = localStorage.getItem('selectedTools');
-    if (!selectedToolsStr) return console.error('selectedTools is not available in local storage');
+const handleChangeComponent = (currentMenuName) => {
+    console.log('--- Verbose Debugging ---');
+    console.log('Current Menu Name:', currentMenuName);
 
-    const selectedTools = JSON.parse(selectedToolsStr);
-    const index = selectedTools.findIndex(tool => tool.name === nextMenuName);
+    // Log the current state of menus before finding the current index
+    console.log('Menus State (before finding current index):', JSON.stringify(menus.value, null, 2));
 
-    let nextToolName;
-    if (index !== -1 && index < selectedTools.length - 1) nextToolName = selectedTools[index + 1].name;
-    else {
+    // Find the current index
+    const currentIndex = menus.value.findIndex(menu => menu.name === currentMenuName);
+    console.log('Current Index:', currentIndex);
+
+    if (currentIndex === -1) {
+        console.error(`Could not find the menu for "${currentMenuName}" in menus`);
+        return;
+    }
+
+    // Mark the current menu as completed
+    menus.value[currentIndex].completed = true;
+    console.log(`Menu "${currentMenuName}" marked as completed.`);
+
+    // Update localStorage with the new state of the menus
+    localStorage.setItem('selectedMenu', JSON.stringify(menus.value));
+    console.log('Updated Menus (after marking current menu as completed):', JSON.stringify(menus.value, null, 2));
+
+    // Check if there is a next tool
+    if (currentIndex < menus.value.length - 1) {
+        const nextTool = menus.value[currentIndex + 1];
+        console.log('Next Tool:', nextTool);
+
+        // Update the selected menu and load the next component
+        selectedMenu.value = nextTool;
+        currentScreeningComponent.value = componentMap[nextTool.name];
+        console.log(`Switched to Next Tool: "${nextTool.name}"`);
+    } else {
+        console.log('No more menus, triggering submission process.');
         Swal.fire({
             icon: 'question',
             title: 'All tests have been completed',
@@ -111,46 +135,30 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
-                // console.log('this function is read');
+                console.log('User confirmed submission.');
                 submitAssessments();
+            } else {
+                console.log('User cancelled submission.');
             }
         });
-        return;
     }
 
-    if (!componentMap[nextToolName]) return console.error(`Component corresponding to ${nextToolName} is not available`);
-
-    // Mark the previous menu as completed
-    if (selectedMenu.value) {
-        const completedMenuIndex = menus.value.findIndex(menu => menu.id === selectedMenu.value.id);
-        if (completedMenuIndex !== -1) {
-            menus.value[completedMenuIndex].completed = true;
-        }
-    }
-
-    // Update selectedMenu to the next menu
-    const nextMenu = menus.value.find(menu => menu.name === nextToolName);
-    selectedMenu.value = nextMenu;
-
-    currentScreeningComponent.value = componentMap[nextToolName];
+    console.log('--- End of Verbose Debugging ---');
 };
 
 
-const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || [];
+const ClientUserIdCaseBase = JSON.parse(sessionStorage.getItem('RescreeningUserID')) || [];
 
 const submitAssessments = async () => {
     try {
-
         const userId = ClientUserIdCaseBase;
-
-        // Gather data from localStorage
         const getDataFromLocalStorage = (key) => {
             try {
                 const data = localStorage.getItem(`${key}_set_counselor_screening`);
-                return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
+                return data ? JSON.parse(data) : {};
             } catch (error) {
                 console.error(`Error parsing ${key} data:`, error);
-                return {}; // Return an empty object if parsing fails
+                return {};
             }
         };
 
@@ -167,16 +175,22 @@ const submitAssessments = async () => {
         formData.append('phqData', JSON.stringify(phqData));
         formData.append('aceData', JSON.stringify(aceData));
 
-        // Calculate risk severity for ASSIST data if available
-        if (assistData && assistData.length > 0) {
+        // Calculate risk severity for ASSIST data and append it, even if assistData is empty
+        if (assistData) {
             const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
             formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
+        } else {
+            formData.append('assistRiskSeverity', JSON.stringify({})); // Send empty object if no data
         }
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
-        const response = await axios.post(endpoints.caseScreenSubmission, formData);
-        sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
 
+        // Send the form data to the server
+        const response = await axios.post(endpoints.rescreenSubmission, formData);
+        console.log(response)
+
+        // Handle success
+        sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
         clearLocalStorageData();
 
         // Show success message
@@ -203,6 +217,7 @@ const submitAssessments = async () => {
         });
     }
 };
+
 
 const calculateAssistRiskSeverity = (assistData) => {
     const substanceScores = {};

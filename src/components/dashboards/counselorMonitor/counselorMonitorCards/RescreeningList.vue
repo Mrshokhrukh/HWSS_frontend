@@ -168,9 +168,6 @@ onMounted(async () => {
       const userAgencyName = parseData.agency.agencyName;
 
       if (response.data && Array.isArray(response.data['Rescreening List'])) {
-        // Log the entire Rescreening List
-        // console.log('Entire Rescreening List:', response.data['Rescreening List']);
-
         let filteredSubmissions;
 
         if (userRole === 'clinical_counselor') {

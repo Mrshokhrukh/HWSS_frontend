@@ -45,6 +45,13 @@
 <script setup>
 import { ref, computed, inject } from 'vue';
 
+const props = defineProps({
+  currentQuestionSetName: {
+    type: String,
+    required: true,  // Ensure the prop is required, so you know it's being passed correctly
+  },
+});
+
 const emit = defineEmits(['goToNext', 'goBack']);
 
 const totalScore = computed(() => {
@@ -100,16 +107,12 @@ const proceed = () => {
         responses.push(response);
     }
 
-    // Get total score and interpretation from computed properties
-    const totalScoreValue = totalScore.value;
-    const interpretationValue = interpretation.value;
+    // Save responses to localStorage for the current set (e.g., GAD)
+    const data = { responses, totalScore: totalScore.value, interpretation: interpretation.value };
+    localStorage.setItem(`${props.currentQuestionSetName}_set_counselor_screening`, JSON.stringify(data));
 
-    // Save responses, total score, and interpretation to local storage
-    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
-    localStorage.setItem('ACE_set_counselor_screening', JSON.stringify(data));
-
-    // Emit the goToNext event
-    emit('goToNext', 'ACE');
+    // Emit to parent that this set is done, so it can navigate
+    emit('goToNext', props.currentQuestionSetName); // Pass the current question set name (e.g., 'GAD')
 };
 
 </script>

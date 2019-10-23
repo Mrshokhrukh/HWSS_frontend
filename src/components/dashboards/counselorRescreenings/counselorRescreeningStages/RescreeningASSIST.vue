@@ -42,12 +42,10 @@
 
 <script setup>
 import { ref, computed, inject, reactive } from 'vue';
-// import ConfettiExplosion from "vue-confetti-explosion";
 import Swal from 'sweetalert2';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 const substanceAnswered = reactive({});
-// const currentQuestionIndex = ref(0);
 const questions = ref([]);
 const answers = reactive({});
 const showAnswerAllPrompt = ref(false);
@@ -66,10 +64,8 @@ const isOtherSubstanceLocked = computed(() => {
 });
 
 const disabledSubstances = computed(() => {
-    // Get the user's responses to question 1 from testResponses
     const question1Responses = testResponses.question1Responses || {};
 
-    // Filter the substances based on the user's responses
     const disabledSubstances = currentQuestion.value.substances.filter(substance => {
         return question1Responses[substance] === 'No';
     });
@@ -78,10 +74,8 @@ const disabledSubstances = computed(() => {
 });
 
 const disabledSubstancesQ345 = computed(() => {
-    // Get the user's responses to question 2 from testResponses
     const question2Responses = testResponses.question2Responses || {};
 
-    // Filter the substances based on the user's responses to question 2
     const disabledSubstances = currentQuestion.value.substances.filter(substance => {
         return question2Responses[substance] === 'Never, not used in the last 3 months';
     });
@@ -162,8 +156,6 @@ const interpretationClass = computed(() => {
     }
 });
 
-// eslint-disable-next-line no-unused-vars
-
 let assistAnswer = [];
 
 function logQuestionAndResponse(option, substance) {
@@ -193,20 +185,16 @@ function logQuestionAndResponse(option, substance) {
         setName: questionSetName,
         response: response,
         point: point,
-        substance: substance || null, // Set substance to null if not provided
+        substance: substance || null,
         diagnosis: null,
     };
 
-    // Push the logEntry object into the assistAnswer array
     assistAnswer.push(logEntry);
 
     const answer = response.trim();
 
-    // Check if the question is from the ASSIST set
     if (questionSetName === 'ASSIST') {
-        // Store the response to question 1 in question1Responses object
         if (currentQuestionIndex.value === 1) {
-            // Initialize question1Responses if not already initialized
             if (!testResponses.question1Responses) {
                 testResponses.question1Responses = {};
             }
@@ -229,15 +217,10 @@ function logQuestionAndResponse(option, substance) {
         }
     }
 
-    // Update or add the log entry to testResponses.responses array
     const index = findLoggedQuestionIndex(questionText, substance);
     if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
-        // console.log('Log Entry Replacing (same substance):', logEntry);
         testResponses.responses[index] = logEntry;
     } else {
-        // console.log('Log Entry:', logEntry);
-        // Log even if substance is different
-        // console.log('(Substance different from existing entry)');
         if (!testResponses.responses) {
             console.error('ASSIST: Null pointer exception in logQuestionAndResponse. testResponses.responses is null');
             return;
