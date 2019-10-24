@@ -121,7 +121,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, inject, provide } from 'vue';
+import { computed, ref, onMounted, provide, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
@@ -172,44 +172,48 @@ const websiteName = "The PEMA HWSS";
 const userDetailsInLocal = () => {
     const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
     if (userDetails) {
-        const agencyName = userDetails.agency ? userDetails.agency.agencyName : null;
+        const agencyName = userDetails.agency ? userDetails.agency.agencyName?.toLowerCase() : null;
         const roleName = userDetails.user ? userDetails.user.role : null;
-        console.log('agency name and role', agencyName, roleName);
         return { agencyName, roleName };
     }
     return { agencyName: null, roleName: null };
-}
+};
 
 const fetchServiceAndTreatmentData = async () => {
     try {
         const { agencyName: userAgencyName, roleName: userRole } = userDetailsInLocal();
-
         const serviceResponse = await axios.get(endpoints.getServiceAndTreatmentList);
-        console.log('Fetched service and treatment data:', serviceResponse.data);
 
         if (serviceResponse.data) {
             let serviceItems = serviceResponse.data;
 
-            // Apply filtering only if userRole is 'aaa_admin'
-            if (userRole === 'aaa_admin') {
+            if (userRole === 'aaa_admin' && userAgencyName) {
                 serviceItems = serviceItems.filter(item => {
-                    const itemAgencyName = item.user?.active_agency?.agency_name?.toLowerCase();
-                    return itemAgencyName === userAgencyName.toLowerCase();
+                    const itemAgencyName = item.user?.active_agency?.agency_name?.toLowerCase() || '';
+                    return itemAgencyName === userAgencyName;
+                });
+            } else if (userRole === 'cecd_admin') {
+                serviceItems = serviceItems.filter(item => {
+                    const itemAgencyName = item.user?.active_agency?.agency_name?.toLowerCase() || '';
+                    return itemAgencyName.includes('school');
                 });
             }
 
-            if (serviceItems && serviceItems.length > 0) {
-                newServiceAndTreatment.value = serviceItems;
-            }
+            // Keep this log for monitoring filtered results
+            console.log('Filtered data:', {
+                role: userRole,
+                total: serviceItems.length
+            });
+
+            newServiceAndTreatment.value = serviceItems;
         }
     } catch (error) {
         console.error('Error fetching service and treatment data:', error);
+        newServiceAndTreatment.value = [];
     }
 };
 
 provide('serviceAndTreatmentData', newServiceAndTreatment);
-
-const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 
 onMounted(() => {
     fetchServiceAndTreatmentData();

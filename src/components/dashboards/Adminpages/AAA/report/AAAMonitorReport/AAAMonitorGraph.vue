@@ -11,34 +11,30 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import VueApexCharts from 'vue3-apexcharts'
-import ApexCharts from 'apexcharts'
+import { ref, computed, watch, onMounted } from 'vue';
+import VueApexCharts from 'vue3-apexcharts';
+import ApexCharts from 'apexcharts';
 
 const props = defineProps({
-  chartData: {
-    type: Object,
-    required: true
-  },
   chartOptions: {
     type: Array,
     required: true
+  },
+  filteredData: {
+    type: Array,
+    required: true
   }
-})
+});
 
-const chart = ref(null)
+const chart = ref(null);
 
 // Function to generate lighter and darker shades
 function generateShades(hexColor) {
-  // Convert hex to RGB
   let r = parseInt(hexColor.slice(1, 3), 16);
   let g = parseInt(hexColor.slice(3, 5), 16);
   let b = parseInt(hexColor.slice(5, 7), 16);
 
-  // Generate lighter shade
   const lighter = `rgb(${Math.min(r + 40, 255)}, ${Math.min(g + 40, 255)}, ${Math.min(b + 40, 255)})`;
-
-  // Generate darker shade
   const darker = `rgb(${Math.max(r - 40, 0)}, ${Math.max(g - 40, 0)}, ${Math.max(b - 40, 0)})`;
 
   return [lighter, hexColor, darker];
@@ -46,26 +42,56 @@ function generateShades(hexColor) {
 
 const colorPalette = generateShades('#8AC2AF');
 
+// Process data for the selected option
+const processChartData = computed(() => {
+  if (!props.filteredData || !props.chartOptions?.[0]) return {};
+
+  const selectedOption = props.chartOptions[0];
+  const result = {
+    [selectedOption]: {
+      male: {},
+      female: {},
+      other: {}
+    }
+  };
+
+  props.filteredData.forEach((item) => {
+    let value;
+    if (selectedOption === 'rescreened') {
+      value = item.rescreened ? 'Yes' : 'No';
+    } else {
+      value = item.service_and_treatment?.[selectedOption] || 'NA';
+    }
+
+    const gender = item.user?.fields?.gender?.toLowerCase() || 'unknown';
+    if (gender === 'male' || gender === 'female' || gender === 'other') {
+      result[selectedOption][gender][value] = (result[selectedOption][gender][value] || 0) + 1;
+    }
+  });
+
+  return result;
+});
+
 const isDataAvailable = computed(() => {
-  return props.chartData &&
-    Object.keys(props.chartData).length > 0 &&
+  return props.filteredData &&
+    props.filteredData.length > 0 &&
     props.chartOptions &&
     props.chartOptions.length > 0;
-})
+});
 
 const series = computed(() => {
-  if (!isDataAvailable.value) {
-    return []
-  }
+  if (!isDataAvailable.value) return [];
 
-  const option = props.chartOptions[0]
-  const data = props.chartData[option]
+  const option = props.chartOptions[0];
+  const data = processChartData.value[option];
 
-  if (!data) {
-    return []
-  }
+  if (!data) return [];
 
-  const categories = [...new Set([...Object.keys(data.male || {}), ...Object.keys(data.female || {}), ...Object.keys(data.other || {})])]
+  const categories = [...new Set([
+    ...Object.keys(data.male || {}),
+    ...Object.keys(data.female || {}),
+    ...Object.keys(data.other || {})
+  ])];
 
   return [
     {
@@ -80,39 +106,35 @@ const series = computed(() => {
       name: 'Other',
       data: categories.map(category => (data.other && data.other[category]) || 0)
     }
-  ]
-})
+  ];
+});
 
 const totalIndividuals = computed(() => {
-  if (!isDataAvailable.value) {
-    return 0
-  }
+  if (!isDataAvailable.value) return 0;
 
-  const option = props.chartOptions[0]
-  const data = props.chartData[option]
+  const option = props.chartOptions[0];
+  const data = processChartData.value[option];
 
-  if (!data) {
-    return 0
-  }
+  if (!data) return 0;
 
   return Object.values(data.male || {}).reduce((sum, count) => sum + count, 0) +
     Object.values(data.female || {}).reduce((sum, count) => sum + count, 0) +
-    Object.values(data.other || {}).reduce((sum, count) => sum + count, 0)
-})
+    Object.values(data.other || {}).reduce((sum, count) => sum + count, 0);
+});
 
 const chartOptions = computed(() => {
-  if (!isDataAvailable.value) {
-    return {}
-  }
+  if (!isDataAvailable.value) return {};
 
-  const option = props.chartOptions[0]
-  const data = props.chartData[option]
+  const option = props.chartOptions[0];
+  const data = processChartData.value[option];
 
-  if (!data) {
-    return {}
-  }
+  if (!data) return {};
 
-  const categories = [...new Set([...Object.keys(data.male || {}), ...Object.keys(data.female || {}), ...Object.keys(data.other || {})])]
+  const categories = [...new Set([
+    ...Object.keys(data.male || {}),
+    ...Object.keys(data.female || {}),
+    ...Object.keys(data.other || {})
+  ])];
 
   return {
     chart: {
@@ -174,23 +196,23 @@ const chartOptions = computed(() => {
       }
     },
     colors: colorPalette
-  }
-})
+  };
+});
 
-watch([() => props.chartData, () => props.chartOptions], () => {
+watch([() => props.filteredData, () => props.chartOptions], () => {
   if (chart.value && isDataAvailable.value) {
-    chart.value.updateOptions(chartOptions.value)
-    chart.value.updateSeries(series.value)
+    chart.value.updateOptions(chartOptions.value);
+    chart.value.updateSeries(series.value);
   }
-}, { deep: true })
+}, { deep: true });
 
 onMounted(() => {
   if (isDataAvailable.value) {
-    console.log('Chart data is available on mount')
+    console.log('Chart data is available on mount');
   } else {
-    console.log('Chart data is not available on mount')
+    console.log('Chart data is not available on mount');
   }
-})
+});
 </script>
 
 <style scoped>

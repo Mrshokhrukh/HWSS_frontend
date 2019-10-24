@@ -1,12 +1,17 @@
 <template>
-  <h3 class="text-center fw-bold my-4 hwss-primary">Current Status in Bhutan</h3>
-  <div class="row d-flex justify-content-center">
-    <div v-for="(status, index) in statuses" :key="index" class="card col-3 bg-light mx-auto h-100"
-      style="border-radius: 15px;">
-      <h4 class="card-title text-center fw-bold mt-3">{{ status.title }}</h4>
-      <div class="card-body text-center d-flex align-items-center justify-content-center">
-        <span class="material-symbols-outlined hwss-primary display-3">{{ status.iconClass }}</span>
-        <p class="card-text display-3 fw-bold me-2 ms-2">{{ formatNumber(status.count) }}</p>
+  <div class="status-container">
+    <h3 class="status-title">Current Status in The Organization</h3>
+    <div class="status-cards">
+      <div v-for="(status, index) in statuses" :key="index" class="status-card">
+        <div class="card-content">
+          <div class="card-icon">
+            <span class="material-symbols-outlined">{{ status.iconClass }}</span>
+          </div>
+          <div class="card-info">
+            <h4 class="card-title">{{ status.title }}</h4>
+            <p class="card-count">{{ formatNumber(status.count) }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -14,48 +19,106 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useDashboardStore } from '@/stores/dashboardStore'; // Adjust the import path as needed
+import { inject } from 'vue';
 
-const dashboardStore = useDashboardStore();
+// Inject the data instead of using store
+const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 
-// Method to format numbers with K, M, B
 const formatNumber = (num) => {
-  if (num >= 1000000000) {
-    return (num / 1000000000).toFixed(2) + 'B';
-  }
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(2) + 'M';
-  }
-  if (num >= 1000) {
-    return (num / 1000).toFixed(2) + 'K';
-  }
+  if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
+  if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
   return num;
 };
 
-// Computed properties to calculate case counts
 const totalOngoingCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "On Going").length
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "On Going"
+  ).length || 0
 );
 
 const totalClosedCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Closed").length
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "Case Closed"
+  ).length || 0
 );
 
 const totalDiscontinueCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Discontinue").length
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "Case Discontinue"
+  ).length || 0
 );
 
-// Reactive statuses array
 const statuses = computed(() => [
   { title: 'Total Case Ongoing', iconClass: 'description', count: totalOngoingCase.value },
   { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
   { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
 ]);
-
-// Fetch data when component is mounted
-onMounted(() => {
-  if (dashboardStore.reportData.length === 0) {
-    dashboardStore.fetchReportData();
-  }
-});
 </script>
+
+<style scoped>
+.status-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.status-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2B656F;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.status-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.status-card {
+  flex: 1;
+  padding: 1.5rem;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card-count {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.status-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .status-cards {
+    flex-direction: column;
+  }
+}
+</style>
