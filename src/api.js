@@ -116,8 +116,13 @@ const endpoints = {
   eventScreenSubmission: `${counselorScreeningBaseUrl}/submit-event-screening/`,
   getEventScreeningList: `${counselorScreeningBaseUrl}/get-event-screenings/`,
   updateEventScreeningList: `${counselorScreeningBaseUrl}/update-event-screening/`,
+  
+  // New Endpoints
   getCaseRecords: `${counselorScreeningBaseUrl}/case-records/`,
   getEventRecords: `${counselorScreeningBaseUrl}/event-records/`,
+  getClusterRecords: `${counselorScreeningBaseUrl}/final-submissions/`,
+  newServiceAndTreatment: `${monitoringBaseUrl}/service-and-treatment/`,
+  newReferrals: `${monitoringBaseUrl}/referrals/`,
 };
 
 export default endpoints;
