@@ -8,18 +8,12 @@
         <p class="text-md">Users: {{ hoveredArea.users }}</p>
       </div>
     </div>
-    <!-- <div class="legend mt-4 flex justify-center items-center">
-      <div v-for="(color, index) in legendColors" :key="index" class="flex items-center mr-4">
-        <div :style="{ backgroundColor: color }" class="w-4 h-4 mr-2"></div>
-        <span class="text-sm">{{ legendLabels[index] }}</span>
-      </div>
-    </div> -->
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue';
-import bhutanSvg from './bhutan-map.svg';  // Make sure this file exists in your project
+import bhutanSvg from './bhutan-map.svg';
 
 const props = defineProps({
   filteredData: {
@@ -45,8 +39,9 @@ const legendLabels = ['No users', '1-20%', '21-40%', '41-60%', '61-80%', '81-100
 const processUserData = (filteredData) => {
   const distribution = {};
   filteredData.forEach(item => {
-    const dzongkhag = item.user.fields.perm_add_dzongkhag;
-    if (dzongkhag) {
+    // Updated to access perm_add_dzongkhag directly from user object
+    if (item.user && item.user.perm_add_dzongkhag) {
+      const dzongkhag = item.user.perm_add_dzongkhag;
       distribution[dzongkhag] = (distribution[dzongkhag] || 0) + 1;
     }
   });
@@ -74,6 +69,7 @@ const showHoverInfo = (event) => {
     users: userCount
   };
 
+  // Get the position relative to the map container
   const rect = event.target.getBoundingClientRect();
   const mapRect = mapWrapper.value.getBoundingClientRect();
 
@@ -87,7 +83,7 @@ const showHoverInfo = (event) => {
 
   // Highlight the hovered path
   event.target.setAttribute('stroke-width', '2');
-  event.target.setAttribute('stroke', '#FFD700');  // Gold color for highlight
+  event.target.setAttribute('stroke', '#FFD700');
 };
 
 const hideHoverInfo = (event) => {
@@ -103,25 +99,26 @@ const updateMapColors = () => {
   if (!mapWrapper.value) return;
 
   const paths = mapWrapper.value.querySelectorAll('path');
-  const maxUserCount = Math.max(...Object.values(userDistribution.value));
+  const maxUserCount = Math.max(...Object.values(userDistribution.value), 1); // Ensure non-zero denominator
 
   paths.forEach(path => {
     const dzongkhagName = path.getAttribute('title');
     const userCount = userDistribution.value[dzongkhagName] || 0;
     const color = getColorByUserCount(userCount, maxUserCount);
+
+    // Apply color with transition
     path.setAttribute('fill', color);
+    path.style.transition = 'fill 0.3s ease-in-out';
 
     // Remove existing text if any
     const existingText = path.parentNode.querySelector(`text[data-name="${dzongkhagName}"]`);
     if (existingText) {
       existingText.remove();
     }
-
-    // Add transition for smooth color changes
-    path.style.transition = 'fill 0.3s ease-in-out';
   });
 };
 
+// Watch for changes in filtered data
 watch(() => props.filteredData, (newData) => {
   if (newData) {
     userDistribution.value = processUserData(newData);
@@ -131,20 +128,20 @@ watch(() => props.filteredData, (newData) => {
 
 onMounted(async () => {
   try {
-    // Load the SVG content
+    // Load and set the SVG content
     const response = await fetch(bhutanSvg);
     svgContent.value = await response.text();
 
-    // Wait for the next tick to ensure the SVG is rendered
+    // Wait for the SVG to be rendered
     await nextTick();
 
-    // Add event listeners to the SVG paths
+    // Add event listeners to all paths
     const paths = mapWrapper.value.querySelectorAll('path');
     paths.forEach(path => {
       path.addEventListener('mouseover', showHoverInfo);
       path.addEventListener('mouseout', hideHoverInfo);
 
-      // Add subtle animation on hover
+      // Add hover animation
       path.style.transition = 'all 0.3s ease-in-out';
       path.addEventListener('mouseover', () => {
         path.style.transform = 'scale(1.02)';
@@ -207,12 +204,5 @@ onMounted(async () => {
 .hover-info p {
   margin: 4px 0 0;
   color: #4A5568;
-}
-
-.legend {
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 </style>

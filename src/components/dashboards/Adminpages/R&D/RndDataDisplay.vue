@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import VueApexCharts from "vue3-apexcharts";
 
 const props = defineProps({
@@ -78,20 +78,34 @@ const primaryColor = '#275D67';
 const secondaryColor = '#A3CDB8';
 const accentColors = ['#4A8895', '#6CB3A5', '#8EDDC8', '#B0F7EB'];
 
+// Updated to match new data structure
 const uniqueSchools = computed(() => {
     const schools = new Set();
     props.filteredData.forEach(item => {
-        if (item.agency_name && item.agency_name !== "Case Base Clients" && item.agency_name !== "Event Base Clients") {
-            schools.add(item.agency_name.toLowerCase());
+        if (item.user?.agency_details?.agency?.agency_name &&
+            !["Case Base Clients", "Event Base Clients"].includes(item.user.agency_details.agency.agency_name)) {
+            schools.add(item.user.agency_details.agency.agency_name.toLowerCase());
         }
     });
     return schools;
 });
 
 const noOfIndividualsWithSuicidalBehavior = computed(() => {
-    return props.filteredData.filter(item =>
-        item.measurement?.fields?.suicidal_measurement === "nearly everyday"
-    ).length;
+    return props.filteredData.filter(item => {
+        const phqData = item.screening_data?.phq_data;
+        if (typeof phqData === 'string') {
+            try {
+                const parsedData = JSON.parse(phqData);
+                return parsedData.responses?.some(response =>
+                    response.question.includes('Thoughts that you would be better off dead') &&
+                    response.selectedOption === 'Nearly everyday'
+                );
+            } catch (e) {
+                return false;
+            }
+        }
+        return false;
+    }).length;
 });
 
 const noOfSchools = computed(() => uniqueSchools.value.size);
@@ -99,12 +113,11 @@ const noOfSchools = computed(() => uniqueSchools.value.size);
 const uniqueAgencies = computed(() => {
     const agencies = new Set();
     props.filteredData.forEach(item => {
-        if (item.agency_name &&
-            !item.agency_name.toLowerCase().includes('school') &&
-            item.agency_name !== "Case Base Clients" &&
-            item.agency_name !== "Event Base Clients" &&
-            item.agency_name !== null) {
-            agencies.add(item.agency_name.toLowerCase());
+        const agencyName = item.user?.agency_details?.agency?.agency_name;
+        if (agencyName &&
+            !agencyName.toLowerCase().includes('school') &&
+            !["Case Base Clients", "Event Base Clients"].includes(agencyName)) {
+            agencies.add(agencyName.toLowerCase());
         }
     });
     return agencies;
@@ -121,36 +134,21 @@ const countCards = computed(() => [
     { label: 'Total Screenings', value: totalScreenings.value }
 ]);
 
+// Chart Options
 const commonChartOptions = {
     chart: {
-        toolbar: {
-            show: false
-        },
+        toolbar: { show: false },
         fontFamily: 'inherit'
     },
-    dataLabels: {
-        enabled: false
-    },
+    dataLabels: { enabled: false },
     xaxis: {
-        labels: {
-            style: {
-                colors: primaryColor
-            }
-        }
+        labels: { style: { colors: primaryColor } }
     },
     yaxis: {
-        labels: {
-            style: {
-                colors: primaryColor
-            }
-        }
+        labels: { style: { colors: primaryColor } }
     },
-    grid: {
-        show: false
-    },
-    theme: {
-        mode: 'light'
-    }
+    grid: { show: false },
+    theme: { mode: 'light' }
 };
 
 // Schools Chart
@@ -168,9 +166,7 @@ const schoolsChartOptions = ref({
         ...commonChartOptions.yaxis,
         title: {
             text: 'Number of Students',
-            style: {
-                color: primaryColor
-            }
+            style: { color: primaryColor }
         }
     },
     colors: [primaryColor]
@@ -180,7 +176,7 @@ const schoolsChartSeries = computed(() => [{
     name: 'Students Screened',
     data: Array.from(uniqueSchools.value).map(school => {
         return props.filteredData.filter(item =>
-            item.agency_name && item.agency_name.toLowerCase() === school
+            item.user?.agency_details?.agency?.agency_name?.toLowerCase() === school
         ).length;
     })
 }]);
@@ -196,15 +192,17 @@ const screeningTypeChartOptions = ref({
     colors: [primaryColor, secondaryColor],
     legend: {
         position: 'bottom',
-        labels: {
-            colors: primaryColor
-        }
+        labels: { colors: primaryColor }
     }
 });
 
 const screeningTypeChartSeries = computed(() => [
-    props.filteredData.filter(item => item.agency_name === "Event Base Clients").length,
-    props.filteredData.filter(item => item.agency_name === "Case Base Clients").length
+    props.filteredData.filter(item =>
+        item.user?.agency_details?.agency?.agency_name === "Event Base Clients"
+    ).length,
+    props.filteredData.filter(item =>
+        item.user?.agency_details?.agency?.agency_name === "Case Base Clients"
+    ).length
 ]);
 
 // Mental Health Chart
@@ -223,42 +221,54 @@ const mentalHealthChartOptions = ref({
         ...commonChartOptions.yaxis,
         title: {
             text: 'Number of Individuals',
-            style: {
-                color: primaryColor
-            }
+            style: { color: primaryColor }
         }
     },
     colors: [primaryColor, secondaryColor],
     legend: {
         position: 'bottom',
-        labels: {
-            colors: primaryColor
-        }
+        labels: { colors: primaryColor }
     }
 });
 
-const mentalHealthChartSeries = computed(() => [
-    {
-        name: 'PHQ-9',
-        data: [
-            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'minimal').length,
-            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'mild').length,
-            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderate').length,
-            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'moderately severe').length,
-            props.filteredData.filter(item => item.measurement?.fields?.phq_measurement === 'severe').length
-        ]
-    },
-    {
-        name: 'GAD-7',
-        data: [
-            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'minimal').length,
-            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'mild').length,
-            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'moderate').length,
-            0,
-            props.filteredData.filter(item => item.measurement?.fields?.gad_measurement === 'severe').length
-        ]
-    }
-]);
+const mentalHealthChartSeries = computed(() => {
+    const getInterpretationCount = (data, interpretation) => {
+        return props.filteredData.filter(item => {
+            if (typeof item.screening_data?.[data] === 'string') {
+                try {
+                    const parsedData = JSON.parse(item.screening_data[data]);
+                    return parsedData.interpretation?.toLowerCase() === interpretation.toLowerCase();
+                } catch (e) {
+                    return false;
+                }
+            }
+            return false;
+        }).length;
+    };
+
+    return [
+        {
+            name: 'PHQ-9',
+            data: [
+                getInterpretationCount('phq_data', 'minimal'),
+                getInterpretationCount('phq_data', 'mild'),
+                getInterpretationCount('phq_data', 'moderate'),
+                getInterpretationCount('phq_data', 'moderately severe'),
+                getInterpretationCount('phq_data', 'severe')
+            ]
+        },
+        {
+            name: 'GAD-7',
+            data: [
+                getInterpretationCount('gad_data', 'minimal'),
+                getInterpretationCount('gad_data', 'mild'),
+                getInterpretationCount('gad_data', 'moderate'),
+                0,
+                getInterpretationCount('gad_data', 'severe')
+            ]
+        }
+    ];
+});
 
 // SUD Chart
 const sudChartOptions = ref({
@@ -275,31 +285,50 @@ const sudChartOptions = ref({
         ...commonChartOptions.yaxis,
         title: {
             text: 'Number of Individuals',
-            style: {
-                color: primaryColor
-            }
+            style: { color: primaryColor }
         }
     },
     colors: accentColors,
-    legend: {
-        show: false
-    }
+    legend: { show: false }
 });
 
-const sudChartSeries = computed(() => [{
-    name: 'SUD Risk Level',
-    data: [
-        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'no risk').length,
-        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'low risk').length,
-        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'moderate risk').length,
-        props.filteredData.filter(item => item.measurement_assist?.fields?.alcoholic_measurement === 'high risk').length
-    ]
-}]);
+const sudChartSeries = computed(() => {
+    let noRisk = 0;
+    let lowRisk = 0;
+    let moderateRisk = 0;
+    let highRisk = 0;
 
-onMounted(() => {
-    // Any initialization if needed
+    props.filteredData.forEach(item => {
+        const assistData = item.screening_data?.assist_data;
+        if (Array.isArray(assistData)) {
+            assistData.forEach(substance => {
+                if (substance.substance__name?.includes('Alcoholic beverages')) {
+                    switch (substance.risk_flag) {
+                        case 'none':
+                            noRisk++;
+                            break;
+                        case 'low':
+                            lowRisk++;
+                            break;
+                        case 'moderate':
+                            moderateRisk++;
+                            break;
+                        case 'severe':
+                            highRisk++;
+                            break;
+                    }
+                }
+            });
+        }
+    });
+
+    return [{
+        name: 'SUD Risk Level',
+        data: [noRisk, lowRisk, moderateRisk, highRisk]
+    }];
 });
 </script>
+
 
 <style scoped>
 .dashboard {

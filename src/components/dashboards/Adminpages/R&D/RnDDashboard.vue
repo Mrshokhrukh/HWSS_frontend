@@ -78,8 +78,7 @@
     </div>
 
     <!-- Display components -->
-    <div v-if="showResults" class=" mt-4">
-
+    <div v-if="showResults" class="mt-4">
       <div class="mt-4">
         <RNDmap :filtered-data="finalFilteredData" />
       </div>
@@ -97,42 +96,17 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, inject } from 'vue';
 import RndDataDisplay from './RndDataDisplay.vue';
 import RnDChartTables from './RnDChartTables.vue';
 import RNDmap from './overview/RNDmap.vue';
 
-const reportData = ref([]);
+// Inject the provided data
+const serviceAndTreatmentData = inject('serviceAndTreatmentData');
+
 const primaryFilteredData = ref([]);
 const showSecondaryFilters = ref(false);
 const showResults = ref(false);
-
-const loadReportData = () => {
-  const storedData = sessionStorage.getItem('reportData');
-  if (storedData) {
-    reportData.value = JSON.parse(storedData);
-
-    // Check if this is the first load after login
-    const hasReloaded = localStorage.getItem('hasReloaded');
-    if (!hasReloaded) {
-      // Set the flag in localStorage
-      localStorage.setItem('hasReloaded', 'true');
-      // Reload the page
-      window.location.reload();
-    }
-  }
-};
-
-onMounted(() => {
-  loadReportData();
-});
-
-// Watch for changes in sessionStorage
-window.addEventListener('storage', (event) => {
-  if (event.key === 'reportData') {
-    loadReportData();
-  }
-});
 
 const primaryFilters = reactive({
   region: '',
@@ -173,7 +147,11 @@ const updateDzongkhags = () => {
 };
 
 const filteredInstitutes = computed(() => {
-  let agencies = reportData.value.map(item => item.agency_name || '').filter(Boolean);
+  if (!serviceAndTreatmentData.value) return [];
+
+  let agencies = serviceAndTreatmentData.value
+    .map(item => item.user?.agency_details?.agency?.agency_name || '')
+    .filter(Boolean);
 
   switch (primaryFilters.agency) {
     case 'School':
@@ -188,15 +166,15 @@ const filteredInstitutes = computed(() => {
         !agency.toLowerCase().includes('case_based')
       );
     default:
-      return agencies;
+      return [...new Set(agencies)];
   }
 });
 
 const applyPrimaryFilters = () => {
-  primaryFilteredData.value = reportData.value.filter((item) => {
+  primaryFilteredData.value = serviceAndTreatmentData.value.filter((item) => {
     const itemDzongkhag = item.user?.fields?.perm_add_dzongkhag || '';
     const itemRegion = getDzongkhagRegion(itemDzongkhag);
-    const itemAgency = (item.agency_name || '').toLowerCase();
+    const itemAgency = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
     let match = true;
 
     if (primaryFilters.region) match = match && itemRegion === primaryFilters.region;
@@ -219,7 +197,9 @@ const applyPrimaryFilters = () => {
       }
     }
 
-    if (primaryFilters.institute) match = match && item.agency_name === primaryFilters.institute;
+    if (primaryFilters.institute) {
+      match = match && item.user?.agency_details?.agency?.agency_name === primaryFilters.institute;
+    }
 
     return match;
   });
@@ -228,25 +208,22 @@ const applyPrimaryFilters = () => {
   showResults.value = false;
 };
 
-const generateResults = () => {
-  showResults.value = true;
-};
-
 const finalFilteredData = computed(() => {
+  if (!primaryFilteredData.value) return [];
+
   return primaryFilteredData.value.filter((item) => {
     let match = true;
 
     if (secondaryFilters.currentStatus && secondaryFilters.selectStatus) {
-      const serviceAndTreatment = item.service_and_treatment || {};
       switch (secondaryFilters.currentStatus) {
         case 'Mental Health Status':
-          match = match && serviceAndTreatment.case_status === secondaryFilters.selectStatus;
+          match = match && item.case_status === secondaryFilters.selectStatus;
           break;
         case 'Referral Status':
-          match = match && serviceAndTreatment.referred === secondaryFilters.selectStatus;
+          match = match && item.referred === secondaryFilters.selectStatus;
           break;
         case 'Current Status':
-          match = match && serviceAndTreatment.counseling === secondaryFilters.selectStatus;
+          match = match && item.counseling === secondaryFilters.selectStatus;
           break;
       }
     }
@@ -255,6 +232,9 @@ const finalFilteredData = computed(() => {
   });
 });
 
+const generateResults = () => {
+  showResults.value = true;
+};
 </script>
 
 <style scoped>

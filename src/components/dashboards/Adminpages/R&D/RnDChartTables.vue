@@ -28,7 +28,7 @@
       </Column>
       <Column v-for="level in severityLevels" :key="'gad-' + level" :field="'gad.' + level">
         <template #body="slotProps">
-          <div class="text-center"> {{ slotProps.data.gad[level] }}</div>
+          <div class="text-center">{{ slotProps.data.gad[level] }}</div>
         </template>
       </Column>
       <Column>
@@ -79,11 +79,21 @@ const displaySUDDialog = ref(false);
 const selectedSchool = ref('');
 const selectedSUDData = ref({});
 
+const safeJsonParse = (jsonString, defaultValue = null) => {
+  try {
+    return typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+  } catch (e) {
+    console.error('JSON Parse Error:', e);
+    return defaultValue;
+  }
+};
+
 const tableData = computed(() => {
   const schoolEvents = new Map();
 
   props.filteredData.forEach(item => {
-    const schoolEvent = item.agency_name || 'Unknown';
+    const schoolEvent = item.user?.agency_details?.agency?.agency_name || 'Unknown';
+
     if (!schoolEvents.has(schoolEvent)) {
       schoolEvents.set(schoolEvent, {
         schoolEvent,
@@ -93,39 +103,55 @@ const tableData = computed(() => {
         gad: { Minimal: 0, Mild: 0, Moderate: 0, 'Moderately Severe': 0, Severe: 0 },
         sud: {}
       });
+      // Initialize SUD data structure
       substances.forEach(substance => {
-        schoolEvents.get(schoolEvent).sud[substance.toLowerCase()] = { 'No Risk': 0, 'Low Risk': 0, 'Moderate Risk': 0, 'High Risk': 0 };
+        schoolEvents.get(schoolEvent).sud[substance.toLowerCase()] = {
+          'No Risk': 0, 'Low Risk': 0, 'Moderate Risk': 0, 'High Risk': 0
+        };
       });
     }
 
     const data = schoolEvents.get(schoolEvent);
     data.individualsScreened++;
 
-    if (item.measurement?.fields?.suicidal_measurement === "nearly everyday") {
-      data.suicidalBehavior++;
+    // Process PHQ data
+    const phqData = safeJsonParse(item.screening_data?.phq_data, {});
+    if (typeof phqData === 'object' && phqData.interpretation) {
+      const level = capitalizeFirstLetter(phqData.interpretation);
+      if (data.phq.hasOwnProperty(level)) {
+        data.phq[level]++;
+      }
+
+      // Check for suicidal behavior
+      if (Array.isArray(phqData.responses)) {
+        const suicidalQuestion = phqData.responses.find(r =>
+          r.question.toLowerCase().includes('thoughts that you would be better off dead')
+        );
+        if (suicidalQuestion?.selectedOption === 'Nearly everyday') {
+          data.suicidalBehavior++;
+        }
+      }
     }
 
-    const phqMeasurement = item.measurement?.fields?.phq_measurement;
-    if (phqMeasurement) {
-      data.phq[capitalizeFirstLetter(phqMeasurement)]++;
+    // Process GAD data
+    const gadData = safeJsonParse(item.screening_data?.gad_data, {});
+    if (typeof gadData === 'object' && gadData.interpretation) {
+      const level = capitalizeFirstLetter(gadData.interpretation);
+      if (data.gad.hasOwnProperty(level)) {
+        data.gad[level]++;
+      }
     }
 
-    const gadMeasurement = item.measurement?.fields?.gad_measurement;
-    if (gadMeasurement) {
-      data.gad[capitalizeFirstLetter(gadMeasurement)]++;
-    }
+    // Process ASSIST/SUD data
+    const assistData = item.screening_data?.assist_data;
+    if (Array.isArray(assistData)) {
+      assistData.forEach(substance => {
+        if (substance.substance__name && substance.risk_flag) {
+          let substanceType = mapSubstanceType(substance.substance__name.toLowerCase());
+          const riskLevel = mapRiskLevel(substance.risk_flag);
 
-    if (item.measurement_assist?.fields) {
-      substances.forEach(substance => {
-        const measurementKey = `${substance.toLowerCase()}_measurement`;
-        const sudMeasurement = item.measurement_assist.fields[measurementKey];
-        if (sudMeasurement) {
-          const riskLevel = sudMeasurement === 'no risk' ? 'No Risk' :
-            sudMeasurement === 'low risk' ? 'Low Risk' :
-              sudMeasurement === 'moderate risk' ? 'Moderate Risk' :
-                sudMeasurement === 'high risk' ? 'High Risk' : null;
-          if (riskLevel) {
-            data.sud[substance.toLowerCase()][riskLevel]++;
+          if (riskLevel && data.sud[substanceType]) {
+            data.sud[substanceType][riskLevel]++;
           }
         }
       });
@@ -135,23 +161,54 @@ const tableData = computed(() => {
   return Array.from(schoolEvents.values());
 });
 
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
+const mapSubstanceType = (substanceName) => {
+  if (substanceName.includes('alcohol')) return 'alcoholic';
+  if (substanceName.includes('tobacco')) return 'tobacco';
+  if (substanceName.includes('cannabis')) return 'cannabis';
+  if (substanceName.includes('cocaine')) return 'cocaine';
+  if (substanceName.includes('amphetamine')) return 'amphetamine';
+  if (substanceName.includes('inhalant')) return 'inhalants';
+  if (substanceName.includes('sedative')) return 'sedatives';
+  if (substanceName.includes('hallucinogen')) return 'hallucinogens';
+  if (substanceName.includes('opioid')) return 'opioids';
+  if (substanceName.includes('other')) return 'other';
+  return 'other';
+};
 
-function showSUDDetails(data) {
+const mapRiskLevel = (flag) => {
+  switch (flag) {
+    case 'none': return 'No Risk';
+    case 'low': return 'Low Risk';
+    case 'moderate': return 'Moderate Risk';
+    case 'severe': return 'High Risk';
+    default: return null;
+  }
+};
+
+const capitalizeFirstLetter = (string) => {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+const showSUDDetails = (data) => {
   selectedSchool.value = data.schoolEvent;
   selectedSUDData.value = data.sud;
   displaySUDDialog.value = true;
-}
+};
 
-function getSUDDetails(substance) {
+const getSUDDetails = (substance) => {
   const substanceLower = substance.toLowerCase();
+  if (!selectedSUDData.value || !selectedSUDData.value[substanceLower]) {
+    return riskLevels.map(level => ({
+      riskLevel: level,
+      count: 0
+    }));
+  }
   return riskLevels.map(level => ({
     riskLevel: level,
     count: selectedSUDData.value[substanceLower][level] || 0
   }));
-}
+};
 </script>
 
 <style scoped>
@@ -159,13 +216,8 @@ function getSUDDetails(substance) {
   text-align: center;
 }
 
-.card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-top: 20px;
-  background-color: #ffffff;
+.border {
+  padding: 1rem;
 }
 
 .card-title {
@@ -201,7 +253,8 @@ function getSUDDetails(substance) {
   background-color: #f0f0f0;
 }
 
-:deep(.p-datatable .p-datatable-tfoot > tr > td) {
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
   border: 1px solid #ddd;
+  padding: 0.5rem;
 }
 </style>
