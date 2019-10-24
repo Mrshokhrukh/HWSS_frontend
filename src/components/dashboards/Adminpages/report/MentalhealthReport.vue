@@ -1,7 +1,5 @@
 <template>
-  <div v-if="isLoading">Loading...</div>
-  <div v-else-if="error">Error: {{ error }}</div>
-  <div v-else>
+  <div>
     <div class="filter-form mb-2">
       <h1>Select Report</h1>
       <hr>
@@ -20,7 +18,7 @@
         <!-- Region Wise Filter -->
         <div class="filter-item">
           <label for="region">Region:</label>
-          <select id="region" v-model="filters.region" @change="updateRegion">
+          <select id="region" v-model="filters.region" @change="handleRegionChange">
             <option value="">Select Region</option>
             <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
           </select>
@@ -31,7 +29,7 @@
           <label for="dzongkhag">Dzongkhag:</label>
           <select id="dzongkhag" v-model="filters.dzongkhag" :disabled="!filters.region">
             <option value="">Select Dzongkhag</option>
-            <option v-for="dzongkhag in dzongkhags[filters.region] || []" :key="dzongkhag" :value="dzongkhag">
+            <option v-for="dzongkhag in availableDzongkhags" :key="dzongkhag" :value="dzongkhag">
               {{ dzongkhag }}
             </option>
           </select>
@@ -50,36 +48,74 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useDashboardStore } from '@/stores/dashboardStore'
+import { ref, computed, inject } from 'vue';
 import MHMonitorReport from './MHMonitorReport/MHMonitorReport.vue';
 import MHCaseStatusReport from './MHCaseStatusReport/MHCaseStatusReport.vue';
 import MHSeverityReport from './MHSeverityReport/MHSeverityReport.vue';
 
-const store = useDashboardStore()
-const { reportData, selectedReport, filters, regions, dzongkhags, filteredData, isLoading, error } = storeToRefs(store)
+// Inject service and treatment data
+const newServiceAndTreatment = inject('serviceAndTreatmentData', []);
 
-const showReport = ref(false)
+// State
+const selectedReport = ref('');
+const filters = ref({
+  region: '',
+  dzongkhag: ''
+});
+const showReport = ref(false);
 
-const showMonitorReport = computed(() => selectedReport.value === 'Monitor Report')
-const showCaseStatusReport = computed(() => selectedReport.value === 'Case Study Report')
-const showSeverityReport = computed(() => selectedReport.value === 'Severity Report')
+// Constants
+const regions = ['Western', 'Central', 'Eastern'];
+const dzongkhagMapping = {
+  Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse', 'Phuentsholing Thromde', 'Thimphu Thromde'],
+  Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang', 'Gelephu Thromde'],
+  Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Samdrup Jongkhar Thromde', 'Trashi Yangtse', 'Trashigang']
+};
 
-const updateRegion = () => {
-  store.setFilter('region', filters.value.region)
-}
+// Computed Properties
+const availableDzongkhags = computed(() => {
+  return filters.value.region ? dzongkhagMapping[filters.value.region] : [];
+});
+
+const showMonitorReport = computed(() => selectedReport.value === 'Monitor Report');
+const showCaseStatusReport = computed(() => selectedReport.value === 'Case Study Report');
+const showSeverityReport = computed(() => selectedReport.value === 'Severity Report');
+
+const filteredData = computed(() => {
+  return newServiceAndTreatment.value.filter((item) => {
+    const itemDzongkhag = item.user?.perm_add_dzongkhag;
+
+    // If no filters are applied, return all data
+    if (!filters.value.region && !filters.value.dzongkhag) {
+      return true;
+    }
+
+    // Find the region for the item's dzongkhag
+    const itemRegion = Object.entries(dzongkhagMapping).find(([_, dzongkhags]) =>
+      dzongkhags.includes(itemDzongkhag)
+    )?.[0];
+
+    // Apply filters
+    if (filters.value.region && itemRegion !== filters.value.region) {
+      return false;
+    }
+    if (filters.value.dzongkhag && itemDzongkhag !== filters.value.dzongkhag) {
+      return false;
+    }
+
+    return true;
+  });
+});
+
+// Methods
+const handleRegionChange = () => {
+  filters.value.dzongkhag = '';
+};
 
 const applyFilters = () => {
-  // The filtering is now handled by the Pinia store's getter
-  console.log('Filtered Data:', filteredData.value)
-  showReport.value = true
-}
-onMounted(async () => {
-  await store.fetchReportData()
-})
+  showReport.value = true;
+};
 </script>
-
 
 <style scoped>
 .filter-form {
@@ -136,13 +172,6 @@ onMounted(async () => {
 .filter-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
-}
-
-.filter-option {
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .error-message {
