@@ -30,8 +30,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject, watch } from 'vue';
 import Chart from 'chart.js/auto';
+
+const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 
 const activeButton = ref(null);
 const substances = [
@@ -53,27 +55,38 @@ const substanceKeyMapping = {
   'Others': 'other'
 };
 
-const reportData = JSON.parse(sessionStorage.getItem('reportData')) || [];
+function extractMeasurementData(data) {
+  if (!data) return [];
 
-function extractMeasurementData(reportData) {
-  return reportData.reduce((results, person) => {
-    const measurementAssist = person.measurement_assist?.fields;
-    const gender = person.user?.fields?.gender || "unknown";
-    
-    if (measurementAssist) {
-      results.push({
-        gender,
-        alcoholic: measurementAssist.alcoholic_measurement || "no data",
-        amphetamine: measurementAssist.amphetamine_measurement || "no data",
-        cannabis: measurementAssist.cannabis_measurement || "no data",
-        cocaine: measurementAssist.cocaine_measurement || "no data",
-        hallucinogens: measurementAssist.hallucinogens_measurement || "no data",
-        inhalants: measurementAssist.inhalants_measurement || "no data",
-        opioids: measurementAssist.opioids_measurement || "no data",
-        sedatives: measurementAssist.sedatives_measurement || "no data",
-        tobacco: measurementAssist.tobacco_measurement || "no data",
-        other: measurementAssist.other_measurement || "no data"
+  return data.reduce((results, item) => {
+    if (item.screening_data?.assist_data) {
+      const assistData = Array.isArray(item.screening_data.assist_data) ?
+        item.screening_data.assist_data :
+        [item.screening_data.assist_data];
+
+      const processedData = {
+        gender: item.user?.gender || "unknown",
+      };
+
+      assistData.forEach(assist => {
+        if (assist.substance__name) {
+          const substance = assist.substance__name.toLowerCase();
+          const riskLevel = assist.risk_flag || "no data";
+
+          if (substance.includes('tobacco')) processedData.tobacco = riskLevel;
+          else if (substance.includes('alcohol')) processedData.alcoholic = riskLevel;
+          else if (substance.includes('cannabis')) processedData.cannabis = riskLevel;
+          else if (substance.includes('cocaine')) processedData.cocaine = riskLevel;
+          else if (substance.includes('amphetamine')) processedData.amphetamine = riskLevel;
+          else if (substance.includes('inhalant')) processedData.inhalants = riskLevel;
+          else if (substance.includes('sedative')) processedData.sedatives = riskLevel;
+          else if (substance.includes('hallucinogen')) processedData.hallucinogens = riskLevel;
+          else if (substance.includes('opioid')) processedData.opioids = riskLevel;
+          else if (substance.includes('other')) processedData.other = riskLevel;
+        }
       });
+
+      results.push(processedData);
     }
     return results;
   }, []);
@@ -81,7 +94,7 @@ function extractMeasurementData(reportData) {
 
 function countRiskLevels(data) {
   const initialCounts = {};
-  
+
   // Initialize counts for all substances
   Object.values(substanceKeyMapping).forEach(substance => {
     initialCounts[`${substance}_moderate_male`] = 0;
@@ -93,32 +106,18 @@ function countRiskLevels(data) {
   // Count risk levels
   return data.reduce((counts, personData) => {
     Object.entries(substanceKeyMapping).forEach(([_, substanceKey]) => {
-      const riskLevel = personData[substanceKey];
-      if (riskLevel === 'moderate risk' || riskLevel === 'high risk') {
-        const key = `${substanceKey}_${riskLevel.split(' ')[0]}_${personData.gender.toLowerCase()}`;
-        counts[key]++;
+      const riskLevel = personData[substanceKey]?.toLowerCase();
+      const gender = personData.gender.toLowerCase();
+
+      if (riskLevel?.includes('moderate')) {
+        counts[`${substanceKey}_moderate_${gender}`]++;
+      } else if (riskLevel?.includes('severe')) {
+        counts[`${substanceKey}_high_${gender}`]++;
       }
     });
     return counts;
   }, initialCounts);
 }
-
-const extractedData = extractMeasurementData(reportData);
-const counts = countRiskLevels(extractedData);
-
-function mapCountsToDummyData(counts) {
-  return Object.entries(substanceKeyMapping).reduce((acc, [displayName, dataKey]) => {
-    acc[displayName] = {
-      'High-risk total male': counts[`${dataKey}_high_male`] || 0,
-      'High-risk total female': counts[`${dataKey}_high_female`] || 0,
-      'Moderate-risk total male': counts[`${dataKey}_moderate_male`] || 0,
-      'Moderate-risk total female': counts[`${dataKey}_moderate_female`] || 0,
-    };
-    return acc;
-  }, {});
-}
-
-const dummyData = mapCountsToDummyData(counts);
 
 let donutChartTotalInstance = null;
 let donutChartModerateInstance = null;
@@ -142,8 +141,8 @@ const chartOptions = {
 };
 
 function renderChart(type, canvasId, data, options) {
-  const existingChart = type === 'donut' ? 
-    (canvasId === 'donutChartTotal' ? donutChartTotalInstance : donutChartModerateInstance) : 
+  const existingChart = type === 'donut' ?
+    (canvasId === 'donutChartTotal' ? donutChartTotalInstance : donutChartModerateInstance) :
     barChartInstance;
 
   if (existingChart) {
@@ -157,9 +156,8 @@ function renderChart(type, canvasId, data, options) {
     options
   });
 
-  // Add empty state text if needed
   if (type === 'donut' && data.datasets[0].data.length === 1 && data.datasets[0].data[0] === 1 ||
-      type === 'bar' && !data.datasets.some(dataset => dataset.data.some(value => value > 0))) {
+    type === 'bar' && !data.datasets.some(dataset => dataset.data.some(value => value > 0))) {
     const chartArea = chart.chartArea;
     const centerX = (chartArea.left + chartArea.right) / 2;
     const centerY = (chartArea.top + chartArea.bottom) / 2;
@@ -177,8 +175,18 @@ function renderChart(type, canvasId, data, options) {
 }
 
 function updateCharts() {
-  const data = dummyData[activeButton.value];
-  if (!data) return;
+  const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+  const counts = countRiskLevels(extractedData);
+
+  const substanceKey = substanceKeyMapping[activeButton.value];
+  if (!substanceKey) return;
+
+  const data = {
+    'High-risk total male': counts[`${substanceKey}_high_male`],
+    'High-risk total female': counts[`${substanceKey}_high_female`],
+    'Moderate-risk total male': counts[`${substanceKey}_moderate_male`],
+    'Moderate-risk total female': counts[`${substanceKey}_moderate_female`],
+  };
 
   const totalHighRisk = data['High-risk total male'] + data['High-risk total female'];
   const totalModerateRisk = data['Moderate-risk total male'] + data['Moderate-risk total female'];
@@ -215,7 +223,6 @@ function updateCharts() {
     }]
   };
 
-  // Configure chart options
   const donutOptions = {
     ...chartOptions,
     plugins: {
@@ -223,8 +230,8 @@ function updateCharts() {
       tooltip: {
         callbacks: {
           label: (context) => {
-            if (context.chart.data.datasets[0].data.length === 1 && 
-                context.chart.data.datasets[0].data[0] === 1) {
+            if (context.chart.data.datasets[0].data.length === 1 &&
+              context.chart.data.datasets[0].data[0] === 1) {
               return 'No data available';
             }
             return `${context.label}: ${context.raw}`;
@@ -238,7 +245,7 @@ function updateCharts() {
     ...chartOptions,
     scales: {
       x: { stacked: true },
-      y: { 
+      y: {
         stacked: true,
         min: 0,
         ticks: { stepSize: 1 }
@@ -257,7 +264,6 @@ function updateCharts() {
     }
   };
 
-  // Render all charts
   donutChartTotalInstance = renderChart('donut', 'donutChartTotal', donutDataTotal, donutOptions);
   donutChartModerateInstance = renderChart('donut', 'donutChartModerate', donutDataModerate, donutOptions);
   barChartInstance = renderChart('bar', 'barChart', barData, barOptions);
@@ -268,12 +274,20 @@ const setActiveButton = (buttonName) => {
   updateCharts();
 };
 
+// Watch for changes in the injected data
+watch(serviceAndTreatmentData, () => {
+  if (activeButton.value) {
+    updateCharts();
+  }
+}, { deep: true });
+
 onMounted(() => {
   setActiveButton(substances[0]);
 });
 </script>
 
 <style scoped>
+/* Styles remain exactly the same as in your original code */
 .risk-level-container {
   font-family: 'Arial', sans-serif;
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
@@ -321,7 +335,8 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-.substance-btn:hover, .substance-btn.active {
+.substance-btn:hover,
+.substance-btn.active {
   background: #2B656F;
   color: #fff;
   transform: translateY(-2px);
@@ -365,7 +380,7 @@ canvas {
   .content-wrapper {
     flex-direction: column;
   }
-  
+
   .chart-card {
     flex-basis: 100%;
   }

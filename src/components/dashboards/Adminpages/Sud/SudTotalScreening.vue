@@ -4,7 +4,8 @@
     <div class="cards-container">
       <div class="data-card total-screened">
         <h3 class="card-title">Total Screened</h3>
-        <DataTable :value="table1Data" :paginator="false" class="custom-datatable" resizableColumns columnResizeMode="expand">
+        <DataTable :value="totalScreenedData" :paginator="false" class="custom-datatable" resizableColumns
+          columnResizeMode="expand">
           <Column field="header" header=""></Column>
           <Column field="male" header="Male"></Column>
           <Column field="female" header="Female"></Column>
@@ -12,7 +13,8 @@
       </div>
       <div class="data-card weekly-screened">
         <h3 class="card-title">Weekly Screened</h3>
-        <DataTable :value="table2Data" :paginator="false" class="custom-datatable" resizableColumns columnResizeMode="expand">
+        <DataTable :value="weeklyScreenedData" :paginator="false" class="custom-datatable" resizableColumns
+          columnResizeMode="expand">
           <Column field="header" header=""></Column>
           <Column field="male" header="Male"></Column>
           <Column field="female" header="Female"></Column>
@@ -23,51 +25,96 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, inject } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+// Inject the service and treatment data
+const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 
-const Malefilter = ref([]);
-const Femalefilter = ref([]);
-const total_male = ref(0);
-const total_female = ref(0);
+// Helper function to check valid screening data
+const hasValidScreeningData = (item) => {
+  return item.screening_data && typeof item.screening_data === 'object' &&
+    (item.screening_data.id ||
+      item.screening_data.gad_data ||
+      item.screening_data.phq_data ||
+      item.screening_data.ace_data);
+};
 
-onMounted(() => {
-  Malefilter.value = reportData.value.filter(
-    (item) => item.user?.fields?.gender === 'Male'
-  );
-  total_male.value = Malefilter.value.length;
+// Computed values for gender counts with screening data
+const genderCounts = computed(() => {
+  if (!serviceAndTreatmentData.value) return { male: 0, female: 0, other: 0 };
 
-  Femalefilter.value = reportData.value.filter(
-    (item) => item.user?.fields?.gender === 'Female'
-  );
-  total_female.value = Femalefilter.value.length;
+  return serviceAndTreatmentData.value.reduce((acc, item) => {
+    if (hasValidScreeningData(item) && item.user?.gender) {
+      const gender = item.user.gender.toLowerCase();
+      if (gender === 'male') acc.male++;
+      else if (gender === 'female') acc.female++;
+      else acc.other++;
+    }
+    return acc;
+  }, { male: 0, female: 0, other: 0 });
 });
 
-const table1Data = ref([
-  { header: 'Total New Entry', male: total_male.value, female: total_female.value },
-  { header: 'Total Old Entry', male: 0, female: 0 },
-  { header: 'Total Screened', male: 0, female: 0 },
-]);
+// Compute weekly counts
+const weeklyGenderCounts = computed(() => {
+  if (!serviceAndTreatmentData.value) return { male: 0, female: 0, other: 0 };
 
-const table2Data = ref([
-  { header: 'Total New Entry', male: 0, female: 0 },
-  { header: 'Total Old Entry', male: 0, female: 0 },
-  { header: 'Total Screened', male: 0, female: 0 },
-]);
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-watch([total_male, total_female], () => {
-  table1Data.value[0].male = total_male.value;
-  table1Data.value[0].female = total_female.value;
-
-  table1Data.value[2].male = table1Data.value[0].male + table1Data.value[1].male;
-  table1Data.value[2].female = table1Data.value[0].female + table1Data.value[1].female;
-
-  table1Data.value = [...table1Data.value];
-  table2Data.value = [...table2Data.value];
+  return serviceAndTreatmentData.value.reduce((acc, item) => {
+    const itemDate = new Date(item.date);
+    if (hasValidScreeningData(item) &&
+      !isNaN(itemDate) &&
+      itemDate >= oneWeekAgo &&
+      item.user?.gender) {
+      const gender = item.user.gender.toLowerCase();
+      if (gender === 'male') acc.male++;
+      else if (gender === 'female') acc.female++;
+      else acc.other++;
+    }
+    return acc;
+  }, { male: 0, female: 0, other: 0 });
 });
+
+// Compute data for total screened table
+const totalScreenedData = computed(() => [
+  {
+    header: 'Total New Entry',
+    male: genderCounts.value.male,
+    female: genderCounts.value.female
+  },
+  {
+    header: 'Total Old Entry',
+    male: 0,
+    female: 0
+  },
+  {
+    header: 'Total Screened',
+    male: genderCounts.value.male,
+    female: genderCounts.value.female
+  }
+]);
+
+// Compute data for weekly screened table
+const weeklyScreenedData = computed(() => [
+  {
+    header: 'Total New Entry',
+    male: weeklyGenderCounts.value.male,
+    female: weeklyGenderCounts.value.female
+  },
+  {
+    header: 'Total Old Entry',
+    male: 0,
+    female: 0
+  },
+  {
+    header: 'Total Screened',
+    male: weeklyGenderCounts.value.male,
+    female: weeklyGenderCounts.value.female
+  }
+]);
 </script>
 
 <style scoped>
@@ -152,5 +199,15 @@ watch([total_male, total_female], () => {
 
 :deep(.p-datatable-tbody > tr:hover) {
   background-color: rgba(44, 105, 117, 0.1);
+}
+
+@media (max-width: 768px) {
+  .cards-container {
+    flex-direction: column;
+  }
+
+  .data-card {
+    min-width: 100%;
+  }
 }
 </style>
