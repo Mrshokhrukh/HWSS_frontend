@@ -111,37 +111,123 @@ const series = ref([{
   data: []
 }])
 
-// Update filterData function to use props.filteredData
-const filterData = (type, level) => props.filteredData.filter(item => item.measurement?.fields[`${type}_measurement`] === level).length
-// Data counts
-const gadCounts = computed(() => ({
-  severe: filterData('gad', 'severe'),
-  minimal: filterData('gad', 'minimal'),
-  moderate: filterData('gad', 'moderate'),
-  mild: filterData('gad', 'mild'),
-}))
+// Helper function to safely parse JSON string
+const safeJSONParse = (jsonString, defaultValue = null) => {
+  try {
+    return jsonString && jsonString !== '{}' ? JSON.parse(jsonString) : defaultValue;
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+    return defaultValue;
+  }
+};
 
-const phqCounts = computed(() => ({
-  severe: filterData('phq', 'severe'),
-  minimal: filterData('phq', 'minimal'),
-  moderate: filterData('phq', 'moderate'),
-  moderately_severe: filterData('phq', 'moderately severe'),
-  mild: filterData('phq', 'mild'),
-}))
+// PHQ-9 Counts
+const phqCounts = computed(() => {
+  const counts = {
+    severe: 0,
+    minimal: 0,
+    moderate: 0,
+    moderately_severe: 0,
+    mild: 0,
+  };
 
-const aceCounts = computed(() => ({
-  high_risk: filterData('ace', 'high risk'),
-  intermediate_risk: filterData('ace', 'intermediate risk'),
-  low_risk: filterData('ace', 'low risk'),
-}))
+  props.filteredData.forEach(item => {
+    const screeningData = item.screening_data;
+    if (screeningData && screeningData.phq_score !== undefined) {
+      const score = screeningData.phq_score;
 
-const suicidalCounts = computed(() => ({
-  nearlyeveryday: filterData('suicidal', 'nearly everyday'),
-  more_than_half_the_days: filterData('suicidal', 'more than half the days'),
-  several_days: filterData('suicidal', 'several days'),
-}))
+      if (score >= 20) counts.severe++;
+      else if (score >= 15) counts.moderately_severe++;
+      else if (score >= 10) counts.moderate++;
+      else if (score >= 5) counts.mild++;
+      else counts.minimal++;
+    }
+  });
 
-// Set active button and update chart
+  return counts;
+})
+
+// GAD-7 Counts
+const gadCounts = computed(() => {
+  const counts = {
+    severe: 0,
+    minimal: 0,
+    moderate: 0,
+    mild: 0,
+  };
+
+  props.filteredData.forEach(item => {
+    const screeningData = item.screening_data;
+    if (screeningData && screeningData.gad_score !== undefined) {
+      const score = screeningData.gad_score;
+
+      if (score >= 15) counts.severe++;
+      else if (score >= 10) counts.moderate++;
+      else if (score >= 5) counts.mild++;
+      else counts.minimal++;
+    }
+  });
+
+  return counts;
+})
+
+// ACE Counts
+const aceCounts = computed(() => {
+  const counts = {
+    high_risk: 0,
+    intermediate_risk: 0,
+    low_risk: 0,
+  };
+
+  props.filteredData.forEach(item => {
+    const screeningData = item.screening_data;
+    if (screeningData && screeningData.ace_score !== undefined) {
+      const score = screeningData.ace_score;
+
+      if (score >= 4) counts.high_risk++;
+      else if (score >= 2) counts.intermediate_risk++;
+      else counts.low_risk++;
+    }
+  });
+
+  return counts;
+})
+
+// Suicidal Behaviours Counts
+const suicidalCounts = computed(() => {
+  const counts = {
+    nearlyeveryday: 0,
+    more_than_half_the_days: 0,
+    several_days: 0,
+  };
+
+  props.filteredData.forEach(item => {
+    const screeningData = item.screening_data;
+    if (screeningData && screeningData.phq_data) {
+      const phqData = safeJSONParse(screeningData.phq_data);
+      if (phqData && phqData.responses) {
+        const suicideQuestion = phqData.responses.find(r =>
+          r.question?.toLowerCase().includes('thoughts that you would be better off dead') ||
+          r.question?.toLowerCase().includes('suicide')
+        );
+
+        if (suicideQuestion) {
+          const option = suicideQuestion.selectedOption?.toLowerCase() || '';
+          if (option.includes('nearly every day')) {
+            counts.nearlyeveryday++;
+          } else if (option.includes('more than half')) {
+            counts.more_than_half_the_days++;
+          } else if (option.includes('several days')) {
+            counts.several_days++;
+          }
+        }
+      }
+    }
+  });
+
+  return counts;
+})
+
 const setActiveButton = (buttonName) => {
   activeButton.value = buttonName
   if (buttonName !== 'Table') {
@@ -155,16 +241,20 @@ const updateChart = (buttonName) => {
 
   if (buttonName === 'Depression') {
     categories = ['Severe', 'Minimal', 'Moderate', 'Moderately Severe', 'Mild']
-    data = [phqCounts.value.severe, phqCounts.value.minimal, phqCounts.value.moderate, phqCounts.value.moderately_severe, phqCounts.value.mild]
+    data = [phqCounts.value.severe, phqCounts.value.minimal, phqCounts.value.moderate,
+    phqCounts.value.moderately_severe, phqCounts.value.mild]
   } else if (buttonName === 'Anxiety') {
     categories = ['Severe', 'Minimal', 'Moderate', 'Mild']
-    data = [gadCounts.value.severe, gadCounts.value.minimal, gadCounts.value.moderate, gadCounts.value.mild]
+    data = [gadCounts.value.severe, gadCounts.value.minimal, gadCounts.value.moderate,
+    gadCounts.value.mild]
   } else if (buttonName === 'ACE') {
     categories = ['High Risk', 'Intermediate Risk', 'Low Risk']
-    data = [aceCounts.value.high_risk, aceCounts.value.intermediate_risk, aceCounts.value.low_risk]
+    data = [aceCounts.value.high_risk, aceCounts.value.intermediate_risk,
+    aceCounts.value.low_risk]
   } else if (buttonName === 'Suicidal Behaviours') {
     categories = ['Nearly Everyday', 'More Than Half The Days', 'Several Days']
-    data = [suicidalCounts.value.nearlyeveryday, suicidalCounts.value.more_than_half_the_days, suicidalCounts.value.several_days]
+    data = [suicidalCounts.value.nearlyeveryday, suicidalCounts.value.more_than_half_the_days,
+    suicidalCounts.value.several_days]
   }
 
   chartOptions.value = {
@@ -181,6 +271,7 @@ const updateChart = (buttonName) => {
   }]
 }
 
+// Watch for data changes
 watch(() => props.filteredData, () => {
   if (activeButton.value && activeButton.value !== 'Table') {
     updateChart(activeButton.value)
@@ -193,7 +284,6 @@ watch(activeButton, (newValue) => {
     updateChart(newValue)
   }
 }, { immediate: true })
-
 </script>
 
 <style scoped>

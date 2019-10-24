@@ -2,39 +2,48 @@
   <div class="severity-graphs-container">
     <div class="filters-section">
       <h3 class="filters-title">Filters</h3>
-      <div class="filters-grid">
-        <div class="filter-item">
-          <label for="yearFilter" class="filter-label">Year</label>
-          <select id="yearFilter" v-model="filters.year" class="filter-select">
+      <div class="row mb-3">
+        <div class="col-md-2">
+          <label for="yearFilter" class="form-label">Year</label>
+          <select id="yearFilter" v-model="filters.year" class="form-select">
             <option value="">All Years</option>
             <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
           </select>
         </div>
-        <div class="filter-item">
-          <label for="genderFilter" class="filter-label">Gender</label>
-          <select id="genderFilter" v-model="filters.gender" class="filter-select">
+
+        <div class="col-md-2">
+          <label for="genderFilter" class="form-label">Gender</label>
+          <select id="genderFilter" v-model="filters.gender" class="form-select">
             <option value="">All Genders</option>
             <option v-for="gender in availableGenders" :key="gender" :value="gender">{{ gender }}</option>
           </select>
         </div>
-        <div class="filter-item">
-          <label for="organizationFilter" class="filter-label">Organization</label>
-          <select id="organizationFilter" v-model="filters.organization" class="filter-select">
-            <option value="">All Organizations</option>
-            <option v-for="org in availableOrganizations" :key="org" :value="org">{{ org }}</option>
+
+        <div class="col-md-3">
+          <label for="agencyFilter" class="form-label">Agency</label>
+          <div class="searchable-dropdown">
+            <input type="text" id="agencyFilter" class="form-control" v-model="agencySearch"
+              placeholder="Search agency..." @input="filterAgencies" @focus="showAgencyDropdown = true" />
+            <ul class="dropdown-menu" :class="{ show: showAgencyDropdown && filteredAgencies.length }">
+              <li v-for="agency in filteredAgencies" :key="agency">
+                <a class="dropdown-item" href="#" @click.prevent="selectAgency(agency)">{{ agency }}</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-md-2">
+          <label for="roleFilter" class="form-label">Role</label>
+          <select id="roleFilter" v-model="filters.role" class="form-select">
+            <option value="">All Roles</option>
+            <option v-for="role in availableRoles" :key="role" :value="role">{{ formatRole(role) }}</option>
           </select>
         </div>
-        <div class="filter-item">
-          <label for="employmentFilter" class="filter-label">Employment</label>
-          <select id="employmentFilter" v-model="filters.employment" class="filter-select">
-            <option value="">All Employment</option>
-            <option v-for="emp in availableEmployment" :key="emp" :value="emp">{{ emp }}</option>
-          </select>
-        </div>
-        <div class="filter-item">
-          <label for="userClassFilter" class="filter-label">User Class</label>
-          <select id="userClassFilter" v-model="filters.userClass" class="filter-select">
-            <option value="">All User Classes</option>
+
+        <div class="col-md-2" v-if="isSchoolAgency">
+          <label for="userClassFilter" class="form-label">Class</label>
+          <select id="userClassFilter" v-model="filters.userClass" class="form-select">
+            <option value="">All Classes</option>
             <option v-for="userClass in availableUserClasses" :key="userClass" :value="userClass">{{ userClass }}
             </option>
           </select>
@@ -55,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import MHSeverityGraph from './MHSeverityGraph.vue'
 import SUDSeverityGraph from './MHSUDSeverityGraph.vue'
 
@@ -67,68 +76,142 @@ const props = defineProps({
 });
 
 const isDataLoaded = ref(false);
-
 const filters = ref({
   year: '',
   gender: '',
-  organization: '',
-  employment: '',
+  role: '',
   userClass: ''
 });
 
+// Agency search functionality
+const agencySearch = ref('');
+const showAgencyDropdown = ref(false);
+const filteredAgencies = ref([]);
+
+// Format role for display
+function formatRole(role) {
+  if (!role) return '';
+  return role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+// Available Years
 const availableYears = computed(() => {
   if (!props.filteredData) return [];
   const years = new Set(props.filteredData.map(item => {
-    const date = item.service_and_treatment?.date;
+    const date = item.date;
     return date ? new Date(date).getFullYear() : null;
   }).filter(Boolean));
-  return Array.from(years).sort();
+  return Array.from(years).sort((a, b) => b - a);
 });
 
+// Available Genders
 const availableGenders = computed(() => {
   if (!props.filteredData) return [];
-  const genders = new Set(props.filteredData.map(item => item.user?.fields?.gender).filter(Boolean));
+  const genders = new Set(props.filteredData.map(item =>
+    item.user?.gender
+  ).filter(Boolean));
   return Array.from(genders).sort();
 });
 
-const availableOrganizations = computed(() => {
+// Available Roles
+const availableRoles = computed(() => {
   if (!props.filteredData) return [];
-  const orgs = new Set(props.filteredData.map(item => item.agency_name).filter(Boolean));
-  return Array.from(orgs).sort();
+  const roles = new Set(props.filteredData.map(item =>
+    item.user?.role
+  ).filter(Boolean));
+  return Array.from(roles).sort();
 });
 
-const availableEmployment = computed(() => {
+// Available Agencies
+const availableAgencies = computed(() => {
   if (!props.filteredData) return [];
-  const employment = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
-  return Array.from(employment).sort();
+  const agencies = new Set(props.filteredData.map(item =>
+    item.user?.active_agency?.agency_name
+  ).filter(Boolean));
+  return Array.from(agencies).sort();
 });
 
+// Check if agency is a school
+const isSchoolAgency = computed(() => {
+  const agency = filters.value.agency?.toLowerCase() || '';
+  return agency.includes('school') || agency.includes('education');
+});
+
+// Available Classes
 const availableUserClasses = computed(() => {
-  if (!props.filteredData) return [];
-  const userClasses = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean));
-  return Array.from(userClasses).sort();
+  if (!filters.value.agency) return [];
+  const classes = new Set(props.filteredData
+    .filter(item => item.user?.active_agency?.agency_name === filters.value.agency)
+    .map(item => item.user?.agency_details?.user_class)
+    .filter(Boolean));
+  return Array.from(classes).sort((a, b) => Number(a) - Number(b));
 });
 
+// Filtered Data
 const filteredDataComputed = computed(() => {
   if (!props.filteredData) return [];
+
   return props.filteredData.filter(item => {
-    const itemYear = item.service_and_treatment?.date ? new Date(item.service_and_treatment.date).getFullYear() : null;
-    return (
-      (filters.value.year === '' || itemYear === parseInt(filters.value.year)) &&
-      (filters.value.gender === '' || item.user?.fields?.gender === filters.value.gender) &&
-      (filters.value.organization === '' || item.agency_name === filters.value.organization) &&
-      (filters.value.employment === '' || item.user_agency?.fields?.user_role_agency === filters.value.employment) &&
-      (filters.value.userClass === '' || item.user_agency?.fields?.user_class === filters.value.userClass)
-    );
+    const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+
+    const matchesYear = !filters.value.year || itemYear === parseInt(filters.value.year);
+    const matchesGender = !filters.value.gender || item.user?.gender === filters.value.gender;
+    const matchesRole = !filters.value.role || item.user?.role === filters.value.role;
+    const matchesAgency = !filters.value.agency || item.user?.active_agency?.agency_name === filters.value.agency;
+    const matchesClass = !isSchoolAgency.value || !filters.value.userClass ||
+      item.user?.agency_details?.user_class === filters.value.userClass;
+
+    return matchesYear && matchesGender && matchesRole && matchesAgency && matchesClass;
   });
 });
 
+// Agency search handlers
+function filterAgencies() {
+  filteredAgencies.value = availableAgencies.value.filter(agency =>
+    agency.toLowerCase().includes(agencySearch.value.toLowerCase())
+  );
+}
+
+function selectAgency(agency) {
+  agencySearch.value = agency;
+  filters.value.agency = agency;
+  showAgencyDropdown.value = false;
+  filters.value.userClass = ''; // Reset class when agency changes
+}
+
+// Click outside handler
+function handleClickOutside(event) {
+  if (!event.target.closest('.searchable-dropdown')) {
+    showAgencyDropdown.value = false;
+  }
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
+// Watch for data changes
 watch(() => props.filteredData, (newValue) => {
   if (newValue && newValue.length > 0) {
     isDataLoaded.value = true;
+  } else {
+    isDataLoaded.value = false;
   }
 }, { immediate: true });
 
+// Sync agency search with filter
+watch(() => filters.value.agency, (newValue) => {
+  agencySearch.value = newValue;
+});
+
+watch(agencySearch, (newValue) => {
+  filters.value.agency = newValue;
+});
 </script>
 
 <style scoped>
@@ -154,25 +237,15 @@ watch(() => props.filteredData, (newValue) => {
   margin-bottom: 20px;
 }
 
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.filter-label {
+.form-label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #4a5568;
   margin-bottom: 5px;
 }
 
-.filter-select {
+.form-select,
+.form-control {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #e2e8f0;
@@ -183,7 +256,8 @@ watch(() => props.filteredData, (newValue) => {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.filter-select:focus {
+.form-select:focus,
+.form-control:focus {
   outline: none;
   border-color: #2c6975;
   box-shadow: 0 0 0 3px rgba(44, 105, 117, 0.2);
@@ -197,10 +271,18 @@ watch(() => props.filteredData, (newValue) => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-@media (max-width: 768px) {
-  .filters-grid {
-    grid-template-columns: 1fr;
-  }
+.searchable-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdown-menu.show {
+  display: block;
 }
 
 .loading-message {

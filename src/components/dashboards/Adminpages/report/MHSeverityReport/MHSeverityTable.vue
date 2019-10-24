@@ -1,20 +1,37 @@
 <template>
-  <div class="card mt-3 b-0">
-    <h3 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">SUD Risk Level</h3>
-    <DataTable :value="tableData" :scrollable="true" scrollHeight="400px" class="p-datatable-sm">
-      <Column field="substance" header="Substance" frozen style="width: 200px"></Column>
-      <Column field="highRiskMale" header="High-risk Male" style="width: 150px"></Column>
-      <Column field="highRiskFemale" header="High-risk Female" style="width: 150px"></Column>
-      <Column field="moderateRiskMale" header="Moderate-risk Male" style="width: 150px"></Column>
-      <Column field="moderateRiskFemale" header="Moderate-risk Female" style="width: 150px"></Column>
-    </DataTable>
+  <div class="card">
+    <h3 class="text-center font-bold text-xl mb-4" style="color: #2c6975">Substance Use Risk Level</h3>
+    <div class="card-body">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="w-full md:w-1/3">
+          <div class="flex flex-wrap gap-2">
+            <Button v-for="category in categories" :key="category" @click="setActiveButton(category)"
+              :class="{ 'p-button-primary': activeButton === category }" class="text-sm">
+              {{ category }}
+            </Button>
+          </div>
+        </div>
+        <div class="w-full md:w-2/3">
+          <div class="mb-4">
+            <DataTable :value="tableData" :paginator="false" :rows="10" class="p-datatable-sm"
+              :loading="!filteredData.length">
+              <Column field="riskLevel" header="Risk Level" sortable></Column>
+              <Column field="totalCount" header="Total" sortable></Column>
+              <Column field="maleCount" header="Male" sortable></Column>
+              <Column field="femaleCount" header="Female" sortable></Column>
+            </DataTable>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Button from 'primevue/button';
 
 const props = defineProps({
   filteredData: {
@@ -23,96 +40,136 @@ const props = defineProps({
   }
 });
 
-function extractMeasurementData(reportData) {
-  return reportData.map(person => {
-    const measurementAssist = person.measurement_assist?.fields;
-    const gender = person.user?.fields?.gender || "unknown";
-    if (measurementAssist) {
-      return {
-        gender: gender,
-        alcoholic: measurementAssist.alcoholic_measurement || "no data",
-        amphetamine: measurementAssist.amphetamine_measurement || "no data",
-        cannabis: measurementAssist.cannabis_measurement || "no data",
-        cocaine: measurementAssist.cocaine_measurement || "no data",
-        hallucinogens: measurementAssist.hallucinogens_measurement || "no data",
-        inhalants: measurementAssist.inhalants_measurement || "no data",
-        opioids: measurementAssist.opioids_measurement || "no data",
-        sedatives: measurementAssist.sedatives_measurement || "no data",
-        tobacco: measurementAssist.tobacco_measurement || "no data",
-        other: measurementAssist.other_measurement || "no data"
-      };
-    }
-    return null;
-  }).filter(Boolean);
-}
+const categories = [
+  'Tobacco',
+  'Alcohol',
+  'Cannabis',
+  'Cocaine',
+  'Amphetamine',
+  'Inhalants',
+  'Sedatives',
+  'Hallucinogens',
+  'Opioids',
+  'Other'
+];
 
-function countRiskLevels(data) {
-  const counts = {
-    tobacco_moderate_male: 0, tobacco_moderate_female: 0,
-    tobacco_high_male: 0, tobacco_high_female: 0,
-    alcoholic_moderate_male: 0, alcoholic_moderate_female: 0,
-    alcoholic_high_male: 0, alcoholic_high_female: 0,
-    cannabis_moderate_male: 0, cannabis_moderate_female: 0,
-    cannabis_high_male: 0, cannabis_high_female: 0,
-    cocaine_moderate_male: 0, cocaine_moderate_female: 0,
-    cocaine_high_male: 0, cocaine_high_female: 0,
-    amphetamine_moderate_male: 0, amphetamine_moderate_female: 0,
-    amphetamine_high_male: 0, amphetamine_high_female: 0,
-    inhalants_moderate_male: 0, inhalants_moderate_female: 0,
-    inhalants_high_male: 0, inhalants_high_female: 0,
-    sedatives_moderate_male: 0, sedatives_moderate_female: 0,
-    sedatives_high_male: 0, sedatives_high_female: 0,
-    hallucinogens_moderate_male: 0, hallucinogens_moderate_female: 0,
-    hallucinogens_high_male: 0, hallucinogens_high_female: 0,
-    opioids_moderate_male: 0, opioids_moderate_female: 0,
-    opioids_high_male: 0, opioids_high_female: 0,
-    other_moderate_male: 0, other_moderate_female: 0,
-    other_high_male: 0, other_high_female: 0,
-  };
+const activeButton = ref('Tobacco');
 
-  data.forEach(personData => {
-    Object.entries(personData).forEach(([substance, riskLevel]) => {
-      if (substance !== 'gender' && (riskLevel === 'moderate risk' || riskLevel === 'high risk')) {
-        const key = `${substance}_${riskLevel === 'moderate risk' ? 'moderate' : 'high'}_${personData.gender.toLowerCase()}`;
-        if (counts.hasOwnProperty(key)) {
-          counts[key]++;
+const getRiskCounts = computed(() => {
+  const counts = categories.reduce((acc, category) => {
+    acc[category] = {
+      none: { male: 0, female: 0 },
+      mild: { male: 0, female: 0 },
+      moderate: { male: 0, female: 0 },
+      severe: { male: 0, female: 0 }
+    };
+    return acc;
+  }, {});
+
+  props.filteredData.forEach(item => {
+    const gender = item.user?.gender?.toLowerCase() || 'unknown';
+    const assistData = item.screening_data?.assist_data;
+
+    if (!assistData || gender === 'unknown') return;
+
+    // Handle array format of assist_data
+    if (Array.isArray(assistData)) {
+      assistData.forEach(substance => {
+        const categoryKey = getCategoryKey(substance.substance__name);
+        if (categoryKey && substance.risk_flag) {
+          const riskLevel = substance.risk_flag.toLowerCase();
+          if (counts[categoryKey]?.[riskLevel] && (gender === 'male' || gender === 'female')) {
+            counts[categoryKey][riskLevel][gender]++;
+          }
         }
-      }
-    });
+      });
+    }
+    // Handle object format of assist_data
+    else {
+      categories.forEach(category => {
+        const key = category.toLowerCase();
+        const measurementKey = key === 'alcohol' ? 'alcoholic' : key;
+        const measurement = assistData[`${measurementKey}_measurement`];
+        if (measurement) {
+          const riskLevel = getRiskLevelFromMeasurement(measurement);
+          if (counts[category]?.[riskLevel] && (gender === 'male' || gender === 'female')) {
+            counts[category][riskLevel][gender]++;
+          }
+        }
+      });
+    }
   });
 
   return counts;
+});
+
+function getCategoryKey(substanceName) {
+  if (substanceName.includes('Tobacco')) return 'Tobacco';
+  if (substanceName.includes('Alcoholic')) return 'Alcohol';
+  if (substanceName.includes('Cannabis')) return 'Cannabis';
+  if (substanceName.includes('Cocaine')) return 'Cocaine';
+  if (substanceName.includes('Amphetamine')) return 'Amphetamine';
+  if (substanceName.includes('Inhalants')) return 'Inhalants';
+  if (substanceName.includes('Sedatives')) return 'Sedatives';
+  if (substanceName.includes('Hallucinogens')) return 'Hallucinogens';
+  if (substanceName.includes('Opioids')) return 'Opioids';
+  if (substanceName.includes('Other')) return 'Other';
+  return null;
 }
 
-const extractedData = computed(() => extractMeasurementData(props.filteredData));
-const counts = computed(() => countRiskLevels(extractedData.value));
+function getRiskLevelFromMeasurement(measurement) {
+  if (measurement === 'no risk' || measurement === 'none') return 'none';
+  if (measurement === 'low risk' || measurement === 'mild') return 'mild';
+  if (measurement === 'moderate risk') return 'moderate';
+  if (measurement === 'high risk' || measurement === 'severe') return 'severe';
+  return 'none';
+}
 
 const tableData = computed(() => {
-  const substances = [
-    'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
-  ];
+  const categoryData = getRiskCounts.value[activeButton.value];
+  if (!categoryData) return [];
 
-  return substances.map(substance => {
-    const key = substance.toLowerCase().replace('-type', '');
-    const dbKey = key === 'alcohol' ? 'alcoholic' :
-      key === 'inhalant' ? 'inhalants' :
-        key === 'hallucinate' ? 'hallucinogens' :
-          key === 'others' ? 'other' : key;
-    return {
-      substance,
-      highRiskMale: counts.value[`${dbKey}_high_male`] || 0,
-      highRiskFemale: counts.value[`${dbKey}_high_female`] || 0,
-      moderateRiskMale: counts.value[`${dbKey}_moderate_male`] || 0,
-      moderateRiskFemale: counts.value[`${dbKey}_moderate_female`] || 0
-    };
-  });
+  return Object.entries(categoryData).map(([riskLevel, genderCounts]) => ({
+    riskLevel: riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1),
+    totalCount: genderCounts.male + genderCounts.female,
+    maleCount: genderCounts.male,
+    femaleCount: genderCounts.female
+  })).filter(row => row.totalCount > 0)
+    .sort((a, b) => {
+      // Custom sort order: severe -> moderate -> mild -> none
+      const order = { 'Severe': 0, 'Moderate': 1, 'Mild': 2, 'None': 3 };
+      return order[a.riskLevel] - order[b.riskLevel];
+    });
 });
+
+const setActiveButton = (buttonName) => {
+  activeButton.value = buttonName;
+};
+
+// Watch for data changes and ensure default selection
+watch(() => props.filteredData, () => {
+  if (!activeButton.value) {
+    setActiveButton('Tobacco');
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>
 .card {
-  margin-top: 20px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.p-button {
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.p-button-primary {
+  background-color: #2c6975 !important;
+  border-color: #2c6975 !important;
 }
 
 :deep(.p-datatable) {
@@ -124,13 +181,19 @@ const tableData = computed(() => {
   color: white;
   font-weight: 600;
   text-align: center;
+  padding: 0.75rem;
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr > td) {
   text-align: center;
+  padding: 0.75rem;
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
   background-color: #d3e2e4;
+}
+
+:deep(.p-column-header-content) {
+  justify-content: center;
 }
 </style>

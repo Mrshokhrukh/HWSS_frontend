@@ -45,52 +45,122 @@ const props = defineProps({
         required: true
     }
 });
-console.log("laso table data", props.filteredData)
-const activeButton = ref(null);
 
-// Filter functions
-const filterData = (type, level) => {
-    // Return 0 if filteredData is undefined or empty
-    if (!props.filteredData || props.filteredData.length === 0) {
-        return 0;
+const activeButton = ref('Depression'); // Set default active button
+
+// Helper function to safely parse JSON string
+const safeJSONParse = (jsonString, defaultValue = null) => {
+    try {
+        return jsonString && jsonString !== '{}' ? JSON.parse(jsonString) : defaultValue;
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+        return defaultValue;
     }
-
-    // Filter data with proper checks
-    return props.filteredData
-        .filter(item => {
-            // Check if measurement and fields exist before accessing them
-            return item.measurement?.fields?.[`${type}_measurement`] === level;
-        })
-        .length;
 };
 
-// Data counts computed from filteredData prop
-const gadCounts = computed(() => ({
-    severe: filterData('gad', 'severe'),
-    minimal: filterData('gad', 'minimal'),
-    moderate: filterData('gad', 'moderate'),
-    mild: filterData('gad', 'mild'),
-}));
+// Updated count functions to handle the screening_data structure
+const phqCounts = computed(() => {
+    const counts = {
+        severe: 0,
+        minimal: 0,
+        moderate: 0,
+        moderately_severe: 0,
+        mild: 0,
+    };
 
-const phqCounts = computed(() => ({
-    severe: filterData('phq', 'severe'),
-    minimal: filterData('phq', 'minimal'),
-    moderate: filterData('phq', 'moderate'),
-    moderately_severe: filterData('phq', 'moderately severe'),
-    mild: filterData('phq', 'mild'),
-}));
+    props.filteredData.forEach(item => {
+        const screeningData = item.screening_data;
+        if (screeningData && screeningData.phq_score !== undefined) {
+            const score = screeningData.phq_score;
 
-const aceCounts = computed(() => ({
-    high_risk: filterData('ace', 'high risk'),
-    intermediate_risk: filterData('ace', 'intermediate risk'),
-    low_risk: filterData('ace', 'low risk'),
-}));
+            if (score >= 20) counts.severe++;
+            else if (score >= 15) counts.moderately_severe++;
+            else if (score >= 10) counts.moderate++;
+            else if (score >= 5) counts.mild++;
+            else counts.minimal++;
+        }
+    });
 
-const suicidalCounts = computed(() => ({
-    nearlyeveryday: filterData('suicidal', 'nearly everyday'),
-    more_than_half_the_days: filterData('suicidal', 'more than half the days'),
-    several_days: filterData('suicidal', 'several days'),
-}));
+    return counts;
+});
+
+const gadCounts = computed(() => {
+    const counts = {
+        severe: 0,
+        minimal: 0,
+        moderate: 0,
+        mild: 0,
+    };
+
+    props.filteredData.forEach(item => {
+        const screeningData = item.screening_data;
+        if (screeningData && screeningData.gad_score !== undefined) {
+            const score = screeningData.gad_score;
+
+            if (score >= 15) counts.severe++;
+            else if (score >= 10) counts.moderate++;
+            else if (score >= 5) counts.mild++;
+            else counts.minimal++;
+        }
+    });
+
+    return counts;
+});
+
+const aceCounts = computed(() => {
+    const counts = {
+        high_risk: 0,
+        intermediate_risk: 0,
+        low_risk: 0,
+    };
+
+    props.filteredData.forEach(item => {
+        const screeningData = item.screening_data;
+        if (screeningData && screeningData.ace_score !== undefined) {
+            const score = screeningData.ace_score;
+
+            if (score >= 4) counts.high_risk++;
+            else if (score >= 2) counts.intermediate_risk++;
+            else counts.low_risk++;
+        }
+    });
+
+    return counts;
+});
+
+const suicidalCounts = computed(() => {
+    const counts = {
+        nearlyeveryday: 0,
+        more_than_half_the_days: 0,
+        several_days: 0,
+    };
+
+    props.filteredData.forEach(item => {
+        const screeningData = item.screening_data;
+        if (screeningData && screeningData.phq_data) {
+            const phqData = safeJSONParse(screeningData.phq_data);
+            if (phqData && phqData.responses) {
+                const suicideQuestion = phqData.responses.find(r =>
+                    r.question?.toLowerCase().includes('thoughts that you would be better off dead') ||
+                    r.question?.toLowerCase().includes('suicide')
+                );
+
+                if (suicideQuestion) {
+                    const option = suicideQuestion.selectedOption?.toLowerCase() || '';
+                    if (option.includes('nearly every day')) {
+                        counts.nearlyeveryday++;
+                    } else if (option.includes('more than half')) {
+                        counts.more_than_half_the_days++;
+                    } else if (option.includes('several days')) {
+                        counts.several_days++;
+                    }
+                }
+            }
+        }
+    });
+
+    return counts;
+});
 
 const setActiveButton = (buttonName) => {
     activeButton.value = buttonName;
@@ -101,17 +171,17 @@ const tableData = computed(() => {
         case 'Depression':
             return [
                 { riskLevel: 'Severe', count: phqCounts.value.severe },
-                { riskLevel: 'Minimal', count: phqCounts.value.minimal },
-                { riskLevel: 'Moderate', count: phqCounts.value.moderate },
                 { riskLevel: 'Moderately Severe', count: phqCounts.value.moderately_severe },
+                { riskLevel: 'Moderate', count: phqCounts.value.moderate },
                 { riskLevel: 'Mild', count: phqCounts.value.mild },
+                { riskLevel: 'Minimal', count: phqCounts.value.minimal },
             ];
         case 'Anxiety':
             return [
                 { riskLevel: 'Severe', count: gadCounts.value.severe },
-                { riskLevel: 'Minimal', count: gadCounts.value.minimal },
                 { riskLevel: 'Moderate', count: gadCounts.value.moderate },
                 { riskLevel: 'Mild', count: gadCounts.value.mild },
+                { riskLevel: 'Minimal', count: gadCounts.value.minimal },
             ];
         case 'ACE':
             return [
@@ -130,10 +200,12 @@ const tableData = computed(() => {
     }
 });
 
+// Watch for data changes and ensure default selection
 watch(() => props.filteredData, () => {
-    setActiveButton('Depression'); // Ensure default selection is maintained after data updates
+    if (!activeButton.value) {
+        setActiveButton('Depression');
+    }
 }, { immediate: true });
-
 </script>
 
 <style scoped>
