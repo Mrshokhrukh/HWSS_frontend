@@ -34,8 +34,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useUserDetailsStore } from '@/stores/userDetails';
+import endpoints from '@/api';
+import axios from 'axios';
 
 // Components
 import SideNavbar from '@/components/navbar/SideNavbar.vue';
@@ -78,5 +80,17 @@ const currentComponent = computed(() => {
 const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
+
+// Axios call on mounted for dashboards except Student and Public
+onMounted(async () => {
+  if (currentComponent.value !== StudentDashboard && currentComponent.value !== PublicDashboard) {
+    try {
+      await axios.get(endpoints.getClusterRecords);
+      // No action required with the response
+    } catch (error) {
+      console.error('Error fetching cluster records:', error);
+    }
+  }
+});
 
 </script>

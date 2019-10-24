@@ -18,7 +18,7 @@
           v-model="userDetailsStore.user.username">
       </div>
       <div class="col-md-12 mb-3">
-        <label>Gender</label>
+        <label>Sex</label>
         <input type="text" class="form-control input-noneditable" readonly disabled
           v-model="userDetailsStore.user.gender">
       </div>

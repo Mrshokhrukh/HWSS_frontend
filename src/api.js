@@ -120,8 +120,8 @@ const endpoints = {
   // New Endpoints
   getCaseRecords: `${counselorScreeningBaseUrl}/case-records/`,
   getEventRecords: `${counselorScreeningBaseUrl}/event-records/`,
-  getClusterRecords: `${counselorScreeningBaseUrl}/final-submissions/`,
-  newServiceAndTreatment: `${monitoringBaseUrl}/service-and-treatment/`,
+  getClusterRecords: `${monitoringBaseUrl}/final-submissions/`,
+  newServiceAndTreatment: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
   newReferrals: `${monitoringBaseUrl}/referrals/`,
 };
 

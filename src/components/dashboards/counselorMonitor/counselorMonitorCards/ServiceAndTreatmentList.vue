@@ -17,8 +17,8 @@
                 :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
                 columnResizeMode="fit" class="custom-datatable">
                 <Column field="date" header="Date" sortable :body="formatDate"></Column>
-                <Column field="user.full_name" header="Name" sortable></Column>
-                <Column field="user.age" header="Age" sortable></Column>
+                <Column field="user.first_name" header="Name" sortable :body="formatFullName"></Column>
+                <Column field="user.date_of_birth" header="Age" sortable :body="calculateAge"></Column>
                 <Column field="user.gender" header="Sex" sortable></Column>
                 <Column field="assessment_status" header="Assessment Status" sortable :body="formatEmpty"></Column>
                 <Column field="case_status" header="Case Status" sortable :body="formatEmpty"></Column>
@@ -26,8 +26,9 @@
                 <Column field="follow_up" header="Follow Up" sortable :body="formatEmpty"></Column>
                 <Column field="comments" header="Comments" sortable :body="formatEmpty"></Column>
                 <Column header="Actions">
-                    <template #body="rowData">
-                        <Button label="View Details" class="view-details-btn rounded" @click="viewDetails(rowData)" />
+                    <template #body="slotProps">
+                        <Button label="View Details" class="view-details-btn rounded"
+                            @click="viewDetails(slotProps.data)" />
                     </template>
                 </Column>
             </DataTable>
@@ -45,21 +46,23 @@
                     <div class="row">
                         <div class="col-lg-4 col-md-5">
                             <div class="profile-card">
-                                <div class="profile-image"
-                                    :style="{ backgroundImage: `url(${selectedUser.profile_picture})` }">
-                                </div>
-                                <h4 class="profile-name">{{ selectedUser.first_name }} {{ selectedUser.middle_name }} {{
-                                    selectedUser.last_name }}</h4>
+                                <h4 class="profile-name">{{ selectedUser?.user?.first_name }} {{
+                                    selectedUser?.user?.middle_name
+                                    }} {{
+                                        selectedUser?.user?.last_name }}</h4>
                                 <ul class="profile-details">
-                                    <li><strong>Age:</strong> {{ selectedUser.date_of_birth }}</li>
-                                    <li><strong>Sex:</strong> {{ selectedUser.gender }}</li>
-                                    <li><strong>Employee ID:</strong> {{ selectedUser.academy_code }}</li>
-                                    <li><strong>Citizen ID:</strong> {{ selectedUser.identity_number }}</li>
-                                    <li><strong>Nationality:</strong> {{ selectedUser.nationality }}</li>
-                                    <li><strong>Phone:</strong> {{ selectedUser.mob_number }}</li>
-                                    <li><strong>Email:</strong> {{ selectedUser.email }}</li>
-                                    <li><strong>Role:</strong> {{ selectedUser.role }}</li>
-                                    <li><strong>Active Agency:</strong> {{ selectedUser.active_agency }}</li>
+                                    <li><strong>Age:</strong> {{ calculateAge(selectedUser?.user?.date_of_birth) }}</li>
+                                    <li><strong>Sex:</strong> {{ selectedUser?.user?.gender }}</li>
+                                    <li><strong>Employee ID:</strong> {{ selectedUser?.user?.academy_code || 'N/A' }}
+                                    </li>
+                                    <li><strong>Citizen ID:</strong> {{ selectedUser?.user?.identity_number }}</li>
+                                    <li><strong>Nationality:</strong> {{ selectedUser?.user?.nationality }}</li>
+                                    <li><strong>Phone:</strong> {{ selectedUser?.user?.mob_number }}</li>
+                                    <li><strong>Email:</strong> {{ selectedUser?.user?.email }}</li>
+                                    <li><strong>Role:</strong> {{ selectedUser?.user?.role }}</li>
+                                    <li><strong>Active Agency:</strong> {{
+                                        selectedUser?.user?.active_agency?.agency_name }}
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -70,23 +73,25 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <label>Mother's Name:</label>
-                                            <input type="text" class="form-control" v-model="selectedUser.mother_name"
-                                                readonly>
+                                            <input type="text" class="form-control"
+                                                :value="selectedUser?.user?.mother_name || 'N/A'" readonly>
                                         </div>
                                         <div class="col-md-6">
                                             <label>Father's Name:</label>
-                                            <input type="text" class="form-control" v-model="selectedUser.father_name"
-                                                readonly>
+                                            <input type="text" class="form-control"
+                                                :value="selectedUser?.user?.father_name || 'N/A'" readonly>
                                         </div>
                                         <div class="col-md-6">
                                             <label>Parents' Occupation:</label>
                                             <input type="text" class="form-control"
-                                                v-model="selectedUser.parents_occupation" readonly>
+                                                :value="selectedUser?.user?.agency_details?.parent_occupation || 'N/A'"
+                                                readonly>
                                         </div>
                                         <div class="col-md-6">
                                             <label>Parental Status:</label>
                                             <input type="text" class="form-control"
-                                                v-model="selectedUser.parental_status" readonly>
+                                                :value="selectedUser?.user?.agency_details?.parent_status || 'N/A'"
+                                                readonly>
                                         </div>
                                     </div>
                                 </div>
@@ -97,17 +102,21 @@
                                         <div class="col-md-6">
                                             <h6>Permanent Address</h6>
                                             <div class="address-details">
-                                                <p><strong>Village:</strong> {{ selectedUser.perm_add_village }}</p>
-                                                <p><strong>Gewog:</strong> {{ selectedUser.perm_add_gewog }}</p>
-                                                <p><strong>Dzongkhag:</strong> {{ selectedUser.perm_add_dzongkhag }}</p>
+                                                <p><strong>Village:</strong> {{ selectedUser?.user?.perm_add_village }}
+                                                </p>
+                                                <p><strong>Gewog:</strong> {{ selectedUser?.user?.perm_add_gewog }}</p>
+                                                <p><strong>Dzongkhag:</strong> {{ selectedUser?.user?.perm_add_dzongkhag
+                                                    }}</p>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <h6>Present Address</h6>
                                             <div class="address-details">
-                                                <p><strong>Village:</strong> {{ selectedUser.ps_add_village }}</p>
-                                                <p><strong>Gewog:</strong> {{ selectedUser.ps_add_gewog }}</p>
-                                                <p><strong>Dzongkhag:</strong> {{ selectedUser.ps_add_dzongkhag }}</p>
+                                                <p><strong>Village:</strong> {{ selectedUser?.user?.ps_add_village }}
+                                                </p>
+                                                <p><strong>Gewog:</strong> {{ selectedUser?.user?.ps_add_gewog }}</p>
+                                                <p><strong>Dzongkhag:</strong> {{ selectedUser?.user?.ps_add_dzongkhag
+                                                    }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -116,11 +125,9 @@
                                 <div class="info-section">
                                     <h5 class="section-title">Case Status</h5>
                                     <div class="row">
-                                        <div class="col-md-6"
-                                            v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
+                                        <div class="col-md-6">
                                             <label for="caseStatus">Case Status:</label>
-                                            <select class="form-control"
-                                                v-model="selectedUser.service_and_treatment_details[0].case_status"
+                                            <select class="form-control" v-model="selectedUser.case_status"
                                                 :disabled="selfRole === 'trained_professional'">
                                                 <option :value="null" disabled>Select Case Status</option>
                                                 <option value="On Going">On Going</option>
@@ -131,42 +138,33 @@
                                     </div>
                                 </div>
 
-                                <div class="info-section"
-                                    v-if="selectedUser.substance_risk_measurement_details && selectedUser.substance_risk_measurement_details.length > 0">
+                                <div class="info-section" v-if="selectedUser?.screening_data">
                                     <h5 class="section-title">Severity</h5>
                                     <div class="severity-tags">
-                                        <template
-                                            v-for="(substance, index) in selectedUser.substance_risk_measurement_details"
-                                            :key="index">
-                                            <div v-if="substance.risk_flag !== 'none'" class="severity-tag">
-                                                <span class="substance-name">{{
-                                                    substance.substance_name.split('(')[0].trim() }}:</span>
-                                                <Tag :value="substance.risk_flag"
-                                                    :style="getSeverityStyles(substance.risk_flag)" rounded></Tag>
-                                            </div>
-                                        </template>
+                                        <div v-if="selectedUser.screening_data.gad_interpretation" class="severity-tag">
+                                            <span class="substance-name">GAD Score:</span>
+                                            <Tag :value="selectedUser.screening_data.gad_interpretation"
+                                                :style="getSeverityStyles(selectedUser.screening_data.gad_interpretation)"
+                                                rounded>
+                                            </Tag>
+                                        </div>
+                                        <div v-if="selectedUser.screening_data.phq_interpretation" class="severity-tag">
+                                            <span class="substance-name">PHQ Score:</span>
+                                            <Tag :value="selectedUser.screening_data.phq_interpretation"
+                                                :style="getSeverityStyles(selectedUser.screening_data.phq_interpretation)"
+                                                rounded>
+                                            </Tag>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="info-section" v-if="selectedUser">
-                                    <h5 class="section-title">Additional Information</h5>
-                                    <p><strong>Non-Medical Drug use through injection:</strong> <span
-                                            class="highlight">{{
-                                                selectedUser.injection_use ? 'YES' : 'Not Applicable' }}</span></p>
-                                    <p><strong>Past Mental Health Disorder history:</strong> <span class="highlight">{{
-                                        selectedUser.past_disorder ? selectedUser.past_disorder : 'No Diagnosis'
-                                            }}</span>
-                                    </p>
-                                </div>
-
-                                <div class="info-section" :class="{ 'greyout': selfRole === 'trained_professional' }"
-                                    v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
+                                <div class="info-section" :class="{ 'greyout': selfRole === 'trained_professional' }">
                                     <h5 class="section-title">Services and Treatment</h5>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="assessmentStatus">Assessment Status:</label>
                                             <select class="form-control" id="assessmentStatus"
-                                                v-model="selectedUser.service_and_treatment_details[0].assessment_status">
+                                                v-model="selectedUser.assessment_status">
                                                 <option value="Not Conducted">Not Conducted</option>
                                                 <option value="Conducted">Conducted</option>
                                             </select>
@@ -174,7 +172,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label for="counselingStatus">Counseling Status:</label>
                                             <select class="form-control" id="counselingStatus"
-                                                v-model="selectedUser.service_and_treatment_details[0].counseling">
+                                                v-model="selectedUser.counseling">
                                                 <option value="Availed">Availed</option>
                                                 <option value="Not Required">Not Required</option>
                                                 <option value="Waiting List">Waiting List</option>
@@ -183,7 +181,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label for="followUpStatus">Follow Up Status:</label>
                                             <select class="form-control" id="followUpStatus"
-                                                v-model="selectedUser.service_and_treatment_details[0].follow_up">
+                                                v-model="selectedUser.follow_up">
                                                 <option value="Treatment Completed">Treatment Completed</option>
                                                 <option value="Undergoing Treatment">Undergoing Treatment</option>
                                                 <option value="Completed Counselling Sessions">Completed Counselling
@@ -206,7 +204,8 @@
                                                 </option>
                                                 <option value="School-based SUD Treatment and Care">School-based SUD
                                                     Treatment
-                                                    and Care</option>
+                                                    and
+                                                    Care</option>
                                                 <option value="Institution-based SUD Treatment and Care">
                                                     Institution-based SUD
                                                     Treatment and Care</option>
@@ -221,7 +220,7 @@
                                         <div class="col-md-12 mb-3">
                                             <label for="comments">Comments:</label>
                                             <textarea class="form-control" id="comments"
-                                                v-model="selectedUser.service_and_treatment_details[0].comments"></textarea>
+                                                v-model="selectedUser.comments"></textarea>
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-end mt-3">
@@ -231,7 +230,7 @@
                                 </div>
 
                                 <div class="info-section"
-                                    :class="{ 'greyout': selectedUser.service_and_treatment_details[0].referred !== 'Not Referred' }">
+                                    :class="{ 'greyout': selectedUser.referred !== 'Not Referred' }">
                                     <h5 class="section-title">Referral Status</h5>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -258,8 +257,7 @@
                                             @click="referCase" />
                                     </div>
                                 </div>
-                                <div v-if="selectedUser.service_and_treatment_details[0].referred !== 'Not Referred'"
-                                    class="alert alert-warning mt-3">
+                                <div v-if="selectedUser.referred !== 'Not Referred'" class="alert alert-warning mt-3">
                                     User Already Referred
                                 </div>
                             </div>
@@ -337,9 +335,8 @@ const getServiceList = async () => {
     try {
         isLoading.value = true;
         hasError.value = false;
-        const response = await axios.get(endpoints.generateServiceAndTreatment);
+        const response = await axios.get(endpoints.newServiceAndTreatment);
         if (response && response.data && Array.isArray(response.data.data)) {
-            console.log('service and treatment:', response.data);
             rowData.value = response.data.data;
         } else {
             console.error('Invalid response format:', response);

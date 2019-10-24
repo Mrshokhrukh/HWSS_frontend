@@ -16,13 +16,13 @@
           </div>
         </div>
         <div class="col text-center">
-          <h4 class="text-capitalize">High Risk Count by gender</h4>
+          <h4 class="text-capitalize">High Risk Count by Sex</h4>
           <div class="w-100">
             <apexchart type="donut" :options="donutOptionsTotal" :series="donutSeriesTotal"></apexchart>
           </div>
         </div>
         <div class="col text-center">
-          <h4 class="text-capitalize">Moderate Risk Count by gender</h4>
+          <h4 class="text-capitalize">Moderate Risk Count by Sex</h4>
           <div class="w-100">
             <apexchart type="donut" :options="donutOptionsModerate" :series="donutSeriesModerate"></apexchart>
           </div>

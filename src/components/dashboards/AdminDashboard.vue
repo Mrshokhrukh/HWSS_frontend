@@ -209,7 +209,6 @@ const fetchReportData = async () => {
         }
 
         const reportResponse = await axios.get(endpoints.getReport);
-        console.log('Fetched data:', reportResponse.data);
         if (reportResponse.data) {
             let reportItems = reportResponse.data.reporting_model_data;
 
