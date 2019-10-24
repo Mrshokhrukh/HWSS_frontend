@@ -44,10 +44,18 @@ const props = defineProps({
   }
 });
 
-// Computed properties for counts
-const ongoingCaseCount = computed(() => props.filteredData.filter(item => item.service_and_treatment?.case_status === 'On Going').length);
-const caseDiscontinueCount = computed(() => props.filteredData.filter(item => item.service_and_treatment?.case_status === 'Case Discontinued').length);
-const caseClosedCount = computed(() => props.filteredData.filter(item => item.service_and_treatment?.case_status === 'Case Closed').length);
+// Computed properties for counts using new data structure
+const ongoingCaseCount = computed(() =>
+  props.filteredData.filter(item => item.case_status === 'On Going').length
+);
+
+const caseDiscontinueCount = computed(() =>
+  props.filteredData.filter(item => item.case_status === 'Case Discontinued').length
+);
+
+const caseClosedCount = computed(() =>
+  props.filteredData.filter(item => item.case_status === 'Case Closed').length
+);
 
 // Aggregate data for DataTable
 const aggregateData = computed(() => ({
@@ -58,8 +66,6 @@ const aggregateData = computed(() => ({
 
 // Wrap aggregateData in an array for DataTable
 const tableData = computed(() => [aggregateData.value]);
-
-console.log('tableData', tableData.value);
 </script>
 
 <style scoped>
@@ -93,5 +99,23 @@ console.log('tableData', tableData.value);
   text-align: center !important;
   font-size: 1.2em;
   background-color: #2C6975 !important;
+}
+
+:deep(.p-datatable-wrapper) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.p-datatable-table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:deep(.p-datatable-tbody > tr:nth-child(even)) {
+  background-color: rgba(44, 105, 117, 0.05);
+}
+
+:deep(.p-datatable-tbody > tr:hover) {
+  background-color: rgba(44, 105, 117, 0.1);
 }
 </style>

@@ -74,9 +74,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import SUDCaseStatusGraph from './SUDCaseStatusGraph.vue'
-import SUDCST_Table from './SUDCSR_Table.vue'
+import { ref, computed, watch } from 'vue';
+import SUDCaseStatusGraph from './SUDCaseStatusGraph.vue';
+import SUDCST_Table from './SUDCSR_Table.vue';
 
 const props = defineProps({
   filteredData: {
@@ -90,99 +90,107 @@ const dataOptions = [
   { label: 'Case Closed', value: 'closed' },
   { label: 'Case Discontinued', value: 'discontinued' },
   { label: 'All', value: 'all' }
-]
+];
 
-const selectedOption = ref('')
-const showReport = ref(false)
+const selectedOption = ref('');
+const showReport = ref(false);
 const additionalFilters = ref({
   year: '',
   gender: '',
   organization: '',
   employment: '',
   userClass: ''
-})
+});
 
 // Computed properties for filter options
 const availableYears = computed(() => {
   const years = new Set(props.filteredData.map(item => {
-    const date = item.service_and_treatment?.date;
+    const date = item.date;
     return date ? new Date(date).getFullYear() : null;
   }).filter(Boolean));
   return Array.from(years).sort();
 });
 
 const availableGenders = computed(() => {
-  const genders = new Set(props.filteredData.map(item => item.user?.fields?.gender).filter(Boolean));
+  const genders = new Set(props.filteredData.map(item => item.user?.gender).filter(Boolean));
   return Array.from(genders);
 });
 
 const availableOrganizations = computed(() => {
-  const orgs = new Set(props.filteredData.map(item => item.agency_name).filter(Boolean));
+  const orgs = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.agency?.agency_name
+  ).filter(Boolean));
   return Array.from(orgs);
 });
 
 const availableUserClasses = computed(() => {
-  const userClasses = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean));
+  const userClasses = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.user_class
+  ).filter(Boolean));
   return Array.from(userClasses);
 });
 
 const availableEmployment = computed(() => {
-  const employment = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
+  const employment = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.user_role_agency
+  ).filter(Boolean));
   return Array.from(employment);
 });
 
 const finalFilteredData = computed(() => {
   return props.filteredData.filter(item => {
-    const itemYear = item.service_and_treatment?.date ? new Date(item.service_and_treatment.date).getFullYear() : null;
+    const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+    const agencyDetails = item.user?.agency_details;
+
     return (
       (additionalFilters.value.year === '' || itemYear === parseInt(additionalFilters.value.year)) &&
-      (additionalFilters.value.gender === '' || item.user?.fields?.gender === additionalFilters.value.gender) &&
-      (additionalFilters.value.organization === '' || item.agency_name === additionalFilters.value.organization) &&
-      (additionalFilters.value.userClass === '' || item.user_agency?.fields?.user_class === additionalFilters.value.userClass) &&
-      (additionalFilters.value.employment === '' || item.user_agency?.fields?.user_role_agency === additionalFilters.value.employment)
-    )
-  })
-})
+      (additionalFilters.value.gender === '' || item.user?.gender === additionalFilters.value.gender) &&
+      (additionalFilters.value.organization === '' || agencyDetails?.agency?.agency_name === additionalFilters.value.organization) &&
+      (additionalFilters.value.userClass === '' || agencyDetails?.user_class === additionalFilters.value.userClass) &&
+      (additionalFilters.value.employment === '' || agencyDetails?.user_role_agency === additionalFilters.value.employment)
+    );
+  });
+});
 
 const processedChartData = computed(() => {
-  const result = {}
+  const result = {};
 
   if (selectedOption.value && selectedOption.value !== 'all') {
     result[selectedOption.value] = {
       Male: 0,
       Female: 0,
       Other: 0
-    }
+    };
 
     finalFilteredData.value.forEach((item) => {
-      let status = item.service_and_treatment?.case_status || 'NA'
-      let gender = item.user?.fields?.gender || 'Other'
+      const status = item.case_status || 'NA';
+      const gender = item.user?.gender || 'Other';
 
       if (
         (selectedOption.value === 'ongoing' && status === 'On Going') ||
         (selectedOption.value === 'closed' && status === 'Case Closed') ||
         (selectedOption.value === 'discontinued' && status === 'Case Discontinued')
       ) {
-        result[selectedOption.value][gender] = (result[selectedOption.value][gender] || 0) + 1
+        result[selectedOption.value][gender] = (result[selectedOption.value][gender] || 0) + 1;
       }
-    })
+    });
   }
-  return result
-})
+
+  return result;
+});
 
 const handleCheckboxChange = (value) => {
-  selectedOption.value = value
-  showReport.value = false  // Reset showReport when selection changes
-}
+  selectedOption.value = value;
+  showReport.value = false;
+};
 
 const generateReport = () => {
-  showReport.value = true
-}
+  showReport.value = true;
+};
 
-// Watch for changes in additional filters and update the chart
 watch(additionalFilters, () => {
   if (showReport.value && selectedOption.value !== 'all') {
     // The chart will be updated automatically due to the reactivity of processedChartData
   }
-}, { deep: true })
+}, { deep: true });
 </script>

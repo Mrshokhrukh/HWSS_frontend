@@ -59,9 +59,9 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import SUDLIfeTimeGraph from './SUDLIfeTimeGraph.vue'
-import SUDCurrentUseGraph from './SUDCurrentUseGraph.vue'
-import SUDGraph from './SUDGraph.vue'
+import SUDLIfeTimeGraph from './SUDLIfeTimeGraph.vue';
+import SUDCurrentUseGraph from './SUDCurrentUseGraph.vue';
+import SUDGraph from './SUDGraph.vue';
 
 const props = defineProps({
   filteredData: {
@@ -80,10 +80,11 @@ const filters = ref({
   userClass: ''
 });
 
+// Updated computed properties for the new data structure
 const availableYears = computed(() => {
   if (!props.filteredData) return [];
   const years = new Set(props.filteredData.map(item => {
-    const date = item.service_and_treatment?.date;
+    const date = item.date;
     return date ? new Date(date).getFullYear() : null;
   }).filter(Boolean));
   return Array.from(years).sort();
@@ -91,38 +92,49 @@ const availableYears = computed(() => {
 
 const availableGenders = computed(() => {
   if (!props.filteredData) return [];
-  const genders = new Set(props.filteredData.map(item => item.user?.fields?.gender).filter(Boolean));
+  const genders = new Set(props.filteredData.map(item =>
+    item.user?.gender
+  ).filter(Boolean));
   return Array.from(genders).sort();
 });
 
 const availableOrganizations = computed(() => {
   if (!props.filteredData) return [];
-  const orgs = new Set(props.filteredData.map(item => item.agency_name).filter(Boolean));
+  const orgs = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.agency?.agency_name
+  ).filter(Boolean));
   return Array.from(orgs).sort();
 });
 
 const availableEmployment = computed(() => {
   if (!props.filteredData) return [];
-  const employment = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
+  const employment = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.user_role_agency
+  ).filter(Boolean));
   return Array.from(employment).sort();
 });
 
 const availableUserClasses = computed(() => {
   if (!props.filteredData) return [];
-  const userClasses = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean));
+  const userClasses = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.user_class
+  ).filter(Boolean));
   return Array.from(userClasses).sort();
 });
 
 const filteredDataComputed = computed(() => {
   if (!props.filteredData) return [];
+
   return props.filteredData.filter(item => {
-    const itemYear = item.service_and_treatment?.date ? new Date(item.service_and_treatment.date).getFullYear() : null;
+    const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+    const agencyDetails = item.user?.agency_details;
+
     return (
       (filters.value.year === '' || itemYear === parseInt(filters.value.year)) &&
-      (filters.value.gender === '' || item.user?.fields?.gender === filters.value.gender) &&
-      (filters.value.organization === '' || item.agency_name === filters.value.organization) &&
-      (filters.value.employment === '' || item.user_agency?.fields?.user_role_agency === filters.value.employment) &&
-      (filters.value.userClass === '' || item.user_agency?.fields?.user_class === filters.value.userClass)
+      (filters.value.gender === '' || item.user?.gender === filters.value.gender) &&
+      (filters.value.organization === '' || agencyDetails?.agency?.agency_name === filters.value.organization) &&
+      (filters.value.employment === '' || agencyDetails?.user_role_agency === filters.value.employment) &&
+      (filters.value.userClass === '' || agencyDetails?.user_class === filters.value.userClass)
     );
   });
 });
@@ -193,17 +205,37 @@ watch(() => props.filteredData, (newValue) => {
   box-shadow: 0 0 0 3px rgba(44, 105, 117, 0.2);
 }
 
+.filter-select:hover {
+  border-color: #2c6975;
+}
+
 .graph-section {
   background-color: white;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 30px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.graph-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
   .filters-grid {
     grid-template-columns: 1fr;
+  }
+
+  .filters-section {
+    margin-bottom: 20px;
+    padding: 15px;
+  }
+
+  .graph-section {
+    padding: 15px;
+    margin-bottom: 20px;
   }
 }
 
@@ -212,5 +244,9 @@ watch(() => props.filteredData, (newValue) => {
   font-size: 1.2rem;
   color: #4a5568;
   margin-top: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

@@ -23,71 +23,66 @@ const props = defineProps({
   }
 });
 
-function extractMeasurementData(reportData) {
-  return reportData.map(person => {
-    const measurementAssist = person.measurement_assist?.fields;
-    const gender = person.user?.fields?.gender || "unknown";
-    if (measurementAssist) {
-      return {
-        gender: gender,
-        alcoholic: measurementAssist.alcoholic_measurement || "no data",
-        amphetamine: measurementAssist.amphetamine_measurement || "no data",
-        cannabis: measurementAssist.cannabis_measurement || "no data",
-        cocaine: measurementAssist.cocaine_measurement || "no data",
-        hallucinogens: measurementAssist.hallucinogens_measurement || "no data",
-        inhalants: measurementAssist.inhalants_measurement || "no data",
-        opioids: measurementAssist.opioids_measurement || "no data",
-        sedatives: measurementAssist.sedatives_measurement || "no data",
-        tobacco: measurementAssist.tobacco_measurement || "no data",
-        other: measurementAssist.other_measurement || "no data"
-      };
-    }
-    return null;
-  }).filter(Boolean);
-}
+const substanceMapping = {
+  'Tobacco': 'Tobacco products',
+  'Alcohol': 'Alcoholic beverages',
+  'Cannabis': 'Cannabis',
+  'Cocaine': 'Cocaine',
+  'Amphetamine-type': 'Amphetamine-type stimulants',
+  'Inhalant': 'Inhalants',
+  'Sedative': 'Sedatives or Sleeping Pills',
+  'Hallucinate': 'Hallucinogens',
+  'Opioids': 'Opioids',
+  'Others': 'Other - specify'
+};
 
 function countRiskLevels(data) {
-  const counts = {
-    tobacco_moderate_male: 0, tobacco_moderate_female: 0,
-    tobacco_high_male: 0, tobacco_high_female: 0,
-    alcoholic_moderate_male: 0, alcoholic_moderate_female: 0,
-    alcoholic_high_male: 0, alcoholic_high_female: 0,
-    cannabis_moderate_male: 0, cannabis_moderate_female: 0,
-    cannabis_high_male: 0, cannabis_high_female: 0,
-    cocaine_moderate_male: 0, cocaine_moderate_female: 0,
-    cocaine_high_male: 0, cocaine_high_female: 0,
-    amphetamine_moderate_male: 0, amphetamine_moderate_female: 0,
-    amphetamine_high_male: 0, amphetamine_high_female: 0,
-    inhalants_moderate_male: 0, inhalants_moderate_female: 0,
-    inhalants_high_male: 0, inhalants_high_female: 0,
-    sedatives_moderate_male: 0, sedatives_moderate_female: 0,
-    sedatives_high_male: 0, sedatives_high_female: 0,
-    hallucinogens_moderate_male: 0, hallucinogens_moderate_female: 0,
-    hallucinogens_high_male: 0, hallucinogens_high_female: 0,
-    opioids_moderate_male: 0, opioids_moderate_female: 0,
-    opioids_high_male: 0, opioids_high_female: 0,
-    other_moderate_male: 0, other_moderate_female: 0,
-    other_high_male: 0, other_high_female: 0,
-  };
+  const counts = {};
 
-  data.forEach(personData => {
-    Object.entries(personData).forEach(([substance, riskLevel]) => {
-      if (substance !== 'gender' && (riskLevel === 'moderate risk' || riskLevel === 'high risk')) {
-        const key = `${substance}_${riskLevel === 'moderate risk' ? 'moderate' : 'high'}_${personData.gender.toLowerCase()}`;
-        if (counts.hasOwnProperty(key)) {
-          counts[key]++;
-        }
+  // Initialize counts for all substances
+  Object.keys(substanceMapping).forEach(substance => {
+    const key = substance.toLowerCase().replace('-type', '');
+    counts[`${key}_severe_male`] = 0;
+    counts[`${key}_severe_female`] = 0;
+    counts[`${key}_moderate_male`] = 0;
+    counts[`${key}_moderate_female`] = 0;
+  });
+
+  data.forEach(record => {
+    if (record.screening_data?.assist_data) {
+      const assistData = Array.isArray(record.screening_data.assist_data)
+        ? record.screening_data.assist_data
+        : [];
+
+      const gender = record.user?.gender?.toLowerCase() || 'other';
+      if (gender === 'male' || gender === 'female') {
+        assistData.forEach(substance => {
+          const substanceKey = Object.entries(substanceMapping).find(([_, value]) =>
+            substance.substance__name?.includes(value)
+          )?.[0];
+
+          if (substanceKey && substance.risk_flag) {
+            const key = substanceKey.toLowerCase().replace('-type', '');
+            const risk = substance.risk_flag.toLowerCase();
+
+            // Map risk levels to either severe or moderate
+            if (risk === 'severe') {
+              counts[`${key}_severe_${gender}`]++;
+            } else if (risk === 'moderate') {
+              counts[`${key}_moderate_${gender}`]++;
+            }
+          }
+        });
       }
-    });
+    }
   });
 
   return counts;
 }
 
-const extractedData = computed(() => extractMeasurementData(props.filteredData));
-const counts = computed(() => countRiskLevels(extractedData.value));
-
 const tableData = computed(() => {
+  const counts = countRiskLevels(props.filteredData);
+
   const substances = [
     'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
     'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
@@ -95,16 +90,17 @@ const tableData = computed(() => {
 
   return substances.map(substance => {
     const key = substance.toLowerCase().replace('-type', '');
-    const dbKey = key === 'alcohol' ? 'alcoholic' :
-      key === 'inhalant' ? 'inhalants' :
-        key === 'hallucinate' ? 'hallucinogens' :
-          key === 'others' ? 'other' : key;
+    const dbKey = key === 'alcohol' ? 'alcohol' :
+      key === 'inhalant' ? 'inhalant' :
+        key === 'hallucinate' ? 'hallucinate' :
+          key === 'others' ? 'others' : key;
+
     return {
       substance,
-      highRiskMale: counts.value[`${dbKey}_high_male`] || 0,
-      highRiskFemale: counts.value[`${dbKey}_high_female`] || 0,
-      moderateRiskMale: counts.value[`${dbKey}_moderate_male`] || 0,
-      moderateRiskFemale: counts.value[`${dbKey}_moderate_female`] || 0
+      highRiskMale: counts[`${dbKey}_severe_male`] || 0,
+      highRiskFemale: counts[`${dbKey}_severe_female`] || 0,
+      moderateRiskMale: counts[`${dbKey}_moderate_male`] || 0,
+      moderateRiskFemale: counts[`${dbKey}_moderate_female`] || 0
     };
   });
 });

@@ -74,9 +74,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import SUDTableLayer from './SUDTableLayer.vue'
-import SUDChartComponent from './SUDChartComponent.vue'
+import { ref, computed, watch } from 'vue';
+import SUDTableLayer from './SUDTableLayer.vue';
+import SUDChartComponent from './SUDChartComponent.vue';
 
 const props = defineProps({
   filteredData: {
@@ -92,87 +92,104 @@ const dataOptions = [
   { label: 'Referral', value: 'referred' },
   { label: 'Follow-up', value: 'follow_up' },
   { label: 'All', value: 'all' }
-]
+];
 
-const selectedOption = ref('')
-const showReport = ref(false)
+const selectedOption = ref('');
+const showReport = ref(false);
 const additionalFilters = ref({
   year: '',
   gender: '',
   organization: '',
   employment: '',
   userClass: ''
-})
+});
 
-const availableYears = computed(() => [...new Set(props.filteredData.map(item => {
-  const date = item.service_and_treatment?.date;
-  return date ? new Date(date).getFullYear() : null;
-}).filter(Boolean))].sort())
+// Updated computed properties to work with new data structure
+const availableYears = computed(() => {
+  return [...new Set(props.filteredData.map(item => {
+    const date = item.date;
+    return date ? new Date(date).getFullYear() : null;
+  }).filter(Boolean))].sort();
+});
 
-const availableGenders = computed(() => [...new Set(props.filteredData.map(item => item.user?.fields?.gender).filter(Boolean))])
+const availableGenders = computed(() =>
+  [...new Set(props.filteredData.map(item => item.user?.gender).filter(Boolean))]
+);
 
-const availableOrganizations = computed(() => [...new Set(props.filteredData.map(item => item.agency_name).filter(Boolean))])
+const availableOrganizations = computed(() =>
+  [...new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.agency?.agency_name
+  ).filter(Boolean))]
+);
 
-const availableUserClasses = computed(() => [...new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean))])
+const availableUserClasses = computed(() =>
+  [...new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.user_class
+  ).filter(Boolean))]
+);
 
 const availableEmployment = computed(() => {
-  const employmentSet = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
+  const employmentSet = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.user_role_agency
+  ).filter(Boolean));
   return Array.from(employmentSet).sort();
-})
+});
 
 const finalFilteredData = computed(() => {
   return props.filteredData.filter(item => {
-    const itemYear = item.service_and_treatment?.date ? new Date(item.service_and_treatment.date).getFullYear() : null;
+    const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+    const userAgencyDetails = item.user?.agency_details;
+
     return (
       (additionalFilters.value.year === '' || itemYear === parseInt(additionalFilters.value.year)) &&
-      (additionalFilters.value.gender === '' || item.user?.fields?.gender === additionalFilters.value.gender) &&
-      (additionalFilters.value.organization === '' || item.agency_name === additionalFilters.value.organization) &&
-      (additionalFilters.value.userClass === '' || item.user_agency?.fields?.user_class === additionalFilters.value.userClass) &&
-      (additionalFilters.value.employment === '' || item.user_agency?.fields?.user_role_agency === additionalFilters.value.employment)
-    )
-  })
-})
+      (additionalFilters.value.gender === '' || item.user?.gender === additionalFilters.value.gender) &&
+      (additionalFilters.value.organization === '' || userAgencyDetails?.agency?.agency_name === additionalFilters.value.organization) &&
+      (additionalFilters.value.userClass === '' || userAgencyDetails?.user_class === additionalFilters.value.userClass) &&
+      (additionalFilters.value.employment === '' || userAgencyDetails?.user_role_agency === additionalFilters.value.employment)
+    );
+  });
+});
 
 const processedChartData = computed(() => {
-  const result = {}
+  const result = {};
 
   if (selectedOption.value && selectedOption.value !== 'all') {
     result[selectedOption.value] = {
       male: {},
       female: {},
       other: {}
-    }
+    };
+
     finalFilteredData.value.forEach((item) => {
-      let value
+      let value;
       if (selectedOption.value === 'rescreened') {
-        value = item.rescreened ? 'Yes' : 'No'
+        value = item.screening_data?.rescreened ? 'Yes' : 'No';
       } else {
-        value = item.service_and_treatment?.[selectedOption.value] || 'NA'
+        value = item[selectedOption.value] || 'NA';
       }
-      const gender = item.user?.fields?.gender?.toLowerCase() || 'unknown'
+
+      const gender = item.user?.gender?.toLowerCase() || 'unknown';
       if (gender === 'male' || gender === 'female' || gender === 'other') {
-        result[selectedOption.value][gender][value] = (result[selectedOption.value][gender][value] || 0) + 1
+        result[selectedOption.value][gender][value] = (result[selectedOption.value][gender][value] || 0) + 1;
       }
-    })
+    });
   }
 
-  console.log('Processed Chart Data:', JSON.stringify(result, null, 2))
-  return result
-})
+  return result;
+});
 
 const handleCheckboxChange = (value) => {
-  selectedOption.value = value
-  showReport.value = false
-}
+  selectedOption.value = value;
+  showReport.value = false;
+};
 
 const generateReport = () => {
-  showReport.value = true
-}
+  showReport.value = true;
+};
 
 watch(additionalFilters, () => {
   if (showReport.value && selectedOption.value !== 'all') {
     // The chart will be updated automatically due to the reactivity of processedChartData
   }
-}, { deep: true })
-
+}, { deep: true });
 </script>
