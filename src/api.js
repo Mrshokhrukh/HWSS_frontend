@@ -1,13 +1,13 @@
-// function getBaseUrl() {
-//   if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-//     const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
-//     const apiPort = import.meta.env.VITE_API_PORT || '8123';
-//     const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
-//     return `${apiProtocol}://${apiHost}:${apiPort}`;
-//   } else {
-//     return import.meta.env.VITE_PRODUCTION_API_URL;
-//   }
-// }
+function getBaseUrl() {
+  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+    const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
+    const apiPort = import.meta.env.VITE_API_PORT || '8123';
+    const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
+    return `${apiProtocol}://${apiHost}:${apiPort}`;
+  }
+  // For non-development mode or when VITE_DEVELOPMENT_MODE is undefined/false
+  return 'http://localhost:8123';
+}
 
 function getScreeningBaseUrl() {
   if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
@@ -20,15 +20,13 @@ function getScreeningBaseUrl() {
   }
 }
 
-const baseUrl = 'http://localhost:8123'
-
 // Function to combine base URL with middle params
 function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
   return `${baseUrl}/api/v1/${middleParams}`;
 }
 
 // Define base URLs
-// const baseUrl = getBaseUrl();
+const baseUrl = getBaseUrl();
 const baseScreeningUrl = getScreeningBaseUrl();
 
 // Define middle params
@@ -94,7 +92,7 @@ const endpoints = {
 
   // Monitoring endpoints
   getRescreeningList: `${monitoringBaseUrl}/check-rescreening-flags/`,
-  getServiceAndTreatmentList: `${monitoringBaseUrl}/get-service-and-treatment/`,
+  getServiceAndTreatmentList: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
   generateServiceAndTreatment: `${monitoringBaseUrl}/generate-service-and-treatment/`,
   getReferralList: `${monitoringBaseUrl}/get-referral-list/`,
   rescreenSubmission: `${monitoringBaseUrl}/submit-rescreening/`,

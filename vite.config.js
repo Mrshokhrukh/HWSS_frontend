@@ -21,13 +21,11 @@ export default defineConfig({
     vue(),
     AutoImport({
       resolvers: [
-        ElementPlusResolver(),
         PrimeVueResolver(),
       ],
     }),
     Components({
       resolvers: [
-        ElementPlusResolver(),
         PrimeVueResolver(),
       ],
     }),

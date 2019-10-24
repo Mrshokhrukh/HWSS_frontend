@@ -18,10 +18,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { ref, computed, inject, onMounted } from 'vue';
 
-const dashboardStore = useDashboardStore();
+// Inject the data from parent component
+const newServiceAndTreatment = inject('serviceAndTreatmentData', []);
 
 const formatNumber = (num) => {
   if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
@@ -30,16 +30,17 @@ const formatNumber = (num) => {
   return num;
 };
 
+// Updated computed properties to use injected data
 const totalOngoingCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "On Going").length
+  newServiceAndTreatment.value?.filter(item => item.case_status === "On Going").length || 0
 );
 
 const totalClosedCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Closed").length
+  newServiceAndTreatment.value?.filter(item => item.case_status === "Case Closed").length || 0
 );
 
 const totalDiscontinueCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Discontinue").length
+  newServiceAndTreatment.value?.filter(item => item.case_status === "Case Discontinue").length || 0
 );
 
 const statuses = computed(() => [
@@ -47,12 +48,6 @@ const statuses = computed(() => [
   { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
   { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
 ]);
-
-onMounted(() => {
-  if (dashboardStore.reportData.length === 0) {
-    dashboardStore.fetchReportData();
-  }
-});
 </script>
 
 <style scoped>
