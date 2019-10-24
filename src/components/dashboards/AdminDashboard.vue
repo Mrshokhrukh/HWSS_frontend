@@ -1,4 +1,3 @@
-<!-- eslint-disable no-unused-vars -->
 <template>
     <!-- template for Mental Health admin -->
     <div class="card admin-card p-4 mb-3 h-100 w-100">
@@ -8,23 +7,16 @@
             </div>
 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-                <MentalhealthReport :reportData="reportData" />
+                <MentalhealthReport />
             </div>
 
             <div v-else-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
                 <MentalhealthHelp />
             </div>
 
-
             <div v-else-if="currentRoute === '/admin-dashboard/admin-settings'" class="admin-settings">
                 <MentalhealthcardSetting />
             </div>
-
-            <!-- 
-            <div v-else-if="currentRoute === '/admin-dashboard/admin-chart-maker'" class="admin-report">
-                <ChartMakerAdmin />
-            </div> -->
-
 
             <div v-else>
                 <DashboardCurrentStatus />
@@ -105,11 +97,11 @@
         <!-- Template for CECD Admin -->
         <div v-if="userRole === 'cecd_admin'">
             <div v-if="currentRoute === '/admin-dashboard'" class="admin-dashboard">
-                <cecdDashboard :reportData="reportData"/>
+                <cecdDashboard />
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-report'" class="admin-report">
-                <cecdReport :reportData="reportData" />
+                <cecdReport />
             </div>
 
             <div v-if="currentRoute === '/admin-dashboard/admin-help'" class="admin-help">
@@ -126,11 +118,15 @@
             <p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
         </div>
     </footer>
-
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, inject, provide } from 'vue';
+import { useRoute } from 'vue-router';
+import axios from 'axios';
+import endpoints from '@/api';
+
+// Component imports
 import MentalhealthApproval from "@/components/dashboards/Adminpages/Approval/MentalhealthApproval.vue"
 import MentalhealthReport from "@/components/dashboards/Adminpages/report/MentalhealthReport.vue"
 import MentalhealthHelp from "@/components/dashboards/Adminpages/MentalhealthHelp/MentalhealthHelp.vue"
@@ -152,25 +148,19 @@ import AaaHelp from "@/components/dashboards/Adminpages/AAA/AaaHelp.vue"
 import RnDDashboard from "@/components/dashboards/Adminpages/R&D/RnDDashboard.vue"
 import RndHelp from "@/components/dashboards/Adminpages/R&D/RndHelp.vue"
 import RnDSetting from "@/components/dashboards/Adminpages/R&D/RnDProfile/RnDSetting.vue"
-// import ChartMakerAdmin from "@/components/dashboards/Adminpages/Mentalhealthcard/ChartMakerAdmin.vue"
 import cecdDashboard from "@/components/dashboards/Adminpages/cecd/cecdDashboard.vue"
 import cecdReport from '@/components/dashboards/Adminpages/cecd/report/cecdReport.vue'
 import cecdSetting from '@/components/dashboards/Adminpages/cecd/cecdSetting.vue'
 import cecdHelp from '@/components/dashboards/Adminpages/cecd/cecdHelp.vue'
 
-
-import axios from 'axios';
-import endpoints from '@/api';
-import { useRoute } from 'vue-router';
-
 const route = useRoute();
-const reportData = ref([])
+const newServiceAndTreatment = ref([]);
 
 const currentRoute = computed(() => route.path);
 
 const userRole = computed(() => {
     const savedUserRole = JSON.parse(localStorage.getItem('userDetailsStore'));
-    return savedUserRole.user.role;
+    return savedUserRole?.user?.role || '';
 });
 
 // Dynamically get the current year
@@ -190,65 +180,45 @@ const userDetailsInLocal = () => {
     return { agencyName: null, roleName: null };
 }
 
-const fetchReportData = async () => {
+const fetchServiceAndTreatmentData = async () => {
     try {
-        const storedData = sessionStorage.getItem('reportData');
-        const storedTimestamp = sessionStorage.getItem('reportDataTimestamp');
-        const currentTime = new Date().getTime();
-
         const { agencyName: userAgencyName, roleName: userRole } = userDetailsInLocal();
 
-        if (storedData && storedTimestamp) {
-            const dataAge = currentTime - parseInt(storedTimestamp);
-            const maxDataAge = 600000;
+        const serviceResponse = await axios.get(endpoints.getServiceAndTreatmentList);
+        console.log('Fetched service and treatment data:', serviceResponse.data);
 
-            if (dataAge < maxDataAge) {
-                reportData.value = JSON.parse(storedData);
-                return;
-            }
-        }
-
-        const reportResponse = await axios.get(endpoints.getReport);
-        if (reportResponse.data) {
-            let reportItems = reportResponse.data.reporting_model_data;
+        if (serviceResponse.data) {
+            let serviceItems = serviceResponse.data;
 
             // Apply filtering only if userRole is 'aaa_admin'
             if (userRole === 'aaa_admin') {
-                reportItems = reportItems.filter(item => {
-                    const itemAgencyName = item.agency_name ? item.agency_name.toLowerCase() : null;
+                serviceItems = serviceItems.filter(item => {
+                    const itemAgencyName = item.user?.active_agency?.agency_name?.toLowerCase();
                     return itemAgencyName === userAgencyName.toLowerCase();
                 });
             }
 
-            if (reportItems && reportItems.length > 0) {
-                reportData.value = reportItems;
-                sessionStorage.setItem('reportData', JSON.stringify(reportData.value));
-                sessionStorage.setItem('reportDataTimestamp', currentTime.toString());
-                console.log('Stored data in session storage:', reportData.value);
+            if (serviceItems && serviceItems.length > 0) {
+                newServiceAndTreatment.value = serviceItems;
             }
         }
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching service and treatment data:', error);
     }
 };
 
-const props = defineProps({
-    reportData: {
-        type: Object,
-        required: true
-    }
-});
+provide('serviceAndTreatmentData', newServiceAndTreatment);
+
+const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 
 onMounted(() => {
-    fetchReportData();
+    fetchServiceAndTreatmentData();
 });
-
 </script>
 
 <style>
 .admin-card {
     background: linear-gradient(135deg, #d3e2e4 0%, #b3c7c9 50%, #8fa8ac 100%);
-
 }
 
 .header {

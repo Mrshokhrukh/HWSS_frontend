@@ -10,6 +10,7 @@
           <div class="chart-stats">
             <p class="stat-item"><span class="stat-label">Male:</span> {{ maleCountClustered }}</p>
             <p class="stat-item"><span class="stat-label">Female:</span> {{ femaleCountClustered }}</p>
+            <p class="stat-item"><span class="stat-label">Other:</span> {{ otherCountClustered }}</p>
             <p class="stat-item"><span class="stat-label">Total:</span> {{ totalCountClustered }}</p>
           </div>
         </div>
@@ -23,6 +24,7 @@
           <div class="chart-stats">
             <p class="stat-item"><span class="stat-label">Male:</span> {{ maleCountIndependent }}</p>
             <p class="stat-item"><span class="stat-label">Female:</span> {{ femaleCountIndependent }}</p>
+            <p class="stat-item"><span class="stat-label">Other:</span> {{ otherCountIndependent }}</p>
             <p class="stat-item"><span class="stat-label">Total:</span> {{ totalCountIndependent }}</p>
           </div>
         </div>
@@ -32,45 +34,100 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, inject } from 'vue';
 import Chart from 'primevue/chart';
-import { useDashboardStore } from '@/stores/dashboardStore';
 
-const dashboardStore = useDashboardStore();
+// Inject the service and treatment data
+const newServiceAndTreatment = inject('serviceAndTreatmentData', []);
 
 const chartType = 'doughnut';
 
-// Clustered screening data
-const clusteredData = computed(() => ({
-  labels: ['Male', 'Female'],
-  datasets: [{
-    data: [
-      dashboardStore.filteredData.filter(item => item.measurement && item.measurement_assist && item.user?.fields?.gender === 'Male').length,
-      dashboardStore.filteredData.filter(item => item.measurement && item.measurement_assist && item.user?.fields?.gender === 'Female').length
-    ],
-    backgroundColor: ['#2B656F', '#64ac99']
-  }]
-}));
+// Helper functions
+const hasValidScreeningData = (item) => {
+  return typeof item?.screening_data === 'object' &&
+    item.screening_data !== null &&
+    item.screening_data !== "Data not available";
+};
 
+const hasScreeningDataWithScores = (item) => {
+  return hasValidScreeningData(item) &&
+    (
+      item.screening_data.phq9_score !== undefined ||
+      item.screening_data.gad7_score !== undefined
+    );
+};
+
+const isRegularScreeningData = (item) => {
+  return hasValidScreeningData(item) && item.screening_data.id !== undefined;
+};
+
+// Classify screening type
+const isIndependentScreening = (item) => {
+  if (!isRegularScreeningData(item)) return false;
+  return item.screening_data.case !== undefined ||
+    item.screening_data.event !== undefined;
+};
+
+const isClusteredScreening = (item) => {
+  return hasScreeningDataWithScores(item) ||
+    (isRegularScreeningData(item) &&
+      !item.screening_data.case &&
+      !item.screening_data.event);
+};
+
+// Helper function to safely get gender
+const getGender = (item) => {
+  // First try the user object's gender
+  if (item.user?.gender) {
+    return item.user.gender.toLowerCase();
+  }
+  // Then try screening_data's gender if it exists
+  else if (hasScreeningDataWithScores(item) && item.screening_data.gender) {
+    // Convert M/F to male/female
+    const gender = item.screening_data.gender.toLowerCase();
+    if (gender === 'm') return 'male';
+    if (gender === 'f') return 'female';
+    return 'other';
+  }
+  return 'other';
+};
+
+// Chart data computation
+const computeChartData = (screeningFilter) => {
+  const counts = newServiceAndTreatment.value.reduce((acc, item) => {
+    if (screeningFilter(item)) {
+      const gender = getGender(item);
+      acc[gender] = (acc[gender] || 0) + 1;
+    }
+    return acc;
+  }, { male: 0, female: 0, other: 0 });
+
+  return {
+    labels: ['Male', 'Female', 'Other'],
+    datasets: [{
+      data: [counts.male, counts.female, counts.other],
+      backgroundColor: ['#2B656F', '#64ac99', '#90CAF9']
+    }]
+  };
+};
+
+// Clustered screening data
+const clusteredData = computed(() => computeChartData(isClusteredScreening));
 const maleCountClustered = computed(() => clusteredData.value.datasets[0].data[0]);
 const femaleCountClustered = computed(() => clusteredData.value.datasets[0].data[1]);
-const totalCountClustered = computed(() => maleCountClustered.value + femaleCountClustered.value);
+const otherCountClustered = computed(() => clusteredData.value.datasets[0].data[2]);
+const totalCountClustered = computed(() =>
+  maleCountClustered.value + femaleCountClustered.value + otherCountClustered.value
+);
 
 // Independent screening data
-const independentData = computed(() => ({
-  labels: ['Male', 'Female'],
-  datasets: [{
-    data: [
-      dashboardStore.filteredData.filter(item => ['Event Base Clients', 'Case Base Clients'].includes(item.agency_name) && item.user?.fields?.gender === 'Male').length,
-      dashboardStore.filteredData.filter(item => ['Event Base Clients', 'Case Base Clients'].includes(item.agency_name) && item.user?.fields?.gender === 'Female').length
-    ],
-    backgroundColor: ['#2B656F', '#64ac99']
-  }]
-}));
-
+const independentData = computed(() => computeChartData(isIndependentScreening));
 const maleCountIndependent = computed(() => independentData.value.datasets[0].data[0]);
 const femaleCountIndependent = computed(() => independentData.value.datasets[0].data[1]);
-const totalCountIndependent = computed(() => maleCountIndependent.value + femaleCountIndependent.value);
+const otherCountIndependent = computed(() => independentData.value.datasets[0].data[2]);
+const totalCountIndependent = computed(() =>
+  maleCountIndependent.value + femaleCountIndependent.value + otherCountIndependent.value
+);
 
 // Chart options
 const donutOptions = ref({
@@ -85,12 +142,6 @@ const donutOptions = ref({
         }
       }
     }
-  }
-});
-
-onMounted(() => {
-  if (dashboardStore.reportData.length === 0) {
-    dashboardStore.fetchReportData();
   }
 });
 </script>

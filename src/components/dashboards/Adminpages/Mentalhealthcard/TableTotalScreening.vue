@@ -25,51 +25,89 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+// Inject the service and treatment data
+const newServiceAndTreatment = inject('serviceAndTreatmentData', []);
 
-const Malefilter = ref([]);
-const Femalefilter = ref([]);
-const total_male = ref(0);
-const total_female = ref(0);
+// Helper function to check if screening data exists
+const hasScreeningData = (item) => {
+  return typeof item.screening_data === 'object' && item.screening_data?.id;
+};
 
-onMounted(() => {
-  Malefilter.value = reportData.value.filter(
-    (item) => item.user?.fields?.gender === 'Male'
-  );
-  total_male.value = Malefilter.value.length;
+// Computed properties for gender counts
+const genderCounts = computed(() => {
+  if (!newServiceAndTreatment.value) return { male: 0, female: 0 };
 
-  Femalefilter.value = reportData.value.filter(
-    (item) => item.user?.fields?.gender === 'Female'
-  );
-  total_female.value = Femalefilter.value.length;
+  return newServiceAndTreatment.value.reduce((acc, item) => {
+    // Only count if screening_data has an id
+    if (hasScreeningData(item)) {
+      const gender = item.user?.gender?.toLowerCase();
+      if (gender === 'male') acc.male++;
+      if (gender === 'female') acc.female++;
+    }
+    return acc;
+  }, { male: 0, female: 0 });
 });
 
-const table1Data = ref([
-  { header: 'Total New Entry', male: total_male.value, female: total_female.value },
-  { header: 'Total Old Entry', male: 0, female: 0 },
-  { header: 'Total Screened', male: 0, female: 0 },
-]);
+// Computed property for weekly counts
+const weeklyGenderCounts = computed(() => {
+  if (!newServiceAndTreatment.value) return { male: 0, female: 0 };
 
-const table2Data = ref([
-  { header: 'Total New Entry', male: 0, female: 0 },
-  { header: 'Total Old Entry', male: 0, female: 0 },
-  { header: 'Total Screened', male: 0, female: 0 },
-]);
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-watch([total_male, total_female], () => {
-  table1Data.value[0].male = total_male.value;
-  table1Data.value[0].female = total_female.value;
+  return newServiceAndTreatment.value.reduce((acc, item) => {
+    const itemDate = new Date(item.date);
 
-  table1Data.value[2].male = table1Data.value[0].male + table1Data.value[1].male;
-  table1Data.value[2].female = table1Data.value[0].female + table1Data.value[1].female;
-
-  table1Data.value = [...table1Data.value];
-  table2Data.value = [...table2Data.value];
+    // Only count if within date range AND has screening data
+    if (!isNaN(itemDate) && itemDate >= oneWeekAgo && hasScreeningData(item)) {
+      const gender = item.user?.gender?.toLowerCase();
+      if (gender === 'male') acc.male++;
+      if (gender === 'female') acc.female++;
+    }
+    return acc;
+  }, { male: 0, female: 0 });
 });
+
+// Table data refs with computed values
+const table1Data = computed(() => [
+  {
+    header: 'Total New Entry',
+    male: genderCounts.value.male,
+    female: genderCounts.value.female
+  },
+  {
+    header: 'Total Old Entry',
+    male: 0,
+    female: 0
+  },
+  {
+    header: 'Total Screened',
+    male: genderCounts.value.male,
+    female: genderCounts.value.female
+  }
+]);
+
+const table2Data = computed(() => [
+  {
+    header: 'Total New Entry',
+    male: weeklyGenderCounts.value.male,
+    female: weeklyGenderCounts.value.female
+  },
+  {
+    header: 'Total Old Entry',
+    male: 0,
+    female: 0
+  },
+  {
+    header: 'Total Screened',
+    male: weeklyGenderCounts.value.male,
+    female: weeklyGenderCounts.value.female
+  }
+]);
 
 const headerStyle = computed(() => ({
   'background-color': '#2B656F',
