@@ -11,9 +11,9 @@
           </select>
         </div>
         <div class="filter-item">
-          <label for="genderFilter" class="filter-label">Gender</label>
+          <label for="genderFilter" class="filter-label">Sex</label>
           <select id="genderFilter" v-model="filters.gender" class="filter-select">
-            <option value="">All Genders</option>
+            <option value="">All Sexs</option>
             <option v-for="gender in availableGenders" :key="gender" :value="gender">{{ gender }}</option>
           </select>
         </div>

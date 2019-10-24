@@ -139,7 +139,7 @@ const chartOptions = computed(() => {
       }
     },
     title: {
-      text: `${option} Distribution by Gender`,
+      text: `${option} Distribution by Sex`,
       align: 'center'
     },
     legend: {

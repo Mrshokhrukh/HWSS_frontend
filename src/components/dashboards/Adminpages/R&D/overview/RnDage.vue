@@ -1,6 +1,6 @@
 <template>
   <div class="age-gender-distribution">
-    <h3 class="mb-4">Age and Gender Distribution</h3>
+    <h3 class="mb-4">Age and Sex Distribution</h3>
     <div class="chart-container">
       <canvas ref="chart"></canvas>
     </div>

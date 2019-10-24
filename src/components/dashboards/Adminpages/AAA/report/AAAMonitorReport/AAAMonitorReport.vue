@@ -32,9 +32,9 @@
                 </select>
               </div>
               <div class="col-md-2">
-                <label for="genderFilter" class="form-label">Gender</label>
+                <label for="genderFilter" class="form-label">Sex</label>
                 <select id="genderFilter" v-model="additionalFilters.gender" class="form-select">
-                  <option value="">All Genders</option>
+                  <option value="">All Sexs</option>
                   <option v-for="gender in availableGenders" :key="gender" :value="gender">{{ gender }}</option>
                 </select>
               </div>

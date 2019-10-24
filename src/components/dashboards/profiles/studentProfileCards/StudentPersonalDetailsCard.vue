@@ -23,7 +23,7 @@
           <input type="text" class="detail-input" readonly :value="userDetailsStore.user.isGyalsung">
         </div>
         <div class="detail-row">
-          <label>Gender</label>
+          <label>Sex</label>
           <input type="text" class="detail-input" readonly :value="userDetailsStore.user.gender">
         </div>
         <div class="detail-row">
