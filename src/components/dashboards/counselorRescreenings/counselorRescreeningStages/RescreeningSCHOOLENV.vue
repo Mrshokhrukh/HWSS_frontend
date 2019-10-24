@@ -21,14 +21,12 @@
                 <tr>
                     <td class="text-capitalize"><strong>Total</strong></td>
                     <td class="text-center" colspan="5">
-                        <!-- Adjust the colspan according to the number of <td> elements in the row -->
                         <strong>{{ totalScore }}</strong>
                     </td>
                 </tr>
                 <tr>
                     <td class="text-capitalize"><strong>Interpretation</strong></td>
                     <td class="text-center" :class="interpretationClass" colspan="5">
-                        <!-- Adjust the colspan according to the number of <td> elements in the row -->
                         <strong>{{ interpretation }}</strong>
                     </td>
                 </tr>
@@ -36,7 +34,7 @@
         </table>
         <div class="footer d-flex">
             <button class="btn hwss-btn" @click="goBack">Back</button>
-            <div class="flex-grow-1"></div> <!-- This ensures the buttons span all the width -->
+            <div class="flex-grow-1"></div> 
             <button class="btn hwss-btn" @click="proceed">Next</button>
         </div>
     </div>
@@ -44,9 +42,6 @@
 
 <script setup>
 import { ref, computed, inject } from 'vue';
-const props = defineProps({
-  currentQuestionSetName: String 
-});
 
 const emit = defineEmits(['goToNext', 'goBack']);
 
@@ -101,9 +96,23 @@ const interpretationClass = computed(() => {
 });
 
 const proceed = () => {
-    localStorage.setItem(`${props.currentQuestionSetName}_set_counselor_screening`, JSON.stringify({}));
+    const responses = [];
+    for (const text of currentQuestion.value) {
+        const response = {
+            question: text.text,
+            selectedOption: text.selectedOption ? text.selectedOption.option : null,
+            score: text.selectedOption ? text.selectedOption.points : 0
+        };
+        responses.push(response);
+    }
 
-    emit('goToNext', 'SCHOOL ENV'); 
+    const totalScoreValue = totalScore.value;
+    const interpretationValue = interpretation.value;
+
+    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
+    localStorage.setItem('PHQ_set_counselor_screening', JSON.stringify(data));
+
+    emit('goToNext', 'SCHOOL ENV');
 };
 
 </script>

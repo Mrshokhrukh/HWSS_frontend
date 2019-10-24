@@ -92,15 +92,7 @@ watch(selectedMenu, (newValue) => {
 });
 
 const handleChangeComponent = (currentMenuName) => {
-    console.log('--- Verbose Debugging ---');
-    console.log('Current Menu Name:', currentMenuName);
-
-    // Log the current state of menus before finding the current index
-    console.log('Menus State (before finding current index):', JSON.stringify(menus.value, null, 2));
-
-    // Find the current index
     const currentIndex = menus.value.findIndex(menu => menu.name === currentMenuName);
-    console.log('Current Index:', currentIndex);
 
     if (currentIndex === -1) {
         console.error(`Could not find the menu for "${currentMenuName}" in menus`);
@@ -109,23 +101,17 @@ const handleChangeComponent = (currentMenuName) => {
 
     // Mark the current menu as completed
     menus.value[currentIndex].completed = true;
-    console.log(`Menu "${currentMenuName}" marked as completed.`);
 
     // Update localStorage with the new state of the menus
     localStorage.setItem('selectedMenu', JSON.stringify(menus.value));
-    console.log('Updated Menus (after marking current menu as completed):', JSON.stringify(menus.value, null, 2));
 
     // Check if there is a next tool
     if (currentIndex < menus.value.length - 1) {
         const nextTool = menus.value[currentIndex + 1];
-        console.log('Next Tool:', nextTool);
 
-        // Update the selected menu and load the next component
         selectedMenu.value = nextTool;
         currentScreeningComponent.value = componentMap[nextTool.name];
-        console.log(`Switched to Next Tool: "${nextTool.name}"`);
     } else {
-        console.log('No more menus, triggering submission process.');
         Swal.fire({
             icon: 'question',
             title: 'All tests have been completed',
@@ -135,23 +121,39 @@ const handleChangeComponent = (currentMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
-                console.log('User confirmed submission.');
                 submitAssessments();
             } else {
                 console.log('User cancelled submission.');
             }
         });
     }
-
-    console.log('--- End of Verbose Debugging ---');
 };
 
 
-const ClientUserIdCaseBase = JSON.parse(sessionStorage.getItem('RescreeningUserID')) || [];
-
 const submitAssessments = async () => {
     try {
-        const userId = ClientUserIdCaseBase;
+        console.log('Function triggered');
+
+        // Get the patient (rescreening) user ID from sessionStorage
+        const patientUserId = JSON.parse(sessionStorage.getItem('RescreeningUserID'));  // Get patient ID from session storage
+
+        // Get the counselor user details from localStorage
+        const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+        const counselorUserId = userDetails?.user?.id || null;  // Get counselor ID from local storage
+
+        if (!counselorUserId) {
+            throw new Error('Counselor user ID not found in local storage');
+        }
+
+        if (!patientUserId) {
+            throw new Error('Patient user ID not found in session storage');
+        }
+
+        // Log IDs for debugging
+        console.log('Patient User ID:', patientUserId);
+        console.log('Counselor (Rescreened By) User ID:', counselorUserId);
+
+        // Retrieve assessment data from local storage
         const getDataFromLocalStorage = (key) => {
             try {
                 const data = localStorage.getItem(`${key}_set_counselor_screening`);
@@ -168,47 +170,39 @@ const submitAssessments = async () => {
         const assistData = getDataFromLocalStorage('ASSIST');
         const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
 
-        // Construct form data
+        // Construct form data to be sent
         const formData = new FormData();
-        formData.append('userId', userId);
+        formData.append('userId', patientUserId);  // Append the patient user ID
+        formData.append('rescreened_by', counselorUserId);  // Append the counselor ID as 'rescreened_by'
         formData.append('gadData', JSON.stringify(gadData));
         formData.append('phqData', JSON.stringify(phqData));
         formData.append('aceData', JSON.stringify(aceData));
 
-        // Calculate risk severity for ASSIST data and append it, even if assistData is empty
         if (assistData) {
             const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
             formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
         } else {
-            formData.append('assistRiskSeverity', JSON.stringify({})); // Send empty object if no data
+            formData.append('assistRiskSeverity', JSON.stringify({}));
         }
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
 
         // Send the form data to the server
         const response = await axios.post(endpoints.rescreenSubmission, formData);
-        console.log(response)
+        console.log(response);
 
-        // Handle success
-        sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
-        clearLocalStorageData();
-
-        // Show success message
+        // Handle successful submission
         Swal.fire({
             icon: 'success',
             title: 'Assessments Submitted Successfully',
             text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            if (ClientUserIdCaseBase.length > 0) {
-                window.location.reload();
-            } else {
-                router.push('/counselor-dashboard');
-            }
+            clearLocalStorageData();
+            router.push('/counselor-dashboard');
         });
     } catch (error) {
         console.error('Error submitting assessments:', error);
-        // Show error message
         Swal.fire({
             icon: 'error',
             title: 'Error',
