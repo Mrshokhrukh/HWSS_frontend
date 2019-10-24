@@ -23,7 +23,7 @@
           </div>
           <div v-else>
             <!-- Additional filters -->
-            <div class="row mb-3 d-none">
+            <div class="row mb-3">
               <div class="col-md-2">
                 <label for="yearFilter" class="form-label">Year</label>
                 <select id="yearFilter" v-model="additionalFilters.year" class="form-select">
@@ -32,24 +32,31 @@
                 </select>
               </div>
               <div class="col-md-2">
-                <label for="genderFilter" class="form-label">Sex</label>
+                <label for="genderFilter" class="form-label">Gender</label>
                 <select id="genderFilter" v-model="additionalFilters.gender" class="form-select">
-                  <option value="">All Sexs</option>
+                  <option value="">All Genders</option>
                   <option v-for="gender in availableGenders" :key="gender" :value="gender">{{ gender }}</option>
                 </select>
               </div>
-              <div class="col-md-2">
+              <div class="col-md-3">
                 <label for="organizationFilter" class="form-label">Organization</label>
-                <select id="organizationFilter" v-model="additionalFilters.organization" class="form-select">
-                  <option value="">All Organizations</option>
-                  <option v-for="org in availableOrganizations" :key="org" :value="org">{{ org }}</option>
-                </select>
+                <div class="searchable-dropdown">
+                  <input type="text" id="organizationFilter" class="form-control" v-model="organizationSearch"
+                    placeholder="Search organization..." @input="filterOrganizations"
+                    @focus="showOrganizationDropdown = true" />
+                  <ul class="dropdown-menu" :class="{ show: showOrganizationDropdown && filteredOrganizations.length }">
+                    <li v-for="org in filteredOrganizations" :key="org">
+                      <a class="dropdown-item" href="#" @click.prevent="selectOrganization(org)">{{ org }}</a>
+                    </li>
+                  </ul>
+                </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-md-2" v-if="isUserClassFilterActive">
                 <label for="userClassFilter" class="form-label">User Class</label>
                 <select id="userClassFilter" v-model="additionalFilters.userClass" class="form-select">
                   <option value="">All User Classes</option>
-                  <option v-for="userClass in availableUserClasses" :key="userClass" :value="userClass">{{ userClass }}
+                  <option v-for="userClass in availableUserClassesForOrganization" :key="userClass" :value="userClass">
+                    {{ userClass }}
                   </option>
                 </select>
               </div>
@@ -74,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import cecdTableLayer from './cecdTableLayer.vue'
 import cecdMonitorGraph from './cecdMonitorGraph.vue'
 
@@ -86,9 +93,9 @@ const props = defineProps({
 });
 
 const dataOptions = [
-  { label: 'Rescreening Count', value: 'rescreened' },
+  { label: 'Screening', value: 'screening' },
   { label: 'Counseling', value: 'counseling' },
-  { label: 'Assessment', value: 'assessment_status' },
+  { label: 'Assessment Status', value: 'assessment_status' },
   { label: 'Referral', value: 'referred' },
   { label: 'Follow-up', value: 'follow_up' },
   { label: 'All', value: 'all' }
@@ -104,75 +111,165 @@ const additionalFilters = ref({
   userClass: ''
 })
 
-const availableYears = computed(() => [...new Set(props.filteredData.map(item => {
-  const date = item.service_and_treatment?.date;
-  return date ? new Date(date).getFullYear() : null;
-}).filter(Boolean))].sort())
+// Organization search functionality
+const organizationSearch = ref('')
+const showOrganizationDropdown = ref(false)
+const filteredOrganizations = ref([])
 
-const availableGenders = computed(() => [...new Set(props.filteredData.map(item => item.user?.fields?.gender).filter(Boolean))])
+// Computed properties for available filter options
+const availableYears = computed(() => {
+  const years = new Set(props.filteredData.map(item =>
+    item.date ? new Date(item.date).getFullYear() : null
+  ).filter(Boolean));
+  return Array.from(years).sort();
+})
 
-const availableOrganizations = computed(() => [...new Set(props.filteredData.map(item => item.agency_name).filter(Boolean))])
+const availableGenders = computed(() => {
+  const genders = new Set(props.filteredData.map(item =>
+    item.user?.gender
+  ).filter(Boolean));
+  return Array.from(genders);
+})
 
-const availableUserClasses = computed(() => [...new Set(props.filteredData.map(item => item.user_agency?.fields?.user_class).filter(Boolean))])
+const availableOrganizations = computed(() => {
+  const organizations = new Set(props.filteredData.map(item =>
+    item.user?.agency_details?.agency?.agency_name
+  ).filter(Boolean));
+  return Array.from(organizations).sort();
+})
 
 const availableEmployment = computed(() => {
-  const employmentSet = new Set(props.filteredData.map(item => item.user_agency?.fields?.user_role_agency).filter(Boolean));
-  return Array.from(employmentSet).sort();
+  const roles = new Set(props.filteredData.map(item =>
+    item.user?.role
+  ).filter(Boolean));
+  return Array.from(roles).sort();
 })
 
+const isUserClassFilterActive = computed(() => {
+  const org = additionalFilters.value.organization.toLowerCase();
+  return org.includes('school') || org.includes('education');
+})
+
+const availableUserClassesForOrganization = computed(() => {
+  if (!additionalFilters.value.organization) return [];
+
+  const classes = new Set(props.filteredData
+    .filter(item => item.user?.agency_details?.agency?.agency_name === additionalFilters.value.organization)
+    .map(item => item.user?.agency_details?.user_class)
+    .filter(Boolean));
+  return Array.from(classes).sort();
+})
+
+// Final filtered data based on all filters
 const finalFilteredData = computed(() => {
   return props.filteredData.filter(item => {
-    const itemYear = item.service_and_treatment?.date ? new Date(item.service_and_treatment.date).getFullYear() : null;
+    const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+    const itemGender = item.user?.gender;
+    const itemOrg = item.user?.agency_details?.agency?.agency_name;
+    const itemClass = item.user?.agency_details?.user_class;
+    const itemRole = item.user?.role;
+
     return (
       (additionalFilters.value.year === '' || itemYear === parseInt(additionalFilters.value.year)) &&
-      (additionalFilters.value.gender === '' || item.user?.fields?.gender === additionalFilters.value.gender) &&
-      (additionalFilters.value.organization === '' || item.agency_name === additionalFilters.value.organization) &&
-      (additionalFilters.value.userClass === '' || item.user_agency?.fields?.user_class === additionalFilters.value.userClass) &&
-      (additionalFilters.value.employment === '' || item.user_agency?.fields?.user_role_agency === additionalFilters.value.employment)
-    )
-  })
+      (additionalFilters.value.gender === '' || itemGender === additionalFilters.value.gender) &&
+      (additionalFilters.value.organization === '' || itemOrg === additionalFilters.value.organization) &&
+      (!isUserClassFilterActive.value || additionalFilters.value.userClass === '' || itemClass === additionalFilters.value.userClass) &&
+      (additionalFilters.value.employment === '' || itemRole === additionalFilters.value.employment)
+    );
+  });
 })
 
+// Process data for charts
 const processedChartData = computed(() => {
-  const result = {}
+  const result = {};
 
   if (selectedOption.value && selectedOption.value !== 'all') {
     result[selectedOption.value] = {
       male: {},
       female: {},
       other: {}
-    }
+    };
+
     finalFilteredData.value.forEach((item) => {
-      let value
-      if (selectedOption.value === 'rescreened') {
-        value = item.rescreened ? 'Yes' : 'No'
+      let value;
+      if (selectedOption.value === 'screening') {
+        value = item.screening_data !== "Data not available" ? 'Screened' : 'Not Screened';
       } else {
-        value = item.service_and_treatment?.[selectedOption.value] || 'NA'
+        value = item[selectedOption.value] || 'Not Available';
       }
-      const gender = item.user?.fields?.gender?.toLowerCase() || 'unknown'
-      if (gender === 'male' || gender === 'female' || gender === 'other') {
-        result[selectedOption.value][gender][value] = (result[selectedOption.value][gender][value] || 0) + 1
-      }
-    })
+
+      const gender = item.user?.gender?.toLowerCase() || 'other';
+      result[selectedOption.value][gender][value] = (result[selectedOption.value][gender][value] || 0) + 1;
+    });
   }
 
-  console.log('Processed Chart Data:', JSON.stringify(result, null, 2))
-  return result
+  return result;
 })
 
+// Event handlers
 const handleCheckboxChange = (value) => {
-  selectedOption.value = value
-  showReport.value = false
+  selectedOption.value = value;
+  showReport.value = false;
 }
 
 const generateReport = () => {
-  showReport.value = true
+  showReport.value = true;
 }
 
+const filterOrganizations = () => {
+  filteredOrganizations.value = availableOrganizations.value.filter(org =>
+    org.toLowerCase().includes(organizationSearch.value.toLowerCase())
+  );
+}
+
+const selectOrganization = (org) => {
+  organizationSearch.value = org;
+  additionalFilters.value.organization = org;
+  showOrganizationDropdown.value = false;
+  additionalFilters.value.userClass = '';
+}
+
+// Click outside handler
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.searchable-dropdown')) {
+    showOrganizationDropdown.value = false;
+  }
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  console.log('data bata', finalFilteredData)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+})
+
+// Watchers
 watch(additionalFilters, () => {
   if (showReport.value && selectedOption.value !== 'all') {
-    // The chart will be updated automatically due to the reactivity of processedChartData
+    // Chart will update automatically due to reactivity
   }
-}, { deep: true })
+}, { deep: true });
 
+watch(() => additionalFilters.value.organization, (newValue) => {
+  organizationSearch.value = newValue;
+});
+
+watch(organizationSearch, (newValue) => {
+  additionalFilters.value.organization = newValue;
+});
 </script>
+
+<style scoped>
+.searchable-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
+</style>

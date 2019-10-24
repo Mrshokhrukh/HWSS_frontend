@@ -1,6 +1,6 @@
 <template>
   <div class="status-container">
-    <h3 class="status-title">Current Status in Bhutan</h3>
+    <h3 class="status-title">Current Status in The Organization</h3>
     <div class="status-cards">
       <div v-for="(status, index) in statuses" :key="index" class="status-card">
         <div class="card-content">
@@ -19,9 +19,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useDashboardStore } from '@/stores/dashboardStore';
+import { inject } from 'vue';
 
-const dashboardStore = useDashboardStore();
+// Inject the data instead of using store
+const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 
 const formatNumber = (num) => {
   if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
@@ -31,15 +32,21 @@ const formatNumber = (num) => {
 };
 
 const totalOngoingCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "On Going").length
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "On Going"
+  ).length || 0
 );
 
 const totalClosedCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Closed").length
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "Case Closed"
+  ).length || 0
 );
 
 const totalDiscontinueCase = computed(() =>
-  dashboardStore.filteredData.filter(item => item.service_and_treatment?.case_status === "Case Discontinue").length
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "Case Discontinue"
+  ).length || 0
 );
 
 const statuses = computed(() => [
@@ -47,12 +54,6 @@ const statuses = computed(() => [
   { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
   { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
 ]);
-
-onMounted(() => {
-  if (dashboardStore.reportData.length === 0) {
-    dashboardStore.fetchReportData();
-  }
-});
 </script>
 
 <style scoped>

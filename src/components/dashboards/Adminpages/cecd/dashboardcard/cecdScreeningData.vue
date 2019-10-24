@@ -1,23 +1,23 @@
 <template>
-  <div class="screening-container">
-    <h3 class="screening-title">Screening Data</h3>
-    <div class="screening-tables">
-      <div class="screening-table">
-        <h5 class="table-title">Total Screened</h5>
-        <DataTable :value="table1Data" :paginator="false" class="p-datatable-sm" resizableColumns
-          columnResizeMode="expand" :scrollable="true" scrollHeight="400px">
-          <Column field="header" header="" :headerStyle="headerStyle" :bodyStyle="bodyStyle"></Column>
-          <Column field="male" header="Male" :headerStyle="headerStyle" :bodyStyle="bodyStyle"></Column>
-          <Column field="female" header="Female" :headerStyle="headerStyle" :bodyStyle="bodyStyle"></Column>
+  <div class="screening-data-container">
+    <h2 class="main-title">Screening Data</h2>
+    <div class="cards-container">
+      <div class="data-card total-screened">
+        <h3 class="card-title">Total Screened</h3>
+        <DataTable :value="totalScreenedData" :paginator="false" class="custom-datatable" resizableColumns
+          columnResizeMode="expand">
+          <Column field="header" header=""></Column>
+          <Column field="male" header="Male"></Column>
+          <Column field="female" header="Female"></Column>
         </DataTable>
       </div>
-      <div class="screening-table">
-        <h5 class="table-title">Weekly Screened</h5>
-        <DataTable :value="table2Data" :paginator="false" class="p-datatable-sm" resizableColumns
-          columnResizeMode="expand" :scrollable="true" scrollHeight="400px">
-          <Column field="header" header="" :headerStyle="headerStyle" :bodyStyle="bodyStyle"></Column>
-          <Column field="male" header="Male" :headerStyle="headerStyle" :bodyStyle="bodyStyle"></Column>
-          <Column field="female" header="Female" :headerStyle="headerStyle" :bodyStyle="bodyStyle"></Column>
+      <div class="data-card weekly-screened">
+        <h3 class="card-title">Weekly Screened</h3>
+        <DataTable :value="weeklyScreenedData" :paginator="false" class="custom-datatable" resizableColumns
+          columnResizeMode="expand">
+          <Column field="header" header=""></Column>
+          <Column field="male" header="Male"></Column>
+          <Column field="female" header="Female"></Column>
         </DataTable>
       </div>
     </div>
@@ -25,133 +25,189 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
-const reportData = ref(JSON.parse(sessionStorage.getItem('reportData')) || []);
+// Inject the service and treatment data
+const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 
-const Malefilter = ref([]);
-const Femalefilter = ref([]);
-const total_male = ref(0);
-const total_female = ref(0);
+// Helper function to check valid screening data
+const hasValidScreeningData = (item) => {
+  return item.screening_data && typeof item.screening_data === 'object' &&
+    (item.screening_data.id ||
+      item.screening_data.gad_data ||
+      item.screening_data.phq_data ||
+      item.screening_data.ace_data);
+};
 
-onMounted(() => {
-  Malefilter.value = reportData.value.filter(
-    (item) => item.user?.fields?.gender === 'Male'
-  );
-  total_male.value = Malefilter.value.length;
+// Computed values for gender counts with screening data
+const genderCounts = computed(() => {
+  if (!serviceAndTreatmentData.value) return { male: 0, female: 0, other: 0 };
 
-  Femalefilter.value = reportData.value.filter(
-    (item) => item.user?.fields?.gender === 'Female'
-  );
-  total_female.value = Femalefilter.value.length;
+  return serviceAndTreatmentData.value.reduce((acc, item) => {
+    if (hasValidScreeningData(item) && item.user?.gender) {
+      const gender = item.user.gender.toLowerCase();
+      if (gender === 'male') acc.male++;
+      else if (gender === 'female') acc.female++;
+      else acc.other++;
+    }
+    return acc;
+  }, { male: 0, female: 0, other: 0 });
 });
 
-const table1Data = ref([
-  { header: 'Total New Entry', male: total_male.value, female: total_female.value },
-  { header: 'Total Old Entry', male: 0, female: 0 },
-  { header: 'Total Screened', male: 0, female: 0 },
-]);
+// Compute weekly counts
+const weeklyGenderCounts = computed(() => {
+  if (!serviceAndTreatmentData.value) return { male: 0, female: 0, other: 0 };
 
-const table2Data = ref([
-  { header: 'Total New Entry', male: 0, female: 0 },
-  { header: 'Total Old Entry', male: 0, female: 0 },
-  { header: 'Total Screened', male: 0, female: 0 },
-]);
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-watch([total_male, total_female], () => {
-  table1Data.value[0].male = total_male.value;
-  table1Data.value[0].female = total_female.value;
-
-  table1Data.value[2].male = table1Data.value[0].male + table1Data.value[1].male;
-  table1Data.value[2].female = table1Data.value[0].female + table1Data.value[1].female;
-
-  table1Data.value = [...table1Data.value];
-  table2Data.value = [...table2Data.value];
+  return serviceAndTreatmentData.value.reduce((acc, item) => {
+    const itemDate = new Date(item.date);
+    if (hasValidScreeningData(item) &&
+      !isNaN(itemDate) &&
+      itemDate >= oneWeekAgo &&
+      item.user?.gender) {
+      const gender = item.user.gender.toLowerCase();
+      if (gender === 'male') acc.male++;
+      else if (gender === 'female') acc.female++;
+      else acc.other++;
+    }
+    return acc;
+  }, { male: 0, female: 0, other: 0 });
 });
 
-const headerStyle = computed(() => ({
-  'background-color': '#2B656F',
-  'color': 'white',
-  'font-weight': 'bold',
-  'text-align': 'center',
-  'padding': '1rem'
-}));
+// Compute data for total screened table
+const totalScreenedData = computed(() => [
+  {
+    header: 'Total New Entry',
+    male: genderCounts.value.male,
+    female: genderCounts.value.female
+  },
+  {
+    header: 'Total Old Entry',
+    male: 0,
+    female: 0
+  },
+  {
+    header: 'Total Screened',
+    male: genderCounts.value.male,
+    female: genderCounts.value.female
+  }
+]);
 
-const bodyStyle = computed(() => ({
-  'text-align': 'center',
-  'padding': '0.75rem'
-}));
+// Compute data for weekly screened table
+const weeklyScreenedData = computed(() => [
+  {
+    header: 'Total New Entry',
+    male: weeklyGenderCounts.value.male,
+    female: weeklyGenderCounts.value.female
+  },
+  {
+    header: 'Total Old Entry',
+    male: 0,
+    female: 0
+  },
+  {
+    header: 'Total Screened',
+    male: weeklyGenderCounts.value.male,
+    female: weeklyGenderCounts.value.female
+  }
+]);
 </script>
 
 <style scoped>
-.screening-container {
-  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
-  border-radius: 20px;
+.screening-data-container {
+  font-family: 'Arial', sans-serif;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.screening-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2B656F;
-  text-align: center;
-  margin-bottom: 2rem;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.screening-tables {
-  display: flex;
-  gap: 2rem;
-  justify-content: space-between;
-}
-
-.screening-table {
-  flex: 1;
-  background: white;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.screening-table:hover {
-  transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-.table-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2B656F;
+.main-title {
+  color: #fff;
   text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cards-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.data-card {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 10px;
+  padding: 1.5rem;
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.data-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-title {
+  color: #2c6975;
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.custom-datatable {
+  background: transparent !important;
+  border: none !important;
+}
+
+:deep(.p-datatable-wrapper) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.p-datatable-table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:deep(.p-datatable-thead > tr > th) {
+  background-color: #2c6975 !important;
+  color: white !important;
+  font-weight: bold !important;
   padding: 1rem;
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-  color: white;
+  text-align: center;
 }
 
-:deep(.p-datatable) {
-  border-radius: 0 0 15px 15px;
+:deep(.p-datatable-tbody > tr > td) {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-  background-color: #2B656F;
-  color: white;
+:deep(.p-datatable-tbody > tr:nth-child(even)) {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
-:deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
-  background-color: #f8f9fa;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr:hover) {
-  background-color: #e9ecef;
+:deep(.p-datatable-tbody > tr:hover) {
+  background-color: rgba(44, 105, 117, 0.1);
 }
 
 @media (max-width: 768px) {
-  .screening-tables {
+  .cards-container {
     flex-direction: column;
+  }
+
+  .data-card {
+    min-width: 100%;
   }
 }
 </style>
