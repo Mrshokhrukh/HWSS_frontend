@@ -78,12 +78,11 @@ const selectMenu = (menu) => {
 
 // Initialize selected menu on component mount
 onMounted(() => {
-    const savedMenus = JSON.parse(localStorage.getItem('selectedTools'));
-    if (savedMenus) {
-        menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
-        selectedMenu.value = menus.value[0];
-    } else {
-        // console.log('No menu saved');
+    const savedTools = JSON.parse(localStorage.getItem('selectedTools'));
+    if (savedTools && savedTools.length) {
+        menus.value = savedTools.map(tool => ({ ...tool, completed: false }));  // Initialize as not completed
+        selectedMenu.value = menus.value[0];  // Start with the first tool
+        currentScreeningComponent.value = componentMap[selectedMenu.value.name];  // Load the first component
     }
 });
 
@@ -92,16 +91,27 @@ watch(selectedMenu, (newValue) => {
     localStorage.setItem('selectedMenu', JSON.stringify([newValue]));
 });
 
-const handleChangeComponent = (nextMenuName) => {
-    const selectedToolsStr = localStorage.getItem('selectedTools');
-    if (!selectedToolsStr) return console.error('selectedTools is not available in local storage');
+const handleChangeComponent = (currentMenuName) => {
+    const currentIndex = menus.value.findIndex(menu => menu.name === currentMenuName);
 
-    const selectedTools = JSON.parse(selectedToolsStr);
-    const index = selectedTools.findIndex(tool => tool.name === nextMenuName);
+    if (currentIndex === -1) {
+        console.error(`Could not find the menu for "${currentMenuName}" in menus`);
+        return;
+    }
 
-    let nextToolName;
-    if (index !== -1 && index < selectedTools.length - 1) nextToolName = selectedTools[index + 1].name;
-    else {
+    // Mark the current menu as completed
+    menus.value[currentIndex].completed = true;
+
+    // Update localStorage with the new state of the menus
+    localStorage.setItem('selectedMenu', JSON.stringify(menus.value));
+
+    // Check if there is a next tool
+    if (currentIndex < menus.value.length - 1) {
+        const nextTool = menus.value[currentIndex + 1];
+
+        selectedMenu.value = nextTool;
+        currentScreeningComponent.value = componentMap[nextTool.name];
+    } else {
         Swal.fire({
             icon: 'question',
             title: 'All tests have been completed',
@@ -111,28 +121,12 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
-                // console.log('this function is read');
                 submitAssessments();
+            } else {
+                console.log('User cancelled submission.');
             }
         });
-        return;
     }
-
-    if (!componentMap[nextToolName]) return console.error(`Component corresponding to ${nextToolName} is not available`);
-
-    // Mark the previous menu as completed
-    if (selectedMenu.value) {
-        const completedMenuIndex = menus.value.findIndex(menu => menu.id === selectedMenu.value.id);
-        if (completedMenuIndex !== -1) {
-            menus.value[completedMenuIndex].completed = true;
-        }
-    }
-
-    // Update selectedMenu to the next menu
-    const nextMenu = menus.value.find(menu => menu.name === nextToolName);
-    selectedMenu.value = nextMenu;
-
-    currentScreeningComponent.value = componentMap[nextToolName];
 };
 
 
@@ -175,6 +169,7 @@ const submitAssessments = async () => {
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
         const response = await axios.post(endpoints.caseScreenSubmission, formData);
+        console.log(response)
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
 
         clearLocalStorageData();

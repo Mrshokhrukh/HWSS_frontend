@@ -86,7 +86,7 @@ onMounted(async () => {
   if (currentComponent.value !== StudentDashboard && currentComponent.value !== PublicDashboard) {
     try {
       await axios.get(endpoints.getClusterRecords);
-      // No action required with the response
+      await axios.get(endpoints.newServiceAndTreatment);
     } catch (error) {
       console.error('Error fetching cluster records:', error);
     }

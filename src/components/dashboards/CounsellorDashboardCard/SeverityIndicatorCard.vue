@@ -1,18 +1,23 @@
 <template>
   <div class="card text-center h-100 shadow-sm">
     <div class="card-header bg-gradient-dark">
-      <h4 class="severity-title text-white mb-0">{{ props.cardTitle }}</h4>
+      <h4 class="severity-title text-white mb-0">{{ cardTitle }}</h4>
     </div>
     <div class="card-body p-4">
-      <div class="row g-3">
-        <div :class="columnClass" v-for="(buttonRow, index) in buttonRows" :key="index">
-          <div v-for="(data, dataIndex) in buttonRow" :key="dataIndex" class="mb-3">
+      <div v-if="isLoading" class="text-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div v-else class="row g-3">
+        <div class="col-12">
+          <div v-for="(data, index) in processedIndicators" :key="index" class="mb-3">
             <router-link
-              :to="`/counselor-dashboard/counselor-reports?flag=${data.text.toLowerCase()}&measurement=${selectedMeasurement}`"
-              class="card bg-hwss hover-effect" @click="handleButtonClick(data)">
+              :to="`/counselor-dashboard/counselor-reports?severity=${data.text.toLowerCase()}&type=${cardTitle.toLowerCase()}`"
+              class="card bg-hwss hover-effect">
               <div class="card-body d-flex align-items-center justify-content-between p-3">
                 <div class="d-flex align-items-center">
-                  <div class="color-dot" :style="{ background: determineFlag(data.flag) }"></div>
+                  <div class="color-dot" :style="{ background: data.color }"></div>
                   <h5 class="card-title mb-0 text-capitalize">{{ data.text }}</h5>
                 </div>
                 <div class="d-flex align-items-center">
@@ -31,144 +36,138 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
-  cardTitle: String
+  cardTitle: {
+    type: String,
+    required: true
+  },
+  filteredData: {
+    type: Array,
+    required: true
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  }
 });
 
-// Inject the filtered data from the parent component
-const filteredData = inject('filteredData');
+const processedIndicators = computed(() => {
+  const counts = new Map();
 
-const maxButtonsInRow = 3;
-const selectedMeasurement = ref('');
+  props.filteredData.forEach(entry => {
+    let measurement = '';
+    const cardTitleLower = props.cardTitle?.trim().toLowerCase();
+    const screeningData = entry.screening_data || {};
 
-const buttonData = computed(() => {
-  const cardTitle = props.cardTitle.toLowerCase();
-  let fieldToExtract = '';
+    switch (cardTitleLower) {
+      case 'suicidal behavior': {
+        try {
+          // Check if phq_data is already an object or needs parsing
+          const phqDataString = screeningData.phq_data;
+          const phqData = typeof phqDataString === 'string' 
+            ? JSON.parse(phqDataString) 
+            : phqDataString;
+            
+          const suicidalQuestion = phqData.responses?.[6];
+          if (suicidalQuestion?.selectedOption) {
+            measurement = suicidalQuestion.selectedOption;
+          } else {
+            console.warn(`No selectedOption for suicidal question in entry ${entry.id}`);
+          }
+        } catch (e) {
+          console.error(`Error parsing phq_data for entry ${entry.id}:`, e);
+        }
+        break;
+      }
 
-  switch (cardTitle) {
-    case 'suicidal behavior':
-      fieldToExtract = 'suicidal_measurement';
-      break;
-    case 'depression':
-      fieldToExtract = 'phq_measurement';
-      break;
-    case 'anxiety':
-      fieldToExtract = 'gad_measurement';
-      break;
-    case 'ace':
-      fieldToExtract = 'ace_measurement';
-      break;
-    case 'assist':
-      fieldToExtract = 'assist';
-      break;
-    default:
-      break;
-  }
+      case 'depression': {
+        measurement = screeningData.phq_interpretation || '';
+        break;
+      }
 
-  const buttonDataMap = new Map();
+      case 'anxiety': {
+        measurement = screeningData.gad_interpretation || '';
+        break;
+      }
 
-  filteredData.value.forEach(user => {
-    let measurement;
-    if (cardTitle === 'assist') {
-      measurement = user.measurementAssist;
-    } else {
-      measurement = user.measurement;
+      case 'ace': {
+        measurement = screeningData.ace_interpretation || '';
+        break;
+      }
+
+      default:
+        console.warn(`Unhandled cardTitle: ${props.cardTitle}`);
     }
 
     if (measurement) {
-      if (cardTitle === 'assist') {
-        const hasRisk = Object.keys(measurement).some(key =>
-          key.includes('_measurement') && measurement[key] !== 'no risk' && measurement[key] !== null
-        );
-        const value = hasRisk ? 'At Risk' : 'No Risk';
-        buttonDataMap.set(value, (buttonDataMap.get(value) || 0) + 1);
-      } else {
-        const fieldValue = measurement[fieldToExtract];
-        if (fieldValue !== null && fieldValue !== undefined) {
-          buttonDataMap.set(fieldValue, (buttonDataMap.get(fieldValue) || 0) + 1);
-        }
-      }
+      counts.set(measurement, (counts.get(measurement) || 0) + 1);
+    } else {
+      console.warn(`No measurement extracted for entry ${entry.id}`);
     }
   });
 
-  const buttons = [];
-  buttonDataMap.forEach((count, value) => {
-    buttons.push({
-      flag: determineFlag(value),
-      text: value,
-      icon: determineIcon(value),
-      count: count
-    });
-  });
-
-  buttons.sort((a, b) => a.text.localeCompare(b.text));
-  return buttons;
+  return Array.from(counts.entries())
+    .map(([text, count]) => ({
+      text,
+      count,
+      color: getSeverityColor(text),
+      icon: getSeverityIcon(text)
+    }))
+    .sort((a, b) => getSeverityOrder(a.text) - getSeverityOrder(b.text));
 });
 
-const buttonRows = computed(() => {
-  const rows = [];
-  for (let i = 0; i < buttonData.value.length; i += maxButtonsInRow) {
-    rows.push(buttonData.value.slice(i, i + maxButtonsInRow));
-  }
-  return rows;
-});
 
-const columnClass = computed(() => {
-  return buttonRows.value.length <= 1 ? 'col-12' : 'col-6';
-});
+const getSeverityColor = (value) => {
+  const lowerValue = value.toLowerCase();
+  const colorMap = {
+    'severe': '#dc3545',
+    'moderately severe': '#ff4d4d',
+    'moderate': '#ffc107',
+    'mild': '#0dcaf0',
+    'minimal': '#198754',
+    'nearly everyday': '#dc3545',
+    'more than half the days': '#ffc107',
+    'several days': '#0dcaf0',
+    'not at all': '#198754'
+  };
 
-const determineFlag = (value) => {
-  if (value === 'nearly everyday' || value === 'red' || value === 'severe' || value === 'At Risk') return 'red';
-  else if (value === 'several days' || value === 'yellow' || value === 'moderate') return 'yellow';
-  else if (value === 'moderately severe' || value === 'orange') return 'orange';
-  else if (value === 'mild' || value === 'blue') return 'skyblue';
-  else if (value === 'minimal' || value === 'green' || value === 'No Risk') return 'green';
-  else return 'blue';
+  return colorMap[lowerValue] || '#6c757d';
 };
 
-const determineIcon = (buttonText) => {
-  if (buttonText === 'nearly everyday' || buttonText === 'severe' || buttonText === 'At Risk') return 'fas fa-biohazard';
-  else if (buttonText === 'several days' || buttonText === 'moderately severe') return 'fas fa-radiation';
-  else if (buttonText === 'moderate') return 'fas fa-exclamation-triangle';
-  else if (buttonText === 'mild') return 'fas fa-exclamation-circle';
-  else if (buttonText === 'minimal' || buttonText === 'No Risk') return 'fas fa-thumbs-up';
-  else return 'fas fa-ban';
+const getSeverityIcon = (value) => {
+  const lowerValue = value.toLowerCase();
+  const iconMap = {
+    'severe': 'fas fa-exclamation-triangle',
+    'moderately severe': 'fas fa-exclamation-triangle',
+    'moderate': 'fas fa-exclamation-circle',
+    'mild': 'fas fa-info-circle',
+    'minimal': 'fas fa-check-circle',
+    'nearly everyday': 'fas fa-exclamation-triangle',
+    'more than half the days': 'fas fa-exclamation-circle',
+    'several days': 'fas fa-info-circle',
+    'not at all': 'fas fa-check-circle'
+  };
+
+  return iconMap[lowerValue] || 'fas fa-question-circle';
 };
 
-const selectedButtonData = ref(null);
+const getSeverityOrder = (value) => {
+  const orderMap = {
+    'severe': 1,
+    'moderately severe': 2,
+    'moderate': 3,
+    'mild': 4,
+    'minimal': 5,
+    'nearly everyday': 1,
+    'more than half the days': 2,
+    'several days': 3,
+    'not at all': 4
+  };
 
-const handleButtonClick = (data) => {
-  selectedButtonData.value = data;
-  selectedMeasurement.value = determineMeasurement(props.cardTitle);
+  return orderMap[value.toLowerCase()] || 99;
 };
-
-const determineMeasurement = (cardTitle) => {
-  let measurement = '';
-  switch (cardTitle.toLowerCase()) {
-    case 'suicidal behavior':
-      measurement = 'suicidal_measurement';
-      break;
-    case 'depression':
-      measurement = 'phq_measurement';
-      break;
-    case 'anxiety':
-      measurement = 'gad_measurement';
-      break;
-    case 'ace':
-      measurement = 'ace_measurement';
-      break;
-    case 'assist':
-      measurement = 'assist';
-      break;
-    default:
-      console.warn('No matching measurement found for card title:', cardTitle);
-      break;
-  }
-  return measurement;
-};
-
 </script>
 
 <style scoped>
@@ -225,12 +224,11 @@ i {
   font-size: 1.2rem;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .card-body {
     padding: 1rem;
   }
-  
+
   .card-title {
     font-size: 0.9rem;
   }

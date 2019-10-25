@@ -1,365 +1,439 @@
 <template>
   <div class="card-container">
     <div class="card p-4">
+      <!-- Search and Report Type Selection -->
       <div class="p-field p-grid row mb-4">
         <div class="col-12 col-md-4 mb-2 mb-md-0">
           <span class="p-input-icon-left w-100">
             <InputText v-model="globalFilter" placeholder="Search Reports..." class="w-100" />
           </span>
         </div>
+        <!-- Dropdown for school counselors to select report type -->
         <div v-if="isSchoolCounselor" class="col-12 col-md-4 mb-2 mb-md-0">
-          <Dropdown v-model="selectedOption" :options="options" placeholder="Select Report Type" class="w-100" />
+          <Dropdown v-model="selectedOption" :options="options" optionLabel="label" optionValue="value"
+            placeholder="Select Report Type" class="w-100" />
         </div>
         <div class="col-12 col-md-4">
           <Button label="Bulk Download All" @click="bulkDownload" class="btn hwss-btn w-100" icon="pi pi-download" />
         </div>
       </div>
 
-      <!-- General Report Table -->
-      <div v-if="selectedOption === 'general Report' || !isSchoolCounselor" class="table-container">
-        <DataTable :value="reportData" :paginator="true" :rows="10" :resizableColumns="true"
-          sortField="suicidal_measurement" :sortOrder="-1" class="custom-table">
+      <!-- General Report Table (for school/clinical counselors) -->
+      <div v-if="(selectedOption === 'generalReport' && isSchoolCounselor) || (selectedOption === 'generalReport' && isClinicalCounselor)" class="table-container">
+        <DataTable :value="reportData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
+          :sortOrder="1" class="custom-table">
+
+          <!-- Display user-related columns -->
           <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
             :sortable="true" :style="field.width ? { width: field.width } : {}">
             <template #body="{ data }">
-              <Tag class="w-100" v-if="field.taggable" :value="data[field.key]"
-                :severity="severityClass(data[field.key])" />
-              <span v-else>{{ data[field.key] }}</span>
+              <span>{{ data[field.key] || 'None' }}</span>
             </template>
           </Column>
+
+          <!-- Display substances with separate columns and severityClass for tags -->
+          <Column field="tobacco_flag" header="Tobacco" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.tobacco_flag || 'None'" :severity="severityClass(data.tobacco_flag)" />
+            </template>
+          </Column>
+          <Column field="alcohol_flag" header="Alcohol" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.alcohol_flag || 'None'" :severity="severityClass(data.alcohol_flag)" />
+            </template>
+          </Column>
+          <Column field="cannabis_flag" header="Cannabis" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.cannabis_flag || 'None'" :severity="severityClass(data.cannabis_flag)" />
+            </template>
+          </Column>
+          <Column field="cocaine_flag" header="Cocaine" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.cocaine_flag || 'None'" :severity="severityClass(data.cocaine_flag)" />
+            </template>
+          </Column>
+          <Column field="amphetamine_flag" header="Amphetamines" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.amphetamine_flag || 'None'"
+                :severity="severityClass(data.amphetamine_flag)" />
+            </template>
+          </Column>
+          <Column field="inhalants_flag" header="Inhalants" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.inhalants_flag || 'None'"
+                :severity="severityClass(data.inhalants_flag)" />
+            </template>
+          </Column>
+          <Column field="sedatives_flag" header="Sedatives" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.sedatives_flag || 'None'"
+                :severity="severityClass(data.sedatives_flag)" />
+            </template>
+          </Column>
+          <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.hallucinogens_flag || 'None'"
+                :severity="severityClass(data.hallucinogens_flag)" />
+            </template>
+          </Column>
+          <Column field="opioids_flag" header="Opioids" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.opioids_flag || 'None'" :severity="severityClass(data.opioids_flag)" />
+            </template>
+          </Column>
+
+          <Column v-for="field in tableServiceFields" :key="field.key" :field="field.key" :header="field.header"
+            :sortable="true" :style="field.width ? { width: field.width } : {}">
+            <template #body="{ data }">
+              <span>{{ data[field.key] || 'None' }}</span>
+            </template>
+          </Column>
+
         </DataTable>
+
+        <!-- Display message if no reports found -->
         <div v-if="isSchoolCounselor && reportData.length === 0">
           <p>No reports found for your agency.</p>
         </div>
       </div>
 
       <!-- School Environment Report Table -->
-      <div v-else-if="selectedOption === 'school' && isSchoolCounselor" class="table-container">
+      <div v-if="selectedOption === 'school' && isSchoolCounselor" class="table-container">
         <SchoolEnvironmentTable />
+      </div>
+
+
+      <!-- Gyalsung Report Table (for gyalsung counselors) -->
+      <div v-if="isGyalsungCounselor" class="table-container">
+        <DataTable :value="gyalsungData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
+          :sortOrder="1" class="custom-table">
+
+          <!-- Display user-related columns for Gyalsung reports -->
+          <Column v-for="field in gyalsungTableFields" :key="field.key" :field="field.key" :header="field.header"
+            :sortable="true" :style="field.width ? { width: field.width } : {}">
+            <template #body="{ data }">
+              <span>{{ data[field.key] || 'None' }}</span>
+            </template>
+          </Column>
+
+          <!-- Substances Columns for Gyalsung reports with severityClass for tags -->
+          <Column field="tobacco_flag" header="Tobacco" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.tobacco_flag || 'None'" :severity="severityClass(data.tobacco_flag)" />
+            </template>
+          </Column>
+          <Column field="alcohol_flag" header="Alcohol" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.alcohol_flag || 'None'" :severity="severityClass(data.alcohol_flag)" />
+            </template>
+          </Column>
+          <Column field="cannabis_flag" header="Cannabis" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.cannabis_flag || 'None'" :severity="severityClass(data.cannabis_flag)" />
+            </template>
+          </Column>
+          <Column field="cocaine_flag" header="Cocaine" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.cocaine_flag || 'None'" :severity="severityClass(data.cocaine_flag)" />
+            </template>
+          </Column>
+          <Column field="amphetamine_flag" header="Amphetamines" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.amphetamine_flag || 'None'"
+                :severity="severityClass(data.amphetamine_flag)" />
+            </template>
+          </Column>
+          <Column field="inhalants_flag" header="Inhalants" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.inhalants_flag || 'None'"
+                :severity="severityClass(data.inhalants_flag)" />
+            </template>
+          </Column>
+          <Column field="sedatives_flag" header="Sedatives" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.sedatives_flag || 'None'"
+                :severity="severityClass(data.sedatives_flag)" />
+            </template>
+          </Column>
+          <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.hallucinogens_flag || 'None'"
+                :severity="severityClass(data.hallucinogens_flag)" />
+            </template>
+          </Column>
+          <Column field="opioids_flag" header="Opioids" :sortable="true">
+            <template #body="{ data }">
+              <Tag class="w-100" :value="data.opioids_flag || 'None'" :severity="severityClass(data.opioids_flag)" />
+            </template>
+          </Column>
+
+        </DataTable>
+
+        <!-- Display message if no reports found -->
+        <div v-if="gyalsungData.length === 0">
+          <p>No reports found for gyalsung counselors.</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
+import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
 import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue';
 import { saveAs } from 'file-saver';
 import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
-import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
-import 'jspdf-autotable'; 
+import 'jspdf-autotable';
 
 // Data refs
 const reportData = ref([]);
+const gyalsungData = ref([]);
 const globalFilter = ref('');
 const isClinicalCounselor = ref(false);
 const isGyalsungCounselor = ref(false);
 const isSchoolCounselor = ref(false);
-
-// Option selectors
-const selectedOption = ref('general Report');
-const options = ['general Report', 'school'];
-
-const tableFields = [
-  { key: 'date', header: 'Date' },
-  { key: 'username', header: 'Name' },
-  { key: 'age', header: 'Age' },
-  { key: 'sex', header: 'Sex' },
-  { key: 'present_dzongkhag', header: 'Present Dzongkhag' },
-  { key: 'present_gewog', header: 'Present Gewog' },
-  { key: 'present_village', header: 'Present Village' },
-  { key: 'user_code', header: 'User Code' },
-  { key: 'parent_occupation', header: 'Parent Occupation' },
-  { key: 'guardian_name', header: 'Guardian Name' },
-  { key: 'parent_status', header: 'Parent Status' },
-  { key: 'current_living_with', header: 'Current Living With' },
-  { key: 'user_role_agency', header: 'User Role Agency' },
-  { key: 'user_class', header: 'User Class' },
-  { key: 'user_stream', header: 'User Stream' },
-  { key: 'user_sub_class', header: 'User Sub Class' },
-  { key: 'past_diagnosis', header: 'Past Diagnosis' },
-  { key: 'suicidal_measurement', header: 'Suicidal Measurement', taggable: true },
-  { key: 'gad_measurement', header: 'GAD Measurement', taggable: true },
-  { key: 'phq_measurement', header: 'PHQ Measurement', taggable: true },
-  { key: 'ace_measurement', header: 'ACE Measurement', taggable: true },
-  { key: 'alcoholic_measurement', header: 'Alcoholic Measurement', taggable: true },
-  { key: 'tobacco_measurement', header: 'Tobacco Measurement', taggable: true },
-  { key: 'cannabis_measurement', header: 'Cannabis Measurement', taggable: true },
-  { key: 'cocaine_measurement', header: 'Cocaine Measurement', taggable: true },
-  { key: 'amphetamine_measurement', header: 'Amphetamine Measurement', taggable: true },
-  { key: 'inhalants_measurement', header: 'Inhalants Measurement', taggable: true },
-  { key: 'sedatives_measurement', header: 'Sedatives Measurement', taggable: true },
-  { key: 'hallucinogens_measurement', header: 'Hallucinogens Measurement', taggable: true },
-  { key: 'opioids_measurement', header: 'Opioids Measurement', taggable: true },
-  { key: 'injection_measurement', header: 'Injection Measurement', taggable: true },
-  { key: 'other_measurement', header: 'Other Measurement', taggable: true },
-  { key: 'other_name', header: 'Other Name' },
-  { key: 'assessment_status', header: 'Assessment Status' },
-  { key: 'case_status', header: 'Case Status' },
-  { key: 'counseling', header: 'Counseling' },
-  { key: 'follow_up', header: 'Follow Up' },
-  { key: 'comments', header: 'Comments' },
-  { key: 'referral_status', header: 'Referral Status' },
-  { key: 'referral_remarks', header: 'Referral Remarks' },
+const selectedOption = ref('generalReport');
+const options = [
+  { label: 'General Report', value: 'generalReport' },
+  { label: 'School', value: 'school' }
 ];
 
-// Fetch user details from localStorage
-const getUserDetailsFromStorage = () => {
-  const userDetailsString = localStorage.getItem('userDetailsStore');
+const tableFields = [
+  { key: 'username', header: 'Username' },
+  { key: 'full_name', header: 'Full Name' },
+  { key: 'gender', header: 'Gender' },
+  { key: 'dob', header: 'Date of Birth' },
+  { key: 'identity_number', header: 'Identity Number' },
+  { key: 'mobile_number', header: 'Mobile Number' },
+  { key: 'ps_add_village', header: 'Present Village' },
+  { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
+  { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
+  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true },
+  { key: 'ace_score', header: 'ACE Score', taggable: true }
+];
 
-  if (userDetailsString) {
-    const userDetails = JSON.parse(userDetailsString);
-    const {
-      user: { role = 'Unknown Role' } = {},
-      agency: { agencyName = 'Unknown Agency', presentDzongkhag = '' } = {}
-    } = userDetails;
+const tableServiceFields = [
+  { key: 'assessment_status', header: 'Assessment Status' },
+  { key: 'case_status', header: 'Case Status' },
+  { key: 'counseling', header: 'Counseling Status' },
+  { key: 'follow_up', header: 'Follow Up Status' },
+  { key: 'referred', header: 'Referral Status' },
+];
 
-    const roleFlags = {
-      school_counselor: () => (isSchoolCounselor.value = true),
-      clinical_counselor: () => (isClinicalCounselor.value = true),
-      gyalsung_counselor: () => (isGyalsungCounselor.value = true),
-    };
+const gyalsungTableFields = [
+  { key: 'username', header: 'Username' },
+  { key: 'full_name', header: 'Full Name' },
+  { key: 'gender', header: 'Gender' },
+  { key: 'dob', header: 'Date of Birth' },
+  { key: 'identity_number', header: 'Identity Number' },
+  { key: 'mobile_number', header: 'Mobile Number' },
+  { key: 'academy_code', header: 'Academy Code' },
+  { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
+  { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
+  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true }
+];
 
-    if (roleFlags[role]) {
-      roleFlags[role]();
+// Fetch report data from API
+const fetchReportDataFromAPI = async () => {
+  try {
+    const response = await axios.get(endpoints.newServiceAndTreatment);
+    const dataArray = response.data || [];
+    
+    // Extract agencyName from localStorage
+    const userAgencyName = getUserDetailsFromStorage();
+
+    if (isGyalsungCounselor.value) {
+      // Filter gyalsungData by agencyName
+      gyalsungData.value = dataArray
+        .filter(item => item.screening_data && item.user?.active_agency?.agency_name === userAgencyName)
+        .map(transformGyalsungData);
+    } else {
+      // Filter reportData by agencyName
+      reportData.value = dataArray
+        .filter(item => item.user && item.user?.active_agency?.agency_name === userAgencyName)
+        .map(transformData);
     }
-
-    return { userRole: role, agencyName, userDzongkhag: presentDzongkhag };
+  } catch (error) {
+    console.error('Error fetching report data:', error);
   }
-
-  return { userRole: 'Unknown Role', agencyName: 'Unknown Agency', userDzongkhag: '' };
 };
 
-// Step 3: ZIP the files and add password protection
+
+// Transform the main dataset to match the table structure
+const transformData = (item) => {
+  const screeningData = item.screening_data || {};
+  const substances = extractSubstances(screeningData.assist_data || []);
+
+  return {
+    username: item.user?.username || 'None',
+    full_name: `${item.user?.first_name || ''} ${item.user?.middle_name || ''} ${item.user?.last_name || ''}`.trim() || 'None',
+    gender: item.user?.gender || 'None',
+    dob: item.user?.date_of_birth || 'None',
+    identity_number: item.user?.identity_number || 'None',
+    mobile_number: item.user?.mob_number || 'None',
+    ps_add_village: item.user?.ps_add_village || 'None',
+    academy_code: item.user?.academy_code || 'None',
+    phq9_score: screeningData.phq_interpretation || 'None',
+    gad7_score: screeningData.gad_interpretation || 'None',
+    suicidal_score: screeningData.suicidal_score || 'None',
+    ace_score: screeningData.ace_interpretation || 'None',
+    assessment_status: item.assessment_status || 'None',
+    case_status: item.case_status || 'None',
+    counseling: item.counseling || 'None',
+    follow_up: item.follow_up || 'None',
+    referred: item.referred || 'None',
+    ...substances
+  };
+};
+
+// Transform the Gyalsung dataset
+const transformGyalsungData = (item) => {
+  const screeningData = item.screening_data || {};
+  return {
+    username: screeningData.username || 'None',
+    full_name: screeningData.full_name || 'None',
+    gender: screeningData.gender || 'None',
+    dob: screeningData.dob || 'None',
+    identity_number: screeningData.identity_number || 'None',
+    mobile_number: screeningData.mobile_number || 'None',
+    academy_code: screeningData.academy_code || 'None',
+    phq9_score: screeningData.phq9_score || 'None',
+    gad7_score: screeningData.gad7_score || 'None',
+    suicidal_score: screeningData.suicidal_score || 'None'
+  };
+};
+
+const extractSubstances = (assistData) => {
+  const substanceMapping = {
+    "Tobacco products (cigarettes, chewing tobacco etc)": "tobacco_flag",
+    "Alcoholic beverages (beer, wine, spirits, ara etc.)": "alcohol_flag",
+    "Cannabis (marijuana, pot, grass, hash, black etc.)": "cannabis_flag",
+    "Cocaine": "cocaine_flag",
+    "Amphetamine-type stimulants (meth, ecstasy, yebe, diet pills etc.)": "amphetamine_flag",
+    "Inhalants (dendrite, glue, petrol, paint thinner, etc.)": "inhalants_flag",
+    "Sedatives or Sleeping Pills (N-10, diazepam etc.)": "sedatives_flag",
+    "Hallucinogens (LSD, trips, Ketamine, etc.)": "hallucinogens_flag",
+    "Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc.)": "opioids_flag"
+  };
+
+  const result = {};
+
+  assistData.forEach(substance => {
+    const key = substanceMapping[substance.substance__name];
+    if (key) {
+      result[key] = substance.risk_flag || 'None';
+    }
+  });
+
+  return result;
+};
+
+// Bulk download function
 const bulkDownload = async () => {
   try {
     const blobWriter = new BlobWriter("application/zip");
     const zipWriter = new ZipWriter(blobWriter, {
       password: getPassword(),
-      encryptionStrength: 3 
+      encryptionStrength: 3
     });
 
-    // Generate PDF
     const pdfBlob = await generatePDF();
-    if (!(pdfBlob instanceof Blob)) {
-      throw new Error("PDF generation failed");
-    }
-
-    // Generate Excel
     const excelBlob = await generateExcel();
-    if (!(excelBlob instanceof Blob)) {
-      throw new Error("Excel generation failed");
-    }
-
-    // Add PDF to zip
     await zipWriter.add("reports.pdf", new BlobReader(pdfBlob));
-
-    // Add Excel to zip
     await zipWriter.add("reports.xlsx", new BlobReader(excelBlob));
-
     await zipWriter.close();
-    const zipBlob = await blobWriter.getData();
 
-    const currentDate = new Date().toISOString().slice(0, 10);
-    const fileName = `${currentDate}_hwss_report.zip`;
+    const zipBlob = await blobWriter.getData();
+    const fileName = `hwss_report_${new Date().toISOString().slice(0, 10)}.zip`;
+
     saveAs(zipBlob, fileName);
   } catch (error) {
     console.error("Error in bulkDownload:", error);
-    // Handle the error appropriately (e.g., show an error message to the user)
   }
 };
 
-// Ensure these functions return Promises
+// Function to generate PDF
 const generatePDF = async () => {
   const doc = new jsPDF();
   doc.text("Report Data", 10, 10);
+
   const headers = Object.keys(reportData.value[0] || {}).map(key => key.toUpperCase());
   const rows = reportData.value.map(item => headers.map(header => item[header.toLowerCase()]));
+
   doc.autoTable({
     head: [headers],
     body: rows,
   });
+
   return new Promise((resolve) => {
     resolve(doc.output('blob'));
   });
 };
 
+// Function to generate Excel
 const generateExcel = async () => {
   const ws = XLSX.utils.json_to_sheet(reportData.value);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Reports");
 
-  // Generate Excel file as Blob
   const excelArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   return new Blob([excelArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 };
 
-
-// Function to generate password dynamically
+// Function to generate password dynamically for zip
 const getPassword = () => {
   const { username } = JSON.parse(localStorage.getItem('userDetailsStore'))?.user || { username: 'defaultUser' };
   return `${username}@${new Date().getFullYear()}#`;
 };
 
-// Fetch report data from the API and filter based on agency
-const fetchReportDataFromAPI = async () => {
-  try {
-    const { agencyName, userDzongkhag } = getUserDetailsFromStorage();
-    const response = await axios.get(endpoints.getReport);
-    const dataArray = response.data.reporting_model_data || [];
-    const gyalsungDataArray = response.data.gyalsung_user_profiles || [];
+// Determine user role and fetch data accordingly
+const getUserDetailsFromStorage = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+  if (userDetailsString) {
+    const { user: { role }, agency: { agencyName } } = JSON.parse(userDetailsString);
 
-    if (isSchoolCounselor.value) {
-      reportData.value = dataArray
-        .filter(item => item.agency_name === agencyName)
-        .map(transformData);
-    } else if (isClinicalCounselor.value) {
-      reportData.value = dataArray
-        .filter(item => item.user?.fields.ps_add_dzongkhag === userDzongkhag)
-        .map(transformData);
-    } else if (isGyalsungCounselor.value) {
-      reportData.value = gyalsungDataArray.map(transformGyalsungData); 
-    } else {
-      reportData.value = dataArray.map(transformData);
+    if (role === 'gyalsung_counselor') {
+      isGyalsungCounselor.value = true;
+    } else if (role === 'school_counselor') {
+      isSchoolCounselor.value = true;
+    } else if (role === 'clinical_counselor') {
+      isClinicalCounselor.value = true;
     }
-  } catch (error) {
-    console.error('Error fetching report data:', error);
-    reportData.value = [];
+
+    return agencyName; // Return the extracted agency name
   }
+  return null;
 };
 
-// Transform Gyalsung Data to match the table structure
-const transformGyalsungData = (item) => {
-  return {
-    username: item.username,
-    full_name: item.full_name,
-    gender: item.gender,
-    dob: formatDate(item.dob),
-    identity_number: item.identity_number,
-    mobile_number: item.mobile_number,
-    dzongkhag: item.ps_add_dzongkhag,
-    academy_code: item.academy_code,
-    batch_number: item.batch_number,
-    prev_school: item.prev_school,
-    phq9_score: item.phq9_score,
-    suicidal_score: item.suicidal_score,
-    gad7_score: item.gad7_score,
-    tobacco_score: item.tobacco_score,
-    alcohol_score: item.alcohol_score,
-    cannabis_score: item.cannabis_score,
-    cocaine_score: item.cocaine_score,
-    amphetamine_score: item.amphetamine_score,
-    inhalants_score: item.inhalants_score,
-    sedatives_score: item.sedatives_score,
-    hallucinogens_score: item.hallucinogens_score,
-    opioids_score: item.opioids_score,
-    injection_use_score: item.injection_use_score,
-    other_score: item.other_score,
-    other_name: item.other_name,
-  };
-};
 
-// Transform the API data for table display
-const transformData = (item) => {
-  const userFields = item.user?.fields || {};
-  const userAgencyFields = item.user_agency?.fields || {};
-  const measurementFields = item.measurement?.fields || {};
-  const measurementAssistFields = item.measurement_assist?.fields || {};
-  const serviceAndTreatment = item.service_and_treatment || {};
-
-  return {
-    date: formatDate(item.original_submission_date),
-    username: `${userFields.first_name || ''} ${userFields.middle_name || ''} ${userFields.last_name || ''}`.trim(),
-    age: calculateAge(userFields.date_of_birth),
-    sex: userFields.gender || '',
-    present_dzongkhag: userFields.ps_add_dzongkhag || '',
-    present_gewog: userFields.ps_add_gewog || '',
-    present_village: userFields.ps_add_village || '',
-    user_code: userAgencyFields.user_code || '',
-    parent_occupation: userAgencyFields.parent_occupation || '',
-    guardian_name: userAgencyFields.guardian_name || '',
-    guardian_occupation: userAgencyFields.guardian_occupation || '',
-    parent_status: userAgencyFields.parent_status || '',
-    current_living_with: userAgencyFields.current_living_with || '',
-    user_role_agency: userAgencyFields.user_role_agency || '',
-    user_class: userAgencyFields.user_class || '',
-    user_stream: userAgencyFields.user_stream || '',
-    user_sub_class: userAgencyFields.user_sub_class || '',
-    suicidal_measurement: measurementFields.suicidal_measurement || '',
-    gad_measurement: measurementFields.gad_measurement || '',
-    phq_measurement: measurementFields.phq_measurement || '',
-    ace_measurement: measurementFields.ace_measurement || '',
-    alcoholic_measurement: measurementAssistFields.alcoholic_measurement || '',
-    tobacco_measurement: measurementAssistFields.tobacco_measurement || '',
-    cannabis_measurement: measurementAssistFields.cannabis_measurement || '',
-    cocaine_measurement: measurementAssistFields.cocaine_measurement || '',
-    amphetamine_measurement: measurementAssistFields.amphetamine_measurement || '',
-    inhalants_measurement: measurementAssistFields.inhalants_measurement || '',
-    sedatives_measurement: measurementAssistFields.sedatives_measurement || '',
-    hallucinogens_measurement: measurementAssistFields.hallucinogens_measurement || '',
-    opioids_measurement: measurementAssistFields.opioids_measurement || '',
-    injection_measurement: measurementAssistFields.injection_measurement || '',
-    other_measurement: measurementAssistFields.other_measurement || '',
-    assessment_status: serviceAndTreatment.assessment_status || '',
-    case_status: serviceAndTreatment.case_status || '',
-    counseling: serviceAndTreatment.counseling || '',
-    follow_up: serviceAndTreatment.follow_up || '',
-    comments: serviceAndTreatment.comments || '',
-    referral_status: serviceAndTreatment.referred || '',
-    referral_remarks: serviceAndTreatment.referral_remarks || '',
-  };
-};
-
-// Helper to format date to 'yyyy-mm-dd'
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-CA');
-};
-
-// Helper to calculate age from birth date
-const calculateAge = (birthDate) => {
-  const birth = new Date(birthDate);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  return age;
-};
-
-// Define the severityClass function to return a CSS class based on the field value
+// Severity class function to add styles to tags
 const severityClass = (value) => {
-  if (typeof value !== 'number') {
-    // Handle non-numeric values
-    const lowerValue = value.toLowerCase();
-    if (lowerValue.includes('severe') || lowerValue.includes('high')) return 'danger';
-    if (lowerValue.includes('more than half the days') || lowerValue.includes('moderate')) return 'warning';
-    if (lowerValue.includes('minimal')) return 'success';
-    return 'info'; // Default for unrecognized text
-  }
-
-  // Handle numeric values (if ranges for risk are based on numbers)
-  if (value >= 7) {
-    return 'danger'; // High risk or severe
-  } else if (value >= 4) {
-    return 'warning'; // Moderate risk
-  } else if (value >= 1) {
-    return 'success'; // Low risk
-  } else {
-    return 'info'; // No risk
+  switch (value) {
+    case 'severe':
+      return 'danger'; // Red pill for severe cases
+    case 'moderate':
+      return 'warning'; // Yellow pill for moderate cases
+    case 'mild':
+      return 'success'; // Green pill for mild cases
+    case 'none':
+    default:
+      return 'info'; // Default blue pill
   }
 };
 
 // On component mount, fetch data and user details
 onMounted(() => {
-  fetchReportDataFromAPI();
   getUserDetailsFromStorage();
+  fetchReportDataFromAPI();
 });
 </script>
+
+
 
 <style scoped>
 .card-container {

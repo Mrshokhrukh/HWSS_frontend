@@ -28,7 +28,7 @@
             <div class="d-flex justify-content-around align-items-center flex-wrap">
                 <span v-for="(value, key) in chartData" :key="key" class="legend-item mb-2">
                     <span class="legend-color rounded-circle mr-2"
-                        :style="{ 'background-color': getColor(key) }"></span>
+                        :style="{ 'background-color': getColor(key, hasData) }"></span>
                     {{ key }} ({{ value }})
                 </span>
                 <span class="font-weight-bold pb-2">Total: {{ getTotalCount }}</span>
@@ -38,81 +38,69 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import axios from 'axios';
 import Chart from 'primevue/chart';
+import endpoints from '@/api';
 
-const filteredData = inject('filteredData');
-const currentYear = inject('currentYear', new Date().getFullYear());
+const apiEndpoint = endpoints.newServiceAndTreatment;
 const isSchoolCounselor = ref(false);
+const chartData = ref({ Male: 0, Female: 0 });
+const error = ref(null);
+const isLoading = ref(true);
+const currentYear = new Date().getFullYear();
 
-const CHART_COLORS = {
-    Male: '#2c6975',
-    Female: '#33d4b9',
-    PseudoMale: '#d3d3d3',
-    PseudoFemale: '#a9a9a9'
+// Add a computed property to check if there's actual data
+const hasData = computed(() => {
+    return getTotalCount.value > 0;
+});
+
+const getUserDetailsFromStorage = () => {
+    const userDetailsString = localStorage.getItem('userDetailsStore');
+    if (userDetailsString) {
+        const userDetails = JSON.parse(userDetailsString);
+        const {
+            user: { role = 'Unknown Role' } = {},
+            agency: { agencyName = 'Unknown Agency', presentDzongkhag = '' } = {}
+        } = userDetails;
+
+        if (role === 'school_counselor') {
+            isSchoolCounselor.value = true;
+        }
+
+        return { agencyName, userDzongkhag: presentDzongkhag };
+    }
+
+    return { agencyName: 'Unknown Agency', userDzongkhag: '' };
 };
 
 const agencyOrDzongkhag = computed(() => {
-    try {
-        const userDetailsStoreString = localStorage.getItem('userDetailsStore');
-        if (!userDetailsStoreString) {
-            console.error('userDetailsStore not found in localStorage');
-            return 'User details not available';
-        }
-
-        const userDetailsStore = JSON.parse(userDetailsStoreString);
-        const role = userDetailsStore.user?.role;
-
-        if (['trained_professional', 'school_counselor', 'gyelsung_counselor'].includes(role)) {
-            return userDetailsStore.agency?.agencyName || 'Agency Not Available';
-        } else if (role === 'clinical_counselor') {
-            return userDetailsStore.user?.psAddDzongkhag || 'Dzongkhag Not Available';
-        } else {
-            return '';
-        }
-    } catch (error) {
-        console.error('Error in agencyOrDzongkhag computed property:', error);
-        return 'Error retrieving user details';
-    }
+    const { agencyName, userDzongkhag } = getUserDetailsFromStorage();
+    return agencyName || userDzongkhag;
 });
-
-const chartData = ref({
-    Male: 0,
-    Female: 0
-});
-
-const error = ref(null);
-const isLoading = ref(true);
 
 const getTotalCount = computed(() => {
     return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
 });
 
-const isDataLoaded = computed(() => {
-    return chartData.value.Male > 0 || chartData.value.Female > 0;
-});
-
+// Modified chart display data to show placeholder when empty
 const chartDisplayData = computed(() => {
-    if (!isDataLoaded.value) {
-        return {
-            labels: ['Male', 'Female'],
-            datasets: [{
-                data: [1, 1],
-                backgroundColor: [CHART_COLORS.PseudoMale, CHART_COLORS.PseudoFemale],
-                borderWidth: 0
-            }]
-        };
-    }
+    const values = hasData.value ? Object.values(chartData.value) : [1, 1];
     return {
         labels: Object.keys(chartData.value),
-        datasets: [{
-            data: Object.values(chartData.value),
-            backgroundColor: Object.keys(chartData.value).map(key => CHART_COLORS[key]),
-            borderWidth: 0
-        }]
+        datasets: [
+            {
+                data: values,
+                backgroundColor: Object.keys(chartData.value).map(key =>
+                    getColor(key, hasData.value)
+                ),
+                borderWidth: 0
+            }
+        ]
     };
 });
 
+// Modified chart options to disable tooltips when no data
 const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: true,
@@ -121,7 +109,7 @@ const chartOptions = computed(() => ({
             display: false
         },
         tooltip: {
-            enabled: isDataLoaded.value,
+            enabled: hasData.value,
             callbacks: {
                 label: (context) => {
                     const label = context.label || '';
@@ -133,84 +121,72 @@ const chartOptions = computed(() => ({
             }
         }
     },
-    cutout: '70%'
+    cutout: '70%',
+    events: hasData.value ? undefined : [] // Disable all events when no data
 }));
 
-const getColor = (key) => CHART_COLORS[key];
-
-const updateChartData = () => {
-    isLoading.value = true;
-    error.value = null;
-
-    if (!filteredData.value || !Array.isArray(filteredData.value)) {
-        console.error('filteredData is not available or not an array:', filteredData.value);
-        error.value = 'Data is not available or in the wrong format. Please try again later.';
-        isLoading.value = false;
-        return;
+// Modified color function to return placeholder colors when no data
+const getColor = (key, hasData) => {
+    if (!hasData) {
+        return key === 'Male' ? '#e0e0e0' : '#c0c0c0'; // Light and darker gray
     }
 
-    const currentYearData = filteredData.value.filter(user => {
-        const submissionDate = user.measurement?.created_at
-            ? new Date(user.measurement.created_at)
-            : null;
-        return submissionDate && submissionDate.getFullYear() === currentYear;
-    });
-
-    let maleCount = 0;
-    let femaleCount = 0;
-
-    currentYearData.forEach(user => {
-        const gender = user.userDetails?.gender || user.sudData?.active?.sex;
-        if (gender) {
-            if (gender.toLowerCase() === 'male') {
-                maleCount++;
-            } else if (gender.toLowerCase() === 'female') {
-                femaleCount++;
-            }
-        }
-    });
-
-    chartData.value = {
-        Male: maleCount,
-        Female: femaleCount
+    const CHART_COLORS = {
+        Male: '#2c6975',
+        Female: '#33d4b9'
     };
-
-    isLoading.value = false;
+    return CHART_COLORS[key];
 };
 
-// Fetch user details from localStorage
-const getUserDetailsFromStorage = () => {
-  const userDetailsString = localStorage.getItem('userDetailsStore');
+const fetchAndFilterData = async () => {
+    try {
+        isLoading.value = true;
+        error.value = null;
 
-  if (userDetailsString) {
-    const userDetails = JSON.parse(userDetailsString);
-    const {
-      user: { role = 'Unknown Role' } = {},
-      agency: { agencyName = 'Unknown Agency', presentDzongkhag = '' } = {}
-    } = userDetails;
+        const response = await axios.get(apiEndpoint);
+        const dataArray = response.data || [];
+        const { agencyName } = getUserDetailsFromStorage();
+        const currentYear = new Date().getFullYear();
 
-    const roleFlags = {
-      school_counselor: () => (isSchoolCounselor.value = true),
-    };
+        const filteredData = dataArray.filter(item => {
+            const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
+            const screeningDate = item.screening_data?.submission_date;
+            const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+            const yearMatch = submissionYear === currentYear;
 
-    if (roleFlags[role]) {
-      roleFlags[role]();
+            return agencyMatch && yearMatch;
+        });
+
+        let maleCount = 0;
+        let femaleCount = 0;
+
+        filteredData.forEach(item => {
+            const gender = item.user?.gender;
+            if (gender === 'Male') {
+                maleCount++;
+            } else if (gender === 'Female') {
+                femaleCount++;
+            }
+        });
+
+        chartData.value = {
+            Male: maleCount,
+            Female: femaleCount
+        };
+
+        isLoading.value = false;
+    } catch (err) {
+        console.error('Error fetching data:', err);
+        error.value = 'Failed to load data. Please try again later.';
+        isLoading.value = false;
     }
-
-    return { userRole: role, agencyName, userDzongkhag: presentDzongkhag };
-  }
-
-  return { userRole: 'Unknown Role', agencyName: 'Unknown Agency', userDzongkhag: '' };
 };
 
 onMounted(() => {
-    updateChartData();
-    getUserDetailsFromStorage()
+    fetchAndFilterData();
 });
-
-watch(() => filteredData.value, updateChartData, { deep: true });
-watch(() => currentYear, updateChartData);
 </script>
+
 
 <style scoped>
 .card {

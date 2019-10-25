@@ -1,37 +1,43 @@
 <template>
     <div class="card w-100 h-100 shadow-sm">
         <div class="card-header bg-gradient-dark">
-            <h4 class="graph-title text-center text-white mb-0">Screening by Gender for: {{ props.cardTitle }}</h4>
+            <h4 class="graph-title text-center text-white mb-0">Screening by Gender for: {{ cardTitle }}</h4>
         </div>
         <div class="card-body p-4">
-            <div v-if="chartDataReady" class="chart-container">
-                <column-chart :data="chartData" :colors="chartColors" :xtitle="'Severity'" :ytitle="'Count'"
-                    :borderSkipped="true" :library="chartOptions" />
+            <div v-show="chartDataReady && hasValidData" class="chart-container">
+                <canvas ref="chartCanvas"></canvas>
             </div>
-            <div v-else class="loading-container">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <div v-show="!chartDataReady || !hasValidData" class="loading-container">
+                <div v-if="!hasValidData" class="text-center">
+                    <p class="text-muted">No data available for this screening.</p>
                 </div>
-                <p class="mt-3">Loading chart data...</p>
+                <div v-else class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading chart data...</p>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, watchEffect, onMounted, inject } from 'vue';
+import { ref, watchEffect, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
+import Chart from 'chart.js/auto';
 
 const props = defineProps({
-    cardTitle: String
+    cardTitle: String,
+    filteredData: Array
 });
 
-// Inject the filtered data from the parent component
-const filteredData = inject('filteredData');
-
-const chartData = ref([]);
-const chartCategories = ref([]);
-const chartColors = ['#2B656F', '#64ac99'];
+const chartCanvas = ref(null);
+const chartInstance = ref(null);
 const chartDataReady = ref(false);
+const hasValidData = ref(false);
+
+const maleColor = '#2B656F';
+const femaleColor = '#64ac99';
 
 const chartOptions = {
     responsive: true,
@@ -44,19 +50,23 @@ const chartOptions = {
                 pointStyle: 'circle',
                 padding: 20,
                 font: {
-                    size: 12
+                    size: 12,
+                    weight: 'bold'
                 }
             }
         },
         tooltip: {
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
             titleColor: '#2B656F',
             bodyColor: '#2B656F',
             borderColor: '#2B656F',
             borderWidth: 1,
             cornerRadius: 8,
-            padding: 10,
-            usePointStyle: true
+            padding: 12,
+            usePointStyle: true,
+            titleFont: {
+                weight: 'bold'
+            }
         }
     },
     scales: {
@@ -66,120 +76,187 @@ const chartOptions = {
             },
             ticks: {
                 font: {
-                    size: 12
+                    size: 12,
+                    weight: 'bold'
                 }
+            },
+            border: {
+                width: 2,
+                color: '#2B656F'
             }
         },
         y: {
             grid: {
-                color: 'rgba(0, 0, 0, 0.05)'
+                color: 'rgba(43, 101, 111, 0.1)',
+                lineWidth: 1
             },
             ticks: {
+                beginAtZero: true,
+                stepSize: 1,
                 font: {
-                    size: 12
+                    size: 12,
+                    weight: 'bold'
                 }
+            },
+            border: {
+                width: 2,
+                color: '#2B656F'
             }
-        }
-    },
-    elements: {
-        bar: {
-            borderRadius: 8,
-            borderSkipped: 'bottom'
         }
     }
 };
 
-// Define a function to count occurrences of severity levels by gender
-const countSeverityByGender = (data, cardTitle) => {
-    const maleData = {};
-    const femaleData = {};
-
-    const titleToProperty = {
-        'Suicidal Behavior': 'suicidal_measurement',
-        'Depression': 'phq_measurement',
-        'Anxiety': 'gad_measurement',
-        'ACE': 'ace_measurement',
-        'Assist': 'assist'
-    };
-
-    const measurementProperty = titleToProperty[cardTitle];
-
-    data.forEach(user => {
-        let measurement, gender;
-
-        if (cardTitle === 'Assist') {
-            measurement = user.measurementAssist;
-            gender = user.sudData?.active?.sex?.toLowerCase() ||
-                user.userDetails?.gender?.toLowerCase() || 'unknown';
-        } else {
-            measurement = user.measurement;
-            gender = user.userDetails?.gender?.toLowerCase() ||
-                user.sudData?.active?.sex?.toLowerCase() || 'unknown';
-        }
-
-        if (measurement) {
-            let severity;
-            if (cardTitle === 'Assist') {
-                // For Assist, check if any measurement is not 'no risk'
-                const hasRisk = Object.keys(measurement).some(key =>
-                    key.includes('_measurement') && measurement[key] !== 'no risk' && measurement[key] !== null
-                );
-                severity = hasRisk ? 'At Risk' : 'No Risk';
-            } else {
-                severity = measurement[measurementProperty];
-                // Only count if the severity is not null or undefined
-                if (severity === null || severity === undefined) {
-                    return; // Skip this user for this measurement
+const getMeasurementForCardTitle = (screeningData, cardTitle) => {
+    try {
+        switch (cardTitle.toLowerCase()) {
+            case 'suicidal behavior': {
+                const phqData = typeof screeningData.phq_data === 'string' 
+                    ? JSON.parse(screeningData.phq_data) 
+                    : screeningData.phq_data;
+                
+                const suicidalQuestion = phqData?.responses?.[6];
+                const selectedOption = suicidalQuestion?.selectedOption || 'No Response';
+                
+                switch (selectedOption) {
+                    case 'Not at all': return 'None';
+                    case 'Several days': return 'Mild';
+                    case 'More than half the days': return 'Moderate';
+                    case 'Nearly everyday': return 'Severe';
+                    default: return null;
                 }
             }
+            case 'depression':
+                return screeningData.phq_interpretation || null;
+            case 'anxiety':
+                return screeningData.gad_interpretation || null;
+            case 'ace':
+                return screeningData.ace_interpretation || null;
+            case 'assist': {
+                const assistData = screeningData.assist_data || [];
+                return assistData.some(item => item.risk_flag !== 'none') ? 'At Risk' : 'No Risk';
+            }
+            default:
+                return null;
+        }
+    } catch (error) {
+        console.error(`Error getting measurement for ${cardTitle}:`, error);
+        return null;
+    }
+};
 
+const processChartData = () => {
+    if (!props.filteredData || props.filteredData.length === 0) {
+        hasValidData.value = false;
+        return null;
+    }
+
+    const maleData = {};
+    const femaleData = {};
+    let hasAnyValidData = false;
+    
+    props.filteredData.forEach(entry => {
+        const screeningData = entry.screening_data || {};
+        const gender = entry.user?.gender?.toLowerCase() || 'unknown';
+        
+        if (gender !== 'male' && gender !== 'female') return;
+        
+        const measurement = getMeasurementForCardTitle(screeningData, props.cardTitle);
+        
+        if (measurement && measurement !== 'No Data' && measurement !== 'No Response') {
+            hasAnyValidData = true;
             if (gender === 'male') {
-                maleData[severity] = (maleData[severity] || 0) + 1;
-            } else if (gender === 'female') {
-                femaleData[severity] = (femaleData[severity] || 0) + 1;
+                maleData[measurement] = (maleData[measurement] || 0) + 1;
+            } else {
+                femaleData[measurement] = (femaleData[measurement] || 0) + 1;
             }
         }
     });
 
-    const allSeverities = new Set([...Object.keys(maleData), ...Object.keys(femaleData)]);
-    Array.from(allSeverities).forEach(severity => {
-        if (!maleData[severity]) maleData[severity] = 0;
-        if (!femaleData[severity]) femaleData[severity] = 0;
-    });
+    hasValidData.value = hasAnyValidData;
+    
+    if (!hasAnyValidData) {
+        return null;
+    }
 
-    return { maleData, femaleData };
-};
+    const allMeasurements = [...new Set([
+        ...Object.keys(maleData),
+        ...Object.keys(femaleData)
+    ])].sort();
 
-const updateChartData = () => {
-    if (filteredData.value && filteredData.value.length > 0) {
-        const { maleData, femaleData } = countSeverityByGender(filteredData.value, props.cardTitle);
-        const allSeverities = new Set([...Object.keys(maleData), ...Object.keys(femaleData)]);
-
-        chartData.value = [
+    return {
+        labels: allMeasurements,
+        datasets: [
             {
-                name: 'Male',
-                data: Object.fromEntries(Array.from(allSeverities).map(severity => [severity, maleData[severity] || 0]))
+                label: 'Male',
+                data: allMeasurements.map(measurement => maleData[measurement] || 0),
+                backgroundColor: `${maleColor}80`,  // 50% transparent
+                borderColor: maleColor,
+                borderWidth: 2,
+                borderRadius: 8
             },
             {
-                name: 'Female',
-                data: Object.fromEntries(Array.from(allSeverities).map(severity => [severity, femaleData[severity] || 0]))
+                label: 'Female',
+                data: allMeasurements.map(measurement => femaleData[measurement] || 0),
+                backgroundColor: `${femaleColor}80`,  // 50% transparent
+                borderColor: femaleColor,
+                borderWidth: 2,
+                borderRadius: 8
             }
-        ];
+        ]
+    };
+};
 
-        chartCategories.value = Array.from(allSeverities);
+const initializeChart = async () => {
+    if (!chartCanvas.value) {
+        console.warn('Canvas element not found');
+        return;
+    }
+
+    // Destroy existing chart if it exists
+    if (chartInstance.value) {
+        chartInstance.value.destroy();
+    }
+
+    const chartData = processChartData();
+    if (!chartData) {
+        chartDataReady.value = false;
+        return;
+    }
+
+    try {
+        const ctx = chartCanvas.value.getContext('2d');
+        chartInstance.value = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: chartOptions
+        });
         chartDataReady.value = true;
-    } else {
+    } catch (error) {
+        console.error('Error initializing chart:', error);
         chartDataReady.value = false;
     }
 };
 
-onMounted(() => {
-    updateChartData();
+// Watch for changes in filteredData
+watchEffect(() => {
+    if (props.filteredData) {
+        nextTick(() => {
+            initializeChart();
+        });
+    }
 });
 
-watchEffect(() => {
-    if (filteredData.value) {
-        updateChartData();
+// Initialize on mount
+onMounted(async () => {
+    await nextTick();
+    initializeChart();
+});
+
+// Cleanup
+onBeforeUnmount(() => {
+    if (chartInstance.value) {
+        chartInstance.value.destroy();
+        chartInstance.value = null;
     }
 });
 </script>
@@ -208,7 +285,7 @@ watchEffect(() => {
 }
 
 .chart-container {
-    height: auto;
+    height: 400px;
     position: relative;
 }
 
@@ -217,7 +294,6 @@ watchEffect(() => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 400px;
 }
 
 .spinner-border {
@@ -226,7 +302,6 @@ watchEffect(() => {
     color: #2B656F;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .chart-container {
         height: 300px;

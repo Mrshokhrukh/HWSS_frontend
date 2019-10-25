@@ -37,8 +37,8 @@
                         </div>
                         <div class="answer-options">
                             <div class="row justify-content-center">
-                                <div class="answer-option col-md-6 col-sm-12" v-for="(option) in currentQuestion.answers"
-                                    :key="option.id">
+                                <div class="answer-option col-md-6 col-sm-12"
+                                    v-for="(option) in currentQuestion.answers" :key="option.id">
                                     <button :class="{ selected: isSelectedAnswer(option) }"
                                         @click="handleAnswerSelection(option)" class="btn btn-lg w-100 my-3">
                                         {{ option.option }}
@@ -179,6 +179,8 @@ import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
 import { useRouter } from "vue-router";
 import ConfettiExplosion from "vue-confetti-explosion";
+import logoDashbopard from '@/assets/images/logoDashbopard.png';
+
 
 const progressStore = useProgressStore();
 const currentQuestionIndex = ref(0);
@@ -271,7 +273,7 @@ const userAge = userDetailsStore?.user?.age || null;
 
 // Function to determine the age group
 function getAgeGroup(age) {
-    if (age === null) return null; 
+    if (age === null) return null;
     if (age <= 14) {
         return "Below 14";
     } else if (age >= 15 && age <= 17) {
@@ -629,25 +631,24 @@ const isAssistOrSchoolEnv = computed(() =>
 const showBgGreen = computed(() =>
     ["PHQ2", "PHQ9", "GAD2", "GAD7"].includes(currentQuestionSetName.value)
 );
-function getIconBaseUrl() {
-    if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-        const iconHost = import.meta.env.VITE_ICON_HOST || 'localhost';
-        const iconPort = import.meta.env.VITE_ICON_PORT || '8686';
-        const iconProtocol = import.meta.env.VITE_ICON_PROTOCOL || 'http';
-        return `${iconProtocol}://${iconHost}:${iconPort}`;
-    } else {
-        return import.meta.env.VITE_PRODUCTION_ICON_URL || 'https://thepemasystem.gov.bt/api/screening';
-    }
-}
 
-// Computed property for iconURL
-const iconURL = computed(() => {
-    const iconPath = currentQuestion.value?.icon || "";
-    if (iconPath) {
-        return `${getIconBaseUrl()}${iconPath}`;
-    } else {
+const getImageUrl = (name) => {
+    try {
+        return new URL(`/src/assets/images/${name}`, import.meta.url).href;
+    } catch (error) {
+        console.error('Error loading image:', error);
         return fallbackIcon;
     }
+};
+
+// Your computed property
+const iconURL = computed(() => {
+    const iconPath = currentQuestion.value?.icon || "";
+    if (!iconPath) return fallbackIcon;
+
+    // Remove the API prefix if it exists
+    const imageName = iconPath.replace('/api/screening/media/question_icons/', '');
+    return getImageUrl(imageName);
 });
 
 const processedQuestionText = computed(() => {

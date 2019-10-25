@@ -156,7 +156,7 @@ const proceed = () => {
     localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
 
     // Emit the goToNext event
-    emit('goToNext', 'GAD');
+    emit('goToNext', 'GAD7');
 };
 
 </script>

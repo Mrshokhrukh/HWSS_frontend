@@ -319,16 +319,16 @@ const filteredRowData = computed(() => {
 });
 
 const filteredRows = computed(() => {
-    if (!searchQuery.value.trim() || !Array.isArray(filteredRowData.value) || filteredRowData.value.length === 0) {
-        return filteredRowData.value;
+    if (!searchQuery.value.trim() || !Array.isArray(rowData.value)) {
+        return rowData.value;
     }
 
-    return filteredRowData.value.filter(row => {
-        return selectedFields.value.some(field => {
+    return rowData.value.filter(row =>
+        selectedFields.value.some(field => {
             const fieldValue = row[field.split('.').pop()];
-            return fieldValue !== undefined && fieldValue.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
-        });
-    });
+            return fieldValue?.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
+        })
+    );
 });
 
 const getServiceList = async () => {
@@ -336,14 +336,14 @@ const getServiceList = async () => {
         isLoading.value = true;
         hasError.value = false;
         const response = await axios.get(endpoints.newServiceAndTreatment);
-        if (response && response.data && Array.isArray(response.data.data)) {
+        if (response?.data?.data) {
             rowData.value = response.data.data;
         } else {
             console.error('Invalid response format:', response);
         }
     } catch (error) {
         hasError.value = true;
-        console.error(error);
+        console.error('Error fetching data:', error);
     } finally {
         isLoading.value = false;
     }
@@ -428,18 +428,9 @@ const handleModalClose = () => {
     showModal.value = false;
 }
 
-const viewDetails = async (userData) => {
-    try {
-        if (userData && userData.data && userData.data.user && userData.data.user.id) {
-            const userId = userData.data.user.id; // Extracting user ID
-            const userDetails = await fetchUserDetails(userId);
-            await openModal(userDetails);
-        } else {
-            console.error('User ID is missing or invalid.');
-        }
-    } catch (error) {
-        console.error('Error fetching user details:', error);
-    }
+const viewDetails = (user) => {
+    selectedUser.value = user;
+    showModal.value = true;
 };
 
 // Function to fetch user details from the server

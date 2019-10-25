@@ -165,7 +165,7 @@ const proceed = () => {
     localStorage.setItem('PHQ_set_counselor_screening', JSON.stringify(data));
 
     // Emit the goToNext event
-    emit('goToNext', 'PHQ');
+    emit('goToNext', 'PHQ9');
 };
 </script>
 

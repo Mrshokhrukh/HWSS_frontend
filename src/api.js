@@ -4,9 +4,9 @@ function getBaseUrl() {
     const apiPort = import.meta.env.VITE_API_PORT || '8123';
     const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
     return `${apiProtocol}://${apiHost}:${apiPort}`;
+  } else {
+    return import.meta.env.VITE_PRODUCTION_API_URL;
   }
-  // For non-development mode or when VITE_DEVELOPMENT_MODE is undefined/false
-  return 'http://localhost:8123';
 }
 
 function getScreeningBaseUrl() {
@@ -19,7 +19,6 @@ function getScreeningBaseUrl() {
     return import.meta.env.VITE_PRODUCTION_SCREENING_URL;
   }
 }
-
 // Function to combine base URL with middle params
 function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
   return `${baseUrl}/api/v1/${middleParams}`;

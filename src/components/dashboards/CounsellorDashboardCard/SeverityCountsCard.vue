@@ -15,12 +15,22 @@
     <div class="row mt-4" v-if="activeItem.title !== 'Assist'">
       <div class="col-md-4">
         <div class="card-container">
-          <SeverityIndicatorCard v-if="activeItem" :cardTitle="activeItem.title" />
+          <SeverityIndicatorCard 
+            v-if="activeItem" 
+            :cardTitle="activeItem.title"
+            :filteredData="getRelevantData"
+            :isLoading="isLoading"
+          />
         </div>
       </div>
       <div class="col-md-8">
         <div class="card-container">
-          <SeverityGraphCard v-if="activeItem" :cardTitle="activeItem.title" />
+          <SeverityGraphCard 
+            v-if="activeItem" 
+            :cardTitle="activeItem.title"
+            :filteredData="getRelevantData"
+            :isLoading="isLoading"
+          />
         </div>
       </div>
     </div>
@@ -28,7 +38,10 @@
     <div class="row mt-4" v-else>
       <div class="col-12">
         <div class="card-container">
-          <AssistSeverityAndGraph />
+          <AssistSeverityAndGraph 
+            :filteredData="getAssistData"
+            :isLoading="isLoading"
+          />
         </div>
       </div>
     </div>
@@ -36,75 +49,176 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide, watch, inject } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
+import axios from 'axios';
+import endpoints from '@/api';
 
-import SeverityGraphCard from '@/components/dashboards/CounsellorDashboardCard/SeverityGraphCard.vue';
-import AssistSeverityAndGraph from '@/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue';
-import SeverityIndicatorCard from '@/components/dashboards/CounsellorDashboardCard/SeverityIndicatorCard.vue';
+import SeverityGraphCard from './SeverityGraphCard.vue';
+import AssistSeverityAndGraph from './AssistSeverityAndGraph.vue';
+import SeverityIndicatorCard from './SeverityIndicatorCard.vue';
 
-// Inject the filtered data from the parent component
-const filteredData = inject('filteredData');
-
-// Constants
+// Constants for severity items with proper field mappings
 const SEVERITY_ITEMS = ref([
-  { count: '0', title: 'Suicidal Behavior', field: 'suicidal_measurement' },
-  { count: '0', title: 'Depression', field: 'phq_measurement' },
-  { count: '0', title: 'Anxiety', field: 'gad_measurement' },
-  { count: '0', title: 'ACE', field: 'ace_measurement' },
-  { count: '0', title: 'Assist', field: 'assist' }
+  { 
+    count: '0', 
+    title: 'Suicidal Behavior', 
+    field: 'phq_data',
+    dataField: 'phq_data',
+    threshold: value => {
+      try {
+        const phqData = JSON.parse(value);
+        const suicidalThoughts = phqData.responses[6];
+        return suicidalThoughts && suicidalThoughts.score >= 2;
+      } catch (e) {
+        return false;
+      }
+    }
+  },
+  { 
+    count: '0', 
+    title: 'Depression', 
+    field: 'phq_score',
+    dataField: 'phq_data', 
+    threshold: value => value >= 10 
+  },
+  { 
+    count: '0', 
+    title: 'Anxiety', 
+    field: 'gad_score',
+    dataField: 'gad_data', 
+    threshold: value => value >= 10 
+  },
+  { 
+    count: '0', 
+    title: 'ACE', 
+    field: 'ace_score',
+    dataField: 'ace_data', 
+    threshold: value => value >= 4 
+  },
+  { 
+    count: '0', 
+    title: 'Assist', 
+    field: 'assist_data',
+    dataField: 'assist_data', 
+    threshold: value => value.some(item => item.risk_flag && item.risk_flag !== 'none')
+  }
 ]);
 
 const activeIndex = ref(0);
+const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
+const filteredData = ref([]);
+const isLoading = ref(true);
+const error = ref(null);
+
+// Computed property to get relevant data based on active item
+const getRelevantData = computed(() => {
+  if (!activeItem.value || !filteredData.value.length) return [];
+
+  return filteredData.value.map(item => {
+    const screeningData = item.screening_data || {};
+    return {
+      ...item,
+      screeningData: screeningData,
+    };
+  });
+});
+
+
+// Computed property specifically for ASSIST data
+const getAssistData = computed(() => {
+  if (!filteredData.value.length) return [];
+
+  return filteredData.value.map(item => {
+    const screeningData = item.screening_data || {};
+    return {
+      ...item, // Pass the entire item as-is
+      assistData: screeningData.assist_data || [],
+    };
+  });
+});
+
 
 function isActive(index) {
   return index === activeIndex.value;
 }
 
-const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
-
-onMounted(() => {
-  updateSeverityCounts();
-});
-
-// Provide filtered data to child components
-provide('filteredUserData', filteredData);
-
 function setActiveIndex(index) {
   activeIndex.value = index;
 }
 
-// Function to update severity counts
-function updateSeverityCounts() {
-  if (filteredData.value) {
-    SEVERITY_ITEMS.value.forEach((item) => {
-      let count = 0;
-      filteredData.value.forEach(user => {
-        if (item.field === 'assist') {
-          // Check if any ASSIST measurement is not 'no risk'
-          const assistData = user.measurementAssist;
-          if (assistData) {
-            const hasRisk = Object.keys(assistData).some(key =>
-              key.includes('_measurement') && assistData[key] !== 'no risk' && assistData[key] !== null
-            );
-            if (hasRisk) count++;
-          }
-        } else {
-          // For other fields, check if measurement exists and is not null
-          const measurement = user.measurement?.[item.field];
-          if (measurement !== undefined && measurement !== null) {
-            count++;
-          }
-        }
-      });
-      item.count = count.toString();
-    });
+const getUserDetailsFromStorage = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+  if (!userDetailsString) {
+    console.error('No userDetailsStore found in localStorage');
+    return { agencyName: 'Unknown Agency' };
   }
-}
 
-// Watch for changes in filtered data and update severity counts
-watch(() => filteredData.value, () => {
-  updateSeverityCounts();
-}, { deep: true });
+  try {
+    const userDetails = JSON.parse(userDetailsString);
+    return {
+      agencyName: userDetails?.agency?.agencyName || 'Unknown Agency'
+    };
+  } catch (error) {
+    console.error('Error parsing user details:', error);
+    return { agencyName: 'Unknown Agency' };
+  }
+};
+
+const fetchAndFilterData = async () => {
+  try {
+    isLoading.value = true;
+    error.value = null;
+
+    const response = await axios.get(endpoints.newServiceAndTreatment);
+    const dataArray = response.data || [];
+    const { agencyName } = getUserDetailsFromStorage();
+    const currentYear = new Date().getFullYear();
+
+    filteredData.value = dataArray.filter(item => {
+      const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
+      const screeningDate = item.screening_data?.submission_date;
+      const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+      return agencyMatch && submissionYear === currentYear;
+    });
+
+    updateSeverityCounts();
+    isLoading.value = false;
+  } catch (err) {
+    console.error('Error fetching data:', err);
+    error.value = 'Failed to load data';
+    isLoading.value = false;
+  }
+};
+
+const updateSeverityCounts = () => {
+  SEVERITY_ITEMS.value.forEach((item, index) => {
+    let count = 0;
+    
+    filteredData.value.forEach(entry => {
+      const screeningData = entry.screening_data;
+      if (!screeningData) return;
+
+      const value = screeningData[item.field];
+      if (value !== undefined && value !== null) {
+        if (item.threshold(value)) {
+          count++;
+        }
+      }
+    });
+
+    SEVERITY_ITEMS.value[index] = { ...item, count: count.toString() };
+  });
+};
+
+onMounted(async () => {
+  await fetchAndFilterData();
+});
+
+watchEffect(() => {
+  if (filteredData.value.length > 0) {
+    updateSeverityCounts();
+  }
+});
 </script>
 
 <style scoped>
