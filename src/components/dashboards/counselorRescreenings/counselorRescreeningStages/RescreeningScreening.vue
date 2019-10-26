@@ -134,35 +134,28 @@ const submitAssessments = async () => {
     try {
         console.log('Function triggered');
 
-        // Get the patient (rescreening) user ID from sessionStorage
-        const patientUserId = JSON.parse(sessionStorage.getItem('RescreeningUserID'));  // Get patient ID from session storage
-
-        // Get the counselor user details from localStorage
+        // Get the patient user ID from sessionStorage
+        const patientUserId = JSON.parse(sessionStorage.getItem('RescreeningUserID'));
         const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
-        const counselorUserId = userDetails?.user?.id || null;  // Get counselor ID from local storage
+        const counselorUserId = userDetails?.user?.id || null;
 
-        if (!counselorUserId) {
-            throw new Error('Counselor user ID not found in local storage');
-        }
+        if (!counselorUserId) throw new Error('Counselor user ID not found in local storage');
+        if (!patientUserId) throw new Error('Patient user ID not found in session storage');
 
-        if (!patientUserId) {
-            throw new Error('Patient user ID not found in session storage');
-        }
-
-        // Log IDs for debugging
         console.log('Patient User ID:', patientUserId);
         console.log('Counselor (Rescreened By) User ID:', counselorUserId);
 
-        // Retrieve assessment data from local storage
+        // Retrieve assessment data from local storage with fallback to {}
         const getDataFromLocalStorage = (key) => {
             try {
                 const data = localStorage.getItem(`${key}_set_counselor_screening`);
-                return data ? JSON.parse(data) : {};
+                return data ? JSON.parse(data) : (key === 'ASSIST' ? [] : {});
             } catch (error) {
                 console.error(`Error parsing ${key} data:`, error);
-                return {};
+                return key === 'ASSIST' ? [] : {}; 
             }
         };
+
 
         const gadData = getDataFromLocalStorage('GAD');
         const phqData = getDataFromLocalStorage('PHQ');
@@ -170,22 +163,19 @@ const submitAssessments = async () => {
         const assistData = getDataFromLocalStorage('ASSIST');
         const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
 
-        // Construct form data to be sent
+        // Construct form data with default empty objects if necessary
         const formData = new FormData();
-        formData.append('userId', patientUserId);  // Append the patient user ID
-        formData.append('rescreened_by', counselorUserId);  // Append the counselor ID as 'rescreened_by'
-        formData.append('gadData', JSON.stringify(gadData));
-        formData.append('phqData', JSON.stringify(phqData));
-        formData.append('aceData', JSON.stringify(aceData));
+        formData.append('userId', patientUserId);
+        formData.append('rescreened_by', counselorUserId);
+        formData.append('gadData', JSON.stringify(gadData || {}));
+        formData.append('phqData', JSON.stringify(phqData || {}));
+        formData.append('aceData', JSON.stringify(aceData || {}));
 
-        if (assistData) {
-            const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
-            formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
-        } else {
-            formData.append('assistRiskSeverity', JSON.stringify({}));
-        }
+        // Calculate risk severity for ASSIST if data exists, else append an empty object
+        const assistRiskSeverity = assistData ? calculateAssistRiskSeverity(assistData) : {};
+        formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
 
-        formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+        formData.append('schoolEnvData', JSON.stringify(schoolEnvData || {}));
 
         // Send the form data to the server
         const response = await axios.post(endpoints.rescreenSubmission, formData);
@@ -212,10 +202,12 @@ const submitAssessments = async () => {
     }
 };
 
-
 const calculateAssistRiskSeverity = (assistData) => {
+    // Ensure assistData is an array, even if it's empty or undefined
+    const validAssistData = Array.isArray(assistData) ? assistData : [];
+
     const substanceScores = {};
-    assistData.forEach(entry => {
+    validAssistData.forEach(entry => {
         const substanceName = entry.substance;
         const point = entry.point;
         substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
@@ -244,7 +236,6 @@ const calculateAssistRiskSeverity = (assistData) => {
         }
         assistRiskSeverity[substanceName] += ` (${score})`;
     }
-
 
     return assistRiskSeverity;
 };

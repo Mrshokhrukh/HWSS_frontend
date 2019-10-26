@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
+import { ref, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import Chart from 'chart.js/auto';
 
 const props = defineProps({

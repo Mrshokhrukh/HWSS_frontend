@@ -5,7 +5,8 @@ function getBaseUrl() {
     const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
     return `${apiProtocol}://${apiHost}:${apiPort}`;
   } else {
-    return import.meta.env.VITE_PRODUCTION_API_URL;
+    // return import.meta.env.VITE_PRODUCTION_API_URL;
+    return 'http://localhost:8123';
   }
 }
 

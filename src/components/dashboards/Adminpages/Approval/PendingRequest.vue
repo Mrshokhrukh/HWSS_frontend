@@ -1,80 +1,139 @@
 <template>
-  <div class="card p-4">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
-      filterDisplay="row" :loading="loading"
-      :globalFilterFields="['id', 'eventName', 'toolsUsed', 'duration', 'submittedBy', 'approvalProcess']">
-      <template #header>
-        <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="p-button-text" label="Clear" outlined
-            @click="clearFilter()" />
-          <div class="p-input-icon-left">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm ms-3" />
-          </div>
-        </div>
-      </template>
-      <template #empty> No events found. </template>
-      <template #loading> Loading events data. Please wait. </template>
+  <div class="min-h-screen bg-gradient-wrapper">
+    <!-- Tab Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-semibold text-white text-center mb-2">Event Screening Dashboard</h1>
+        <p class="text-white/80 text-center">Manage and approve event screening requests</p>
+      </div>
 
-      <!-- Existing columns -->
-      <Column field="start_date" header="Date" :sortable="true" />
-      <Column field="event_name" header="Event Name" :sortable="true" />
-      <Column field="toolsUsed" header="Tools Used" :sortable="true">
-        <template #body="{ data }">
-          {{ data.selected_tool }}
-        </template>
-        <template #filter="{ filterModel, filterCallback }">
-          <MultiSelect v-model="filterModel.value" @change="filterCallback('toolsUsed')" :options="toolOptions"
-            placeholder="Select" class="p-column-filter" :optionLabel="'label'" />
-        </template>
-      </Column>
-      <Column field="duration" header="Duration" :sortable="true" />
-      <Column field="counselor" header="Submitted By" :sortable="true" />
-
-      <!-- New column for Approval Process -->
-      <Column header="Approval Process" :showFilterMenu="false">
-        <template #body="{ data }">
-          <Button type="button" icon="pi pi-info-circle" class="custom-button" @click="openDialogue(data)"
-            label="Process for Approval" />
-        </template>
-
-      </Column>
-    </DataTable>
-
-    <Dialog v-model:visible="visible" header="Approval Process Details" modal style="width: 50%;">
-      <div class="card p-4">
-        <h4 class="event-details__title">Event Details</h4>
-        <section v-for="(section, index) in sections" :key="index" class="event-details__section">
-          <h6 class="hwss-primary">{{ section.label }}:</h6>
-          <p class="event-details__value">{{ section.value }}</p>
-        </section>
-        <h6 class="hwss-primary">Purpose:</h6>
-        <div class="event-details__description px-4 py-2 mb-4 lh-base ">
-          {{ eventData.eventPurpose }}
-        </div>
-        <h6 class="hwss-primary">Tools to be used:</h6>
-        <p class="event-details__tools px-4 py-2 mb-4 lh-base ">{{ eventData.toolsUsed }}</p>
-        <section class="event-details__section">
-          <h6 class="hwss-primary">Total days for screening:</h6>
-          <p class="event-details__value px-4 py-2 mb-4 lh-base ">{{ eventData.totalDays }} day(s)</p>
-        </section>
-        <section class="event-details__actions">
-          <Button type="button" icon="pi pi-check" class="custom-button" @click="acceptEvent(eventData)"
-            label="Accept" />
-          <Button type="button" icon="pi pi-times" class="custom-button" @click="showRejectPopup(eventData)"
-            label="Reject" />
-        </section>
-        <div v-if="showPopup" class="popup">
-          <div class="popup-content">
-            <span class="close" @click="closePopup">×</span>
-            <label for="comment">Comment:</label>
-            <textarea id="comment" v-model="rejectComment"></textarea>
-            <button @click="rejectEvent">Save</button>
-          </div>
+      <!-- Tabs -->
+      <div class="bg-white/10 backdrop-blur-sm rounded-xl p-2 mb-8 max-w-xl mx-auto">
+        <div class="grid grid-cols-2 gap-2">
+          <button v-for="(tab, index) in tabs" :key="index" :class="[
+            'py-3 px-6 rounded-lg font-medium transition-all duration-200 text-center',
+            activeTab === tab.key
+              ? 'bg-white text-[#2B656F] shadow-lg'
+              : 'text-white/90 hover:bg-white/10'
+          ]" @click="changeTab(tab.key)">
+            {{ tab.label }}
+          </button>
         </div>
       </div>
-    </Dialog>
 
+      <!-- Main Content Card -->
+      <div class="bg-white rounded-xl shadow-xl">
+        <!-- Table Controls -->
+        <div class="p-6 border-b border-gray-100">
+          <div class="flex justify-between items-center">
+            <Button type="button"
+              class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+              <i class="fa-solid fa-filter-circle-xmark mr-2"></i>
+              Clear Filters
+            </Button>
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <InputText v-model="filters['global'].value" placeholder="Search events..."
+                class="pl-10 pr-4 py-2 rounded-lg border-gray-200 w-64 focus:ring-2 focus:ring-[#2B656F]/20" />
+            </div>
+          </div>
+        </div>
+
+        <!-- DataTable -->
+        <DataTable v-model:filters="filters" :value="filteredData" :paginator="true" :rows="10" stripedRows class="p-4"
+          :loading="loading">
+          <Column v-for="col in columns" :key="col.field" :field="col.field" :header="col.header" :sortable="true"
+            class="p-4" />
+
+          <Column header="Actions" :exportable="false">
+            <template #body="slotProps">
+              <Button type="button"
+                class="mr-2 px-4 py-2 rounded-lg bg-[#2B656F] text-white hover:bg-[#1D4851] transition-colors"
+                @click="openDialogue(slotProps.data)">
+                View Details
+              </Button>
+            </template>
+          </Column>
+        </DataTable>
+      </div>
+
+      <!-- Modal -->
+      <Dialog v-model:visible="visible" :modal="true" :closable="true" class="p-0 rounded-xl overflow-hidden max-w-2xl">
+        <template #header>
+          <div class="bg-gradient-to-r from-[#2B656F] to-[#1D4851] p-6">
+            <h3 class="text-xl font-semibold text-white">Event Details</h3>
+          </div>
+        </template>
+
+        <div class="p-6">
+          <div class="space-y-6">
+            <!-- Event Details -->
+            <div v-for="(section, index) in sections" :key="index" class="border-b border-gray-100 pb-4">
+              <h6 class="text-sm font-medium text-[#2B656F] mb-2">{{ section.label }}:</h6>
+              <p class="text-gray-700">{{ section.value }}</p>
+            </div>
+
+            <!-- Purpose Section -->
+            <div>
+              <h6 class="text-sm font-medium text-[#2B656F] mb-2">Purpose:</h6>
+              <div class="bg-gray-50 rounded-lg p-4 text-gray-700">
+                {{ eventData.eventPurpose }}
+              </div>
+            </div>
+
+            <!-- Tools Section -->
+            <div>
+              <h6 class="text-sm font-medium text-[#2B656F] mb-2">Tools to be used:</h6>
+              <div class="bg-gray-50 rounded-lg p-4 text-gray-700">
+                {{ eventData.toolsUsed }}
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-4 pt-4">
+              <Button type="button"
+                class="px-6 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+                @click="showRejectPopup(eventData)">
+                Reject
+              </Button>
+              <Button type="button"
+                class="px-6 py-2 rounded-lg bg-[#2B656F] text-white hover:bg-[#1D4851] transition-colors"
+                @click="acceptEvent(eventData)">
+                Accept
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
+      <!-- Reject Popup -->
+      <Dialog v-if="showPopup" :visible="true" :modal="true" class="p-0 rounded-xl overflow-hidden max-w-md">
+        <template #header>
+          <div class="bg-gradient-to-r from-[#2B656F] to-[#1D4851] p-4">
+            <h3 class="text-lg font-semibold text-white">Rejection Reason</h3>
+          </div>
+        </template>
+
+        <div class="p-6">
+          <textarea v-model="rejectComment"
+            class="w-full rounded-lg border border-gray-200 p-4 h-32 resize-none focus:ring-2 focus:ring-[#2B656F]/20"
+            placeholder="Please provide a reason for rejection..."></textarea>
+
+          <div class="flex justify-end gap-4 mt-4">
+            <Button type="button" class="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              @click="closePopup">
+              Cancel
+            </Button>
+            <Button type="button"
+              class="px-4 py-2 rounded-lg bg-[#2B656F] text-white hover:bg-[#1D4851] transition-colors"
+              @click="rejectEvent">
+              Submit
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+    </div>
   </div>
 </template>
 
@@ -83,7 +142,6 @@ import { ref, onMounted, computed } from 'vue';
 import { FilterMatchMode } from 'primevue/api';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
@@ -95,9 +153,6 @@ const eventData = ref({}); // Add this to store the event data for the modal
 const visible = ref(false); // Control visibility of the dialog
 const showPopup = ref(false); // Control visibility of the reject popup
 const rejectComment = ref(''); // Store the reject comment
-
-
-const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
 
 const monitorData = ref();
 const filters = ref({
@@ -122,19 +177,11 @@ const filteredData = computed(() => {
   return filtered;
 });
 
-const clearFilter = () => {
-  // Clear all filters
-  for (const key in filters.value) {
-    filters.value[key].value = [];
-  }
-};
 const fetchReportData = async () => {
   try {
     const response = await axios.get(endpoints.getEventScreeningList);
-    console.log('API Response:', response.data); // Log the response data to check
     if (response.data && Array.isArray(response.data)) {
       monitorData.value = response.data; // Use monitorData instead of reportData
-      console.log('Fetched Data: for request', monitorData.value); // Log the fetched data to check
     } else {
       handleFetchError();
     }
@@ -199,11 +246,7 @@ const rejectEvent = async () => {
   }
 };
 
-
-
-
 const openDialogue = (data) => {
-  console.log(data)
   eventData.value = {
     id: data.id,
     eventPurpose: data.event_purpose,
@@ -239,162 +282,58 @@ const acceptEvent = async (eventData) => {
 </script>
 
 <style scoped>
-.custom-button {
-  background-color: #f0f0f0;
-  /* Grey background color */
-  border: 1px solid #ccc;
-  /* Grey border */
-  color: black;
+.bg-gradient-wrapper {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-.event-details {
-  border-radius: 0 5px 5px 0;
-  box-shadow: 4px 4px 14.2px 0 rgba(0, 0, 0, 0.25);
-  background-color: #fff;
-  display: flex;
-  max-width: 751px;
-  flex-direction: column;
-  padding: 20px 15px;
-  margin: 0 auto;
-  /* Added margin to center the element */
+:deep(.p-datatable) {
+  border-radius: 0.75rem;
+  overflow: hidden;
 }
 
-.event-details__title {
-  color: #000;
-  text-align: center;
-  align-self: center;
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+  background-color: #f8fafc;
+  color: #1f2937;
+  font-weight: 600;
+  padding: 1rem;
 }
 
-.event-details__section {
-  display: flex;
-  gap: 5px;
-  text-align: center;
-  padding: 6px 0;
+:deep(.p-datatable .p-datatable-tbody > tr) {
+  transition: background-color 0.2s;
 }
 
-@media (max-width: 991px) {
-  .event-details__section {
-    flex-wrap: wrap;
-  }
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+  background-color: #f1f5f9;
 }
 
-.hwss-primary {
-  color: #30406b;
+:deep(.p-dialog) {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
-.event-details__value {
-  color: #000;
+:deep(.p-dialog-header),
+:deep(.p-dialog-content) {
+  padding: 0;
 }
 
-@media (max-width: 991px) {
-  .event-details__value {
-    max-width: 100%;
-  }
+:deep(.p-button) {
+  transition: all 0.2s;
 }
 
-.event-details__description,
-.event-details__tools {
-  align-self: start;
-  color: #000;
-  margin-top: 5px;
+:deep(.p-inputtext:focus) {
+  border-color: #2B656F;
+  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
 }
 
-@media (max-width: 991px) {
-
-  .event-details__description,
-  .event-details__tools {
-    max-width: 100%;
-  }
+/* Add smooth transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-.event-details__actions {
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  margin-top: 20px;
-  text-align: center;
-  padding: 10px;
-}
-
-@media (max-width: 991px) {
-  .event-details__actions {
-    max-width: 100%;
-    padding: 0 20px;
-  }
-}
-
-.event-details__button {
-  justify-content: center;
-  border-radius: 8px;
-  padding: 2px 25px;
-  cursor: pointer;
-}
-
-.event-details__button--accept {
-  background-color: var(--Primary, #2c6975);
-  color: #fff;
-}
-
-.event-details__button--reject {
-  border: 1px solid rgba(43, 101, 111, 1);
-  color: #000;
-}
-
-@media (max-width: 991px) {
-  .event-details__button {
-    padding: 0 20px;
-  }
-}
-
-.popup {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.popup-content {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  max-width: 400px;
-  width: 100%;
-}
-
-.close {
-  position: absolute;
-  top: 5px;
-  right: 10px;
-  cursor: pointer;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-}
-
-textarea {
-  width: 100%;
-  height: 100px;
-  margin-bottom: 10px;
-}
-
-button {
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-  background-color: #2c6975;
-  color: white;
-  border: none;
-}
-
-button:hover {
-  background-color: #265e69;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

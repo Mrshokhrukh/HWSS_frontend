@@ -16,7 +16,12 @@
                 <p class="mt-2">Loading data...</p>
             </div>
             <div v-else class="chart-container">
-                <Chart type="doughnut" :data="chartDisplayData" :options="chartOptions" />
+                <div v-if="isDataAvailable">
+                    <Chart type="bar" :data="chartDisplayData" :options="chartOptions" style="height: 250px;"/>
+                </div>
+                <div v-else class="no-data-message text-center">
+                    <h6 class="my-5 py-4">No data found</h6>
+                </div>
             </div>
             <div v-if="isSchoolCounselor" class="text-center">
                 <div class="hwss-primary text-capitalize font-italic font-weight-bold">
@@ -26,33 +31,189 @@
         </div>
         <div class="card-footer bg-white py-3">
             <div class="d-flex justify-content-around align-items-center flex-wrap">
-                <span v-for="(value, key) in chartData" :key="key" class="legend-item mb-2">
-                    <span class="legend-color rounded-circle mr-2"
-                        :style="{ 'background-color': getColor(key, hasData) }"></span>
-                    {{ key }} ({{ value }})
-                </span>
-                <span class="font-weight-bold pb-2">Total: {{ getTotalCount }}</span>
+                <div v-for="category in categories" :key="category" class="mb-2">
+                    <h6 class="font-weight-bold">{{ formatCategoryName(category) }}</h6>
+                    <span v-for="gender in ['Male', 'Female']" :key="`${category}-${gender}`" class="legend-item mr-3">
+                        <span class="legend-color rounded-circle mr-2"
+                            :style="{ 'background-color': getColor(gender) }"></span>
+                        {{ gender }}: {{ formatNumber(chartData[category]?.[gender] || 0) }}
+                    </span>
+                </div>
+                <div class="font-weight-bold">
+                    Total: {{ formatNumber(getTotalCount) }}
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import axios from 'axios';
 import Chart from 'primevue/chart';
 import endpoints from '@/api';
 
 const apiEndpoint = endpoints.newServiceAndTreatment;
-const isSchoolCounselor = ref(false);
-const chartData = ref({ Male: 0, Female: 0 });
-const error = ref(null);
 const isLoading = ref(true);
+const error = ref(null);
 const currentYear = new Date().getFullYear();
 
-// Add a computed property to check if there's actual data
-const hasData = computed(() => {
-    return getTotalCount.value > 0;
+// Initialize chartData with nested structure
+const chartData = reactive({
+    caseBased: { Male: 0, Female: 0 },
+    eventBased: { Male: 0, Female: 0 },
+    clusterBased: { Male: 0, Female: 0 }
+});
+
+const isSchoolCounselor = ref(false);
+const isClinicalCounselor = ref(false);
+const isGyalsungCounselor = ref(false);
+
+const categories = computed(() => {
+    if (isGyalsungCounselor.value) {
+        return ['caseBased'];
+    } else if (isClinicalCounselor.value) {
+        return ['caseBased', 'eventBased'];
+    }
+    return ['caseBased', 'eventBased', 'clusterBased'];
+});
+
+const isDataAvailable = computed(() => {
+    return categories.value.some(category => {
+        const categoryData = chartData[category];
+        return categoryData.Male > 0 || categoryData.Female > 0;
+    });
+});
+
+
+const formatCategoryName = (category) => {
+    const names = {
+        caseBased: 'Case Based',
+        eventBased: 'Event Based',
+        clusterBased: 'Cluster Based'
+    };
+    return names[category];
+};
+
+const formatNumber = (value) => {
+    if (value >= 1000000) {
+        return (value / 1000000).toFixed(1) + 'M';
+    } else if (value >= 1000) {
+        return (value / 1000).toFixed(1) + 'K';
+    }
+    return value.toString();
+};
+
+const chartDisplayData = computed(() => {
+    return {
+        labels: categories.value.map(formatCategoryName),
+        datasets: [
+            {
+                label: 'Male',
+                data: categories.value.map(category => chartData[category]?.Male || 0),
+                backgroundColor: '#2c6975',
+                borderColor: '#2c6975',
+                borderWidth: 2,
+                borderRadius: 8,
+                stack: 'Stack 0'
+            },
+            {
+                label: 'Female',
+                data: categories.value.map(category => chartData[category]?.Female || 0),
+                backgroundColor: '#64ac99',
+                borderColor: '#64ac99',
+                borderWidth: 2,
+                borderRadius: 8,
+                stack: 'Stack 0'
+            }
+        ]
+    };
+});
+
+const chartOptions = computed(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+        x: {
+            stacked: true,
+            grid: {
+                display: false
+            },
+            ticks: {
+                font: {
+                    size: 12,
+                    weight: '500'
+                }
+            }
+        },
+        y: {
+            stacked: true,
+            beginAtZero: true,
+            grid: {
+                display: false
+            },
+            ticks: {
+                callback: function(value) {
+                    return formatNumber(value);
+                },
+                stepSize: 1,
+                font: {
+                    size: 12
+                },
+                padding: 10
+            }
+        }
+    },
+    plugins: {
+        legend: {
+            display: false
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            titleColor: '#2c6975',
+            titleFont: {
+                size: 13,
+                weight: 'bold'
+            },
+            bodyColor: '#2c6975',
+            bodyFont: {
+                size: 12
+            },
+            borderColor: 'rgba(44, 105, 117, 0.1)',
+            borderWidth: 1,
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+                label: (context) => {
+                    const label = context.dataset.label || '';
+                    const value = context.raw || 0;
+                    const categoryTotal = getTotalForCategory(context.label.toLowerCase().replace(' ', ''));
+                    const percentage = categoryTotal ? ((value / categoryTotal) * 100).toFixed(1) : 0;
+                    return `${label}: ${formatNumber(value)} (${percentage}%)`;
+                }
+            }
+        }
+    }
+}));
+
+const getColor = (key) => {
+    const CHART_COLORS = {
+        Male: '#2c6975',
+        Female: '#64ac99'
+    };
+    return CHART_COLORS[key];
+};
+
+const getTotalForCategory = (category) => {
+    const categoryData = chartData[category];
+    if (!categoryData) return 0;
+    return categoryData.Male + categoryData.Female;
+};
+
+const getTotalCount = computed(() => {
+    return categories.value.reduce((total, category) => {
+        return total + getTotalForCategory(category);
+    }, 0);
 });
 
 const getUserDetailsFromStorage = () => {
@@ -64,9 +225,9 @@ const getUserDetailsFromStorage = () => {
             agency: { agencyName = 'Unknown Agency', presentDzongkhag = '' } = {}
         } = userDetails;
 
-        if (role === 'school_counselor') {
-            isSchoolCounselor.value = true;
-        }
+        isSchoolCounselor.value = role === 'school_counselor';
+        isClinicalCounselor.value = role === 'clinical_counselor';
+        isGyalsungCounselor.value = role === 'gyalsung_counselor';
 
         return { agencyName, userDzongkhag: presentDzongkhag };
     }
@@ -79,63 +240,37 @@ const agencyOrDzongkhag = computed(() => {
     return agencyName || userDzongkhag;
 });
 
-const getTotalCount = computed(() => {
-    return Object.values(chartData.value).reduce((acc, curr) => acc + curr, 0);
-});
+const processData = (dataArray) => {
+    const { agencyName } = getUserDetailsFromStorage();
 
-// Modified chart display data to show placeholder when empty
-const chartDisplayData = computed(() => {
-    const values = hasData.value ? Object.values(chartData.value) : [1, 1];
-    return {
-        labels: Object.keys(chartData.value),
-        datasets: [
-            {
-                data: values,
-                backgroundColor: Object.keys(chartData.value).map(key =>
-                    getColor(key, hasData.value)
-                ),
-                borderWidth: 0
-            }
-        ]
-    };
-});
+    const filteredData = dataArray.filter(item => {
+        const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
+        const screeningDate = item.screening_data?.submission_date;
+        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+        return agencyMatch && submissionYear === currentYear;
+    });
 
-// Modified chart options to disable tooltips when no data
-const chartOptions = computed(() => ({
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-        legend: {
-            display: false
-        },
-        tooltip: {
-            enabled: hasData.value,
-            callbacks: {
-                label: (context) => {
-                    const label = context.label || '';
-                    const value = context.raw || 0;
-                    const total = getTotalCount.value;
-                    const percentage = ((value / total) * 100).toFixed(1);
-                    return `${label}: ${value} (${percentage}%)`;
-                }
-            }
+    // Reset counts before processing data
+    chartData.caseBased.Male = 0;
+    chartData.caseBased.Female = 0;
+    chartData.eventBased.Male = 0;
+    chartData.eventBased.Female = 0;
+    chartData.clusterBased.Male = 0;
+    chartData.clusterBased.Female = 0;
+
+    filteredData.forEach(item => {
+        const gender = item.user?.gender;
+        if (gender !== 'Male' && gender !== 'Female') return;
+        const screeningData = item.screening_data || {};
+
+        if ('case' in screeningData) {
+            chartData.caseBased[gender]++;
+        } else if ('event' in screeningData) {
+            chartData.eventBased[gender]++;
+        } else if ('initial_submission' in screeningData) {
+            chartData.clusterBased[gender]++;
         }
-    },
-    cutout: '70%',
-    events: hasData.value ? undefined : [] // Disable all events when no data
-}));
-
-// Modified color function to return placeholder colors when no data
-const getColor = (key, hasData) => {
-    if (!hasData) {
-        return key === 'Male' ? '#e0e0e0' : '#c0c0c0'; // Light and darker gray
-    }
-
-    const CHART_COLORS = {
-        Male: '#2c6975',
-        Female: '#33d4b9'
-    };
-    return CHART_COLORS[key];
+    });
 };
 
 const fetchAndFilterData = async () => {
@@ -144,35 +279,7 @@ const fetchAndFilterData = async () => {
         error.value = null;
 
         const response = await axios.get(apiEndpoint);
-        const dataArray = response.data || [];
-        const { agencyName } = getUserDetailsFromStorage();
-        const currentYear = new Date().getFullYear();
-
-        const filteredData = dataArray.filter(item => {
-            const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
-            const screeningDate = item.screening_data?.submission_date;
-            const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-            const yearMatch = submissionYear === currentYear;
-
-            return agencyMatch && yearMatch;
-        });
-
-        let maleCount = 0;
-        let femaleCount = 0;
-
-        filteredData.forEach(item => {
-            const gender = item.user?.gender;
-            if (gender === 'Male') {
-                maleCount++;
-            } else if (gender === 'Female') {
-                femaleCount++;
-            }
-        });
-
-        chartData.value = {
-            Male: maleCount,
-            Female: femaleCount
-        };
+        processData(response.data || []);
 
         isLoading.value = false;
     } catch (err) {
@@ -193,6 +300,7 @@ onMounted(() => {
     max-width: 450px;
     margin: 0 auto;
     transition: all 0.3s ease;
+    border-radius: 15px;
 }
 
 .card:hover {
@@ -210,9 +318,9 @@ onMounted(() => {
 
 .chart-container {
     position: relative;
-    height: 0;
-    padding-bottom: 100%;
-    max-width: 300px;
+    height: 250px; /* Increased height */
+    width: 100%;
+    max-width: 500px;
     margin: 0 auto;
 }
 
@@ -233,7 +341,6 @@ onMounted(() => {
 
 .legend-label {
     width: 60px;
-    /* Adjust this value to ensure alignment */
     margin-right: 0.5rem;
 }
 

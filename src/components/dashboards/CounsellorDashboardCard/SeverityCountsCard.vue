@@ -100,7 +100,15 @@ const SEVERITY_ITEMS = ref([
     title: 'Assist', 
     field: 'assist_data',
     dataField: 'assist_data', 
-    threshold: value => value.some(item => item.risk_flag && item.risk_flag !== 'none')
+    threshold: value => {
+      try {
+        const assistData = typeof value === 'string' ? JSON.parse(value) : value;
+        return assistData && assistData.some(item => item.risk_flag && item.risk_flag !== 'none');
+      } catch (e) {
+        console.error("Error parsing assist_data:", e);
+        return false;
+      }
+    }
   }
 ]);
 
