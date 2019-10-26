@@ -75,12 +75,38 @@ const props = defineProps({
   }
 });
 
+// Helper function to check valid screening data
+const hasValidScreeningData = (item) => {
+  return item?.screening_data &&
+    typeof item.screening_data === 'object' &&
+    item.screening_data !== "Data not available";
+};
+
+// Helper function to get gender
+const getGender = (item) => {
+  if (item?.user?.gender) {
+    return item.user.gender;
+  } else if (hasValidScreeningData(item) && item.screening_data.gender) {
+    return item.screening_data.gender === 'M' ? 'Male' :
+      item.screening_data.gender === 'F' ? 'Female' : null;
+  }
+  return null;
+};
+
+// Helper function to get organization name
+const getOrganizationName = (item) => {
+  return item?.user?.active_agency?.agency_name ||
+    item?.user?.agency_details?.agency?.agency_name ||
+    (hasValidScreeningData(item) ? item.screening_data.prev_school : null);
+};
+
 const isDataLoaded = ref(false);
 const filters = ref({
   year: '',
   gender: '',
   role: '',
-  userClass: ''
+  userClass: '',
+  agency: ''
 });
 
 // Agency search functionality
@@ -96,38 +122,41 @@ function formatRole(role) {
 
 // Available Years
 const availableYears = computed(() => {
-  if (!props.filteredData) return [];
-  const years = new Set(props.filteredData.map(item => {
-    const date = item.date;
-    return date ? new Date(date).getFullYear() : null;
-  }).filter(Boolean));
+  const years = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item => item.date ? new Date(item.date).getFullYear() : null)
+    .filter(Boolean));
   return Array.from(years).sort((a, b) => b - a);
 });
 
 // Available Genders
 const availableGenders = computed(() => {
-  if (!props.filteredData) return [];
-  const genders = new Set(props.filteredData.map(item =>
-    item.user?.gender
-  ).filter(Boolean));
+  const genders = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item => getGender(item))
+    .filter(Boolean));
   return Array.from(genders).sort();
 });
 
 // Available Roles
 const availableRoles = computed(() => {
-  if (!props.filteredData) return [];
-  const roles = new Set(props.filteredData.map(item =>
-    item.user?.role
-  ).filter(Boolean));
+  const roles = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item =>
+      item.user?.role ||
+      item.user?.agency_details?.user_role_agency ||
+      (hasValidScreeningData(item) && item.screening_data?.academy_code ? 'student' : null)
+    )
+    .filter(Boolean));
   return Array.from(roles).sort();
 });
 
 // Available Agencies
 const availableAgencies = computed(() => {
-  if (!props.filteredData) return [];
-  const agencies = new Set(props.filteredData.map(item =>
-    item.user?.active_agency?.agency_name
-  ).filter(Boolean));
+  const agencies = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item => getOrganizationName(item))
+    .filter(Boolean));
   return Array.from(agencies).sort();
 });
 
@@ -140,8 +169,9 @@ const isSchoolAgency = computed(() => {
 // Available Classes
 const availableUserClasses = computed(() => {
   if (!filters.value.agency) return [];
+
   const classes = new Set(props.filteredData
-    .filter(item => item.user?.active_agency?.agency_name === filters.value.agency)
+    .filter(item => getOrganizationName(item) === filters.value.agency)
     .map(item => item.user?.agency_details?.user_class)
     .filter(Boolean));
   return Array.from(classes).sort((a, b) => Number(a) - Number(b));
@@ -149,19 +179,24 @@ const availableUserClasses = computed(() => {
 
 // Filtered Data
 const filteredDataComputed = computed(() => {
-  if (!props.filteredData) return [];
-
   return props.filteredData.filter(item => {
+    if (!hasValidScreeningData(item)) return false;
+
     const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+    const gender = getGender(item);
+    const organization = getOrganizationName(item);
+    const role = item.user?.role ||
+      item.user?.agency_details?.user_role_agency ||
+      (hasValidScreeningData(item) && item.screening_data?.academy_code ? 'student' : null);
+    const userClass = item.user?.agency_details?.user_class;
 
-    const matchesYear = !filters.value.year || itemYear === parseInt(filters.value.year);
-    const matchesGender = !filters.value.gender || item.user?.gender === filters.value.gender;
-    const matchesRole = !filters.value.role || item.user?.role === filters.value.role;
-    const matchesAgency = !filters.value.agency || item.user?.active_agency?.agency_name === filters.value.agency;
-    const matchesClass = !isSchoolAgency.value || !filters.value.userClass ||
-      item.user?.agency_details?.user_class === filters.value.userClass;
-
-    return matchesYear && matchesGender && matchesRole && matchesAgency && matchesClass;
+    return (
+      (!filters.value.year || itemYear === parseInt(filters.value.year)) &&
+      (!filters.value.gender || gender === filters.value.gender) &&
+      (!filters.value.role || role === filters.value.role) &&
+      (!filters.value.agency || organization === filters.value.agency) &&
+      (!isSchoolAgency.value || !filters.value.userClass || userClass === filters.value.userClass)
+    );
   });
 });
 
@@ -176,7 +211,7 @@ function selectAgency(agency) {
   agencySearch.value = agency;
   filters.value.agency = agency;
   showAgencyDropdown.value = false;
-  filters.value.userClass = ''; // Reset class when agency changes
+  filters.value.userClass = '';
 }
 
 // Click outside handler
@@ -186,25 +221,19 @@ function handleClickOutside(event) {
   }
 }
 
-// Lifecycle hooks
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  isDataLoaded.value = props.filteredData.length > 0;
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 });
 
-// Watch for data changes
 watch(() => props.filteredData, (newValue) => {
-  if (newValue && newValue.length > 0) {
-    isDataLoaded.value = true;
-  } else {
-    isDataLoaded.value = false;
-  }
+  isDataLoaded.value = newValue && newValue.length > 0;
 }, { immediate: true });
 
-// Sync agency search with filter
 watch(() => filters.value.agency, (newValue) => {
   agencySearch.value = newValue;
 });
@@ -213,6 +242,7 @@ watch(agencySearch, (newValue) => {
   filters.value.agency = newValue;
 });
 </script>
+
 
 <style scoped>
 .severity-graphs-container {

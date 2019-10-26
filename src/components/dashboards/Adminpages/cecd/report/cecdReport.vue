@@ -14,6 +14,7 @@
             <option value="Monitor Report">Monitor Report</option>
             <option value="Case Study Report">Case Study Report</option>
             <option value="Severity Report">Severity Report</option>
+            <option value="School Environment Report">School Environment Report</option>
           </select>
         </div>
 
@@ -45,6 +46,7 @@
       <cecdMonitorReport v-if="showMonitorReport" :filteredData="filteredData" />
       <cecdCaseStatusReport v-if="showCaseStatusReport" :filteredData="filteredData" />
       <cecdSeverityReport v-if="showSeverityReport" :filteredData="filteredData" />
+      <cecdSchoolenvReport v-if="showSchoolEnvReport" :filteredData="filteredData" />
     </div>
   </div>
 </template>
@@ -54,6 +56,7 @@ import { ref, computed, inject, watch } from 'vue';
 import cecdMonitorReport from './cecdMonitorReport/cecdMonitorReport.vue';
 import cecdCaseStatusReport from './cecdCasestatusReport/cecdCaseStatusReport.vue';
 import cecdSeverityReport from './cecdSeverityReport/cecdSeverityReport.vue';
+import cecdSchoolenvReport from './cecdSchoolenvReport/cecdSchoolenvReport.vue';
 
 // Inject service and treatment data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
@@ -113,11 +116,12 @@ const availableDzongkhags = computed(() => {
 const showMonitorReport = computed(() => selectedReport.value === 'Monitor Report');
 const showCaseStatusReport = computed(() => selectedReport.value === 'Case Study Report');
 const showSeverityReport = computed(() => selectedReport.value === 'Severity Report');
+const showSchoolEnvReport = computed(() => selectedReport.value === 'School Environment Report');
 
 const filteredData = computed(() => {
   if (!serviceAndTreatmentData.value) return [];
 
-  return serviceAndTreatmentData.value.filter((item) => {
+  let data = serviceAndTreatmentData.value.filter((item) => {
     const itemDzongkhag = getDzongkhag(item);
 
     // If no filters are applied, return all data
@@ -145,6 +149,17 @@ const filteredData = computed(() => {
 
     return true;
   });
+
+  // Additional filtering for school environment report
+  if (showSchoolEnvReport.value) {
+    data = data.filter(item => {
+      // Check if the item has school_env_data
+      return item?.screening_data?.school_env_data &&
+        Object.keys(item.screening_data.school_env_data).length > 0;
+    });
+  }
+
+  return data;
 });
 
 // Methods

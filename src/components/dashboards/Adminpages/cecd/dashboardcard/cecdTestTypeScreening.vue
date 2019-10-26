@@ -13,7 +13,6 @@
           <div class="chart-stats">
             <p class="stat-item"><span class="stat-label">Male:</span> {{ maleCountClustered }}</p>
             <p class="stat-item"><span class="stat-label">Female:</span> {{ femaleCountClustered }}</p>
-            <p class="stat-item"><span class="stat-label">Other:</span> {{ otherCountClustered }}</p>
             <p class="stat-item"><span class="stat-label">Total:</span> {{ totalCountClustered }}</p>
           </div>
         </div>
@@ -27,7 +26,6 @@
           <div class="chart-stats">
             <p class="stat-item"><span class="stat-label">Male:</span> {{ maleCountIndependent }}</p>
             <p class="stat-item"><span class="stat-label">Female:</span> {{ femaleCountIndependent }}</p>
-            <p class="stat-item"><span class="stat-label">Other:</span> {{ otherCountIndependent }}</p>
             <p class="stat-item"><span class="stat-label">Total:</span> {{ totalCountIndependent }}</p>
           </div>
         </div>
@@ -43,7 +41,7 @@ import Chart from 'primevue/chart';
 
 // Inject the data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
-console.log("serviceAndTreatmentData cecd", serviceAndTreatmentData)
+
 // Helper functions
 const hasValidScreeningData = (item) => {
   return typeof item?.screening_data === 'object' &&
@@ -83,31 +81,33 @@ const getGender = (item) => {
     const gender = item.screening_data.gender.toLowerCase();
     if (gender === 'm') return 'male';
     if (gender === 'f') return 'female';
-    return 'other';
+    return null;
   }
-  return 'other';
+  return null;
 };
 
 // Chart data computation
 const computeChartData = (screeningFilter) => {
   if (!serviceAndTreatmentData?.value) return {
-    labels: ['Male', 'Female', 'Other'],
-    datasets: [{ data: [0, 0, 0], backgroundColor: ['#2B656F', '#64ac99', '#90CAF9'] }]
+    labels: ['Male', 'Female'],
+    datasets: [{ data: [0, 0], backgroundColor: ['#2B656F', '#64ac99'] }]
   };
 
   const counts = serviceAndTreatmentData.value.reduce((acc, item) => {
     if (screeningFilter(item)) {
       const gender = getGender(item);
-      acc[gender] = (acc[gender] || 0) + 1;
+      if (gender === 'male' || gender === 'female') {
+        acc[gender] = (acc[gender] || 0) + 1;
+      }
     }
     return acc;
-  }, { male: 0, female: 0, other: 0 });
+  }, { male: 0, female: 0 });
 
   return {
-    labels: ['Male', 'Female', 'Other'],
+    labels: ['Male', 'Female'],
     datasets: [{
-      data: [counts.male, counts.female, counts.other],
-      backgroundColor: ['#2B656F', '#64ac99', '#90CAF9']
+      data: [counts.male, counts.female],
+      backgroundColor: ['#2B656F', '#64ac99']
     }]
   };
 };
@@ -116,18 +116,16 @@ const computeChartData = (screeningFilter) => {
 const clusteredData = computed(() => computeChartData(isClusteredScreening));
 const maleCountClustered = computed(() => clusteredData.value.datasets[0].data[0] || 0);
 const femaleCountClustered = computed(() => clusteredData.value.datasets[0].data[1] || 0);
-const otherCountClustered = computed(() => clusteredData.value.datasets[0].data[2] || 0);
 const totalCountClustered = computed(() =>
-  maleCountClustered.value + femaleCountClustered.value + otherCountClustered.value
+  maleCountClustered.value + femaleCountClustered.value
 );
 
 // Independent screening data
 const independentData = computed(() => computeChartData(isIndependentScreening));
 const maleCountIndependent = computed(() => independentData.value.datasets[0].data[0] || 0);
 const femaleCountIndependent = computed(() => independentData.value.datasets[0].data[1] || 0);
-const otherCountIndependent = computed(() => independentData.value.datasets[0].data[2] || 0);
 const totalCountIndependent = computed(() =>
-  maleCountIndependent.value + femaleCountIndependent.value + otherCountIndependent.value
+  maleCountIndependent.value + femaleCountIndependent.value
 );
 
 // Chart options

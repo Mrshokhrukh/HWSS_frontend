@@ -15,22 +15,30 @@
             </div>
           </div>
         </div>
-        <div class="col text-center">
-          <h4 class="text-capitalize">Severe Risk Count by gender</h4>
+
+        <div v-if="hasData && activeButton !== 'Table'" class="col text-center">
+          <h4 class="text-capitalize">High Risk Count by Gender</h4>
           <div class="w-100">
-            <apexchart type="donut" :options="donutOptionsTotal" :series="donutSeriesTotal"></apexchart>
+            <apexchart type="donut" :options="donutOptionsTotal" :series="donutSeriesTotal" />
           </div>
         </div>
-        <div class="col text-center">
-          <h4 class="text-capitalize">Moderate Risk Count by gender</h4>
+
+        <div v-if="hasData && activeButton !== 'Table'" class="col text-center">
+          <h4 class="text-capitalize">Low Risk Count by Gender</h4>
           <div class="w-100">
-            <apexchart type="donut" :options="donutOptionsModerate" :series="donutSeriesModerate"></apexchart>
+            <apexchart type="donut" :options="donutOptionsModerate" :series="donutSeriesModerate" />
           </div>
         </div>
-        <div class="col">
-          <apexchart type="bar" height="350" :options="barOptions" :series="barSeries"></apexchart>
+
+        <div v-if="hasData && activeButton !== 'Table'" class="col">
+          <apexchart type="bar" height="350" :options="barOptions" :series="barSeries" />
         </div>
-        <div v-if="activeButton === 'Table'">
+
+        <div v-if="!hasData" class="col-12 text-center">
+          <p>No data available for the selected substance</p>
+        </div>
+
+        <div v-if="activeButton === 'Table'" class="col-12">
           <cecdSUDSeverityTable :filteredData="filteredData" />
         </div>
       </div>
@@ -39,10 +47,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
-import cecdSUDSeverityTable from './cecdSUDSeverityTable.vue'
-
+import cecdSUDSeverityTable from './cecdSUDSeverityTable.vue';
 
 const props = defineProps({
   filteredData: {
@@ -52,11 +59,7 @@ const props = defineProps({
 });
 
 const activeButton = ref('Tobacco');
-
-const substances = [
-  'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-  'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others', 'Table'
-];
+const hasData = ref(false);
 
 const substanceGroups = [
   ['Tobacco', 'Alcohol'],
@@ -66,17 +69,23 @@ const substanceGroups = [
   ['Opioids', 'Others', 'Table']
 ];
 
-const substanceMapping = {
-  'Tobacco': 'Tobacco products',
-  'Alcohol': 'Alcoholic beverages',
-  'Cannabis': 'Cannabis',
-  'Cocaine': 'Cocaine',
-  'Amphetamine-type': 'Amphetamine-type stimulants',
-  'Inhalant': 'Inhalants',
-  'Sedative': 'Sedatives or Sleeping Pills',
-  'Hallucinate': 'Hallucinogens',
-  'Opioids': 'Opioids',
-  'Others': 'Other - specify'
+const flagMapping = {
+  'red': 'high risk',
+  'blue': 'low risk',
+  'green': 'moderate risk'
+};
+
+const substanceFieldMapping = {
+  'Tobacco': 'tobacco',
+  'Alcohol': 'alcoholic',
+  'Cannabis': 'cannabis',
+  'Cocaine': 'cocaine',
+  'Amphetamine-type': 'amphetamine',
+  'Inhalant': 'inhalants',
+  'Sedative': 'sedatives',
+  'Hallucinate': 'hallucinogens',
+  'Opioids': 'opioids',
+  'Others': 'other'
 };
 
 const donutOptionsTotal = ref({
@@ -95,7 +104,9 @@ const donutOptionsModerate = ref({
 
 const barOptions = ref({
   chart: { type: 'bar', stacked: true },
-  xaxis: { categories: ['Severe Risk', 'Moderate Risk'] },
+  xaxis: {
+    categories: ['High Risk', 'Low Risk', 'Moderate Risk'],
+  },
   colors: ['#2c6975', '#000000'],
   legend: { position: 'bottom' }
 });
@@ -104,35 +115,31 @@ const donutSeriesTotal = ref([0, 0]);
 const donutSeriesModerate = ref([0, 0]);
 const barSeries = ref([]);
 
-function countRiskLevels(data) {
-  const counts = {};
-  substances.forEach(substance => {
-    counts[substance] = {
-      severe_male: 0, severe_female: 0,
-      moderate_male: 0, moderate_female: 0,
-      mild_male: 0, mild_female: 0,
-      none_male: 0, none_female: 0
-    };
-  });
+function countRiskLevels() {
+  const counts = {
+    high_risk: { male: 0, female: 0 },
+    low_risk: { male: 0, female: 0 },
+    moderate_risk: { male: 0, female: 0 }
+  };
 
-  data.forEach(person => {
-    const gender = person.user?.gender?.toLowerCase() || 'unknown';
-    const assistData = person.screening_data?.assist_data || [];
+  props.filteredData.forEach(record => {
+    if (!record.screening_data?.assist_data) return;
 
-    if (Array.isArray(assistData)) {
-      assistData.forEach(substance => {
-        const substanceKey = Object.entries(substanceMapping).find(([key, value]) =>
-          substance.substance__name.includes(value)
-        )?.[0];
+    const gender = record.user?.gender?.toLowerCase() ||
+      record.screening_data?.gender?.toLowerCase() === 'm' ? 'male' : 'female';
 
-        if (substanceKey && substance.risk_flag && (gender === 'male' || gender === 'female')) {
-          const riskLevel = substance.risk_flag.toLowerCase();
-          const riskKey = `${riskLevel}_${gender}`;
-          if (counts[substanceKey] && counts[substanceKey][riskKey] !== undefined) {
-            counts[substanceKey][riskKey]++;
-          }
-        }
-      });
+    const substanceField = substanceFieldMapping[activeButton.value];
+    if (!substanceField) return;
+
+    const flag = record.screening_data.assist_data[`${substanceField}_flag`];
+    const measurement = record.screening_data.assist_data[`${substanceField}_measurement`];
+
+    if (flag === 'red' || measurement === 'high risk') {
+      counts.high_risk[gender]++;
+    } else if (flag === 'blue' || measurement === 'low risk') {
+      counts.low_risk[gender]++;
+    } else if (flag === 'green' || measurement === 'moderate risk') {
+      counts.moderate_risk[gender]++;
     }
   });
 
@@ -140,31 +147,48 @@ function countRiskLevels(data) {
 }
 
 function updateCharts() {
-  if (!activeButton.value || activeButton.value === 'Table') return;
+  if (!activeButton.value || activeButton.value === 'Table') {
+    hasData.value = false;
+    return;
+  }
 
-  const counts = countRiskLevels(props.filteredData);
-  const data = counts[activeButton.value];
+  const counts = countRiskLevels();
 
-  if (!data) return;
+  // Check if we have any data
+  const totalCount = Object.values(counts).reduce((sum, genderCounts) =>
+    sum + genderCounts.male + genderCounts.female, 0);
 
+  hasData.value = totalCount > 0;
+
+  if (!hasData.value) return;
+
+  // Update charts
   donutSeriesTotal.value = [
-    data.severe_male || 0,
-    data.severe_female || 0
+    counts.high_risk.male,
+    counts.high_risk.female
   ];
 
   donutSeriesModerate.value = [
-    data.moderate_male || 0,
-    data.moderate_female || 0
+    counts.low_risk.male,
+    counts.low_risk.female
   ];
 
   barSeries.value = [
     {
       name: 'Male',
-      data: [data.severe_male || 0, data.moderate_male || 0]
+      data: [
+        counts.high_risk.male,
+        counts.low_risk.male,
+        counts.moderate_risk.male
+      ]
     },
     {
       name: 'Female',
-      data: [data.severe_female || 0, data.moderate_female || 0]
+      data: [
+        counts.high_risk.female,
+        counts.low_risk.female,
+        counts.moderate_risk.female
+      ]
     }
   ];
 }
@@ -176,22 +200,20 @@ const setActiveButton = (buttonName) => {
 
 // Watch for changes in filteredData
 watch(() => props.filteredData, () => {
-  if (!activeButton.value) {
-    setActiveButton('Tobacco');
-  } else {
-    updateCharts();
-  }
+  updateCharts();
 }, { immediate: true, deep: true });
 
-// Initial update
-updateCharts();
+// Watch for changes in activeButton
+watch(activeButton, () => {
+  updateCharts();
+});
+
+onMounted(() => {
+  updateCharts();
+});
 </script>
 
 <style scoped>
-.custom-card {
-  background-color: #d3e2e4;
-}
-
 .btn {
   height: 50px;
   width: 150px;

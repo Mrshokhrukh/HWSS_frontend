@@ -7,19 +7,28 @@
           <div class="flex flex-wrap gap-2">
             <Button v-for="category in categories" :key="category" @click="setActiveButton(category)"
               :class="{ 'p-button-primary': activeButton === category }" class="text-sm">
-              {{ category }}
+              {{ formatCategoryName(category) }}
             </Button>
           </div>
         </div>
         <div class="w-full md:w-2/3">
           <div class="mb-4">
-            <DataTable :value="tableData" :paginator="false" :rows="10" class="p-datatable-sm"
-              :loading="!filteredData.length">
-              <Column field="riskLevel" header="Risk Level" sortable></Column>
-              <Column field="totalCount" header="Total" sortable></Column>
-              <Column field="maleCount" header="Male" sortable></Column>
-              <Column field="femaleCount" header="Female" sortable></Column>
+            <DataTable :value="tableData" :paginator="false" :rows="10" class="p-datatable-sm" :loading="loading"
+              v-model:sortField="sortField" v-model:sortOrder="sortOrder">
+              <Column field="riskLevel" header="Risk Level" :sortable="true">
+                <template #body="slotProps">
+                  <span :class="getRiskLevelClass(slotProps.data.riskLevel)">
+                    {{ slotProps.data.riskLevel }}
+                  </span>
+                </template>
+              </Column>
+              <Column field="totalCount" header="Total" :sortable="true"></Column>
+              <Column field="maleCount" header="Male" :sortable="true"></Column>
+              <Column field="femaleCount" header="Female" :sortable="true"></Column>
             </DataTable>
+          </div>
+          <div v-if="!tableData.length" class="text-center text-gray-500 py-4">
+            No data available for selected substance
           </div>
         </div>
       </div>
@@ -40,6 +49,11 @@ const props = defineProps({
   }
 });
 
+const loading = ref(true);
+const sortField = ref('riskLevel');
+const sortOrder = ref(-1); // Default descending order
+const activeButton = ref('Tobacco');
+
 const categories = [
   'Tobacco',
   'Alcohol',
@@ -53,105 +67,107 @@ const categories = [
   'Other'
 ];
 
-const activeButton = ref('Tobacco');
+// Mapping for substance field names in the data
+const substanceFieldMapping = {
+  'Tobacco': 'tobacco',
+  'Alcohol': 'alcoholic',
+  'Cannabis': 'cannabis',
+  'Cocaine': 'cocaine',
+  'Amphetamine': 'amphetamine',
+  'Inhalants': 'inhalants',
+  'Sedatives': 'sedatives',
+  'Hallucinogens': 'hallucinogens',
+  'Opioids': 'opioids',
+  'Other': 'other'
+};
+
+function formatCategoryName(category) {
+  return category === 'Other' ? 'Others' : category;
+}
+
+function getRiskLevelClass(riskLevel) {
+  const classes = {
+    'High Risk': 'text-red-600 font-semibold',
+    'Moderate Risk': 'text-yellow-600 font-semibold',
+    'Low Risk': 'text-green-600 font-semibold',
+    'No Risk': 'text-gray-600'
+  };
+  return classes[riskLevel] || '';
+}
 
 const getRiskCounts = computed(() => {
-  const counts = categories.reduce((acc, category) => {
-    acc[category] = {
-      none: { male: 0, female: 0 },
-      mild: { male: 0, female: 0 },
-      moderate: { male: 0, female: 0 },
-      severe: { male: 0, female: 0 }
-    };
-    return acc;
-  }, {});
+  const counts = {
+    'High Risk': { male: 0, female: 0 },
+    'Moderate Risk': { male: 0, female: 0 },
+    'Low Risk': { male: 0, female: 0 },
+    'No Risk': { male: 0, female: 0 }
+  };
 
-  props.filteredData.forEach(item => {
-    const gender = item.user?.gender?.toLowerCase() || 'unknown';
-    const assistData = item.screening_data?.assist_data;
+  props.filteredData.forEach(record => {
+    if (!record.screening_data?.assist_data) return;
 
-    if (!assistData || gender === 'unknown') return;
+    const gender = record.user?.gender?.toLowerCase() ||
+      (record.screening_data?.gender?.toLowerCase() === 'm' ? 'male' : 'female');
 
-    // Handle array format of assist_data
-    if (Array.isArray(assistData)) {
-      assistData.forEach(substance => {
-        const categoryKey = getCategoryKey(substance.substance__name);
-        if (categoryKey && substance.risk_flag) {
-          const riskLevel = substance.risk_flag.toLowerCase();
-          if (counts[categoryKey]?.[riskLevel] && (gender === 'male' || gender === 'female')) {
-            counts[categoryKey][riskLevel][gender]++;
-          }
-        }
-      });
+    const substanceField = substanceFieldMapping[activeButton.value];
+    if (!substanceField) return;
+
+    const assistData = record.screening_data.assist_data;
+    const flag = assistData[`${substanceField}_flag`];
+    const measurement = assistData[`${substanceField}_measurement`];
+
+    let riskLevel;
+    if (flag === 'red' || measurement === 'high risk') {
+      riskLevel = 'High Risk';
+    } else if (flag === 'green' || measurement === 'moderate risk') {
+      riskLevel = 'Moderate Risk';
+    } else if (flag === 'blue' || measurement === 'low risk') {
+      riskLevel = 'Low Risk';
+    } else {
+      riskLevel = 'No Risk';
     }
-    // Handle object format of assist_data
-    else {
-      categories.forEach(category => {
-        const key = category.toLowerCase();
-        const measurementKey = key === 'alcohol' ? 'alcoholic' : key;
-        const measurement = assistData[`${measurementKey}_measurement`];
-        if (measurement) {
-          const riskLevel = getRiskLevelFromMeasurement(measurement);
-          if (counts[category]?.[riskLevel] && (gender === 'male' || gender === 'female')) {
-            counts[category][riskLevel][gender]++;
-          }
-        }
-      });
+
+    if (counts[riskLevel] && (gender === 'male' || gender === 'female')) {
+      counts[riskLevel][gender]++;
     }
   });
 
   return counts;
 });
 
-function getCategoryKey(substanceName) {
-  if (substanceName.includes('Tobacco')) return 'Tobacco';
-  if (substanceName.includes('Alcoholic')) return 'Alcohol';
-  if (substanceName.includes('Cannabis')) return 'Cannabis';
-  if (substanceName.includes('Cocaine')) return 'Cocaine';
-  if (substanceName.includes('Amphetamine')) return 'Amphetamine';
-  if (substanceName.includes('Inhalants')) return 'Inhalants';
-  if (substanceName.includes('Sedatives')) return 'Sedatives';
-  if (substanceName.includes('Hallucinogens')) return 'Hallucinogens';
-  if (substanceName.includes('Opioids')) return 'Opioids';
-  if (substanceName.includes('Other')) return 'Other';
-  return null;
-}
-
-function getRiskLevelFromMeasurement(measurement) {
-  if (measurement === 'no risk' || measurement === 'none') return 'none';
-  if (measurement === 'low risk' || measurement === 'mild') return 'mild';
-  if (measurement === 'moderate risk') return 'moderate';
-  if (measurement === 'high risk' || measurement === 'severe') return 'severe';
-  return 'none';
-}
-
 const tableData = computed(() => {
-  const categoryData = getRiskCounts.value[activeButton.value];
-  if (!categoryData) return [];
+  const counts = getRiskCounts.value;
 
-  return Object.entries(categoryData).map(([riskLevel, genderCounts]) => ({
-    riskLevel: riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1),
-    totalCount: genderCounts.male + genderCounts.female,
-    maleCount: genderCounts.male,
-    femaleCount: genderCounts.female
-  })).filter(row => row.totalCount > 0)
-    .sort((a, b) => {
-      // Custom sort order: severe -> moderate -> mild -> none
-      const order = { 'Severe': 0, 'Moderate': 1, 'Mild': 2, 'None': 3 };
-      return order[a.riskLevel] - order[b.riskLevel];
-    });
+  return Object.entries(counts)
+    .map(([riskLevel, genderCounts]) => ({
+      riskLevel,
+      totalCount: genderCounts.male + genderCounts.female,
+      maleCount: genderCounts.male,
+      femaleCount: genderCounts.female
+    }))
+    .filter(row => row.totalCount > 0);
 });
 
 const setActiveButton = (buttonName) => {
   activeButton.value = buttonName;
 };
 
-// Watch for data changes and ensure default selection
-watch(() => props.filteredData, () => {
+// Watch for data changes
+watch(() => props.filteredData, (newData) => {
+  loading.value = true;
   if (!activeButton.value) {
     setActiveButton('Tobacco');
   }
+  loading.value = newData.length === 0;
 }, { immediate: true });
+
+// Watch for active button changes
+watch(activeButton, () => {
+  loading.value = true;
+  setTimeout(() => {
+    loading.value = false;
+  }, 300);
+});
 </script>
 
 <style scoped>
@@ -190,10 +206,15 @@ watch(() => props.filteredData, () => {
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
-  background-color: #d3e2e4;
+  background-color: #f8fafc;
 }
 
 :deep(.p-column-header-content) {
   justify-content: center;
+}
+
+/* Add hover effect to rows */
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+  background-color: #d3e2e4;
 }
 </style>
