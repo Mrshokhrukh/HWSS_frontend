@@ -116,32 +116,58 @@ const organizationSearch = ref('')
 const showOrganizationDropdown = ref(false)
 const filteredOrganizations = ref([])
 
+// Helper function to get valid screening data
+const hasValidScreeningData = (item) => {
+  return item?.screening_data &&
+    typeof item.screening_data === 'object' &&
+    item.screening_data !== "Data not available";
+};
+
+// Helper function to get organization name
+const getOrganizationName = (item) => {
+  return item?.user?.agency_details?.agency?.agency_name ||
+    item?.user?.active_agency?.agency_name ||
+    (item?.screening_data && typeof item.screening_data === 'object' ?
+      item.screening_data.prev_school : null);
+};
+
 // Computed properties for available filter options
 const availableYears = computed(() => {
-  const years = new Set(props.filteredData.map(item =>
-    item.date ? new Date(item.date).getFullYear() : null
-  ).filter(Boolean));
+  const years = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item => item.date ? new Date(item.date).getFullYear() : null)
+    .filter(Boolean));
   return Array.from(years).sort();
 })
 
 const availableGenders = computed(() => {
-  const genders = new Set(props.filteredData.map(item =>
-    item.user?.gender
-  ).filter(Boolean));
-  return Array.from(genders);
+  return Array.from(new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item => {
+      if (item.user?.gender) return item.user.gender;
+      if (item.screening_data?.gender) {
+        return item.screening_data.gender === 'M' ? 'Male' :
+          item.screening_data.gender === 'F' ? 'Female' : 'Other';
+      }
+      return null;
+    })
+    .filter(Boolean)));
 })
 
 const availableOrganizations = computed(() => {
-  const organizations = new Set(props.filteredData.map(item =>
-    item.user?.agency_details?.agency?.agency_name
-  ).filter(Boolean));
+  const organizations = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(getOrganizationName)
+    .filter(Boolean));
   return Array.from(organizations).sort();
 })
 
 const availableEmployment = computed(() => {
-  const roles = new Set(props.filteredData.map(item =>
-    item.user?.role
-  ).filter(Boolean));
+  const roles = new Set(props.filteredData
+    .filter(hasValidScreeningData)
+    .map(item => item.user?.role ||
+      (item.screening_data?.academy_code ? 'student' : null))
+    .filter(Boolean));
   return Array.from(roles).sort();
 })
 
@@ -154,7 +180,7 @@ const availableUserClassesForOrganization = computed(() => {
   if (!additionalFilters.value.organization) return [];
 
   const classes = new Set(props.filteredData
-    .filter(item => item.user?.agency_details?.agency?.agency_name === additionalFilters.value.organization)
+    .filter(item => getOrganizationName(item) === additionalFilters.value.organization)
     .map(item => item.user?.agency_details?.user_class)
     .filter(Boolean));
   return Array.from(classes).sort();
@@ -163,11 +189,14 @@ const availableUserClassesForOrganization = computed(() => {
 // Final filtered data based on all filters
 const finalFilteredData = computed(() => {
   return props.filteredData.filter(item => {
+    if (!hasValidScreeningData(item)) return false;
+
     const itemYear = item.date ? new Date(item.date).getFullYear() : null;
-    const itemGender = item.user?.gender;
-    const itemOrg = item.user?.agency_details?.agency?.agency_name;
+    const itemGender = item.user?.gender || (item.screening_data?.gender === 'M' ? 'Male' :
+      item.screening_data?.gender === 'F' ? 'Female' : 'Other');
+    const itemOrg = getOrganizationName(item);
     const itemClass = item.user?.agency_details?.user_class;
-    const itemRole = item.user?.role;
+    const itemRole = item.user?.role || (item.screening_data?.academy_code ? 'student' : null);
 
     return (
       (additionalFilters.value.year === '' || itemYear === parseInt(additionalFilters.value.year)) &&
@@ -193,12 +222,12 @@ const processedChartData = computed(() => {
     finalFilteredData.value.forEach((item) => {
       let value;
       if (selectedOption.value === 'screening') {
-        value = item.screening_data !== "Data not available" ? 'Screened' : 'Not Screened';
+        value = hasValidScreeningData(item) ? 'Screened' : 'Not Screened';
       } else {
         value = item[selectedOption.value] || 'Not Available';
       }
 
-      const gender = item.user?.gender?.toLowerCase() || 'other';
+      const gender = (item.user?.gender || item.screening_data?.gender)?.toLowerCase() || 'other';
       result[selectedOption.value][gender][value] = (result[selectedOption.value][gender][value] || 0) + 1;
     });
   }
@@ -229,24 +258,20 @@ const selectOrganization = (org) => {
   additionalFilters.value.userClass = '';
 }
 
-// Click outside handler
 const handleClickOutside = (event) => {
   if (!event.target.closest('.searchable-dropdown')) {
     showOrganizationDropdown.value = false;
   }
 }
 
-// Lifecycle hooks
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  console.log('data bata', finalFilteredData)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 })
 
-// Watchers
 watch(additionalFilters, () => {
   if (showReport.value && selectedOption.value !== 'all') {
     // Chart will update automatically due to reactivity

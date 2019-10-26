@@ -51,7 +51,8 @@
                 </div>
                 <div class="col-md-2">
                   <label for="userClassFilter" class="form-label">User Class</label>
-                  <select id="userClassFilter" v-model="additionalFilters.userClass" class="form-select">
+                  <select id="userClassFilter" v-model="additionalFilters.userClass" class="form-select"
+                    :disabled="!isUserClassAvailable">
                     <option value="">All User Classes</option>
                     <option v-for="userClass in availableUserClasses" :key="userClass" :value="userClass">
                       {{ userClass }}
@@ -113,60 +114,97 @@ const additionalFilters = ref({
   userClass: ''
 });
 
+// Helper function to check if screening data is valid
+const hasValidScreeningData = (item) => {
+  return item?.screening_data &&
+    typeof item.screening_data === 'object' &&
+    item.screening_data !== "Data not available";
+};
+
+// Helper function to get organization name
+const getOrganizationName = (item) => {
+  return item?.user?.active_agency?.agency_name ||
+    item?.user?.agency_details?.agency?.agency_name ||
+    (item?.screening_data && typeof item.screening_data === 'object' ?
+      item.screening_data.prev_school : null);
+};
+
+// Helper function to get gender
+const getGender = (item) => {
+  const userGender = item?.user?.gender;
+  const screeningGender = hasValidScreeningData(item) ? item.screening_data.gender : null;
+
+  if (userGender) return userGender;
+  if (screeningGender === 'M') return 'Male';
+  if (screeningGender === 'F') return 'Female';
+  return 'Other';
+};
+
 // Computed properties for filter options
 const availableYears = computed(() => {
-  const years = new Set(props.filteredData.map(item => {
-    const date = item.date;
-    return date ? new Date(date).getFullYear() : null;
-  }).filter(Boolean));
+  const years = new Set(props.filteredData
+    .map(item => item.date ? new Date(item.date).getFullYear() : null)
+    .filter(Boolean));
   return Array.from(years).sort();
 });
 
 const availableGenders = computed(() => {
-  const genders = new Set(props.filteredData.map(item =>
-    item.user?.gender
-  ).filter(Boolean));
+  const genders = new Set(props.filteredData
+    .map(item => getGender(item))
+    .filter(Boolean));
   return Array.from(genders);
 });
 
 const availableOrganizations = computed(() => {
-  const orgs = new Set(props.filteredData.map(item =>
-    item.user?.active_agency?.agency_name ||
-    item.user?.agency_details?.agency?.agency_name
-  ).filter(Boolean));
-  return Array.from(orgs);
+  const orgs = new Set(props.filteredData
+    .map(item => getOrganizationName(item))
+    .filter(Boolean));
+  return Array.from(orgs).sort();
+});
+
+const isUserClassAvailable = computed(() => {
+  const selectedOrg = additionalFilters.value.organization?.toLowerCase() || '';
+  return selectedOrg.includes('school') || selectedOrg.includes('education');
 });
 
 const availableUserClasses = computed(() => {
-  const userClasses = new Set(props.filteredData.map(item =>
-    item.user?.agency_details?.user_class
-  ).filter(Boolean));
-  return Array.from(userClasses);
+  if (!isUserClassAvailable.value) return [];
+
+  const classes = new Set(props.filteredData
+    .filter(item => getOrganizationName(item) === additionalFilters.value.organization)
+    .map(item => item?.user?.agency_details?.user_class)
+    .filter(Boolean));
+  return Array.from(classes).sort();
 });
 
 const availableEmployment = computed(() => {
-  const employment = new Set(props.filteredData.map(item =>
-    item.user?.agency_details?.user_role_agency
-  ).filter(Boolean));
-  return Array.from(employment);
+  const roles = new Set(props.filteredData
+    .map(item =>
+      item?.user?.agency_details?.user_role_agency ||
+      item?.user?.role ||
+      (hasValidScreeningData(item) && item.screening_data?.academy_code ? 'student' : null)
+    )
+    .filter(Boolean));
+  return Array.from(roles).sort();
 });
 
 // Filtered data based on additional filters
 const finalFilteredData = computed(() => {
   return props.filteredData.filter(item => {
-    const itemYear = item.date
-      ? new Date(item.date).getFullYear()
-      : null;
-
-    const organization = item.user?.active_agency?.agency_name ||
-      item.user?.agency_details?.agency?.agency_name;
+    const itemYear = item.date ? new Date(item.date).getFullYear() : null;
+    const gender = getGender(item);
+    const organization = getOrganizationName(item);
+    const userClass = item?.user?.agency_details?.user_class;
+    const employment = item?.user?.agency_details?.user_role_agency ||
+      item?.user?.role ||
+      (hasValidScreeningData(item) && item.screening_data?.academy_code ? 'student' : null);
 
     return (
       (!additionalFilters.value.year || itemYear === parseInt(additionalFilters.value.year)) &&
-      (!additionalFilters.value.gender || item.user?.gender === additionalFilters.value.gender) &&
+      (!additionalFilters.value.gender || gender === additionalFilters.value.gender) &&
       (!additionalFilters.value.organization || organization === additionalFilters.value.organization) &&
-      (!additionalFilters.value.userClass || item.user?.agency_details?.user_class === additionalFilters.value.userClass) &&
-      (!additionalFilters.value.employment || item.user?.agency_details?.user_role_agency === additionalFilters.value.employment)
+      (!additionalFilters.value.userClass || userClass === additionalFilters.value.userClass) &&
+      (!additionalFilters.value.employment || employment === additionalFilters.value.employment)
     );
   });
 });
@@ -184,7 +222,7 @@ const processedChartData = computed(() => {
 
     finalFilteredData.value.forEach((item) => {
       const status = item.case_status;
-      const gender = item.user?.gender || 'Other';
+      const gender = getGender(item);
 
       const statusMapping = {
         ongoing: 'On Going',

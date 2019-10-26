@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, watch } from 'vue';
 import cecdMonitorReport from './cecdMonitorReport/cecdMonitorReport.vue';
 import cecdCaseStatusReport from './cecdCasestatusReport/cecdCaseStatusReport.vue';
 import cecdSeverityReport from './cecdSeverityReport/cecdSeverityReport.vue';
@@ -73,7 +73,36 @@ const regions = ['Western', 'Central', 'Eastern'];
 const dzongkhagMapping = {
   Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse', 'Phuentsholing Thromde', 'Thimphu Thromde'],
   Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang', 'Gelephu Thromde'],
-  Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Samdrup Jongkhar Thromde', 'Trashi Yangtse', 'Trashigang']
+  Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Samdrup Jongkhar Thromde', 'Trashiyangtse', 'Trashigang']
+};
+
+// Helper function to get dzongkhag from item
+const getDzongkhag = (item) => {
+  // First try to get from screening data
+  if (item?.screening_data && typeof item.screening_data === 'object' && item.screening_data.ps_add_dzongkhag) {
+    return item.screening_data.ps_add_dzongkhag;
+  }
+  // Then try from user data
+  if (item?.user?.ps_add_dzongkhag) {
+    return item.user.ps_add_dzongkhag;
+  }
+  // Finally try from active agency
+  if (item?.user?.active_agency?.present_dzongkhag) {
+    return item.user.active_agency.present_dzongkhag;
+  }
+  return null;
+};
+
+// Helper function to find region for a dzongkhag
+const findRegionForDzongkhag = (dzongkhag) => {
+  if (!dzongkhag) return null;
+
+  for (const [region, dzongkhags] of Object.entries(dzongkhagMapping)) {
+    if (dzongkhags.some(d => d.toLowerCase() === dzongkhag.toLowerCase())) {
+      return region;
+    }
+  }
+  return null;
 };
 
 // Computed Properties
@@ -89,23 +118,28 @@ const filteredData = computed(() => {
   if (!serviceAndTreatmentData.value) return [];
 
   return serviceAndTreatmentData.value.filter((item) => {
-    const itemDzongkhag = item.user?.perm_add_dzongkhag;
+    const itemDzongkhag = getDzongkhag(item);
 
     // If no filters are applied, return all data
     if (!filters.value.region && !filters.value.dzongkhag) {
       return true;
     }
 
-    // Find the region for the item's dzongkhag
-    const itemRegion = Object.entries(dzongkhagMapping).find(([_, dzongkhags]) =>
-      dzongkhags.includes(itemDzongkhag)
-    )?.[0];
+    // If we can't determine the dzongkhag, exclude the item
+    if (!itemDzongkhag) {
+      return false;
+    }
 
-    // Apply filters
+    const itemRegion = findRegionForDzongkhag(itemDzongkhag);
+
+    // Apply region filter
     if (filters.value.region && itemRegion !== filters.value.region) {
       return false;
     }
-    if (filters.value.dzongkhag && itemDzongkhag !== filters.value.dzongkhag) {
+
+    // Apply dzongkhag filter
+    if (filters.value.dzongkhag &&
+      itemDzongkhag.toLowerCase() !== filters.value.dzongkhag.toLowerCase()) {
       return false;
     }
 
@@ -121,6 +155,13 @@ const handleRegionChange = () => {
 const applyFilters = () => {
   showReport.value = true;
 };
+
+// Debug logging to help troubleshoot filtering
+watch([filters, filteredData], ([newFilters, newData]) => {
+  console.log('Current Filters:', newFilters);
+  console.log('Filtered Data Count:', newData.length);
+  console.log('Sample Filtered Item:', newData[0]);
+}, { deep: true });
 </script>
 
 <style scoped>

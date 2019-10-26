@@ -39,81 +39,92 @@ const columns = ref([
   { field: 'followUp', header: 'Follow-Up' },
 ]);
 
+// Helper function to check if screening data is valid
+const hasValidScreeningData = (item) => {
+  return item?.screening_data &&
+    typeof item.screening_data === 'object' &&
+    item.screening_data !== "Data not available";
+};
+
 // Computed counts based on filtered data
 const counts = computed(() => {
+  const validData = props.filteredData.filter(hasValidScreeningData);
+
   return {
-    rescreening: props.filteredData.filter(item =>
-      item.screening_data?.rescreened === false
+    rescreening: validData.filter(item =>
+      item.screening_data?.rescreened === false ||
+      (typeof item.screening_data?.rescreening_count === 'number' &&
+        item.screening_data.rescreening_count === 0)
     ).length,
 
     counseling: {
-      waitingList: props.filteredData.filter(item =>
+      waitingList: validData.filter(item =>
         item.counseling === 'Waiting List'
       ).length,
-      notRequired: props.filteredData.filter(item =>
+      notRequired: validData.filter(item =>
         item.counseling === 'Not Required'
       ).length,
-      availed: props.filteredData.filter(item =>
+      availed: validData.filter(item =>
         item.counseling === 'Availed'
       ).length
     },
 
     assessment: {
-      conducted: props.filteredData.filter(item =>
+      conducted: validData.filter(item =>
         item.assessment_status === 'Conducted'
       ).length,
-      notConducted: props.filteredData.filter(item =>
+      notConducted: validData.filter(item =>
         item.assessment_status === 'Not Conducted'
       ).length
     },
 
     referral: {
-      referred: props.filteredData.filter(item =>
+      referred: validData.filter(item =>
         item.referred === 'Referred'
       ).length,
-      notReferred: props.filteredData.filter(item =>
+      notReferred: validData.filter(item =>
         item.referred === 'Not Referred'
       ).length
     },
 
     followUp: {
-      treatmentCompleted: props.filteredData.filter(item =>
+      treatmentCompleted: validData.filter(item =>
         item.follow_up === 'Treatment Completed'
       ).length,
-      undergoingTreatment: props.filteredData.filter(item =>
+      undergoingTreatment: validData.filter(item =>
         item.follow_up === 'Undergoing treatment'
       ).length,
-      completedCounselling: props.filteredData.filter(item =>
+      completedCounselling: validData.filter(item =>
         item.follow_up === 'Completed counselling sessions'
       ).length,
-      undergoingCounselling: props.filteredData.filter(item =>
+      undergoingCounselling: validData.filter(item =>
         item.follow_up === 'Undergoing counselling'
       ).length,
-      unwillingToUndergoTreatment: props.filteredData.filter(item =>
+      unwillingToUndergoTreatment: validData.filter(item =>
         item.follow_up === 'Unwilling to undergo treatment'
       ).length,
-      undergoneRehabilitation: props.filteredData.filter(item =>
+      undergoneRehabilitation: validData.filter(item =>
         item.follow_up === 'Undergone Rehabilitation'
       ).length,
-      undergoingRehabilitation: props.filteredData.filter(item =>
+      undergoingRehabilitation: validData.filter(item =>
         item.follow_up === 'Undergoing Rehabilitation'
       ).length,
-      hospitalBasedPrimary: props.filteredData.filter(item =>
+      hospitalBasedPrimary: validData.filter(item =>
         item.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)'
       ).length,
-      hospitalBasedContinuing: props.filteredData.filter(item =>
+      hospitalBasedContinuing: validData.filter(item =>
         item.follow_up === 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)'
       ).length,
-      schoolBased: props.filteredData.filter(item =>
+      schoolBased: validData.filter(item =>
         item.follow_up === 'School-based SUD Treatment and Care'
       ).length,
-      institutionBased: props.filteredData.filter(item =>
+      institutionBased: validData.filter(item =>
         item.follow_up === 'Institution-based SUD Treatment and Care'
       ).length,
-      followUpTest: props.filteredData.filter(item =>
+      followUpTest: validData.filter(item =>
         item.follow_up === 'Follow up Drug Test Conducted'
       ).length,
-      detentionBased: props.filteredData.filter(item =>
+      detentionBased: validData.filter(item =>
         item.follow_up === 'Detention-based SUD Treatment and Care'
       ).length
     }
@@ -137,7 +148,7 @@ const aggregateData = computed(() => [
       { key: 'Not Referred', count: counts.value.referral.notReferred }
     ],
     followUp: [
-      { key: 'Treatment completed', count: counts.value.followUp.treatmentCompleted },
+      { key: 'Treatment Completed', count: counts.value.followUp.treatmentCompleted },
       { key: 'Undergoing treatment', count: counts.value.followUp.undergoingTreatment },
       { key: 'Completed counselling sessions', count: counts.value.followUp.completedCounselling },
       { key: 'Undergoing counselling', count: counts.value.followUp.undergoingCounselling },
