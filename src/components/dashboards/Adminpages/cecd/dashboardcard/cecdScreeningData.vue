@@ -25,57 +25,83 @@
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue';
+import { computed, inject } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
 // Inject the service and treatment data
-const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
+const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 
-// Helper function to check valid screening data
+// Helper function to determine if screening data is valid
 const hasValidScreeningData = (item) => {
-  return item.screening_data && typeof item.screening_data === 'object' &&
-    (item.screening_data.id ||
-      item.screening_data.gad_data ||
-      item.screening_data.phq_data ||
-      item.screening_data.ace_data);
+  return item?.screening_data &&
+    typeof item.screening_data === 'object' &&
+    item.screening_data !== "Data not available" &&
+    Object.keys(item.screening_data).length > 0;
+};
+
+// Helper function to get gender from either user or screening data
+const getGender = (item) => {
+  if (!hasValidScreeningData(item)) return null;
+
+  if (item?.user?.gender) {
+    return item.user.gender.toLowerCase();
+  } else if (item?.screening_data?.gender) {
+    return item.screening_data.gender.toLowerCase();
+  }
+  return null;
 };
 
 // Computed values for gender counts with screening data
 const genderCounts = computed(() => {
-  if (!serviceAndTreatmentData.value) return { male: 0, female: 0, other: 0 };
+  if (!serviceAndTreatmentData?.value || serviceAndTreatmentData.value.length === 0) {
+    return { male: 0, female: 0, other: 0 };
+  }
 
-  return serviceAndTreatmentData.value.reduce((acc, item) => {
-    if (hasValidScreeningData(item) && item.user?.gender) {
-      const gender = item.user.gender.toLowerCase();
-      if (gender === 'male') acc.male++;
-      else if (gender === 'female') acc.female++;
-      else acc.other++;
-    }
-    return acc;
-  }, { male: 0, female: 0, other: 0 });
+  return serviceAndTreatmentData.value.reduce(
+    (acc, item) => {
+      if (!hasValidScreeningData(item)) return acc;
+
+      const gender = getGender(item);
+      if (gender) {
+        if (gender === 'male' || gender === 'm') acc.male++;
+        else if (gender === 'female' || gender === 'f') acc.female++;
+        else acc.other++;
+      }
+      return acc;
+    },
+    { male: 0, female: 0, other: 0 }
+  );
 });
 
 // Compute weekly counts
 const weeklyGenderCounts = computed(() => {
-  if (!serviceAndTreatmentData.value) return { male: 0, female: 0, other: 0 };
+  if (!serviceAndTreatmentData?.value || serviceAndTreatmentData.value.length === 0) {
+    return { male: 0, female: 0, other: 0 };
+  }
 
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  return serviceAndTreatmentData.value.reduce((acc, item) => {
-    const itemDate = new Date(item.date);
-    if (hasValidScreeningData(item) &&
-      !isNaN(itemDate) &&
-      itemDate >= oneWeekAgo &&
-      item.user?.gender) {
-      const gender = item.user.gender.toLowerCase();
-      if (gender === 'male') acc.male++;
-      else if (gender === 'female') acc.female++;
-      else acc.other++;
-    }
-    return acc;
-  }, { male: 0, female: 0, other: 0 });
+  return serviceAndTreatmentData.value.reduce(
+    (acc, item) => {
+      if (!hasValidScreeningData(item)) return acc;
+
+      const itemDate = new Date(item.date);
+      const gender = getGender(item);
+      if (
+        !isNaN(itemDate) &&
+        itemDate >= oneWeekAgo &&
+        gender
+      ) {
+        if (gender === 'male' || gender === 'm') acc.male++;
+        else if (gender === 'female' || gender === 'f') acc.female++;
+        else acc.other++;
+      }
+      return acc;
+    },
+    { male: 0, female: 0, other: 0 }
+  );
 });
 
 // Compute data for total screened table
@@ -83,18 +109,18 @@ const totalScreenedData = computed(() => [
   {
     header: 'Total New Entry',
     male: genderCounts.value.male,
-    female: genderCounts.value.female
+    female: genderCounts.value.female,
   },
   {
     header: 'Total Old Entry',
     male: 0,
-    female: 0
+    female: 0,
   },
   {
     header: 'Total Screened',
     male: genderCounts.value.male,
-    female: genderCounts.value.female
-  }
+    female: genderCounts.value.female,
+  },
 ]);
 
 // Compute data for weekly screened table
@@ -102,18 +128,18 @@ const weeklyScreenedData = computed(() => [
   {
     header: 'Total New Entry',
     male: weeklyGenderCounts.value.male,
-    female: weeklyGenderCounts.value.female
+    female: weeklyGenderCounts.value.female,
   },
   {
     header: 'Total Old Entry',
     male: 0,
-    female: 0
+    female: 0,
   },
   {
     header: 'Total Screened',
     male: weeklyGenderCounts.value.male,
-    female: weeklyGenderCounts.value.female
-  }
+    female: weeklyGenderCounts.value.female,
+  },
 ]);
 </script>
 

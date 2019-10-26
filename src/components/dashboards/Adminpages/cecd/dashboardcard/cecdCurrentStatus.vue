@@ -1,5 +1,8 @@
 <template>
-  <div class="status-container">
+  <div v-if="!serviceAndTreatmentData.length" class="status-container">
+    <p>Loading...</p>
+  </div>
+  <div v-else class="status-container">
     <h3 class="status-title">Current Status in The Organization</h3>
     <div class="status-cards">
       <div v-for="(status, index) in statuses" :key="index" class="status-card">
@@ -18,42 +21,61 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { inject } from 'vue';
 
-// Inject the data instead of using store
+// Inject the data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 
+// Format number function
 const formatNumber = (num) => {
+  if (!num && num !== 0) return 0;
   if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
   if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
   if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
   return num;
 };
 
-const totalOngoingCase = computed(() =>
-  serviceAndTreatmentData.value?.filter(item =>
-    item.service_and_treatment?.case_status === "On Going"
-  ).length || 0
-);
+// Computed properties for case counts
+const totalOngoingCase = computed(() => {
+  if (!serviceAndTreatmentData?.value) return 0;
+  return serviceAndTreatmentData.value.filter(item =>
+    item?.case_status === "On Going"
+  ).length;
+});
 
-const totalClosedCase = computed(() =>
-  serviceAndTreatmentData.value?.filter(item =>
-    item.service_and_treatment?.case_status === "Case Closed"
-  ).length || 0
-);
+const totalClosedCase = computed(() => {
+  if (!serviceAndTreatmentData?.value) return 0;
+  return serviceAndTreatmentData.value.filter(item =>
+    item?.case_status === "Case Closed"
+  ).length;
+});
 
-const totalDiscontinueCase = computed(() =>
-  serviceAndTreatmentData.value?.filter(item =>
-    item.service_and_treatment?.case_status === "Case Discontinue"
-  ).length || 0
-);
+const totalDiscontinueCase = computed(() => {
+  if (!serviceAndTreatmentData?.value) return 0;
+  return serviceAndTreatmentData.value.filter(item =>
+    item?.case_status === "Case Discontinue"
+  ).length;
+});
 
 const statuses = computed(() => [
-  { title: 'Total Case Ongoing', iconClass: 'description', count: totalOngoingCase.value },
-  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
-  { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
+  {
+    title: 'Total Case Ongoing',
+    iconClass: 'description',
+    count: totalOngoingCase.value
+  },
+  {
+    title: 'Total Case Discontinue',
+    iconClass: 'credit_card_off',
+    count: totalDiscontinueCase.value
+  },
+  {
+    title: 'Total Case Closed',
+    iconClass: 'fact_check',
+    count: totalClosedCase.value
+  }
 ]);
+
 </script>
 
 <style scoped>
