@@ -18,7 +18,7 @@
                         </form>
                         <!-- Reset Status Messages -->
                         <div v-if="resetStatus === 'success'" class="alert alert-success mt-3" role="alert">
-                            Password reset link sent! Please check your email.
+                            {{ successMessage }}
                         </div>
                         <div v-if="resetStatus === 'failed'" class="alert alert-danger mt-3" role="alert">
                             Failed to send reset link. Please check the email provided and try again.
@@ -54,18 +54,20 @@
     </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
 import loginLogo from '@/assets/images/seal.png';
 import Swal from 'sweetalert2';
 
+const router = useRouter();
 const email = ref('');
 const resetStatus = ref(null);
 const loading = ref(false);
 const tagline = ref('');
+const successMessage = ref('');
 
 onMounted(async () => {
     try {
@@ -80,20 +82,27 @@ onMounted(async () => {
 const requestPasswordReset = async () => {
     loading.value = true;
     try {
-        await axios.post(endpoints.passwordResetRequest, { email: email.value });
+        const response = await axios.post(endpoints.passwordResetRequest, { email: email.value });
         resetStatus.value = 'success';
+        successMessage.value = response.data.message;
+        
+        // Show success alert with the backend message
         Swal.fire({
-            title: 'Reset Link Sent',
-            text: 'Please check your email for the password reset link.',
+            title: 'Password Reset Successful',
+            text: response.data.message,
             icon: 'success',
             confirmButtonColor: '#2B656F'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                router.push('/login');
+            }
         });
     } catch (error) {
         console.error('Failed to send password reset link:', error);
         resetStatus.value = 'failed';
         Swal.fire({
             title: 'Reset Failed',
-            text: 'Failed to send reset link. Please check the email provided and try again.',
+            text: error.response?.data?.error || 'Failed to send reset link. Please check the email provided and try again.',
             icon: 'error',
             confirmButtonColor: '#2B656F'
         });

@@ -1,271 +1,1040 @@
 <template>
-  <div class="filter-container">
-    <!-- Primary filters -->
-    <div class="filter-form mb-4">
-      <h4 class="mb-3">FILTERS</h4>
-      <form @submit.prevent="applyPrimaryFilters" class="filter-form-container">
-        <div class="row">
-          <div class="col-md-3 mb-3">
-            <label for="region" class="form-label">Region</label>
-            <select id="region" v-model="primaryFilters.region" class="form-select" @change="updateDzongkhags">
-              <option value="">Select Region</option>
-              <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
-            </select>
+  <div class="dashboard-container">
+    <!-- Enhanced Filter Panel -->
+    <Panel :toggleable="true" :collapsed="false" class="filter-panel">
+      <template #header>
+        <div class="filter-header">
+          <div class="d-flex align-items-center gap-3">
+            <i class="pi pi-filter text-white"></i>
+            <h4 class="m-0">Configure Data Filters</h4>
           </div>
-          <div class="col-md-3 mb-3">
-            <label for="dzongkhag" class="form-label">Dzongkhag</label>
-            <select id="dzongkhag" v-model="primaryFilters.dzongkhag" class="form-select">
-              <option value="">Select Dzongkhag</option>
-              <option v-for="dzongkhag in availableDzongkhags" :key="dzongkhag" :value="dzongkhag">
-                {{ dzongkhag }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="agency" class="form-label">Agency</label>
-            <select id="agency" v-model="primaryFilters.agency" class="form-select">
-              <option value="">Select Agency</option>
-              <option value="School">School</option>
-              <option value="Gyalsuung">Gyalsuung</option>
-              <option value="RCSC">RCSC</option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label for="institute" class="form-label">Institute/Org</label>
-            <select id="institute" v-model="primaryFilters.institute" class="form-select">
-              <option value="">Select Institute/Org</option>
-              <option v-for="institute in filteredInstitutes" :key="institute" :value="institute">{{ institute }}
-              </option>
-            </select>
+          <div class="filter-badges" v-if="hasActiveFilters">
+            <span class="filter-count">{{ activeFilterCount }} active</span>
           </div>
         </div>
-        <div class="row">
-          <div class="col-12">
-            <button type="submit" class="btn btn-primary">Configure</button>
-          </div>
-        </div>
-      </form>
-    </div>
+      </template>
 
-    <!-- Secondary filters -->
-    <div v-if="showSecondaryFilters" class="second-filter-form mb-4">
-      <div class="row">
-        <div class="col-md-4 mb-2 mb-md-0">
-          <select v-model="secondaryFilters.currentStatus" class="form-select">
-            <option value="">Current Status</option>
-            <option value="Mental Health Status">Mental Health Status</option>
-            <option value="Referral Status">Referral Status</option>
-            <option value="Current Status">Current Status</option>
-          </select>
-        </div>
-        <div class="col-md-4 mb-2 mb-md-0">
-          <select v-model="secondaryFilters.selectStatus" class="form-select">
-            <option value="">Select Status</option>
-            <option value="Waiting/Pending">Waiting/Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Ended">Ended</option>
-            <option value="Discontinued">Discontinued</option>
-          </select>
+      <div class="filter-content">
+        <!-- Primary Filters -->
+        <form @submit.prevent="applyFilters" class="primary-filters">
+          <div class="filter-grid">
+            <!-- Region Selection -->
+            <div class="filter-item">
+              <label class="filter-label">Region</label>
+              <Dropdown v-model="filters.region" :options="regions" optionLabel="name" placeholder="Select Region"
+                class="w-full" @change="handleRegionChange" :filter="true" :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-map-marker mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Region' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+
+            <!-- Dzongkhag Selection -->
+            <div class="filter-item">
+              <label class="filter-label">Dzongkhag</label>
+              <Dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" optionLabel="name"
+                placeholder="Select Dzongkhag" class="w-full" :disabled="!filters.region" :filter="true"
+                :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-building mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Dzongkhag' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+
+            <!-- Organization Selection -->
+            <div class="filter-item">
+              <label class="filter-label">Organization</label>
+              <Dropdown v-model="filters.organization" :options="organizations" optionLabel="name"
+                placeholder="Select Organization" class="w-full" @change="handleOrganizationChange" :filter="true"
+                :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-briefcase mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Organization' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+
+            <!-- Agency Selection -->
+            <div class="filter-item">
+              <label class="filter-label">Agency</label>
+              <Dropdown v-model="filters.agency" :options="filteredAgencies" optionLabel="name"
+                placeholder="Select Agency" class="w-full" :disabled="!filters.organization" :filter="true"
+                :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-home mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Agency' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+          </div>
+
+          <!-- Additional Filters -->
+          <div class="filter-grid mt-4">
+            <!-- Age Group Filter -->
+            <div class="filter-item">
+              <label class="filter-label">Age Group</label>
+              <MultiSelect v-model="filters.ageGroups" :options="ageGroups" optionLabel="name"
+                placeholder="Select Age Groups" class="w-full" :filter="true" display="chip">
+                <template #value="slotProps">
+                  <div class="multiselect-value">
+                    <span v-if="slotProps.value.length === 0">Select Age Groups</span>
+                    <Chip v-for="item in slotProps.value" :key="item.code" :label="item.name" class="mr-1" />
+                  </div>
+                </template>
+              </MultiSelect>
+            </div>
+
+            <!-- Class/Grade Filter -->
+            <div class="filter-item" v-if="filters.organization?.code === 'SCHOOL'">
+              <label class="filter-label">Class/Grade</label>
+              <MultiSelect v-model="filters.classes" :options="schoolClasses" optionLabel="name"
+                placeholder="Select Classes" class="w-full" :filter="true" display="chip">
+                <template #value="slotProps">
+                  <div class="multiselect-value">
+                    <span v-if="slotProps.value.length === 0">Select Classes</span>
+                    <Chip v-for="item in slotProps.value" :key="item.code" :label="item.name" class="mr-1" />
+                  </div>
+                </template>
+              </MultiSelect>
+            </div>
+
+            <!-- Status Filters -->
+            <div class="filter-item">
+              <label class="filter-label">Current Status</label>
+              <Dropdown v-model="filters.currentStatus" :options="statusTypes" optionLabel="name"
+                placeholder="Select Status Type" class="w-full" :filter="true" :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-chart-bar mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Status Type' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+
+            <div class="filter-item">
+              <label class="filter-label">Status Value</label>
+              <Dropdown v-model="filters.statusValue" :options="currentStatusValues" optionLabel="name"
+                placeholder="Select Status" class="w-full" :disabled="!filters.currentStatus" :filter="true"
+                :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-tag mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Status' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
+          </div>
+
+          <!-- Active Filters Display -->
+          <div v-if="hasActiveFilters" class="active-filters-section">
+            <div class="active-filters-header">
+              <i class="pi pi-check-circle mr-2"></i>
+              <h6 class="m-0">Active Filters</h6>
+            </div>
+            <div class="active-filters-content">
+              <Chip v-for="filter in activeFilters" :key="filter.key" :label="filter.label" class="filter-chip"
+                removable @remove="removeFilter(filter.key)" />
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="filter-actions">
+            <Button label="Reset Filters" icon="pi pi-refresh" severity="secondary" outlined @click="resetFilters" />
+            <Button label="Apply Filters" icon="pi pi-check" severity="primary" @click="applyFilters"
+              :loading="isLoading" />
+          </div>
+        </form>
+      </div>
+    </Panel>
+
+    <!-- Results Section -->
+    <div v-if="showResults" class="results-section">
+      <div v-if="isLoading" class="loading-overlay">
+        <ProgressSpinner />
+      </div>
+
+      <!-- Enhanced Summary Cards -->
+      <div class="summary-grid">
+        <div v-for="metric in summaryMetrics" :key="metric.label" class="summary-card">
+          <div class="summary-content">
+            <div class="summary-header">
+              <h6>{{ metric.label }}</h6>
+              <i
+                :class="['trend-icon', metric.trend > 0 ? 'pi pi-arrow-up text-success' : 'pi pi-arrow-down text-danger']"></i>
+            </div>
+            <h3 class="summary-value">{{ metric.value }}</h3>
+            <small :class="['trend-value', metric.trend > 0 ? 'text-success' : 'text-danger']">
+              {{ Math.abs(metric.trend) }}% from previous period
+            </small>
+          </div>
         </div>
       </div>
-      <div class="row mt-3">
-        <div class="col-12">
-          <button @click="generateResults" class="btn btn-primary">Generate</button>
+
+      <!-- Visualization Components -->
+      <div class="visualization-grid">
+        <div class="map-container">
+          <RNDmap :filtered-data="filteredData" />
         </div>
-      </div>
-    </div>
-
-    <!-- Display components -->
-    <div v-if="showResults" class="mt-4">
-      <div class="mt-4">
-        <RNDmap :filtered-data="finalFilteredData" />
-      </div>
-
-      <div class="mt-4">
-        <h5>Data Display</h5>
-        <RndDataDisplay :filtered-data="finalFilteredData" />
-      </div>
-
-      <div class="mt-4">
-        <RnDChartTables :filtered-data="finalFilteredData" />
+        <div class="chart-container">
+          <RndDataDisplay :filtered-data="filteredData" />
+        </div>
+        <div class="table-container">
+          <RnDChartTables :filtered-data="filteredData" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, inject } from 'vue';
+import { ref, reactive, computed, inject, onMounted } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
+import Button from 'primevue/button';
+import Chip from 'primevue/chip';
+import Panel from 'primevue/panel';
+import ProgressSpinner from 'primevue/progressspinner';
 import RndDataDisplay from './RndDataDisplay.vue';
 import RnDChartTables from './RnDChartTables.vue';
 import RNDmap from './overview/RNDmap.vue';
 
 // Inject the provided data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
+const toast = useToast();
 
-const primaryFilteredData = ref([]);
-const showSecondaryFilters = ref(false);
+// State Management
+const isFilterExpanded = ref(true);
+const isLoading = ref(false);
 const showResults = ref(false);
 
-const primaryFilters = reactive({
-  region: '',
-  dzongkhag: '',
-  agency: '',
-  institute: ''
+// Filter state
+const filters = reactive({
+  region: null,
+  dzongkhag: null,
+  organization: null,
+  agency: null,
+  ageGroups: [],
+  classes: [],
+  currentStatus: null,
+  statusValue: null
 });
 
-const secondaryFilters = reactive({
-  currentStatus: '',
-  selectStatus: ''
+// Constants and Options
+const regions = [
+  { code: 'WESTERN', name: 'Western' },
+  { code: 'CENTRAL', name: 'Central' },
+  { code: 'EASTERN', name: 'Eastern' }
+];
+
+const organizations = [
+  { code: 'SCHOOL', name: 'School' },
+  { code: 'GYALSUUNG', name: 'Gyalsuung' },
+  { code: 'RCSC', name: 'RCSC' }
+];
+
+const ageGroups = [
+  { code: '13-15', name: '13-15 years' },
+  { code: '16-18', name: '16-18 years' },
+  { code: '19-21', name: '19-21 years' },
+  { code: '22-24', name: '22-24 years' },
+  { code: '25+', name: '25+ years' }
+];
+
+const schoolClasses = [
+  { code: 'PP', name: 'Pre-Primary' },
+  { code: '1', name: 'Class 1' },
+  { code: '2', name: 'Class 2' },
+  { code: '3', name: 'Class 3' },
+  { code: '4', name: 'Class 4' },
+  { code: '5', name: 'Class 5' },
+  { code: '6', name: 'Class 6' },
+  { code: '7', name: 'Class 7' },
+  { code: '8', name: 'Class 8' },
+  { code: '9', name: 'Class 9' },
+  { code: '10', name: 'Class 10' },
+  { code: '11', name: 'Class 11' },
+  { code: '12', name: 'Class 12' }
+];
+
+
+const statusTypes = [
+  { code: 'MENTAL_HEALTH', name: 'Mental Health Status' },
+  { code: 'REFERRAL', name: 'Referral Status' },
+  { code: 'CURRENT', name: 'Current Status' }
+];
+
+// Computed Properties
+const availableDzongkhags = computed(() => {
+  if (!filters.region) return [];
+
+  const dzongkhagsByRegion = {
+    WESTERN: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse'],
+    CENTRAL: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
+    EASTERN: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
+  };
+
+  return dzongkhagsByRegion[filters.region.code].map(name => ({
+    code: name.toUpperCase(),
+    name
+  }));
 });
 
-const regions = ['Western', 'Central', 'Eastern'];
+const filteredAgencies = computed(() => {
+  if (!serviceAndTreatmentData.value || !filters.organization) return [];
 
-const dzongkhags = {
-  Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse', 'Phuentsholing Thromde', 'Thimphu Thromde'],
-  Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang', 'Gelephu Thromde'],
-  Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Samdrup Jongkhar Thromde', 'Trashiyangtse', 'Trashigang']
+  const agencies = new Set();
+  serviceAndTreatmentData.value.forEach(item => {
+    const agencyName = item.user?.agency_details?.agency?.agency_name;
+    if (agencyName) {
+      if (filters.organization.code === 'SCHOOL' && agencyName.toLowerCase().includes('school')) {
+        agencies.add(agencyName);
+      } else if (filters.organization.code === 'GYALSUUNG' && agencyName.toLowerCase().includes('gyalsung')) {
+        agencies.add(agencyName);
+      } else if (filters.organization.code === 'RCSC' &&
+        !agencyName.toLowerCase().includes('school') &&
+        !agencyName.toLowerCase().includes('gyalsung')) {
+        agencies.add(agencyName);
+      }
+    }
+  });
+
+  return Array.from(agencies).map(name => ({
+    code: name,
+    name
+  }));
+});
+
+const currentStatusValues = computed(() => {
+  if (!filters.currentStatus) return [];
+
+  const statusMap = {
+    MENTAL_HEALTH: [
+      { code: 'WAITING', name: 'Waiting/Pending' },
+      { code: 'IN_PROGRESS', name: 'In Progress' },
+      { code: 'COMPLETED', name: 'Completed' }
+    ],
+    REFERRAL: [
+      { code: 'NOT_REFERRED', name: 'Not Referred' },
+      { code: 'REFERRED', name: 'Referred' },
+      { code: 'IN_PROGRESS', name: 'In Progress' }
+    ],
+    CURRENT: [
+      { code: 'ACTIVE', name: 'Active' },
+      { code: 'INACTIVE', name: 'Inactive' },
+      { code: 'DISCONTINUED', name: 'Discontinued' }
+    ]
+  };
+
+  return statusMap[filters.currentStatus.code] || [];
+});
+
+const hasActiveFilters = computed(() => {
+  return Object.values(filters).some(value =>
+    value !== null &&
+    (Array.isArray(value) ? value.length > 0 : true)
+  );
+});
+
+const activeFilterCount = computed(() => {
+  return Object.values(filters).filter(value =>
+    value !== null &&
+    (Array.isArray(value) ? value.length > 0 : true)
+  ).length;
+});
+
+const activeFilters = computed(() => {
+  const active = [];
+
+  if (filters.region) active.push({ key: 'region', label: `Region: ${filters.region.name}` });
+  if (filters.dzongkhag) active.push({ key: 'dzongkhag', label: `Dzongkhag: ${filters.dzongkhag.name}` });
+  if (filters.organization) active.push({ key: 'organization', label: `Organization: ${filters.organization.name}` });
+  if (filters.agency) active.push({ key: 'agency', label: `Agency: ${filters.agency.name}` });
+  if (filters.ageGroups.length) {
+    active.push({
+      key: 'ageGroups',
+      label: `Age Groups: ${filters.ageGroups.map(g => g.name).join(', ')}`
+    });
+  }
+  if (filters.classes.length) {
+    active.push({
+      key: 'classes',
+      label: `Classes: ${filters.classes.map(c => c.name).join(', ')}`
+    });
+  }
+  if (filters.currentStatus && filters.statusValue) {
+    active.push({
+      key: 'status',
+      label: `${filters.currentStatus.name}: ${filters.statusValue.name}`
+    });
+  }
+
+  return active;
+});
+
+const toggleFilters = () => {
+  isFilterExpanded.value = !isFilterExpanded.value;
 };
 
+const handleRegionChange = () => {
+  filters.dzongkhag = null;
+};
+
+const handleOrganizationChange = () => {
+  filters.agency = null;
+  filters.classes = [];
+};
+
+const calculateAge = (dateOfBirth) => {
+  const dob = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+
+  return age;
+};
+
+const getAgeGroup = (age) => {
+  if (age < 13) return null;
+  if (age <= 15) return '13-15';
+  if (age <= 18) return '16-18';
+  if (age <= 21) return '19-21';
+  if (age <= 24) return '22-24';
+  return '25+';
+};
+
+const resetFilters = () => {
+  Object.keys(filters).forEach(key => {
+    filters[key] = Array.isArray(filters[key]) ? [] : null;
+  });
+  showResults.value = false;
+};
+
+const removeFilter = (filterKey) => {
+  if (Array.isArray(filters[filterKey])) {
+    filters[filterKey] = [];
+  } else {
+    filters[filterKey] = null;
+  }
+
+  // Handle dependent fields
+  if (filterKey === 'region') {
+    filters.dzongkhag = null;
+  } else if (filterKey === 'organization') {
+    filters.agency = null;
+    filters.classes = [];
+  } else if (filterKey === 'currentStatus') {
+    filters.statusValue = null;
+  }
+};
+
+const filteredData = computed(() => {
+  if (!serviceAndTreatmentData.value) return [];
+
+  return serviceAndTreatmentData.value.filter(item => {
+    let match = true;
+
+    // Region and Dzongkhag filtering
+    if (filters.region) {
+      const itemDzongkhag = item.user?.fields?.perm_add_dzongkhag;
+      const dzongkhagRegion = getDzongkhagRegion(itemDzongkhag);
+      match = match && dzongkhagRegion === filters.region.code;
+
+      if (filters.dzongkhag) {
+        match = match && itemDzongkhag === filters.dzongkhag.code;
+      }
+    }
+
+    // Organization and Agency filtering
+    if (filters.organization) {
+      const agencyName = item.user?.agency_details?.agency?.agency_name?.toLowerCase() || '';
+
+      switch (filters.organization.code) {
+        case 'SCHOOL':
+          match = match && agencyName.includes('school');
+          break;
+        case 'GYALSUUNG':
+          match = match && agencyName.includes('gyalsung');
+          break;
+        case 'RCSC':
+          match = match && !agencyName.includes('school') &&
+            !agencyName.includes('gyalsung');
+          break;
+      }
+
+      if (filters.agency) {
+        match = match && item.user?.agency_details?.agency?.agency_name === filters.agency.code;
+      }
+    }
+
+    // Age Group filtering
+    if (filters.ageGroups.length > 0) {
+      const age = calculateAge(item.user?.date_of_birth);
+      const ageGroup = getAgeGroup(age);
+      match = match && filters.ageGroups.some(group => group.code === ageGroup);
+    }
+
+    // Class/Grade filtering (for schools)
+    if (filters.organization?.code === 'SCHOOL' && filters.classes.length > 0) {
+      const userClass = item.user?.agency_details?.user_class;
+      match = match && filters.classes.some(cls => cls.code === userClass);
+    }
+
+    // Status filtering
+    if (filters.currentStatus && filters.statusValue) {
+      switch (filters.currentStatus.code) {
+        case 'MENTAL_HEALTH':
+          match = match && item.case_status === filters.statusValue.code;
+          break;
+        case 'REFERRAL':
+          match = match && item.referred === filters.statusValue.code;
+          break;
+        case 'CURRENT':
+          match = match && item.counseling === filters.statusValue.code;
+          break;
+      }
+    }
+
+    return match;
+  });
+});
+
+const summaryMetrics = computed(() => {
+  const data = filteredData.value;
+  const totalCases = data.length;
+  const previousPeriodCases = 0;
+
+  return [
+    {
+      label: 'Total Cases',
+      value: totalCases,
+      trend: ((totalCases - previousPeriodCases) / previousPeriodCases * 100) || 0
+    },
+    {
+      label: 'High Risk Cases',
+      value: data.filter(item => item.screening_data?.phq_interpretation === 'Severe' ||
+        item.screening_data?.gad_interpretation === 'Severe').length,
+      trend: 5.2 // Calculate actual trend
+    },
+    {
+      label: 'Active Referrals',
+      value: data.filter(item => item.referred === 'REFERRED').length,
+      trend: -2.1 // Calculate actual trend
+    },
+    {
+      label: 'Completed Cases',
+      value: data.filter(item => item.case_status === 'COMPLETED').length,
+      trend: 8.4 // Calculate actual trend
+    }
+  ];
+});
+
+const applyFilters = async () => {
+  try {
+    isLoading.value = true;
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    showResults.value = true;
+
+    toast.add({
+      severity: 'success',
+      summary: 'Filters Applied',
+      detail: `Successfully filtered data with ${activeFilterCount.value} criteria`,
+      life: 3000
+    });
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to apply filters. Please try again.',
+      life: 3000
+    });
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Helper function to get region from dzongkhag
 const getDzongkhagRegion = (dzongkhag) => {
-  for (const [region, dzongkhagList] of Object.entries(dzongkhags)) {
-    if (dzongkhagList.includes(dzongkhag)) {
+  const regionMap = {
+    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHHUKHA', 'SAMTSE'],
+    CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE'],
+    EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG']
+  };
+
+  for (const [region, dzongkhags] of Object.entries(regionMap)) {
+    if (dzongkhags.includes(dzongkhag?.toUpperCase())) {
       return region;
     }
   }
   return null;
 };
 
-const availableDzongkhags = computed(() => {
-  return primaryFilters.region ? dzongkhags[primaryFilters.region] || [] : [];
+// Lifecycle hooks
+onMounted(() => {
+  // Initialize any required data or state
+  isFilterExpanded.value = true;
 });
-
-const updateDzongkhags = () => {
-  primaryFilters.dzongkhag = '';
-};
-
-const filteredInstitutes = computed(() => {
-  if (!serviceAndTreatmentData.value) return [];
-
-  let agencies = serviceAndTreatmentData.value
-    .map(item => item.user?.agency_details?.agency?.agency_name || '')
-    .filter(Boolean);
-
-  switch (primaryFilters.agency) {
-    case 'School':
-      return agencies.filter(agency => agency.toLowerCase().includes('school'));
-    case 'Gyalsuung':
-      return agencies.filter(agency => agency.toLowerCase().includes('gyalsung'));
-    case 'RCSC':
-      return agencies.filter(agency =>
-        !agency.toLowerCase().includes('school') &&
-        !agency.toLowerCase().includes('gyalsung') &&
-        !agency.toLowerCase().includes('eventbased') &&
-        !agency.toLowerCase().includes('case_based')
-      );
-    default:
-      return [...new Set(agencies)];
-  }
-});
-
-const applyPrimaryFilters = () => {
-  primaryFilteredData.value = serviceAndTreatmentData.value.filter((item) => {
-    const itemDzongkhag = item.user?.fields?.perm_add_dzongkhag || '';
-    const itemRegion = getDzongkhagRegion(itemDzongkhag);
-    const itemAgency = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
-    let match = true;
-
-    if (primaryFilters.region) match = match && itemRegion === primaryFilters.region;
-    if (primaryFilters.dzongkhag) match = match && itemDzongkhag === primaryFilters.dzongkhag;
-
-    if (primaryFilters.agency) {
-      switch (primaryFilters.agency) {
-        case 'School':
-          match = match && itemAgency.includes('school');
-          break;
-        case 'Gyalsuung':
-          match = match && itemAgency.includes('gyalsung');
-          break;
-        case 'RCSC':
-          match = match && !itemAgency.includes('school') &&
-            !itemAgency.includes('gyalsung') &&
-            !itemAgency.includes('eventbased') &&
-            !itemAgency.includes('case_based');
-          break;
-      }
-    }
-
-    if (primaryFilters.institute) {
-      match = match && item.user?.agency_details?.agency?.agency_name === primaryFilters.institute;
-    }
-
-    return match;
-  });
-
-  showSecondaryFilters.value = true;
-  showResults.value = false;
-};
-
-const finalFilteredData = computed(() => {
-  if (!primaryFilteredData.value) return [];
-
-  return primaryFilteredData.value.filter((item) => {
-    let match = true;
-
-    if (secondaryFilters.currentStatus && secondaryFilters.selectStatus) {
-      switch (secondaryFilters.currentStatus) {
-        case 'Mental Health Status':
-          match = match && item.case_status === secondaryFilters.selectStatus;
-          break;
-        case 'Referral Status':
-          match = match && item.referred === secondaryFilters.selectStatus;
-          break;
-        case 'Current Status':
-          match = match && item.counseling === secondaryFilters.selectStatus;
-          break;
-      }
-    }
-
-    return match;
-  });
-});
-
-const generateResults = () => {
-  showResults.value = true;
-};
 </script>
 
 <style scoped>
-.filter-container {
-  background-color: #fff;
+.dashboard-container {
+  background-color: var(--surface-ground);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.filter-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.filter-panel :deep(.p-panel-header) {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 1.25rem;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.filter-content {
+  padding: 2rem;
+  background: white;
+  border-radius: 0 0 12px 12px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-label {
+  font-weight: 500;
+  color: var(--text-color-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.dropdown-value {
+  display: flex;
+  align-items: center;
+}
+
+.multiselect-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.active-filters-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(43, 101, 111, 0.05);
+  border-radius: 12px;
+}
+
+.active-filters-header {
+  display: flex;
+  align-items: center;
+  color: #2B656F;
+  margin-bottom: 1rem;
+}
+
+.active-filters-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.filter-chip {
+  background: white;
+  border: 1px solid rgba(43, 101, 111, 0.2);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--surface-border);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.summary-header h6 {
+  color: var(--text-color-secondary);
+  margin: 0;
+}
+
+.summary-value {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+  color: #2B656F;
+}
+
+.trend-value {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.visualization-grid {
+  display: grid;
+  gap: 1.5rem;
+  /* Create a layout with map on top, chart and table below */
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas: 
+    "map map"
+    "chart table";
+}
+
+.map-container {
+  grid-area: map;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.chart-container {
+  grid-area: chart;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.table-container {
+  grid-area: table;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* PrimeVue component customization */
+:deep(.p-dropdown),
+:deep(.p-multiselect) {
   border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.form-label {
-  font-weight: bold;
+:deep(.p-dropdown:not(.p-disabled):hover),
+:deep(.p-multiselect:not(.p-disabled):hover) {
+  border-color: #2B656F;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
+:deep(.p-dropdown.p-focus),
+:deep(.p-multiselect.p-focus) {
+  border-color: #2B656F;
+  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.1);
 }
 
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
-}
-
-.second-filter-form {
-  margin-top: 20px;
-}
-
-.results-container {
-  background-color: #fff;
+:deep(.p-dropdown-panel),
+:deep(.p-multiselect-panel) {
   border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.p-dropdown-item),
+:deep(.p-multiselect-item) {
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+:deep(.p-dropdown-item:hover),
+:deep(.p-multiselect-item:hover) {
+  background: rgba(43, 101, 111, 0.05);
+}
+
+:deep(.p-dropdown-item.p-highlight),
+:deep(.p-multiselect-item.p-highlight) {
+  background: rgba(43, 101, 111, 0.1);
+  color: #2B656F;
+}
+
+/* Button customization */
+:deep(.p-button) {
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.2s ease;
+}
+
+:deep(.p-button.p-button-outlined) {
+  border: 2px solid;
+}
+
+:deep(.p-button.p-button-outlined:hover) {
+  background: rgba(43, 101, 111, 0.05);
+}
+
+:deep(.p-button.p-button-primary) {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border: none;
+}
+
+:deep(.p-button.p-button-primary:hover) {
+  background: linear-gradient(135deg, #1D4851 0%, #2B656F 100%);
+  transform: translateY(-1px);
+}
+
+/* Chip customization */
+:deep(.p-chip) {
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  background: rgba(43, 101, 111, 0.1);
+  color: #2B656F;
+}
+
+:deep(.p-chip .p-chip-remove-icon) {
+  margin-left: 0.5rem;
+}
+
+/* Progress Spinner customization */
+:deep(.p-progress-spinner) {
+  width: 50px;
+  height: 50px;
+}
+
+:deep(.p-progress-spinner-circle) {
+  stroke: #2B656F;
+  stroke-width: 4;
+}
+
+/* Panel content animations */
+.filter-content {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Loading overlay enhancement */
+.loading-overlay {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+}
+
+/* Visualization containers enhancement */
+.visualization-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.map-container,
+.chart-container,
+.table-container {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.map-container:hover,
+.chart-container:hover,
+.table-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2B656F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1D4851;
+}
+
+/* Filter badges enhancement */
+.filter-badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filter-count {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animations */
+.summary-card,
+.filter-chip,
+.visualization-grid > div {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Enhance active filters section */
+.active-filters-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.active-filters-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border-radius: 4px 4px 0 0;
+}
+
+/* Enhanced dropdown icons */
+:deep(.p-dropdown-trigger),
+:deep(.p-multiselect-trigger) {
+  width: 3rem;
+  background: rgba(43, 101, 111, 0.05);
+  border-radius: 0 8px 8px 0;
+  transition: all 0.2s ease;
+}
+
+:deep(.p-dropdown:hover .p-dropdown-trigger),
+:deep(.p-multiselect:hover .p-multiselect-trigger) {
+  background: rgba(43, 101, 111, 0.1);
+}
+
+/* Responsive enhancements */
+@media (max-width: 1024px) {
+  .visualization-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "map"
+      "chart"
+      "table";
+  }
+  
+  .summary-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+  
+  .filter-actions {
+    flex-direction: column;
+  }
+  
+  .filter-actions .p-button {
+    width: 100%;
+  }
+  
+  .summary-card {
+    padding: 1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .dashboard-container {
+    padding: 0;
+  }
+  
+  .filter-panel {
+    display: none;
+  }
+  
+  .summary-grid,
+  .visualization-grid {
+    gap: 1rem;
+  }
 }
 </style>
