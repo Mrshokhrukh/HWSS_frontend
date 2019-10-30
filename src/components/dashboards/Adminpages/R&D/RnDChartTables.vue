@@ -325,7 +325,8 @@ const printTable = () => {
 
 <style scoped>
 .bg-gradient {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%) !important;
+  color: white !important;
 }
 
 .bg-gradient-secondary {
@@ -333,7 +334,7 @@ const printTable = () => {
 }
 
 .card {
-  background: white;
+  background: #ffffff;
   margin: 1rem;
 }
 
@@ -346,7 +347,7 @@ const printTable = () => {
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {
-  background-color: #f8f9fa;
+  background-color: #8EC0CC;
   color: #1D4851;
   font-weight: 600;
   padding: 1rem;
@@ -369,7 +370,7 @@ const printTable = () => {
 :deep(.p-button) {
   background: transparent;
   border: 1px solid white;
-  color: white;
+  color: rgb(37, 155, 120);
   transition: all 0.2s;
 }
 

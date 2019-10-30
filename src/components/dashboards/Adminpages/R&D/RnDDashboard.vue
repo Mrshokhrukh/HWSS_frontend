@@ -746,9 +746,10 @@ onMounted(() => {
   /* Create a layout with map on top, chart and table below */
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
-  grid-template-areas: 
-    "map map"
-    "chart table";
+  grid-template-areas:
+    "map"
+    "chart"
+    "table";
 }
 
 .map-container {
@@ -945,6 +946,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -954,7 +956,7 @@ onMounted(() => {
 /* Apply animations */
 .summary-card,
 .filter-chip,
-.visualization-grid > div {
+.visualization-grid>div {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
@@ -993,12 +995,12 @@ onMounted(() => {
 @media (max-width: 1024px) {
   .visualization-grid {
     grid-template-columns: 1fr;
-    grid-template-areas: 
+    grid-template-areas:
       "map"
       "chart"
       "table";
   }
-  
+
   .summary-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
@@ -1008,15 +1010,15 @@ onMounted(() => {
   .dashboard-container {
     padding: 1rem;
   }
-  
+
   .filter-actions {
     flex-direction: column;
   }
-  
+
   .filter-actions .p-button {
     width: 100%;
   }
-  
+
   .summary-card {
     padding: 1rem;
   }
@@ -1027,11 +1029,11 @@ onMounted(() => {
   .dashboard-container {
     padding: 0;
   }
-  
+
   .filter-panel {
     display: none;
   }
-  
+
   .summary-grid,
   .visualization-grid {
     gap: 1rem;
