@@ -1,83 +1,104 @@
 <template>
-  <div class="card shadow-lg rounded-lg overflow-hidden">
-    <div class="p-4">
-      <h3 class="card-title text-2xl font-bold mb-4">School/Event Data</h3>
-      <div class="d-flex gap-4 mb-4">
-        <Button icon="pi pi-download" label="Download PDF" @click="downloadPDF"
-          class="p-button-outlined p-button-light" />
-        <Button icon="pi pi-print" label="Print" @click="printTable" class="p-button-outlined p-button-light" />
+  <div class="card border-0 shadow-sm rounded-3 mx-3 my-4">
+    <div class="card-header border-0 p-4 custom-gradient">
+      <h3 class="fs-4 fw-bold text-white mb-2">School/Event Data</h3>
+      <p class="text-white-50 mb-3">Comprehensive screening results and analysis</p>
+
+      <div class="d-flex gap-3 mb-2">
+        <Button icon="pi pi-download" label="Download PDF" @click="downloadPDF" class="btn-custom" />
+        <Button icon="pi pi-print" label="Print" @click="printTable" class="btn-custom" />
       </div>
     </div>
 
-    <DataTable :value="tableData" :rowHover="true" class="p-datatable-sm" responsiveLayout="scroll" stripedRows
-      showGridlines tableStyle="min-width: 50rem">
-      <Column field="schoolEvent" header="Agency/Event" sortable>
-        <template #header>
-          <div class="text-sm font-semibold">Agency/Event</div>
-        </template>
-      </Column>
-      <Column field="individualsScreened" header="Individuals Screened" bodyClass="text-center" sortable>
-        <template #header>
-          <div class="text-sm font-semibold">Individuals Screened</div>
-        </template>
-      </Column>
-      <Column field="suicidalBehavior" header="Suicidal Behavior" bodyClass="text-center" sortable>
-        <template #header>
-          <div class="text-sm font-semibold">Suicidal Behavior</div>
-        </template>
-      </Column>
+    <div class="card-body p-4">
+      <DataTable :value="tableData" :rowHover="true" class="table-modern" responsiveLayout="scroll" stripedRows
+        showGridlines tableStyle="min-width: 50rem">
 
-      <ColumnGroup type="header">
-        <Row>
-          <Column header="School/Event Data" :colspan="1" :rowspan="2" headerClass="bg-gradient text-white" />
-          <Column header="No. of Individuals Screened" :colspan="1" :rowspan="2" headerClass="bg-gradient text-white" />
-          <Column header="Suicidal Behavior" :colspan="1" :rowspan="2" headerClass="bg-gradient text-white" />
-          <Column header="PHQ" :colspan="5" headerClass="bg-gradient text-white text-center" />
-          <Column header="GAD" :colspan="5" headerClass="bg-gradient text-white text-center" />
-          <Column header="SUD" headerClass="bg-gradient text-white text-center" :rowspan="2" />
-        </Row>
-        <Row>
-          <div class="text-center">
+        <ColumnGroup type="header">
+          <Row>
+            <Column header="School/Event Data" :colspan="1" :rowspan="2" headerClass="header-main" />
+            <Column header="Screening Results" :colspan="2" headerClass="header-main" />
+            <Column header="PHQ Assessment" :colspan="5" headerClass="header-main text-center" />
+            <Column header="GAD Assessment" :colspan="5" headerClass="header-main text-center" />
+            <Column header="SUD" headerClass="header-main text-center" :rowspan="2" />
+          </Row>
+          <Row>
+            <Column header="Screened" headerClass="header-secondary" />
+            <Column header="Suicidal" headerClass="header-secondary" />
             <Column v-for="level in severityLevels" :key="'phq-' + level" :header="level"
-              headerClass="bg-gradient-secondary text-white" />
+              headerClass="header-secondary" />
             <Column v-for="level in severityLevels" :key="'gad-' + level" :header="level"
-              headerClass="bg-gradient-secondary text-white" />
-          </div>
-        </Row>
-      </ColumnGroup>
+              headerClass="header-secondary" />
+          </Row>
+        </ColumnGroup>
 
-      <Column v-for="level in severityLevels" :key="'phq-' + level" :field="'phq.' + level">
-        <template #body="slotProps">
-          <div class="text-center">{{ slotProps.data.phq[level] }}</div>
+        <Column field="schoolEvent" header="Agency/Event">
+          <template #body="slotProps">
+            <div class="fw-semibold text-dark">{{ slotProps.data.schoolEvent }}</div>
+          </template>
+        </Column>
+
+        <Column field="individualsScreened" bodyClass="text-center">
+          <template #body="slotProps">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">
+              {{ slotProps.data.individualsScreened }}
+            </span>
+          </template>
+        </Column>
+
+        <Column field="suicidalBehavior" bodyClass="text-center">
+          <template #body="slotProps">
+            <div class="text-danger fw-semibold">
+              {{ slotProps.data.suicidalBehavior }}
+            </div>
+          </template>
+        </Column>
+
+        <template v-for="level in severityLevels" :key="'phq-' + level">
+          <Column :field="'phq.' + level">
+            <template #body="slotProps">
+              <div class="text-center py-1 px-2" :class="getSeverityClass(level, slotProps.data.phq[level])">
+                {{ slotProps.data.phq[level] }}
+              </div>
+            </template>
+          </Column>
         </template>
-      </Column>
 
-      <Column v-for="level in severityLevels" :key="'gad-' + level" :field="'gad.' + level">
-        <template #body="slotProps">
-          <div class="text-center">{{ slotProps.data.gad[level] }}</div>
+        <template v-for="level in severityLevels" :key="'gad-' + level">
+          <Column :field="'gad.' + level">
+            <template #body="slotProps">
+              <div class="text-center py-1 px-2" :class="getSeverityClass(level, slotProps.data.gad[level])">
+                {{ slotProps.data.gad[level] }}
+              </div>
+            </template>
+          </Column>
         </template>
-      </Column>
 
-      <Column>
-        <template #body="slotProps">
-          <Button label="SUD Details" @click="showSUDDetails(slotProps.data)" class="p-button-sm p-button-outlined" />
-        </template>
-      </Column>
-    </DataTable>
+        <Column>
+          <template #body="slotProps">
+            <Button label="View Details" @click="showSUDDetails(slotProps.data)"
+              class="btn-secondary-custom p-button-sm" />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
 
-    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" :style="{ width: '60vw' }"
-      class="sud-dialog">
+    <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" class="dialog-modern">
       <TabView>
         <TabPanel v-for="substance in substances" :key="substance" :header="substance">
-          <DataTable :value="getSUDDetails(substance)" class="p-datatable-sm" stripedRows showGridlines>
+          <DataTable :value="getSUDDetails(substance)" class="table-secondary" stripedRows>
             <Column field="riskLevel" header="Risk Level">
-              <template #header>
-                <div class="text-sm font-semibold">Risk Level</div>
+              <template #body="slotProps">
+                <div :class="getRiskLevelClass(slotProps.data.riskLevel)">
+                  {{ slotProps.data.riskLevel }}
+                </div>
               </template>
             </Column>
             <Column field="count" header="Count">
-              <template #header>
-                <div class="text-sm font-semibold">Count</div>
+              <template #body="slotProps">
+                <div class="text-center fw-semibold">
+                  {{ slotProps.data.count }}
+                </div>
               </template>
             </Column>
           </DataTable>
@@ -97,7 +118,6 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import { saveAs } from 'file-saver';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 
@@ -321,76 +341,157 @@ const printTable = () => {
   WinPrint.print();
   WinPrint.close();
 };
+
+// Updated helper functions for Bootstrap classes
+const getSeverityClass = (level, value) => {
+  if (value === 0) return 'text-secondary bg-secondary-subtle';
+  switch (level) {
+    case 'Minimal': return 'text-success bg-success-subtle';
+    case 'Mild': return 'text-primary bg-primary-subtle';
+    case 'Moderate': return 'text-warning bg-warning-subtle';
+    case 'Moderately Severe': return 'text-info bg-info-subtle';
+    case 'Severe': return 'text-danger bg-danger-subtle';
+    default: return '';
+  }
+};
+
+const getRiskLevelClass = (level) => {
+  switch (level) {
+    case 'No Risk': return 'badge bg-success-subtle text-success';
+    case 'Low Risk': return 'badge bg-primary-subtle text-primary';
+    case 'Moderate Risk': return 'badge bg-warning-subtle text-warning';
+    case 'High Risk': return 'badge bg-danger-subtle text-danger';
+    default: return '';
+  }
+};
 </script>
 
 <style scoped>
-.bg-gradient {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%) !important;
-  color: white !important;
+/* Custom gradient */
+.custom-gradient {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-.bg-gradient-secondary {
-  background: linear-gradient(135deg, #1D4851 0%, #2B656F 100%);
+/* Custom styles to complement Bootstrap */
+:deep(.btn-custom) {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
 }
 
-.card {
-  background: #ffffff;
-  margin: 1rem;
+:deep(.btn-custom:hover) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
-.card-title {
-  font-family: 'Inter', sans-serif;
+:deep(.btn-secondary-custom) {
+  background: #2B656F;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
 }
 
-:deep(.p-datatable) {
-  font-family: 'Inter', sans-serif;
+:deep(.btn-secondary-custom:hover) {
+  background: #1D4851;
 }
 
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-  background-color: #8EC0CC;
-  color: #1D4851;
-  font-weight: 600;
+.table-modern :deep(.header-main) {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  border: none;
   padding: 1rem;
-  border: 1px solid #e9ecef;
 }
 
-:deep(.p-datatable .p-datatable-tbody > tr) {
-  transition: background-color 0.2s;
+.table-modern :deep(.header-secondary) {
+  background: #1D4851;
+  color: rgba(255, 255, 255, 0.9);
+  border: none;
+  padding: 0.75rem;
 }
 
-:deep(.p-datatable .p-datatable-tbody > tr:hover) {
-  background-color: #f8f9fa;
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-  padding: 0.75rem 1rem;
-  border: 1px solid #e9ecef;
-}
-
-:deep(.p-button) {
-  background: transparent;
-  border: 1px solid white;
-  color: rgb(37, 155, 120);
-  transition: all 0.2s;
-}
-
-:deep(.p-button:hover) {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-:deep(.sud-dialog .p-dialog-header) {
+.dialog-modern :deep(.p-dialog-header) {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: white;
 }
 
-:deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
-  background: #2B656F;
+.dialog-modern :deep(.p-tabview-nav-link) {
+  transition: all 0.2s;
+}
+
+.dialog-modern :deep(.p-tabview-selected .p-tabview-nav-link) {
+  background: #2B656F !important;
+  color: white !important;
+  border-color: #2B656F !important;
+}
+
+:deep(.p-datatable) {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.p-datatable .p-datatable-wrapper) {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(43, 101, 111, 0.1);
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr:hover) {
+  background-color: rgba(43, 101, 111, 0.05);
+}
+
+:deep(.badge) {
+  font-weight: 500;
+  padding: 0.5em 1em;
+}
+
+:deep(.badge.bg-primary-subtle) {
+  background-color: rgba(43, 101, 111, 0.1) !important;
+  color: #2B656F !important;
+}
+
+/* Severity classes with new color scheme */
+:deep(.severity-minimal) {
+  background-color: rgba(43, 101, 111, 0.1);
+  color: #2B656F;
+}
+
+:deep(.severity-mild) {
+  background-color: rgba(43, 101, 111, 0.2);
+  color: #2B656F;
+}
+
+:deep(.severity-moderate) {
+  background-color: rgba(43, 101, 111, 0.3);
+  color: #2B656F;
+}
+
+:deep(.severity-severe) {
+  background-color: rgba(43, 101, 111, 0.4);
   color: white;
 }
 
-@media print {
-  .p-button {
-    display: none;
-  }
+/* Add Bootstrap-like transitions */
+.btn, .badge, .p-button {
+  transition: all 0.2s;
+}
+
+/* Ensure table text contrast */
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  color: #2B656F;
+}
+
+/* Dialog styling improvements */
+:deep(.p-dialog) {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+:deep(.p-dialog-content) {
+  padding: 1.5rem;
+}
+
+:deep(.p-tabview .p-tabview-panels) {
+  padding: 1.5rem 0;
 }
 </style>

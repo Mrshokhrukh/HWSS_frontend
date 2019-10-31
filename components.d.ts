@@ -24,6 +24,7 @@ declare module 'vue' {
     AAATableLayer: typeof import('./src/components/dashboards/Adminpages/AAA/report/AAAMonitorReport/AAATableLayer.vue')['default']
     AdminDashboard: typeof import('./src/components/dashboards/AdminDashboard.vue')['default']
     AssistSeverityAndGraph: typeof import('./src/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue')['default']
+    AutoComplete: typeof import('primevue/autocomplete')['default']
     Button: typeof import('primevue/button')['default']
     CaseScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningRegister.vue')['default']
     CaseScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningScreening.vue')['default']

@@ -25,24 +25,26 @@
                             <input type="date" class="form-control hwss-primary" id="DOB" v-model="DOB" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select hwss-primary" id="gender" v-model="gender" required>
-                                <option value="" disabled selected>Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
+                            <label for="age" class="form-label">Age</label>
+                            <input type="text" class="form-control hwss-primary" id="age" :value="calculatedAge"
+                                readonly disabled>
                         </div>
                         <div class="col-md-4 mb-3">
+                            <label for="gender" class="form-label">Sex</label>
+                            <select class="form-select hwss-primary" id="gender" v-model="gender" required>
+                                <option value="" disabled selected>Select Sex</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div v-if="showParentalStatus" class="col-md-4 mb-3">
                             <label for="parentalStatus" class="form-label">Parental Status</label>
-                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus"
-                                required>
+                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus" required>
                                 <option value="" disabled selected>Select Parental Status</option>
                                 <option value="Married">Married</option>
                                 <option value="Divorce">Divorce</option>
                                 <option value="Single Parent">Single Parent</option>
                                 <option value="One Deceased">One Deceased</option>
-                                <!-- Add more options as needed -->
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -84,14 +86,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import endpoints from '@/api';
 
 const emit = defineEmits(['proceedToSelectTools']);
-
-
 
 const CID = ref('');
 const clientFullName = ref('');
@@ -104,35 +104,47 @@ const email = ref('');
 const dzongkhag = ref('');
 
 const dzongkhags = [
-    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Bumthang', 'Chukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
+const getCounselorName = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userRole = ref(getCounselorName?.user?.role || '');
 
-// Define a computed property to check if all fields are filled
-const isAllFieldsFilled = computed(() => {
-    return (
-        CID.value !== '' &&
+const showParentalStatus = computed(() => {
+    return userRole.value !== 'clinical_counselor';
+});
+
+const validateCID = (cid) => {
+    const cidPattern = /^[1235]\d{10}$/;
+    return cidPattern.test(cid);
+};
+
+const isProceedButtonActive = computed(() => {
+    return validateCID(CID.value) &&
         clientFullName.value !== '' &&
         DOB.value !== '' &&
         gender.value !== '' &&
-        parentalStatus.value !== '' &&
+        (showParentalStatus.value ? parentalStatus.value !== '' : true) &&
         currentAddress.value !== '' &&
-        phoneNumber.value !== '' &&
         dzongkhag.value !== '' &&
-        email.value !== ''
-    );
-});
-
-
-// Combine conditions to determine if the "Proceed to Select Tools" button should be active
-const isProceedButtonActive = computed(() => {
-    return (
-        isAllFieldsFilled.value
-    );
+        phoneNumber.value !== '' &&
+        email.value !== '';
 });
 
 const submitForm = async () => {
+    if (!validateCID(CID.value)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid CID',
+            text: 'CID must be 11 digits and start with 1, 2, 3, or 5.',
+        });
+        return;
+    }
+    
+    if (!showParentalStatus.value) {
+        parentalStatus.value = "None"; 
+    }
     try {
         // Await the username generation
         const username = await makeUserName();
@@ -140,8 +152,8 @@ const submitForm = async () => {
 
         // Ensure getCounselorName is not null and user is defined
         if (getCounselorName && getCounselorName.user) {
-            const userAgency = getCounselorName.agency?.agencyName || 'Unknown Agency'; // Handle case where agency is undefined
-            const userAgencyCode = getCounselorName.agency?.agencyCode || 'Unknown Code'; // Handle case where agencyCode is undefined
+            const userAgency = getCounselorName.agency?.agencyName || 'Unknown Agency';
+            const userAgencyCode = getCounselorName.agency?.agencyCode || 'Unknown Code';
             const formData = {
                 userData: {
                     username: username,
@@ -195,44 +207,57 @@ const submitForm = async () => {
 
                     const userId = response.data.userId;
                     localStorage.setItem('ClientUserIdCaseBase', userId);
-                    return response.data; // Return the response data
+                    return response.data;
                 } catch (resendError) {
-                    // Handle errors during resend
                     console.error('Error resending form:', resendError);
-                    throw resendError; // Re-throw the error to be caught by the caller
+                    throw resendError;
                 }
             }
         } else {
-            // Display error message to the user using SweetAlert
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: `Mobile number too long, please use Bhutanese standard mobile number excluding country code.`,
             });
-
-            // Re-throw the error to be caught by the caller
             throw error;
         }
 
     };
 }
 
+const calculatedAge = computed(() => {
+    if (!DOB.value) return '';
+    const birthDate = new Date(DOB.value);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    
+    let ageGroup;
+    if (age < 14) {
+        ageGroup = 'Below 14';
+    } else if (age >= 14 && age <= 17) {
+        ageGroup = '15 to 17';
+    } else {
+        ageGroup = 'Above 18';
+    }
+    sessionStorage.setItem('clientAgeGroup', ageGroup);
+    
+    return age;
+});
 
 const makeUserName = () => {
     return new Promise((resolve) => {
-        // Assuming clientFullName and DOB are reactive ref objects
         const fullName = clientFullName.value;
         const dob = DOB.value;
 
-        // Generate the username
         const username = `${fullName}${dob}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-
-        // Resolve with the generated username
         resolve(username);
     });
 };
-
-
 
 const proceedToSelectTools = async () => {
     try {
@@ -247,6 +272,18 @@ const proceedToSelectTools = async () => {
         console.error('Error submitting form:', error);
     }
 };
+
+watch(DOB, (newValue) => {
+    if (newValue) {
+        calculatedAge.value;
+    }
+});
+
+watch(CID, (newCID) => {
+    if (newCID && !validateCID(newCID)) {
+        console.warn('CID must be 11 digits and start with 1, 2, 3, or 5');
+    }
+});
 
 </script>
 

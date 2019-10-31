@@ -19,7 +19,9 @@
       </div>
 
       <!-- General Report Table (for school/clinical counselors) -->
-      <div v-if="(selectedOption === 'generalReport' && isSchoolCounselor) || (selectedOption === 'generalReport' && isClinicalCounselor)" class="table-container">
+      <div
+        v-if="(selectedOption === 'generalReport' && isSchoolCounselor) || (selectedOption === 'generalReport' && isClinicalCounselor)"
+        class="table-container">
         <DataTable :value="reportData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
           :sortOrder="1" class="custom-table">
 
@@ -34,51 +36,56 @@
           <!-- Display substances with separate columns and severityClass for tags -->
           <Column field="tobacco_flag" header="Tobacco" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.tobacco_flag || 'None'" :severity="severityClass(data.tobacco_flag)" />
+              <Tag class="w-100" :value="severityText(data.tobacco_flag || 'None')"
+                :severity="severityClass(data.tobacco_flag)" />
             </template>
           </Column>
           <Column field="alcohol_flag" header="Alcohol" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.alcohol_flag || 'None'" :severity="severityClass(data.alcohol_flag)" />
+              <Tag class="w-100" :value="severityText(data.alcohol_flag || 'None')"
+                :severity="severityClass(data.alcohol_flag)" />
             </template>
           </Column>
           <Column field="cannabis_flag" header="Cannabis" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.cannabis_flag || 'None'" :severity="severityClass(data.cannabis_flag)" />
+              <Tag class="w-100" :value="severityText(data.cannabis_flag || 'None')"
+                :severity="severityClass(data.cannabis_flag)" />
             </template>
           </Column>
           <Column field="cocaine_flag" header="Cocaine" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.cocaine_flag || 'None'" :severity="severityClass(data.cocaine_flag)" />
+              <Tag class="w-100" :value="severityText(data.cocaine_flag || 'None')"
+                :severity="severityClass(data.cocaine_flag)" />
             </template>
           </Column>
           <Column field="amphetamine_flag" header="Amphetamines" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.amphetamine_flag || 'None'"
+              <Tag class="w-100" :value="severityText(data.amphetamine_flag || 'None')"
                 :severity="severityClass(data.amphetamine_flag)" />
             </template>
           </Column>
           <Column field="inhalants_flag" header="Inhalants" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.inhalants_flag || 'None'"
+              <Tag class="w-100" :value="severityText(data.inhalants_flag || 'None')"
                 :severity="severityClass(data.inhalants_flag)" />
             </template>
           </Column>
           <Column field="sedatives_flag" header="Sedatives" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.sedatives_flag || 'None'"
+              <Tag class="w-100" :value="severityText(data.sedatives_flag || 'None')"
                 :severity="severityClass(data.sedatives_flag)" />
             </template>
           </Column>
           <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.hallucinogens_flag || 'None'"
+              <Tag class="w-100" :value="severityText(data.hallucinogens_flag || 'None')"
                 :severity="severityClass(data.hallucinogens_flag)" />
             </template>
           </Column>
           <Column field="opioids_flag" header="Opioids" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.opioids_flag || 'None'" :severity="severityClass(data.opioids_flag)" />
+              <Tag class="w-100" :value="severityText(data.opioids_flag || 'None')"
+                :severity="severityClass(data.opioids_flag)" />
             </template>
           </Column>
 
@@ -243,7 +250,7 @@ const fetchReportDataFromAPI = async () => {
   try {
     const response = await axios.get(endpoints.newServiceAndTreatment);
     const dataArray = response.data || [];
-    
+
     // Extract agencyName from localStorage
     const userAgencyName = getUserDetailsFromStorage();
 
@@ -323,15 +330,23 @@ const extractSubstances = (assistData) => {
 
   const result = {};
 
-  assistData.forEach(substance => {
-    const key = substanceMapping[substance.substance__name];
-    if (key) {
-      result[key] = substance.risk_flag || 'None';
-    }
-  });
+  if (Array.isArray(assistData)) {
+    assistData.forEach(substance => {
+      const key = substanceMapping[substance.substance__name];
+      if (key) {
+        result[key] = substance.risk_flag || 'None';
+      }
+    });
+  } else if (typeof assistData === 'object') {
+    Object.keys(substanceMapping).forEach(substanceName => {
+      const key = substanceMapping[substanceName];
+      result[key] = assistData[key] || 'None';
+    });
+  }
 
   return result;
 };
+
 
 // Bulk download function
 const bulkDownload = async () => {
@@ -410,23 +425,28 @@ const getUserDetailsFromStorage = () => {
   return null;
 };
 
-
-// Severity class function to add styles to tags
-const severityClass = (value) => {
-  switch (value) {
-    case 'severe':
-      return 'danger'; // Red pill for severe cases
-    case 'moderate':
-      return 'warning'; // Yellow pill for moderate cases
-    case 'mild':
-      return 'success'; // Green pill for mild cases
-    case 'none':
-    default:
-      return 'info'; // Default blue pill
-  }
+const severityText = (value) => {
+  const textMapping = {
+    red: 'Severe',
+    blue: 'Mild',
+    green: 'None',
+    yellow: 'Moderate',
+    grey: 'Not Applicable'
+  };
+  return textMapping[value] || 'Not Applicable'; 
 };
 
-// On component mount, fetch data and user details
+const severityClass = (value) => {
+  const severityMapping = {
+    red: 'danger',
+    blue: 'info', 
+    green: 'success',
+    yellow: 'warning',
+    grey: 'secondary'
+  };
+  return severityMapping[value] || 'secondary'; 
+};
+
 onMounted(() => {
   getUserDetailsFromStorage();
   fetchReportDataFromAPI();

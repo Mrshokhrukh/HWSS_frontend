@@ -124,7 +124,7 @@
                                     </div>
                                 </div>
 
-                                <div class="info-section">
+                                <div class="info-section d-none">
                                     <h5 class="section-title">Case Status</h5>
                                     <div class="row">
                                         <div class="col-md-6">
@@ -140,36 +140,38 @@
                                     </div>
                                 </div>
 
-                                <div class="info-section" v-if="selectedUser?.screening_data">
-                                    <h5 class="section-title">Severity</h5>
-                                    <div class="severity-tags">
-                                        <!-- GAD Score -->
-                                        <div v-if="selectedUser.screening_data.gad_interpretation" class="severity-tag">
-                                            <span class="substance-name">GAD Score:</span>
-                                            <Tag :value="selectedUser.screening_data.gad_interpretation"
-                                                :style="getSeverityStyles(selectedUser.screening_data.gad_interpretation)"
-                                                rounded>
-                                            </Tag>
+                                <div class="info-section">
+                                    <div class="severity-section">
+                                        <h3 class="severity-section-title">Mental Health Severity</h3>
+                                        <div class="severity-pills">
+                                            <div class="severity-pill"
+                                                :class="getSeverityClass(selectedUser.screening_data.phq_interpretation)">
+                                                PHQ-9: {{ selectedUser.screening_data.phq_interpretation }}
+                                            </div>
+                                            <div class="severity-pill"
+                                                :class="getSeverityClass(selectedUser.screening_data.gad_interpretation)">
+                                                GAD-7: {{ selectedUser.screening_data.gad_interpretation }}
+                                            </div>
+                                            <div class="severity-pill"
+                                                :class="getSeverityClass(selectedUser.screening_data.ace_interpretation)">
+                                                ACE: {{ selectedUser.screening_data.ace_interpretation }}
+                                            </div>
                                         </div>
-                                        <!-- PHQ Score -->
-                                        <div v-if="selectedUser.screening_data.phq_interpretation" class="severity-tag">
-                                            <span class="substance-name">PHQ Score:</span>
-                                            <Tag :value="selectedUser.screening_data.phq_interpretation"
-                                                :style="getSeverityStyles(selectedUser.screening_data.phq_interpretation)"
-                                                rounded>
-                                            </Tag>
-                                        </div>
-                                        <!-- ACE Score -->
-                                        <div v-if="selectedUser.screening_data.ace_interpretation" class="severity-tag">
-                                            <span class="substance-name">ACE Score:</span>
-                                            <Tag :value="selectedUser.screening_data.ace_interpretation"
-                                                :style="getSeverityStyles(selectedUser.screening_data.ace_interpretation)"
-                                                rounded>
-                                            </Tag>
+                                    </div>
+
+                                    <div class="severity-section">
+                                        <h3 class="severity-section-title">SUD Severity</h3>
+                                        <div class="severity-pills">
+                                            <template v-if="selectedUser.screening_data.assist_data">
+                                                <div v-for="(value, key) in filterSubstances(selectedUser.screening_data.assist_data)"
+                                                    :key="key" class="severity-pill"
+                                                    :class="getRiskClass(value.measurement)">
+                                                    {{ formatSubstanceName(key) }}: {{ value.measurement }}
+                                                </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>
-
 
                                 <div class="card">
                                     <div class="card-body">
@@ -281,7 +283,7 @@
 
                                         <!-- Save Button -->
                                         <div class="d-flex justify-content-end mt-4">
-                                            <button class="btn btn-success" @click="saveChanges"
+                                            <button class="btn refresh-btn" @click="saveChanges"
                                                 :disabled="selfRole === 'trained_professional'">
                                                 <i class="pi pi-check me-2"></i>
                                                 Save Changes
@@ -297,6 +299,7 @@
                                         <div class="col-md-6 mb-3">
                                             <label for="referTo">Refer To:</label>
                                             <select class="form-control" id="referTo" v-model="selectedUser.refer_to">
+                                                <option value="" selected="true" disabled>Select One</option>
                                                 <option value="clinical_counselor">Clinical Counselor</option>
                                                 <option value="psychiatrist">Psychiatrist</option>
                                                 <option value="medical_officer">Medical Officer</option>
@@ -305,16 +308,15 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="official">Official:</label>
-                                            <select class="form-control" id="official" v-model="selectedUser.official">
-                                                <option v-for="option in officialOptions" :key="option.id"
-                                                    :value="option.id">
-                                                    {{ option.full_name }}, {{ option.active_agency }}
-                                                </option>
-                                            </select>
+                                            <AutoComplete v-model="selectedUser.official"
+                                                :suggestions="filteredOfficials" @complete="searchOfficials"
+                                                field="full_name" placeholder="Type Official's Name"
+                                                class="form-control p-0" :forceSelection="true">
+                                            </AutoComplete>
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-end mt-3">
-                                        <Button label="Refer Case" icon="pi pi-send" class="p-button-info"
+                                        <Button label="Refer Case" icon="pi pi-send" class="refresh-btn rounded"
                                             @click="referCase" />
                                     </div>
                                 </div>
@@ -338,10 +340,12 @@ import { ref, computed, onMounted, watchEffect } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import Swal from 'sweetalert2';
+import AutoComplete from 'primevue/autocomplete';
 
 const showModal = ref(false);
 const selectedUser = ref(null);
 const officialOptions = ref([]);
+const filteredOfficials = ref([]);
 const selfRole = ref('');
 const isLoading = ref(true);
 const hasError = ref(false);
@@ -360,11 +364,70 @@ const selectedFields = ref([
     'comments',
 ]);
 
+const searchOfficials = (event) => {
+    const query = event.query.toLowerCase();
+    filteredOfficials.value = officialOptions.value.filter((official) =>
+        official.full_name.toLowerCase().includes(query)
+    );
+};
+
 const formatEmpty = (rowData, column) => {
     if (rowData[column.field] === 'follow_up' && rowData[column.field] === '') {
         return '----';
     }
     return rowData[column.field];
+};
+
+const getSeverityClass = (severity) => {
+    switch (severity?.toLowerCase()) {
+        case 'severe':
+        case 'high risk':
+            return 'risk-high';
+        case 'moderate':
+        case 'moderately severe':
+            return 'risk-moderate';
+        case 'mild':
+        case 'low risk':
+            return 'risk-low';
+        default:
+            return '';
+    }
+};
+
+const filterSubstances = (assistData) => {
+    if (!assistData) return {};
+    
+    const substances = {};
+    Object.keys(assistData).forEach(key => {
+        if (key.endsWith('_measurement')) {
+            const substanceName = key.replace('_measurement', '');
+            substances[substanceName] = {
+                measurement: assistData[key],
+                flag: assistData[`${substanceName}_flag`]
+            };
+        }
+    });
+    return substances;
+};
+
+const formatSubstanceName = (name) => {
+    return name
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
+
+const getRiskClass = (measurement) => {
+    switch (measurement?.toLowerCase()) {
+        case 'high risk':
+            return 'risk-high';
+        case 'moderate risk':
+            return 'risk-moderate';
+        case 'low risk':
+            return 'risk-low';
+        default:
+            return '';
+    }
 };
 
 const myAgency = ref('');
@@ -399,21 +462,6 @@ const getServiceList = async () => {
     }
 };
 
-const getSeverityStyles = (riskFlag) => {
-    switch (riskFlag.toLowerCase()) {
-        case 'severe':
-            return { color: 'red', backgroundColor: 'pink' };
-        case 'moderate':
-            return { color: 'orange', backgroundColor: 'lightyellow' };
-        case 'mild':
-            return { color: 'green', backgroundColor: 'lightgreen' };
-        case 'no risk':
-            return { color: 'blue', backgroundColor: 'lightblue' };
-        default:
-            return {};
-    }
-};
-
 watchEffect(async () => {
     if (selectedUser.value && selectedUser.value.refer_to) {
         try {
@@ -428,7 +476,6 @@ watchEffect(async () => {
         }
     }
 });
-
 
 const viewDetails = (user) => {
     selectedUser.value = user;
@@ -458,7 +505,7 @@ const saveChanges = () => {
     const formData = {
         updateData: {
             assessment_status: selectedUser.value.assessment_status,
-            counseling: selectedUser.value.counseling_status, 
+            counseling: selectedUser.value.counseling_status,
             follow_up: selectedUser.value.follow_up,
             comments: selectedUser.value.comments,
             case_status: selectedUser.value.case_status,
@@ -736,6 +783,84 @@ onMounted(() => {
     padding: 1rem 1.5rem;
     display: flex;
     justify-content: flex-end;
+}
+
+.save-btn,
+.refer-btn {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.save-btn:hover,
+.refer-btn:hover {
+    opacity: 0.9;
+}
+
+.severity-section {
+    margin-bottom: 2rem;
+}
+
+.severity-section-title {
+    color: #2B656F;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.severity-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.severity-pill {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.risk-high {
+    background-color: #FFE4E4;
+    color: #D32F2F;
+}
+
+.risk-moderate {
+    background-color: #FFF3E0;
+    color: #E65100;
+}
+
+.risk-low {
+    background-color: #E8F5E9;
+    color: #2E7D32;
+}
+
+:deep(.p-autocomplete) {
+    width: 100%;
+}
+
+:deep(.p-autocomplete-input) {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    width: 100%;
+    padding: 0.5rem;
+}
+
+:deep(.p-autocomplete-input:focus) {
+    border-color: #2B656F;
+    box-shadow: 0 0 0 0.2rem rgba(43, 101, 111, 0.25);
+    outline: none;
+}
+
+:deep(.p-autocomplete-panel) {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive adjustments */

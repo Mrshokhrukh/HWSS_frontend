@@ -281,7 +281,7 @@ const availableDzongkhags = computed(() => {
   if (!filters.region) return [];
 
   const dzongkhagsByRegion = {
-    WESTERN: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse'],
+    WESTERN: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chukha', 'Samtse'],
     CENTRAL: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
     EASTERN: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
   };
@@ -573,7 +573,7 @@ const applyFilters = async () => {
 // Helper function to get region from dzongkhag
 const getDzongkhagRegion = (dzongkhag) => {
   const regionMap = {
-    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHHUKHA', 'SAMTSE'],
+    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'Chukha', 'SAMTSE'],
     CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE'],
     EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG']
   };

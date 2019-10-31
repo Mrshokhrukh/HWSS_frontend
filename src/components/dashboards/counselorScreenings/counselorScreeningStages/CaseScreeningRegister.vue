@@ -75,16 +75,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="gender">Gender</label>
-                        <select id="gender" v-model="gender" required>
-                            <option value="" disabled selected>Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
+                        <label for="age">Age</label>
+                        <input type="text" id="age" :value="calculatedAge" readonly disabled>
                     </div>
 
                     <div class="form-group">
+                        <label for="gender">Sex</label>
+                        <select id="gender" v-model="gender" required>
+                            <option value="" disabled selected>Select Sex</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+
+                    <div v-if="showParentalStatus" class="form-group">
                         <label for="parentalStatus">Parental Status</label>
                         <select id="parentalStatus" v-model="parentalStatus" required>
                             <option value="" disabled selected>Select Parental Status</option>
@@ -116,7 +120,7 @@
         <!-- Button Section -->
         <div class="form-actions">
             <button type="button" class="proceed-button" :disabled="!isProceedButtonActive"
-                @click="proceedToSelectTools">
+                    @click="proceedToSelectTools">
                 Proceed to Select Tools
                 <i class="fas fa-arrow-right"></i>
             </button>
@@ -136,12 +140,12 @@ const maxUsersPerDay = 10;
 
 // Get the user's ID from localStorage
 const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userRole = ref(userDetailsStore?.user?.role || '');
 const userId = userDetailsStore ? userDetailsStore.user.id : null;
 
 const caseName = ref('');
 const purpose = ref('');
 const dzongkhag = ref('');
-
 const CID = ref('');
 const clientFullName = ref('');
 const DOB = ref('');
@@ -150,9 +154,8 @@ const parentalStatus = ref('');
 const currentAddress = ref('');
 const phoneNumber = ref('');
 const email = ref('');
-
 const dzongkhags = [
-    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Bumthang', 'Chukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
@@ -165,6 +168,36 @@ const resetIfNewDay = () => {
         localStorage.setItem(`screeningDate_${userId}`, today);
     }
 };
+
+const showParentalStatus = computed(() => {
+    return userRole.value !== 'clinical_counselor';
+});
+
+const validateCID = (cid) => /^[1235]\d{10}$/.test(cid);
+
+const calculatedAge = computed(() => {
+    if (!DOB.value) return '';
+    const birthDate = new Date(DOB.value);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    
+    let ageGroup;
+    if (age < 14) {
+        ageGroup = 'Below 14';
+    } else if (age >= 14 && age <= 17) {
+        ageGroup = '15 to 17';
+    } else {
+        ageGroup = 'Above 18';
+    }
+    sessionStorage.setItem('clientAgeGroup', ageGroup);
+    
+    return age;
+});
 
 // Define a function to reset the userScreenedToday counter
 const resetUserScreenedToday = () => {
@@ -196,11 +229,11 @@ const isAllFieldsFilled = computed(() => {
         caseName.value !== '' &&
         purpose.value !== '' &&
         dzongkhag.value !== '' &&
-        CID.value !== '' &&
+        validateCID(CID.value) &&
         clientFullName.value !== '' &&
         DOB.value !== '' &&
         gender.value !== '' &&
-        parentalStatus.value !== '' &&
+        (showParentalStatus.value ? parentalStatus.value !== '' : true) &&
         currentAddress.value !== '' &&
         phoneNumber.value !== '' &&
         email.value !== ''
@@ -261,6 +294,17 @@ const incrementUserScreenedToday = () => {
 
 
 const submitForm = async () => {
+    if (!validateCID(CID.value)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Invalid CID',
+            text: 'CID must be 11 digits and start with 1, 2, 3, or 5.',
+        });
+        return;
+    }
+    if (!showParentalStatus.value) {
+        parentalStatus.value = "None"; // Default value for clinical counselors
+    }
     try {
         // Await the username generation
         const username = await makeUserName();
@@ -346,19 +390,19 @@ const submitForm = async () => {
 
 const makeUserName = () => {
     return new Promise((resolve) => {
-        // Assuming clientFullName and DOB are reactive ref objects
         const fullName = clientFullName.value;
         const dob = DOB.value;
-
-        // Generate the username
         const username = `${fullName}${dob}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-        // Resolve with the generated username
         resolve(username);
     });
 };
 
-
+watch(DOB, (newValue) => {
+    if (newValue) {
+        calculatedAge.value;
+    }
+});
 
 const proceedToSelectTools = async () => {
     try {
@@ -486,7 +530,9 @@ label {
     font-weight: 500;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
     width: 100%;
     background: white;
     border: 1px solid rgba(43, 101, 111, 0.2);
@@ -496,13 +542,17 @@ input, select, textarea {
     transition: all 0.3s ease;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
     outline: none;
     border-color: #2B656F;
     box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
 }
 
-input:hover, select:hover, textarea:hover {
+input:hover,
+select:hover,
+textarea:hover {
     border-color: rgba(43, 101, 111, 0.4);
 }
 

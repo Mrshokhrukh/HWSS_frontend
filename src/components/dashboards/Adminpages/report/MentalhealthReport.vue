@@ -4,7 +4,8 @@
       <div class="config-header">
         <h2 class="header-title">Data Configuration</h2>
         <div class="quick-actions">
-          <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text" @click="resetFilters" :disabled="!hasFilters" />
+          <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text" @click="resetFilters"
+            :disabled="!hasFilters" />
         </div>
       </div>
 
@@ -12,26 +13,31 @@
         <div class="main-filters">
           <div class="filter-group">
             <label>Report Type</label>
-            <p-dropdown v-model="selectedReport" :options="reportTypes" optionLabel="label" class="w-full" placeholder="Select Report Type" />
+            <p-dropdown v-model="selectedReport" :options="reportTypes" optionLabel="label" class="w-full"
+              placeholder="Select Report Type" />
           </div>
 
           <div class="filter-group">
             <label>Agency Type</label>
-            <p-dropdown v-model="filters.agencyType" :options="agencyTypes" class="w-full" placeholder="Select Agency Type" @change="handleAgencyTypeChange" />
+            <p-dropdown v-model="filters.agencyType" :options="agencyTypes" class="w-full"
+              placeholder="Select Agency Type" @change="handleAgencyTypeChange" />
           </div>
 
           <template v-if="filters.agencyType === 'SCHOOL'">
             <div class="filter-group">
               <label>Class Level</label>
-              <p-dropdown v-model="filters.classLevel" :options="classLevels" class="w-full" placeholder="Select Class" />
+              <p-dropdown v-model="filters.classLevel" :options="classLevels" class="w-full"
+                placeholder="Select Class" />
             </div>
           </template>
 
           <div class="filter-section">
             <h3 class="section-title">Location</h3>
             <div class="filter-group-row">
-              <p-dropdown v-model="filters.region" :options="regions" class="w-full" placeholder="Region" @change="handleRegionChange" />
-              <p-dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" class="w-full" placeholder="Dzongkhag" :disabled="!filters.region" />
+              <p-dropdown v-model="filters.region" :options="regions" class="w-full" placeholder="Region"
+                @change="handleRegionChange" />
+              <p-dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" class="w-full"
+                placeholder="Dzongkhag" :disabled="!filters.region" />
             </div>
           </div>
         </div>
@@ -41,12 +47,14 @@
             <h3 class="section-title">Demographics</h3>
             <div class="filter-group">
               <label>Age Group</label>
-              <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full" placeholder="Select Age Groups" display="chip" />
+              <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
+                placeholder="Select Age Groups" display="chip" />
             </div>
 
             <div class="filter-group">
               <label>Gender</label>
-              <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full" placeholder="Select Gender" display="chip" />
+              <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full"
+                placeholder="Select Gender" display="chip" />
             </div>
           </div>
 
@@ -59,7 +67,8 @@
 
       <div v-if="hasFilters" class="active-filters">
         <div class="filter-chips">
-          <p-chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label" removable @remove="removeFilter(filter.id)" />
+          <p-chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label" removable
+            @remove="removeFilter(filter.id)" />
         </div>
       </div>
 
@@ -71,8 +80,10 @@
 
     <div v-if="showReport" class="report-container">
       <MHMonitorReport v-if="showMonitorReport" :filteredData="processedData" :activeFiltersList="activeFiltersList" />
-      <MHCaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData" :activeFiltersList="activeFiltersList" />
-      <MHSeverityReport v-if="showSeverityReport" :filteredData="processedData" :activeFiltersList="activeFiltersList" />
+      <MHCaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData"
+        :activeFiltersList="activeFiltersList" />
+      <MHSeverityReport v-if="showSeverityReport" :filteredData="processedData"
+        :activeFiltersList="activeFiltersList" />
     </div>
   </div>
 </template>
@@ -100,7 +111,7 @@ const ageGroupOptions = ['5-10', '11-15', '16-20', '21-25', '26-30', '31-35', '3
 const genderOptions = ['Male', 'Female', 'Other'];
 const regions = ['Western', 'Central', 'Eastern'];
 const dzongkhagMapping = {
-  Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse'],
+  Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chukha', 'Samtse'],
   Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
   Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
 };

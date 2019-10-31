@@ -286,7 +286,7 @@ watch(endDate, (newValue, oldValue) => {
 
 // Optionally, you can also fetch dzongkhags on component mount
 const dzongkhags = [
-    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Bumthang', 'Chukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 </script>
@@ -386,60 +386,60 @@ input:disabled {
 }
 
 .tools-selection {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .tool-option {
-  flex: 1;
-  min-width: 200px;
-  background: #ffffff;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+    flex: 1;
+    min-width: 200px;
+    background: #ffffff;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .tool-option:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(43, 101, 111, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(43, 101, 111, 0.1);
 }
 
 .tool-option.selected {
-  border-color: #2B656F;
-  box-shadow: 0 5px 15px rgba(43, 101, 111, 0.2);
+    border-color: #2B656F;
+    box-shadow: 0 5px 15px rgba(43, 101, 111, 0.2);
 }
 
 .tool-option input[type="radio"] {
-  display: none;
+    display: none;
 }
 
 .tool-option label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.5rem;
-  cursor: pointer;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    cursor: pointer;
+    height: 100%;
 }
 
 .tool-option i {
-  font-size: 2rem;
-  color: #2B656F;
-  margin-bottom: 0.5rem;
+    font-size: 2rem;
+    color: #2B656F;
+    margin-bottom: 0.5rem;
 }
 
 .tool-option span {
-  font-weight: 600;
-  color: #1D4851;
-  margin-bottom: 0.3rem;
+    font-weight: 600;
+    color: #1D4851;
+    margin-bottom: 0.3rem;
 }
 
 .tool-option small {
-  color: #6c757d;
-  text-align: center;
+    color: #6c757d;
+    text-align: center;
 }
 
 
