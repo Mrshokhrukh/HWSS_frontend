@@ -15,6 +15,14 @@ import ConfirmationService from 'primevue/confirmationservice';
 import VueApexCharts from "vue3-apexcharts";
 import Particles from 'vue3-particles';
 
+import Accordion from 'primevue/accordion';
+import AccordionTab from 'primevue/accordiontab';
+import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
+import Calendar from 'primevue/calendar';
+import Button from 'primevue/button';
+import Chip from 'primevue/chip';
+
 const pinia = createPinia();
 const app = createApp(App);
 
@@ -28,6 +36,14 @@ app.use(ToastService);
 app.use(ConfirmDialog)
 app.use(VueApexCharts);
 app.use(Particles);
+
+app.component('p-accordion', Accordion);
+app.component('p-accordion-tab', AccordionTab);
+app.component('p-dropdown', Dropdown);
+app.component('p-multi-select', MultiSelect);
+app.component('p-calendar', Calendar);
+app.component('p-button', Button);
+app.component('p-chip', Chip);
 
 const router = createAppRouter(pinia);
 app.use(router);
