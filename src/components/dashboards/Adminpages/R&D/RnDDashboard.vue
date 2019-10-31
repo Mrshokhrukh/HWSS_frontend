@@ -278,12 +278,12 @@ const statusTypes = [
 
 // Computed Properties
 const availableDzongkhags = computed(() => {
-  if (!filters.region) return [];
+  if (!filters.region || !filters.region.code) return [];
 
   const dzongkhagsByRegion = {
-    WESTERN: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse'],
-    CENTRAL: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
-    EASTERN: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
+    WESTERN: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse', 'Thimphu Thromde', 'Phuentshogling Thromde'],
+    CENTRAL: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue', 'Zhemgang'],
+    EASTERN: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang', 'Samdrup Jongkhar Thromde', 'Trashi Yangtse']
   };
 
   return dzongkhagsByRegion[filters.region.code].map(name => ({
@@ -291,6 +291,7 @@ const availableDzongkhags = computed(() => {
     name
   }));
 });
+
 
 const filteredAgencies = computed(() => {
   if (!serviceAndTreatmentData.value || !filters.organization) return [];
@@ -445,19 +446,48 @@ const removeFilter = (filterKey) => {
 };
 
 const filteredData = computed(() => {
-  if (!serviceAndTreatmentData.value) return [];
+  if (!serviceAndTreatmentData.value) {
+    console.log('No service and treatment data available');
+    return [];
+  }
 
   return serviceAndTreatmentData.value.filter(item => {
     let match = true;
 
     // Region and Dzongkhag filtering
     if (filters.region) {
-      const itemDzongkhag = item.user?.fields?.perm_add_dzongkhag;
+      // Get dzongkhag from all possible locations
+      const itemDzongkhag =
+        item.user?.ps_add_dzongkhag ||
+        item.user?.perm_add_dzongkhag ||
+        item.screening_data?.ps_add_dzongkhag ||
+        item.user?.agency_details?.agency?.present_dzongkhag ||
+        item.user?.active_agency?.present_dzongkhag;
+
+      // If no dzongkhag found, exclude from results
+      if (!itemDzongkhag) {
+        console.log('No dzongkhag found for item:', item.id);
+        return false;
+      }
+
+      // Check region match
       const dzongkhagRegion = getDzongkhagRegion(itemDzongkhag);
+      console.log('Item dzongkhag:', itemDzongkhag, 'Region:', dzongkhagRegion);
+
       match = match && dzongkhagRegion === filters.region.code;
 
+      // Check dzongkhag match if dzongkhag filter is applied
       if (filters.dzongkhag) {
-        match = match && itemDzongkhag === filters.dzongkhag.code;
+        const normalizedItemDzongkhag = itemDzongkhag.toUpperCase().trim();
+        const normalizedFilterDzongkhag = filters.dzongkhag.code.trim();
+
+        console.log('Comparing dzongkhag:', {
+          item: normalizedItemDzongkhag,
+          filter: normalizedFilterDzongkhag,
+          match: normalizedItemDzongkhag === normalizedFilterDzongkhag
+        });
+
+        match = match && normalizedItemDzongkhag === normalizedFilterDzongkhag;
       }
     }
 
@@ -573,9 +603,11 @@ const applyFilters = async () => {
 // Helper function to get region from dzongkhag
 const getDzongkhagRegion = (dzongkhag) => {
   const regionMap = {
-    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHHUKHA', 'SAMTSE'],
-    CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE'],
-    EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG']
+    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHUKHA', 'SAMTSE',
+      'THIMPHU THROMDE', 'PHUENTSHOGLING THROMDE'],
+    CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE', 'ZHEMGANG'],
+    EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG',
+      'SAMDRUP JONGKHAR THROMDE', 'TRASHI YANGTSE']
   };
 
   for (const [region, dzongkhags] of Object.entries(regionMap)) {
