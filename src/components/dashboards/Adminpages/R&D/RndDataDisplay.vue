@@ -4,10 +4,10 @@
             <div class="col-md-6 d-flex">
                 <div class="card flex-fill">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">No. of Students Screened (Per School)</h5>
+                        <h5 class="card-title mb-0">No. of People Screened (Per Agency Type)</h5>
                     </div>
                     <div class="card-body">
-                        <apexchart type="bar" height="300" :options="schoolsChartOptions" :series="schoolsChartSeries">
+                        <apexchart type="bar" height="300" :options="agencyChartOptions" :series="agencyChartSeries">
                         </apexchart>
                     </div>
                 </div>
@@ -83,19 +83,45 @@ const commonChartOptions = {
     theme: { mode: 'light' }
 };
 
-// Updated to match new data structure
-const uniqueSchools = computed(() => {
-    const schools = new Set();
-    props.filteredData.forEach(item => {
-        if (item.user?.agency_details?.agency?.agency_name) {
-            schools.add(item.user.agency_details.agency.agency_name.toLowerCase());
-        }
-    });
-    return Array.from(schools);
+// Agency Chart Data
+const agencyData = computed(() => {
+    // Filter out case and event screenings first
+    const validData = props.filteredData.filter(item =>
+        !item.screening_data?.case && !item.screening_data?.event
+    );
+
+    // Check Gyalsung first since it's the highest priority
+    const gyalsungCount = validData.filter(item =>
+        item.screening_data?.academy_code ||
+        (item.user?.is_gyalsung && item.user?.academy_code)
+    ).length;
+
+    // For schools and RCSC, explicitly exclude Gyalsung users
+    const nonGyalsungData = validData.filter(item =>
+        !(item.screening_data?.academy_code ||
+            (item.user?.is_gyalsung && item.user?.academy_code))
+    );
+
+    // Count schools from remaining data
+    const schoolCount = nonGyalsungData.filter(item =>
+        item.user?.agency_details?.agency?.agency_name?.toLowerCase().includes('school')
+    ).length;
+
+    // RCSC is what's left after excluding both Gyalsung and schools
+    const rcscCount = nonGyalsungData.filter(item =>
+        item.user?.agency_details?.agency?.agency_name &&
+        !item.user?.agency_details?.agency?.agency_name.toLowerCase().includes('school')
+    ).length;
+
+    return {
+        schools: schoolCount,
+        gyalsung: gyalsungCount,
+        rcsc: rcscCount
+    };
 });
 
-// Schools Chart
-const schoolsChartOptions = ref({
+// Agency Chart
+const agencyChartOptions = ref({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -103,28 +129,28 @@ const schoolsChartOptions = ref({
     },
     xaxis: {
         ...commonChartOptions.xaxis,
-        categories: uniqueSchools.value
+        categories: ['Schools', 'Gyalsung', 'RCSC']
     },
     yaxis: {
         ...commonChartOptions.yaxis,
         title: {
-            text: 'Number of Students',
+            text: 'Number of People',
             style: { color: primaryColor }
         }
     },
     colors: [primaryColor]
 });
 
-const schoolsChartSeries = computed(() => [{
-    name: 'Students Screened',
-    data: uniqueSchools.value.map(school => {
-        return props.filteredData.filter(item =>
-            item.user?.agency_details?.agency?.agency_name?.toLowerCase() === school
-        ).length;
-    })
+const agencyChartSeries = computed(() => [{
+    name: 'People Screened',
+    data: [
+        agencyData.value.schools,
+        agencyData.value.gyalsung,
+        agencyData.value.rcsc
+    ]
 }]);
 
-// Updated Screening Type Chart
+// Screening Type Chart
 const screeningTypeChartOptions = ref({
     ...commonChartOptions,
     chart: {

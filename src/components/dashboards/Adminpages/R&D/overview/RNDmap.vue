@@ -50,9 +50,9 @@ const mapWrapper = ref(null);
 const userDistribution = ref({});
 
 const legendColors = [
-  '#C1E6EA',  // Darker light color
-  '#8ACAD5',  // Darker medium light
-  '#4FAEBF',  // Darker medium
+  '#C1E6EA',  // Lightest
+  '#8ACAD5',  // Light
+  '#4FAEBF',  // Medium
   '#347A85',  // Medium dark
   '#255965',  // Darker
   '#123C4B'   // Darkest
@@ -71,22 +71,35 @@ const totalUsers = computed(() => {
   return Object.values(userDistribution.value).reduce((sum, count) => sum + count, 0);
 });
 
-const getGrowthRate = (dzongkhagName) => {
-  return Math.floor(Math.random() * 15 + 5);
-};
-
-const getPercentageOfTotal = (users) => {
-  return ((users / totalUsers.value) * 100).toFixed(1);
-};
-
 const processUserData = (filteredData) => {
   const distribution = {};
   filteredData.forEach(item => {
-    if (item.user?.perm_add_dzongkhag) {
-      const dzongkhag = item.user.perm_add_dzongkhag;
+    let dzongkhag = null;
+
+    // Check direct screening_data for ps_add_dzongkhag
+    if (item.screening_data?.ps_add_dzongkhag) {
+      dzongkhag = item.screening_data.ps_add_dzongkhag;
+    }
+    // Check user object for ps_add_dzongkhag
+    else if (item.user?.ps_add_dzongkhag) {
+      dzongkhag = item.user.ps_add_dzongkhag;
+    }
+    // Check if screening_data id exists and has ps_add_dzongkhag
+    else if (typeof item.screening_data === 'object' && 'id' in item.screening_data) {
+      dzongkhag = item.screening_data.ps_add_dzongkhag;
+    }
+
+    // Only count if we found a valid dzongkhag
+    if (dzongkhag) {
+      // Clean up dzongkhag name by removing "Thromde" if present
+      dzongkhag = dzongkhag.replace(' Thromde', '');
+      // Convert to title case for consistency
+      dzongkhag = dzongkhag.charAt(0).toUpperCase() + dzongkhag.slice(1).toLowerCase();
       distribution[dzongkhag] = (distribution[dzongkhag] || 0) + 1;
     }
   });
+
+  console.log('User Distribution:', distribution); // For debugging
   return distribution;
 };
 
@@ -119,6 +132,7 @@ const showHoverInfo = (event) => {
     transform: 'translate(-50%, -100%)'
   };
 
+  // Apply hover effects
   event.target.style.transform = 'scale(1.02) translateZ(10px)';
   event.target.style.zIndex = '100';
   event.target.style.filter = 'drop-shadow(0 8px 12px rgba(43, 101, 111, 0.3))';
@@ -128,6 +142,7 @@ const hideHoverInfo = (event) => {
   hoveredArea.value = null;
   tooltipStyle.value.display = 'none';
 
+  // Remove hover effects
   event.target.style.transform = 'scale(1) translateZ(0)';
   event.target.style.zIndex = '1';
   event.target.style.filter = 'none';
@@ -149,6 +164,7 @@ const updateMapColors = () => {
   });
 };
 
+// Watch for changes in filteredData
 watch(() => props.filteredData, (newData) => {
   if (newData) {
     userDistribution.value = processUserData(newData);
@@ -158,16 +174,19 @@ watch(() => props.filteredData, (newData) => {
 
 onMounted(async () => {
   try {
+    // Load SVG content
     const response = await fetch(bhutanSvg);
     svgContent.value = await response.text();
 
     await nextTick();
 
+    // Add event listeners to paths
     const paths = mapWrapper.value.querySelectorAll('path');
     paths.forEach(path => {
       path.addEventListener('mouseenter', showHoverInfo);
       path.addEventListener('mouseleave', hideHoverInfo);
 
+      // Set initial styles
       path.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
       path.style.transformOrigin = 'center center';
       path.style.position = 'relative';
@@ -219,7 +238,8 @@ onMounted(async () => {
   position: absolute;
   z-index: 1000;
   pointer-events: none;
-  opacity: 1; /* Ensure opacity is not set to 0 */
+  opacity: 1;
+  /* Ensure opacity is not set to 0 */
 }
 
 
