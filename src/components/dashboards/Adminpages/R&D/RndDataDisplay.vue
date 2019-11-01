@@ -1,16 +1,5 @@
 <template>
     <div class="dashboard">
-        <div class="row g-4 mt-1 mx-auto d-flex align-items-stretch">
-            <div class="col-md-3 d-flex" v-for="(card, index) in countCards" :key="index">
-                <div class="card flex-fill count-card">
-                    <div class="card-body text-center">
-                        <h3 class="display-4 fw-bold mb-2">{{ card.value }}</h3>
-                        <p class="text-uppercase mb-0">{{ card.label }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="row g-4 mt-4 d-flex align-items-stretch">
             <div class="col-md-6 d-flex">
                 <div class="card flex-fill">
@@ -77,63 +66,7 @@ const primaryColor = '#275D67';
 const secondaryColor = '#A3CDB8';
 const accentColors = ['#4A8895', '#6CB3A5', '#8EDDC8', '#B0F7EB'];
 
-// Updated to match new data structure
-const uniqueSchools = computed(() => {
-    const schools = new Set();
-    props.filteredData.forEach(item => {
-        if (item.user?.agency_details?.agency?.agency_name &&
-            !["Case Base Clients", "Event Base Clients"].includes(item.user.agency_details.agency.agency_name)) {
-            schools.add(item.user.agency_details.agency.agency_name.toLowerCase());
-        }
-    });
-    return schools;
-});
-
-// const noOfIndividualsWithSuicidalBehavior = computed(() => {
-//     return props.filteredData.filter(item => {
-//         const phqData = item.screening_data?.phq_data;
-//         if (typeof phqData === 'string') {
-//             try {
-//                 const parsedData = JSON.parse(phqData);
-//                 return parsedData.responses?.some(response =>
-//                     response.question.includes('Thoughts that you would be better off dead') &&
-//                     response.selectedOption === 'Nearly everyday'
-//                 );
-//             } catch (e) {
-//                 return false;
-//             }
-//         }
-//         return false;
-//     }).length;
-// });
-
-// const noOfSchools = computed(() => uniqueSchools.value.size);
-
-// const uniqueAgencies = computed(() => {
-//     const agencies = new Set();
-//     props.filteredData.forEach(item => {
-//         const agencyName = item.user?.agency_details?.agency?.agency_name;
-//         if (agencyName &&
-//             !agencyName.toLowerCase().includes('school') &&
-//             !["Case Base Clients", "Event Base Clients"].includes(agencyName)) {
-//             agencies.add(agencyName.toLowerCase());
-//         }
-//     });
-//     return agencies;
-// });
-
-// const noOfAgencies = computed(() => uniqueAgencies.value.size);
-
-// const totalScreenings = computed(() => props.filteredData.length);
-
-// const countCards = computed(() => [
-//     { label: 'Schools', value: noOfSchools.value },
-//     { label: 'Agencies', value: noOfAgencies.value },
-//     { label: 'Suicidal Behavior', value: noOfIndividualsWithSuicidalBehavior.value },
-//     { label: 'Total Screenings', value: totalScreenings.value }
-// ]);
-
-// Chart Options
+// Common chart options
 const commonChartOptions = {
     chart: {
         toolbar: { show: false },
@@ -150,6 +83,17 @@ const commonChartOptions = {
     theme: { mode: 'light' }
 };
 
+// Updated to match new data structure
+const uniqueSchools = computed(() => {
+    const schools = new Set();
+    props.filteredData.forEach(item => {
+        if (item.user?.agency_details?.agency?.agency_name) {
+            schools.add(item.user.agency_details.agency.agency_name.toLowerCase());
+        }
+    });
+    return Array.from(schools);
+});
+
 // Schools Chart
 const schoolsChartOptions = ref({
     ...commonChartOptions,
@@ -159,7 +103,7 @@ const schoolsChartOptions = ref({
     },
     xaxis: {
         ...commonChartOptions.xaxis,
-        categories: Array.from(uniqueSchools.value)
+        categories: uniqueSchools.value
     },
     yaxis: {
         ...commonChartOptions.yaxis,
@@ -173,14 +117,14 @@ const schoolsChartOptions = ref({
 
 const schoolsChartSeries = computed(() => [{
     name: 'Students Screened',
-    data: Array.from(uniqueSchools.value).map(school => {
+    data: uniqueSchools.value.map(school => {
         return props.filteredData.filter(item =>
             item.user?.agency_details?.agency?.agency_name?.toLowerCase() === school
         ).length;
     })
 }]);
 
-// Screening Type Chart
+// Updated Screening Type Chart
 const screeningTypeChartOptions = ref({
     ...commonChartOptions,
     chart: {
@@ -196,12 +140,8 @@ const screeningTypeChartOptions = ref({
 });
 
 const screeningTypeChartSeries = computed(() => [
-    props.filteredData.filter(item =>
-        item.user?.agency_details?.agency?.agency_name === "Event Base Clients"
-    ).length,
-    props.filteredData.filter(item =>
-        item.user?.agency_details?.agency?.agency_name === "Case Base Clients"
-    ).length
+    props.filteredData.filter(item => item.screening_data?.event).length,
+    props.filteredData.filter(item => item.screening_data?.case).length
 ]);
 
 // Mental Health Chart

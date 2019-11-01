@@ -737,15 +737,17 @@ onMounted(() => {
 }
 
 .summary-card {
-  background: white;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease;
+  color: white;
 }
 
 .summary-card:hover {
   transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .summary-header {
@@ -756,15 +758,17 @@ onMounted(() => {
 }
 
 .summary-header h6 {
-  color: var(--text-color-secondary);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .summary-value {
   font-size: 2rem;
   font-weight: 600;
   margin: 0.5rem 0;
-  color: #2B656F;
+  color: #fff;
 }
 
 .trend-value {
