@@ -65,7 +65,6 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import VueApexCharts from "vue3-apexcharts";
 
 const props = defineProps({
     filteredData: {
@@ -90,49 +89,49 @@ const uniqueSchools = computed(() => {
     return schools;
 });
 
-const noOfIndividualsWithSuicidalBehavior = computed(() => {
-    return props.filteredData.filter(item => {
-        const phqData = item.screening_data?.phq_data;
-        if (typeof phqData === 'string') {
-            try {
-                const parsedData = JSON.parse(phqData);
-                return parsedData.responses?.some(response =>
-                    response.question.includes('Thoughts that you would be better off dead') &&
-                    response.selectedOption === 'Nearly everyday'
-                );
-            } catch (e) {
-                return false;
-            }
-        }
-        return false;
-    }).length;
-});
+// const noOfIndividualsWithSuicidalBehavior = computed(() => {
+//     return props.filteredData.filter(item => {
+//         const phqData = item.screening_data?.phq_data;
+//         if (typeof phqData === 'string') {
+//             try {
+//                 const parsedData = JSON.parse(phqData);
+//                 return parsedData.responses?.some(response =>
+//                     response.question.includes('Thoughts that you would be better off dead') &&
+//                     response.selectedOption === 'Nearly everyday'
+//                 );
+//             } catch (e) {
+//                 return false;
+//             }
+//         }
+//         return false;
+//     }).length;
+// });
 
-const noOfSchools = computed(() => uniqueSchools.value.size);
+// const noOfSchools = computed(() => uniqueSchools.value.size);
 
-const uniqueAgencies = computed(() => {
-    const agencies = new Set();
-    props.filteredData.forEach(item => {
-        const agencyName = item.user?.agency_details?.agency?.agency_name;
-        if (agencyName &&
-            !agencyName.toLowerCase().includes('school') &&
-            !["Case Base Clients", "Event Base Clients"].includes(agencyName)) {
-            agencies.add(agencyName.toLowerCase());
-        }
-    });
-    return agencies;
-});
+// const uniqueAgencies = computed(() => {
+//     const agencies = new Set();
+//     props.filteredData.forEach(item => {
+//         const agencyName = item.user?.agency_details?.agency?.agency_name;
+//         if (agencyName &&
+//             !agencyName.toLowerCase().includes('school') &&
+//             !["Case Base Clients", "Event Base Clients"].includes(agencyName)) {
+//             agencies.add(agencyName.toLowerCase());
+//         }
+//     });
+//     return agencies;
+// });
 
-const noOfAgencies = computed(() => uniqueAgencies.value.size);
+// const noOfAgencies = computed(() => uniqueAgencies.value.size);
 
-const totalScreenings = computed(() => props.filteredData.length);
+// const totalScreenings = computed(() => props.filteredData.length);
 
-const countCards = computed(() => [
-    { label: 'Schools', value: noOfSchools.value },
-    { label: 'Agencies', value: noOfAgencies.value },
-    { label: 'Suicidal Behavior', value: noOfIndividualsWithSuicidalBehavior.value },
-    { label: 'Total Screenings', value: totalScreenings.value }
-]);
+// const countCards = computed(() => [
+//     { label: 'Schools', value: noOfSchools.value },
+//     { label: 'Agencies', value: noOfAgencies.value },
+//     { label: 'Suicidal Behavior', value: noOfIndividualsWithSuicidalBehavior.value },
+//     { label: 'Total Screenings', value: totalScreenings.value }
+// ]);
 
 // Chart Options
 const commonChartOptions = {
