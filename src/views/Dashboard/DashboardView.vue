@@ -44,7 +44,7 @@ import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import PublicDashboard from '@/components/dashboards/PublicDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
-import AdminDashboard from '@/components/dashboards/AdminDashboard.vue';
+import AdminDashboard from '@/components/dashboards/Adminpages/AdminDashboard/AdminDashboardMain.vue';
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue';
 import HelplineServices from "@/components/dashboards/screenings/screeningCards/HelplineServices.vue";
 
