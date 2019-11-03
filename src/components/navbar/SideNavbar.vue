@@ -155,45 +155,46 @@ const toggle = () => {
 };
 
 const logout = async () => {
-	const progressStore = useProgressStore();
-	if (progressStore) {
-		progressStore.resetStore();
-	}
+    const progressStore = useProgressStore();
+    if (progressStore) {
+        progressStore.resetStore();
+    }
 
-	try {
-		if (localStorage) {
-			for (let key in localStorage) {
-				if (key !== 'userScreenedToday') {
-					localStorage.removeItem(key);
-				}
-			}
-		}
-		if (sessionStorage) {
-			sessionStorage.clear();
-		}
-		if (userDetailsStore) {
-			userDetailsStore.clearUserDetails();
-		}
+    try {
+        if (localStorage) {
+            for (let key in localStorage) {
+                if (!key.startsWith('userScreenedToday_')) {
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+        if (sessionStorage) {
+            sessionStorage.clear();
+        }
+        if (userDetailsStore) {
+            userDetailsStore.clearUserDetails();
+        }
 
-		await Swal.fire({
-			title: 'Logged Out',
-			text: 'You have been successfully logged out of the system.',
-			icon: 'success',
-			showConfirmButton: false,
-			timer: 1200
-		});
+        await Swal.fire({
+            title: 'Logged Out',
+            text: 'You have been successfully logged out of the system.',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1200
+        });
 
-		router.push("/login");
-	} catch (error) {
-		console.error("Logout failed:", error);
-		await Swal.fire({
-			title: 'Error',
-			text: 'Logout failed. Please try again.',
-			icon: 'error',
-			confirmButtonText: 'OK'
-		});
-	}
+        router.push("/login");
+    } catch (error) {
+        console.error("Logout failed:", error);
+        await Swal.fire({
+            title: 'Error',
+            text: 'Logout failed. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
 };
+
 </script>
 
 <style scoped>

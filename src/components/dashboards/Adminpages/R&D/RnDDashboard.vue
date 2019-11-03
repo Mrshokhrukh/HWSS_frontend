@@ -603,7 +603,7 @@ const applyFilters = async () => {
 // Helper function to get region from dzongkhag
 const getDzongkhagRegion = (dzongkhag) => {
   const regionMap = {
-    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHUKHA', 'SAMTSE',
+    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'Chhukha', 'SAMTSE',
       'THIMPHU THROMDE', 'PHUENTSHOGLING THROMDE'],
     CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE', 'ZHEMGANG'],
     EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG',

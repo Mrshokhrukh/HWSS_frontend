@@ -39,7 +39,8 @@
                         </div>
                         <div v-if="showParentalStatus" class="col-md-4 mb-3">
                             <label for="parentalStatus" class="form-label">Parental Status</label>
-                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus" required>
+                            <select class="form-select hwss-primary" id="parentalStatus" v-model="parentalStatus"
+                                required>
                                 <option value="" disabled selected>Select Parental Status</option>
                                 <option value="Married">Married</option>
                                 <option value="Divorce">Divorce</option>
@@ -104,7 +105,7 @@ const email = ref('');
 const dzongkhag = ref('');
 
 const dzongkhags = [
-    'Bumthang', 'Chukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuentse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
@@ -141,9 +142,9 @@ const submitForm = async () => {
         });
         return;
     }
-    
+
     if (!showParentalStatus.value) {
-        parentalStatus.value = "None"; 
+        parentalStatus.value = "None";
     }
     try {
         // Await the username generation
@@ -231,11 +232,11 @@ const calculatedAge = computed(() => {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
     }
-    
+
     let ageGroup;
     if (age < 14) {
         ageGroup = 'Below 14';
@@ -245,7 +246,7 @@ const calculatedAge = computed(() => {
         ageGroup = 'Above 18';
     }
     sessionStorage.setItem('clientAgeGroup', ageGroup);
-    
+
     return age;
 });
 

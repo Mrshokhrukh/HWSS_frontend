@@ -81,12 +81,10 @@ onMounted(() => {
     }
 });
 
-
 // Function to activate a tab
 function activateTab(tabName) {
     activeTab.value = tabName;
 }
-
 
 async function fetchCounselorScreeningQuestions() {
     try {

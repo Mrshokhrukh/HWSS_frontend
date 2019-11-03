@@ -6,7 +6,7 @@
         </div>
         <div class="card-inner">
             <!-- Progress bar -->
-            <div class="card-body">
+            <div class="card-body pb-0">
                 <div class="progress-container py-1 mt-2 mb-4">
                     <div class="progress" style="height: 15px; border-radius: 20px">
                         <div class="progress-bar" role="progressbar" :style="{ width: progressPercentage + '%' }"
@@ -14,13 +14,11 @@
                     </div>
                 </div>
 
-                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'
-                ">
+                <div v-if="currentQuestionSetName !== 'SCHOOL ENV' && currentQuestionSetName !== 'ASSIST'">
                     <!-- Existing layout for other question sets -->
                     <div v-if="showBgGreen" class="card p-3 my-3 text-center bg-gradient-dark">
                         <h4 class="text-white">
-                            Over the last 2 weeks, how often have you been bothered by any of the
-                            following problems:
+                            Over the last 2 weeks, how often have you been bothered by any of the following problems:
                         </h4>
                     </div>
                     <div class="question-area text-center px-5" v-if="currentQuestion">
@@ -30,12 +28,12 @@
                                     <img :src="iconURL" alt="Question Icon" style="max-width: 100px"
                                         class="mx-4 my-3 animated-icon" />
                                     <div class="question-text d-inline-block">
-                                        <h2 class="text-capitalize">{{ processedQuestionText }}</h2>
+                                        <div v-html="formattedQuestionText"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="answer-options">
+                        <div class="answer-options mb-1">
                             <div class="row justify-content-center">
                                 <div class="answer-option col-md-6 col-sm-12"
                                     v-for="(option) in currentQuestion.answers" :key="option.id">
@@ -49,6 +47,7 @@
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Layout for "ASSIST" question set -->
                 <div v-if="isAssistOrSchoolEnv && currentQuestionSetName === 'ASSIST'">
@@ -179,8 +178,6 @@ import endpoints from "@/api";
 import fallbackIcon from "@/assets/images/question.png";
 import { useRouter } from "vue-router";
 import ConfettiExplosion from "vue-confetti-explosion";
-import logoDashbopard from '@/assets/images/logoDashbopard.png';
-
 
 const progressStore = useProgressStore();
 const currentQuestionIndex = ref(0);
@@ -292,9 +289,11 @@ function isUserAgeGroupIncluded(ageGroupTags) {
 
 
 onMounted(async () => {
+    // Load progress data and current question index
     progressStore.loadProgress();
     currentQuestionIndex.value = progressStore.currentQuestionIndex;
 
+    // Retrieve questions from sessionStorage or fetch from API if unavailable
     let storedQuestions = JSON.parse(sessionStorage.getItem("questions"));
     if (!storedQuestions) {
         const response = await axios.get(
@@ -304,19 +303,24 @@ onMounted(async () => {
         sessionStorage.setItem("questions", JSON.stringify(storedQuestions));
     }
 
+    // Flatten questions while sorting each set by `id`
     questions.value = storedQuestions.flatMap((data) =>
-        data.question_sets.flatMap((set) =>
-            set.questions.map((question) => ({
+        data.question_sets.flatMap((set) => {
+            // Sort questions in each set by `id` to maintain order
+            set.questions.sort((a, b) => a.id - b.id);
+            return set.questions.map((question) => ({
                 ...question,
                 setName: set.name,
-            }))
-        )
+            }));
+        })
     );
 
+    // Initialize answers for each question
     questions.value.forEach((question) => {
         answers[question.id] = question.answer_type === 5 ? "" : null;
     });
 
+    // Initialize substances answered state if current set is "ASSIST"
     if (currentQuestionSetName.value === "ASSIST") {
         currentQuestion.value.substances.forEach((substance) => {
             substanceAnswered[substance] = false;
@@ -346,9 +350,9 @@ watch(allSubstancesNo, (allNo) => {
 watch(currentQuestionIndex, (newIndex) => {
     if (currentQuestionSetName.value === "ASSIST") {
         const currentQuestion = questions.value[newIndex];
-        if (currentQuestion && (currentQuestion.id === 54 || currentQuestion.id === 55)) {
-            const ageGroupTags = currentQuestion.age_group_tags;
-            const includeUserAgeGroup = isUserAgeGroupIncluded(ageGroupTags);
+        if (currentQuestion && currentQuestion.age_group_tags) {
+            const includeUserAgeGroup = isUserAgeGroupIncluded(currentQuestion.age_group_tags);
+
             if (!includeUserAgeGroup) {
                 jumpToNextRelevantSet();
             }
@@ -651,11 +655,6 @@ const iconURL = computed(() => {
     return getImageUrl(imageName);
 });
 
-const processedQuestionText = computed(() => {
-    const regex = /over the last 2 weeks, how often have you been bothered by any of the following problems[:?]\s*/i;
-    return currentQuestion.value?.text.replace(regex, "");
-});
-
 const progressPercentage = computed(() => {
     return (currentQuestionIndex.value / (questions.value.length - 1)) * 100;
 });
@@ -809,14 +808,17 @@ function filterSubstances(substances) {
 }
 
 const jumpToNextQuestion = () => {
+    // Custom skip logic for specific "ASSIST" question
     if (currentQuestion.value.text === "In the past three months, how often have you used:") {
         const allSubstancesDisabled = assistq2substances.value.every(substance => substance.disabled);
         if (allSubstancesDisabled) {
+            // Skip 4 questions if all substances are disabled
             currentQuestionIndex.value += 4;
             return;
         }
     }
 
+    // Handle "ASSIST" set navigation with validation checks
     if (currentQuestionSetName.value === "ASSIST") {
         if (!checkInvalidInputs()) {
             const allSubstancesNo = Object.values(substanceAnswered).every(
@@ -831,11 +833,12 @@ const jumpToNextQuestion = () => {
         }
     }
 
+    // Move to the next question in sorted order
     currentQuestionIndex.value++;
 };
 
-
 function jumpToNextRelevantSet(setToSkip) {
+    // Find the next question after skipping the specified set
     const nextIndex = findNextSetIndex(setToSkip);
     if (nextIndex !== -1) {
         currentQuestionIndex.value = nextIndex;
@@ -845,6 +848,7 @@ function jumpToNextRelevantSet(setToSkip) {
 }
 
 function findNextSetIndex(setToSkip) {
+    // Find the next question index that is not part of the setToSkip
     return questions.value.findIndex(
         (question, index) =>
             question.setName !== setToSkip && index > currentQuestionIndex.value
@@ -1100,6 +1104,50 @@ function saveTextResponse(questionId) {
     const value = textResponses[questionId] || "";
     logQuestionAndResponseSchoolEnv(questionText, "Strongly Disagree", questionId, value);
 }
+
+// Define keywords to look for in question text
+const keywords = ["safety", "supportive", "feedback", "environment"];
+
+// Function to check if question contains relevant keywords
+function hasRelevantKeywords(questionText) {
+    return keywords.some(keyword => questionText.toLowerCase().includes(keyword));
+}
+
+// Computed property to format question text if relevant keywords are present
+const formattedQuestionText = computed(() => {
+    if (hasRelevantKeywords(currentQuestionText.value)) {
+        return `
+            <div>
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h1 style="color: #1D4851; font-size: 32px; font-weight: bold; margin: 0 0 15px 0; line-height: 1.2;">Student Survey</h1>
+                    <div style="height: 4px; width: 100px; background-color: #2B656F; border-radius: 2px; margin: 0 auto;"></div>
+                </div>
+                <div style="color: #555555; font-size: 16px; line-height: 1.6; text-align: left;">
+                    <h4 style="margin: 0 0 20px 0;">
+                        Dear students,
+                    </h4>
+                    
+                    <p style="margin: 0 0 20px 0;">
+                        We kindly request your honest responses for the following questions.
+                    </p>
+                    
+                    <p style="margin: 0 0 20px 0;">
+                        This survey is crucial for the schools to understand the issues and enhance the learning environment, ensuring safety and conducive conditions. Therefore, your feedback will help us understand how we can make our school a safer and more supportive place for everyone.
+                    </p>
+                    
+                    <div style="background-color: rgba(43, 101, 111, 0.1); border-left: 4px solid #2B656F; padding: 15px; margin: 0 0 20px 0; color: #1D4851;">
+                        <p style="margin: 0;">
+                            Please be assured that your responses will be kept confidential and the collected data will be used solely for its intended purpose.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    // Default return if no keywords match
+    return `<div>${currentQuestionText.value}</div>`;
+});
+
 
 </script>
 

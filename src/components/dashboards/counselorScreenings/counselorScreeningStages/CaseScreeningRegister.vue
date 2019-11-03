@@ -120,7 +120,7 @@
         <!-- Button Section -->
         <div class="form-actions">
             <button type="button" class="proceed-button" :disabled="!isProceedButtonActive"
-                    @click="proceedToSelectTools">
+                @click="proceedToSelectTools">
                 Proceed to Select Tools
                 <i class="fas fa-arrow-right"></i>
             </button>
@@ -155,7 +155,7 @@ const currentAddress = ref('');
 const phoneNumber = ref('');
 const email = ref('');
 const dzongkhags = [
-    'Bumthang', 'Chukha', 'Dagana', 'Gasa', 'Haa', 'Lhuntse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
+    'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuentse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
@@ -181,11 +181,11 @@ const calculatedAge = computed(() => {
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         age--;
     }
-    
+
     let ageGroup;
     if (age < 14) {
         ageGroup = 'Below 14';
@@ -195,7 +195,7 @@ const calculatedAge = computed(() => {
         ageGroup = 'Above 18';
     }
     sessionStorage.setItem('clientAgeGroup', ageGroup);
-    
+
     return age;
 });
 
