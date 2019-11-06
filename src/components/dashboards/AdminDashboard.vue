@@ -199,7 +199,6 @@ const fetchServiceAndTreatmentData = async () => {
                 });
             }
 
-            // Keep this log for monitoring filtered results
             console.log('Filtered data:', {
                 role: userRole,
                 total: serviceItems.length
@@ -215,9 +214,35 @@ const fetchServiceAndTreatmentData = async () => {
 
 provide('serviceAndTreatmentData', newServiceAndTreatment);
 
+watch(currentRoute, (newRoute) => {
+    console.log(`Current route is: ${newRoute}`);
+    console.log(`User role is: ${userRole.value}`);
+    
+    let dashboard;
+    switch (newRoute) {
+        case '/admin-dashboard/admin-approval':
+            dashboard = 'Approval Dashboard';
+            break;
+        case '/admin-dashboard/admin-report':
+            dashboard = 'Report Dashboard';
+            break;
+        case '/admin-dashboard/admin-help':
+            dashboard = 'Help Dashboard';
+            break;
+        case '/admin-dashboard/admin-settings':
+            dashboard = 'Settings Dashboard';
+            break;
+        default:
+            dashboard = 'Default Dashboard';
+    }
+    console.log(`Loading: ${dashboard}`);
+});
+
 onMounted(() => {
+    console.log(`Component mounted. Current route: ${currentRoute.value}, User role: ${userRole.value}`);
     fetchServiceAndTreatmentData();
 });
+
 </script>
 
 <style>

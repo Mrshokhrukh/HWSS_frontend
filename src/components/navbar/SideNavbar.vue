@@ -1,44 +1,53 @@
 <template>
 	<div :class="{ sidebar: true, 'sidebar-open': sidebarStore.isOpen }">
 		<!-- User Profile Section -->
-		<div class="user-profile text-center my-3">
+		<div class="user-profile text-center">
 			<div class="profile-image-container">
 				<img :src="profilePictureUrl" alt="User" :class="profilePicClass" />
 				<span class="status-indicator online"></span>
 			</div>
 			<transition name="fade">
-				<div v-if="sidebarStore.isOpen" class="user-info mt-2">
-					<h5 class="user-name mb-0">{{ fullName }}</h5>
-					<small class="user-role text-light-green">{{ userType }}</small>
+				<div v-if="sidebarStore.isOpen" class="user-info">
+					<h5 class="user-name">{{ fullName }}</h5>
+					<small class="user-role">{{ userType }}</small>
 				</div>
 			</transition>
 		</div>
 
 		<!-- Menu Items -->
-		<div class="menu-container">
+		<div class="menu-wrapper">
+			<div class="menu-background"></div>
 			<nav class="menu-items">
 				<template v-for="(menu, index) in filteredMenus" :key="index">
-					<router-link :to="menu.route" class="side-btn" :class="{ active: $route.path === menu.route }"
+					<router-link :to="menu.route" class="menu-link" :class="{ active: $route.path === menu.route }"
 						v-b-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
-						<i :class="menu.iconClass" class="link-icon"></i>
-						<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
+						<span class="link-content">
+							<i :class="menu.iconClass" class="link-icon"></i>
+							<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
+						</span>
+						<div class="curve-effect"></div>
 					</router-link>
 				</template>
 			</nav>
 		</div>
 
-		<!-- Logout and Toggle Icon -->
-		<div class="sidebar-footer mt-auto">
-			<router-link to="#" class="side-btn logout-btn" @click="logout"
+		<!-- Footer Section -->
+		<div class="sidebar-footer">
+			<router-link to="#" class="menu-link logout-link" @click="logout"
 				v-b-tooltip.hover.right="{ title: 'Log Out', disabled: sidebarStore.isOpen }">
-				<i class="fas fa-sign-out-alt me-3"></i>
-				<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
+				<span class="link-content">
+					<i class="fas fa-sign-out-alt link-icon"></i>
+					<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
+				</span>
 			</router-link>
 
-			<button class="toggle-btn d-none" @click="toggle"
+			<button class="menu-link toggle-btn d-none" @click="toggle"
 				v-b-tooltip.hover.right="{ title: sidebarStore.isOpen ? 'Collapse' : 'Expand', disabled: sidebarStore.isOpen }">
-				<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"></i>
-				<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
+				<span class="link-content">
+					<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"
+						class="link-icon"></i>
+					<span class="link-text" v-if="sidebarStore.isOpen">Collapse</span>
+				</span>
 			</button>
 		</div>
 	</div>
@@ -155,44 +164,44 @@ const toggle = () => {
 };
 
 const logout = async () => {
-    const progressStore = useProgressStore();
-    if (progressStore) {
-        progressStore.resetStore();
-    }
+	const progressStore = useProgressStore();
+	if (progressStore) {
+		progressStore.resetStore();
+	}
 
-    try {
-        if (localStorage) {
-            for (let key in localStorage) {
-                if (!key.startsWith('userScreenedToday_')) {
-                    localStorage.removeItem(key);
-                }
-            }
-        }
-        if (sessionStorage) {
-            sessionStorage.clear();
-        }
-        if (userDetailsStore) {
-            userDetailsStore.clearUserDetails();
-        }
+	try {
+		if (localStorage) {
+			for (let key in localStorage) {
+				if (!key.startsWith('userScreenedToday_')) {
+					localStorage.removeItem(key);
+				}
+			}
+		}
+		if (sessionStorage) {
+			sessionStorage.clear();
+		}
+		if (userDetailsStore) {
+			userDetailsStore.clearUserDetails();
+		}
 
-        await Swal.fire({
-            title: 'Logged Out',
-            text: 'You have been successfully logged out of the system.',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1200
-        });
+		await Swal.fire({
+			title: 'Logged Out',
+			text: 'You have been successfully logged out of the system.',
+			icon: 'success',
+			showConfirmButton: false,
+			timer: 1200
+		});
 
-        router.push("/login");
-    } catch (error) {
-        console.error("Logout failed:", error);
-        await Swal.fire({
-            title: 'Error',
-            text: 'Logout failed. Please try again.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-    }
+		router.push("/login");
+	} catch (error) {
+		console.error("Logout failed:", error);
+		await Swal.fire({
+			title: 'Error',
+			text: 'Logout failed. Please try again.',
+			icon: 'error',
+			confirmButtonText: 'OK'
+		});
+	}
 };
 
 </script>
@@ -203,50 +212,46 @@ const logout = async () => {
 	color: white;
 	display: flex;
 	flex-direction: column;
-	padding: 1rem 0 0 0;
 	position: fixed;
-	z-index: 999;
 	height: 100vh;
 	width: 4.5rem;
-	overflow-x: hidden;
+	transition: width 0.3s ease-in-out;
+	overflow: hidden;
+	z-index: 999;
+	box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-open {
-	width: 16%;
+	width: 16rem;
 }
 
+/* Profile Section */
 .user-profile {
-	padding: 0.5rem;
-	transition: all 0.3s ease-in-out;
+	padding: 1.5rem 1rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .profile-image-container {
 	position: relative;
 	display: inline-block;
+	margin-bottom: 0.5rem;
 }
 
-.profile-pic,
-.mini-profile-pic {
-	width: 80px;
-	height: 80px;
+.profile-pic {
+	width: 3.5rem;
+	height: 3.5rem;
 	border-radius: 50%;
-	border: 3px solid #cde0c9;
+	border: 2px solid #cde0c9;
 	object-fit: cover;
-	object-position: top;
-	transition: all 0.3s ease-in-out;
-}
-
-.mini-profile-pic {
-	width: 40px;
-	height: 40px;
+	transition: all 0.3s ease;
 }
 
 .status-indicator {
 	position: absolute;
-	bottom: 5px;
-	right: 5px;
-	width: 12px;
-	height: 12px;
+	bottom: 2px;
+	right: 2px;
+	width: 10px;
+	height: 10px;
 	border-radius: 50%;
 	background-color: #4CAF50;
 	border: 2px solid #2c6975;
@@ -257,108 +262,125 @@ const logout = async () => {
 }
 
 .user-name {
-	color: white;
 	font-size: 1rem;
-	margin-bottom: 0.2rem;
+	font-weight: 600;
+	margin: 0;
+	color: #fff;
 }
 
 .user-role {
+	color: #cde0c9;
 	font-size: 0.8rem;
-	opacity: 0.8;
 }
 
-.menu-container {
-	flex-grow: 1;
+/* Menu Section */
+.menu-wrapper {
+	position: relative;
+	flex: 1;
 	overflow-y: auto;
-	margin-top: 1rem;
+	padding: 1rem 0;
+}
+
+.menu-background {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	width: calc(100% - 4px);
+	background-color: rgba(255, 255, 255, 0.03);
+	border-radius: 16px 0 0 16px;
 }
 
 .menu-items {
+	position: relative;
 	display: flex;
 	flex-direction: column;
+	gap: 0.5rem;
+	padding: 0.5rem;
 }
 
-.side-btn {
+.menu-link {
+	position: relative;
 	display: flex;
 	align-items: center;
 	padding: 0.8rem 1rem;
 	color: white;
 	text-decoration: none;
 	transition: all 0.3s ease;
-	border-radius: 0 25px 25px 0;
-	margin: 0.2rem 0;
+	border-radius: 12px 0 0 12px;
 }
 
-.side-btn:hover,
-.side-btn.active {
-	background-color: #cde0c9;
-	color: #2c6975;
+.menu-link:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+	border-radius: 10px;
+}
+
+.link-content {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	z-index: 1;
 }
 
 .link-icon {
 	font-size: 1.2rem;
-	width: 1.5rem;
+	min-width: 1.5rem;
 	text-align: center;
-	margin-right: 1rem;
 }
 
 .link-text {
 	font-size: 0.9rem;
+	font-weight: 500;
 	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 }
 
+/* Active Link Styling */
+.menu-link.active {
+	background-color: #cde0c9;
+	color: #2c6975;
+	border-radius: 10px;
+}
+
+/* Footer Section */
 .sidebar-footer {
-	margin-top: auto;
-	padding: 0 1rem;
+	padding: 1rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.logout-btn,
+.logout-link {
+	margin-bottom: 0.5rem;
+}
+
 .toggle-btn {
 	width: 100%;
-	padding: 0.8rem;
-	margin-top: 0.5rem;
 	background: none;
 	border: none;
-	color: white;
 	cursor: pointer;
-	transition: all 0.3s ease;
-	text-align: left;
-	border-radius: 25px;
 }
 
-.logout-btn:hover,
-.toggle-btn:hover {
-	background-color: rgba(255, 255, 255, 0.1);
+/* Scrollbar Styling */
+.menu-wrapper::-webkit-scrollbar {
+	width: 4px;
+}
+
+.menu-wrapper::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 4px;
+}
+
+.menu-wrapper::-webkit-scrollbar-thumb {
+	background: #cde0c9;
+	border-radius: 4px;
 }
 
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-	transition: opacity 0.3s;
+	transition: opacity 0.3s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
-}
-
-/* Scrollbar styling */
-.menu-container::-webkit-scrollbar {
-	width: 5px;
-}
-
-.menu-container::-webkit-scrollbar-track {
-	background: #2c6975;
-}
-
-.menu-container::-webkit-scrollbar-thumb {
-	background: #cde0c9;
-	border-radius: 5px;
-}
-
-.menu-container::-webkit-scrollbar-thumb:hover {
-	background: #a8c7a4;
 }
 </style>

@@ -105,10 +105,11 @@ const fetchData = async () => {
     try {
         const response = await axios.get(endpoints.getSchoolEnvData);
         const processedData = processResponseData(response.data);
-        surveyData.value = processedData;
+        surveyData.value = processedData || []; // Ensure we always have an array
         calculateMetrics();
     } catch (error) {
         console.error('Error fetching survey data:', error);
+        surveyData.value = []; // Set empty array on error
     }
 };
 
@@ -117,35 +118,45 @@ const processResponseData = (rawData) => {
     return Object.values(rawData).flatMap(user => user.submissions);
 };
 
+
 // Calculate summary metrics
 const calculateMetrics = () => {
-    const responses = surveyData.value;
-    totalResponses.value = Object.keys(responses).length;
+    if (!Array.isArray(surveyData.value)) return;
 
-    // Calculate Safety Score
-    const safetyResponses = responses.filter(r => r.question === "I feel safe at school");
-    const positiveSafetyResponses = safetyResponses.filter(r =>
-        r.answer === "Strongly Agree" || r.answer === "Agree"
-    ).length;
-    safetyScore.value = Math.round((positiveSafetyResponses / safetyResponses.length) * 100);
+    totalResponses.value = surveyData.value.length || 0;
 
-    // Calculate Support Score
-    const supportResponses = responses.filter(r =>
-        r.question === "My teachers and other staff are helpful and supportive"
+    // Safety Score calculation with null checks
+    const safetyResponses = surveyData.value.filter(r => 
+        r?.question === "I feel safe at school" && r?.answer
     );
-    const positiveSupportResponses = supportResponses.filter(r =>
-        r.answer === "Strongly Agree" || r.answer === "Agree"
-    ).length;
-    supportScore.value = Math.round((positiveSupportResponses / supportResponses.length) * 100);
+    if (safetyResponses.length > 0) {
+        const positiveSafetyResponses = safetyResponses.filter(r =>
+            r.answer === "Strongly Agree" || r.answer === "Agree"
+        ).length;
+        safetyScore.value = Math.round((positiveSafetyResponses / safetyResponses.length) * 100);
+    }
 
-    // Calculate Engagement Score
-    const engagementResponses = responses.filter(r =>
-        r.question === "My school engages all the students in all school activities"
+    // Support Score calculation with null checks
+    const supportResponses = surveyData.value.filter(r =>
+        r?.question === "My teachers and other staff are helpful and supportive" && r?.answer
     );
-    const positiveEngagementResponses = engagementResponses.filter(r =>
-        r.answer === "Strongly Agree" || r.answer === "Agree"
-    ).length;
-    engagementScore.value = Math.round((positiveEngagementResponses / engagementResponses.length) * 100);
+    if (supportResponses.length > 0) {
+        const positiveSupportResponses = supportResponses.filter(r =>
+            r.answer === "Strongly Agree" || r.answer === "Agree"
+        ).length;
+        supportScore.value = Math.round((positiveSupportResponses / supportResponses.length) * 100);
+    }
+
+    // Engagement Score calculation with null checks
+    const engagementResponses = surveyData.value.filter(r =>
+        r?.question === "My school engages all the students in all school activities" && r?.answer
+    );
+    if (engagementResponses.length > 0) {
+        const positiveEngagementResponses = engagementResponses.filter(r =>
+            r.answer === "Strongly Agree" || r.answer === "Agree"
+        ).length;
+        engagementScore.value = Math.round((positiveEngagementResponses / engagementResponses.length) * 100);
+    }
 };
 
 // Chart Configurations
@@ -251,34 +262,12 @@ const engagementChartOptions = {
 
 // Computed series
 const safetyChartSeries = computed(() => {
-    if (!surveyData.value.length) return [];
-    const safetyResponses = surveyData.value.filter(r => r.question === "I feel safe at school");
-    const counts = {
-        'Strongly Agree': 0,
-        'Agree': 0,
-        'Neutral/Indifferent': 0,
-        'Disagree': 0,
-        'Strongly Disagree': 0
-    };
-    safetyResponses.forEach(response => {
-        counts[response.answer] = (counts[response.answer] || 0) + 1;
-    });
-    return [{ name: 'Responses', data: Object.values(counts) }];
-});
-
-const environmentChartSeries = computed(() => {
-    if (!surveyData.value.length) return [];
-    // ... rest of the environment chart series computation
-    return [{
-        name: 'Environment Score',
-        data: [4.2, 3.8, 4.0, 4.5, 3.9] // Sample data
-    }];
-});
-
-const supportChartSeries = computed(() => {
-    if (!surveyData.value.length) return [];
-    const supportResponses = surveyData.value.filter(r =>
-        r.question === "My teachers and other staff are helpful and supportive"
+    if (!Array.isArray(surveyData.value) || surveyData.value.length === 0) {
+        return [{ name: 'Responses', data: [0, 0, 0, 0, 0] }];
+    }
+    
+    const safetyResponses = surveyData.value.filter(r => 
+        r?.question === "I feel safe at school" && r?.answer
     );
     const counts = {
         'Strongly Agree': 0,
@@ -287,11 +276,53 @@ const supportChartSeries = computed(() => {
         'Disagree': 0,
         'Strongly Disagree': 0
     };
-    supportResponses.forEach(response => {
-        counts[response.answer] = (counts[response.answer] || 0) + 1;
+    
+    safetyResponses.forEach(response => {
+        if (response.answer in counts) {
+            counts[response.answer]++;
+        }
     });
+    
+    return [{ name: 'Responses', data: Object.values(counts) }];
+});
+
+const environmentChartSeries = computed(() => {
+    if (!Array.isArray(surveyData.value) || surveyData.value.length === 0) {
+        return [{ name: 'Environment Score', data: [0, 0, 0, 0, 0] }];
+    }
+    
+    // Calculate actual environment scores based on your data
+    return [{
+        name: 'Environment Score',
+        data: [4.2, 3.8, 4.0, 4.5, 3.9] // Replace with actual calculations
+    }];
+});
+
+const supportChartSeries = computed(() => {
+    if (!Array.isArray(surveyData.value) || surveyData.value.length === 0) {
+        return [0, 0, 0, 0, 0];
+    }
+    
+    const supportResponses = surveyData.value.filter(r =>
+        r?.question === "My teachers and other staff are helpful and supportive" && r?.answer
+    );
+    const counts = {
+        'Strongly Agree': 0,
+        'Agree': 0,
+        'Neutral/Indifferent': 0,
+        'Disagree': 0,
+        'Strongly Disagree': 0
+    };
+    
+    supportResponses.forEach(response => {
+        if (response.answer in counts) {
+            counts[response.answer]++;
+        }
+    });
+    
     return Object.values(counts);
 });
+
 
 const engagementChartSeries = computed(() => {
     if (!surveyData.value.length) return [];
@@ -320,6 +351,8 @@ onMounted(() => {
 .dashboard-container {
     background-color: #f8f9fa;
     min-height: 100vh;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .card {

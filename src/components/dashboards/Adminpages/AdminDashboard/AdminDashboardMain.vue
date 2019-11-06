@@ -85,7 +85,7 @@ const userRole = computed(() => {
     return savedUserRole?.user?.role || '';
 });
 
-const isValidRole = computed(() => roleConfig.hasOwnProperty(userRole.value));
+const isValidRole = computed(() => Object.prototype.hasOwnProperty.call(roleConfig, userRole.value));
 
 const currentYear = new Date().getFullYear();
 const websiteName = "The PEMA HWSS";
@@ -129,11 +129,6 @@ const fetchServiceAndTreatmentData = async () => {
         if (serviceResponse.data && roleConfig[userRole]) {
             const filterFunction = roleConfig[userRole].dataFilter;
             newServiceAndTreatment.value = filterFunction(serviceResponse.data, userAgencyName);
-
-            console.log('Filtered data:', {
-                role: userRole,
-                total: newServiceAndTreatment.value.length
-            });
         }
     } catch (error) {
         console.error('Error fetching service and treatment data:', error);

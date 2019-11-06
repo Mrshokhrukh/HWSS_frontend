@@ -44,6 +44,7 @@ import SideNavbar from '@/components/navbar/SideNavbar.vue';
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue';
 import PublicDashboard from '@/components/dashboards/PublicDashboard.vue';
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue';
+import AdminDashboard2 from '@/components/dashboards/AdminDashboard.vue';
 import AdminDashboard from '@/components/dashboards/Adminpages/AdminDashboard/AdminDashboardMain.vue';
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue';
 import HelplineServices from "@/components/dashboards/screenings/screeningCards/HelplineServices.vue";
@@ -68,9 +69,10 @@ const currentComponent = computed(() => {
     case 'mh_admin':
     case 'sud_admin':
     case 'aaa_admin':
-    case 'rd_admin':
     case 'cecd_admin':
-      return AdminDashboard;
+        return AdminDashboard;
+    case 'rd_admin':
+      return AdminDashboard2;
     default:
       return PublicDashboard;
   }

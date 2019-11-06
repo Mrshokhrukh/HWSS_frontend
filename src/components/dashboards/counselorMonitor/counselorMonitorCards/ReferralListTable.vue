@@ -51,7 +51,7 @@
     <Column field="referred_to.name" header="Referred To" :filterMatchMode="'contains'" :sortable="true"
       :style="{ 'min-width': '12rem' }">
       <template #body="{ data }">
-        {{ data.referred_to.name || 'No Data' }}
+        {{ extractFullName(data.referred_to.name) || 'No Data' }}
       </template>
       <template #filter="{ filterModel }">
         <InputText v-model="filterModel['referred_to.name']" type="text" class="p-column-filter"
@@ -165,7 +165,8 @@
                   <div class="col-md-6"
                     v-if="selectedUser.service_and_treatment_details && selectedUser.service_and_treatment_details.length > 0">
                     <label for="caseStatus">Case Status:</label>
-                    <select disabled class="form-control" v-model="selectedUser.service_and_treatment_details[0].case_status">
+                    <select disabled class="form-control"
+                      v-model="selectedUser.service_and_treatment_details[0].case_status">
                       <option :value="null" disabled>Select Case Status</option>
                       <option value="On Going">On Going</option>
                       <option value="Case Closed">Case Closed</option>
@@ -308,6 +309,16 @@ const getStatusSeverity = (status) => {
   }
 };
 
+const extractFullName = (nameString) => {
+  try {
+    const parsedData = JSON.parse(nameString.replace(/'/g, '"')); // Replace single quotes with double quotes
+    return parsedData.full_name || 'No Data';
+  } catch (error) {
+    console.error('Error parsing name string:', error);
+    return 'No Data';
+  }
+};
+
 const viewDetails = async (userData) => {
   try {
     if (userData && userData.user_data && userData.user_data.patient_id) {
@@ -338,6 +349,7 @@ onMounted(async () => {
 });
 </script>
 
+
 <style scoped>
 .hwss-primary {
   background-color: #2c6975 !important;
@@ -350,215 +362,215 @@ onMounted(async () => {
 
 
 .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
 .dashboard-title {
-    color: #2B656F;
+  color: #2B656F;
 }
 
 .refresh-btn {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    border: none;
-    color: white;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border: none;
+  color: white;
 }
 
 .custom-datatable {
-    background: white;
-    border-radius: 8px;
+  background: white;
+  border-radius: 8px;
 }
 
 .view-details-btn {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    border: none;
-    color: white;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border: none;
+  color: white;
 }
 
 .custom-modal {
-    border-radius: 12px;
-    overflow: hidden;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .modal-content {
-    background: white;
+  background: white;
 }
 
 .modal-header {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    color: white;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 8px 8px 0 0;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px 8px 0 0;
 }
 
 .modal-title {
-    margin: 0;
-    font-size: 1.2rem;
+  margin: 0;
+  font-size: 1.2rem;
 }
 
 .modal-body {
-    padding: 2rem;
+  padding: 2rem;
 }
 
 .profile-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .profile-image {
-    display: none;
+  display: none;
 }
 
 .profile-name {
-    color: #2B656F;
-    text-align: center;
-    margin-bottom: 1rem;
+  color: #2B656F;
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
 .profile-details {
-    list-style-type: none;
-    padding: 0;
+  list-style-type: none;
+  padding: 0;
 }
 
 .profile-details li {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .info-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .info-section {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
 }
 
 .section-title {
-    color: #2B656F;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    font-weight: 600;
+  color: #2B656F;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .address-details p {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .severity-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .severity-tag {
-    display: flex;
-    align-items: center;
-    background: #f0f7f8;
-    border-radius: 20px;
-    padding: 0.25rem 0.75rem;
+  display: flex;
+  align-items: center;
+  background: #f0f7f8;
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
 }
 
 .substance-name {
-    margin-right: 0.5rem;
-    font-weight: 600;
+  margin-right: 0.5rem;
+  font-weight: 600;
 }
 
 .highlight {
-    color: #2B656F;
-    font-weight: 600;
+  color: #2B656F;
+  font-weight: 600;
 }
 
 .greyout {
-    opacity: 0.6;
-    pointer-events: none;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .form-control {
-    border: 1px solid #d1e0e3;
-    border-radius: 4px;
-    padding: 0.5rem;
+  border: 1px solid #d1e0e3;
+  border-radius: 4px;
+  padding: 0.5rem;
 }
 
 .form-control:focus {
-    border-color: #2B656F;
-    box-shadow: 0 0 0 0.2rem rgba(43, 101, 111, 0.25);
+  border-color: #2B656F;
+  box-shadow: 0 0 0 0.2rem rgba(43, 101, 111, 0.25);
 }
 
 .modal-footer {
-    border-top: 1px solid #e6f3f5;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: flex-end;
+  border-top: 1px solid #e6f3f5;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .dashboard-container {
-        padding: 1rem;
-    }
+  .dashboard-container {
+    padding: 1rem;
+  }
 
-    .modal-body {
-        padding: 1rem;
-    }
+  .modal-body {
+    padding: 1rem;
+  }
 
-    .profile-card {
-        margin-bottom: 1rem;
-    }
+  .profile-card {
+    margin-bottom: 1rem;
+  }
 }
 
 /* Loading and Error styles */
 .loading-overlay,
 .error-message {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #2B656F;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2B656F;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
 
-    100% {
-        transform: rotate(360deg);
-    }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    padding: 1rem;
-    text-align: center;
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 1rem;
+  text-align: center;
 }
 
 .error-message i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
 }
 </style>

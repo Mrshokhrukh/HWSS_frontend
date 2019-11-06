@@ -90,7 +90,8 @@
             <div v-if="selectedOption === 'all'" class="showtable">
               <MHMonitorTable :filteredData="finalFilteredData" />
             </div>
-            <ChartComponent v-else :chartData="processedChartData" :chartOptions="[selectedOption]" />
+            <ChartComponent :chartData="processedChartData" :chartOptions="[selectedOption]"
+              :activeFiltersList="props.activeFiltersList"/>
           </div>
         </div>
       </div>
@@ -336,12 +337,18 @@ const handleCheckboxChange = (value) => {
   }
 };
 
-const generateReport = () => {
+const isLoading = ref(false);
+
+const generateReport = async () => {
   try {
+    isLoading.value = true;
     showReport.value = true;
+    // Your report generation logic
   } catch (error) {
     console.error('Error generating report:', error);
     showReport.value = false;
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -425,6 +432,20 @@ watch(organizationSearch, (newValue) => {
     console.error('Error in organizationSearch watcher:', error);
   }
 });
+
+watch(() => props.filteredData, (newData) => {
+  if (newData && newData.length) {
+    // Update your local data processing here if needed
+    console.log('Filtered data updated:', newData.length);
+  }
+}, { immediate: true });
+
+watch(() => props.activeFiltersList, (newFilters) => {
+  if (newFilters && newFilters.length) {
+    // Handle filter changes here if needed
+    console.log('Active filters updated:', newFilters);
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>

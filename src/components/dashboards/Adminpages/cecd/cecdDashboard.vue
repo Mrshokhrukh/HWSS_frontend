@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { inject, provide } from 'vue';
 import cecdCurrentStatus from "@/components/dashboards/Adminpages/cecd/dashboardcard/cecdCurrentStatus.vue";
 import cecdScreeningData from "@/components/dashboards/Adminpages/cecd/dashboardcard/cecdScreeningData.vue";

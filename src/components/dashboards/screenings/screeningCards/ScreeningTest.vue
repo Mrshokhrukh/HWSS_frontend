@@ -365,6 +365,8 @@ watch(currentQuestionIndex, (newIndex) => {
     }
     if (
         currentQuestion.value.text ===
+        "Has a friend or relative or anyone else ever expressed concern (or worry) about your use of (FIRST DRUG, SECOND DRUG, ETC.)" ||
+        currentQuestion.value.text ===
         "Has a friend or relative or anyone else ever expressed concern (or worry) about your use?"
     ) {
         assistq2substances.value.forEach((substance) => {
@@ -1147,8 +1149,6 @@ const formattedQuestionText = computed(() => {
     // Default return if no keywords match
     return `<div>${currentQuestionText.value}</div>`;
 });
-
-
 </script>
 
 <style scoped>

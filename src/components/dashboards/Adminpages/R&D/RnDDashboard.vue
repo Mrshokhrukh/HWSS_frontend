@@ -385,10 +385,6 @@ const activeFilters = computed(() => {
   return active;
 });
 
-const toggleFilters = () => {
-  isFilterExpanded.value = !isFilterExpanded.value;
-};
-
 const handleRegionChange = () => {
   filters.dzongkhag = null;
 };

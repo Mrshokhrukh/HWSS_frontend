@@ -1,6 +1,6 @@
 <template>
     <div class="filter-configurator">
-        <div class="config-card">
+        <div class="config-card mb-4">
             <!-- Header -->
             <div class="config-header">
                 <h2 class="header-title">Data Configuration</h2>
@@ -16,8 +16,8 @@
                     <!-- Report Type -->
                     <div class="filter-group">
                         <label>Report Type</label>
-                        <p-dropdown v-model="selectedReport" :options="reportTypes" optionLabel="label" class="w-full"
-                            placeholder="Select Report Type" />
+                        <p-dropdown v-model="selectedReport" :options="availableReportTypes" optionLabel="label"
+                            class="w-full" placeholder="Select Report Type" />
                     </div>
 
                     <!-- Agency Type -->
@@ -50,7 +50,6 @@
                 <!-- Additional Filters -->
                 <div class="additional-filters">
                     <div class="filter-section">
-                        <h3 class="section-title">Demographics</h3>
                         <div class="filter-group">
                             <label>Age Group</label>
                             <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
@@ -84,17 +83,19 @@
             <!-- Action Buttons -->
             <div class="filter-actions">
                 <p-button label="Reset" severity="secondary" @click="resetFilters" :disabled="!hasFilters" />
-                <p-button label="Apply Filters" @click="applyFilters" :disabled="!canApplyFilters" />
+                <p-button class="hwss-btn" label="Apply Filters" @click="applyFilters" :disabled="!canApplyFilters" />
             </div>
         </div>
 
         <!-- Reports Display -->
         <div v-if="showReport" class="report-container">
-            <MonitorReport v-if="showMonitorReport" :filteredData="processedData"
+            <MonitorReport v-if="showMonitorReport && processedData.length" :filteredData="processedData"
                 :activeFiltersList="activeFiltersList" />
             <CaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData"
                 :activeFiltersList="activeFiltersList" />
             <SeverityReport v-if="showSeverityReport" :filteredData="processedData"
+                :activeFiltersList="activeFiltersList" />
+            <SchoolEnvReport v-if="showSchoolEnvironmentReport" :filteredData="processedData"
                 :activeFiltersList="activeFiltersList" />
         </div>
     </div>
@@ -106,6 +107,7 @@ import { useToast } from 'primevue/usetoast';
 import MonitorReport from './MonitorReport/MonitorReport.vue';
 import CaseStatusReport from './CaseStatusReport/CaseStatusReport.vue';
 import SeverityReport from './SeverityReport/SeverityReport.vue';
+import SchoolEnvReport from './SchoolEnvReport/SchoolEnvReport.vue';
 
 const props = defineProps({
     serviceData: {
@@ -117,12 +119,24 @@ const props = defineProps({
 
 const toast = useToast();
 
+const userRole = computed(() => {
+    const savedUserRole = JSON.parse(localStorage.getItem('userDetailsStore'));
+    return savedUserRole?.user?.role || '';
+});
+
 // Filter Options
-const reportTypes = [
+const baseReportTypes = [
     { label: 'Monitor Report', value: 'monitor' },
     { label: 'Case Study Report', value: 'case-study' },
     { label: 'Severity Report', value: 'severity' }
 ];
+
+const availableReportTypes = computed(() => {
+    return userRole.value === 'cecd_admin'
+        ? [...baseReportTypes, { label: 'School Environment Report', value: 'school-environment' }]
+        : baseReportTypes;
+});
+
 const agencyTypes = ['GYALSUNG', 'SCHOOL', 'RCSC'];
 const classLevels = ['PP', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 const ageGroupOptions = ['5-10', '11-15', '16-20', '21-25', '26-30', '31-35', '36+'];
@@ -135,7 +149,6 @@ const dzongkhagMapping = {
 };
 
 // State
-const loading = ref(false);
 const selectedReport = ref(null);
 const dateRange = ref(null);
 const filters = ref({
@@ -153,6 +166,7 @@ const processedData = ref(props.serviceData);
 const showMonitorReport = computed(() => selectedReport.value?.value === 'monitor');
 const showCaseStatusReport = computed(() => selectedReport.value?.value === 'case-study');
 const showSeverityReport = computed(() => selectedReport.value?.value === 'severity');
+const showSchoolEnvironmentReport = computed(() => selectedReport.value?.value === 'school-environment');
 
 // Computed properties for filters
 const availableDzongkhags = computed(() =>
@@ -256,7 +270,7 @@ const filterData = (data) => {
             });
             matches = matches && belongsToRegion;
         }
-        
+
         if (filters.value.dzongkhag) {
             matches = matches && agency.present_dzongkhag === filters.value.dzongkhag;
         }
@@ -344,26 +358,26 @@ const removeFilter = (filterId) => {
 // Helper functions
 const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return null;
-    
+
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
-    
+
     // Check for invalid date
     if (isNaN(birthDate.getTime())) return null;
-    
+
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
-    
+
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
         age--;
     }
-    
+
     return age;
 };
 
 const isInAgeRange = (age, range) => {
     if (age === null) return false;
-    
+
     const [min, max] = range.split('-');
     if (max === '+') {
         return age >= parseInt(min);

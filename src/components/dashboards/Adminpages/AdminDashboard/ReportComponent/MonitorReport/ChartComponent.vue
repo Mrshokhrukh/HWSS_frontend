@@ -15,9 +15,7 @@
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle me-2"></i>
                 {{ error }}
-                <button class="btn btn-sm btn-outline-danger ms-3" @click="retryLoadData">
-                    Retry
-                </button>
+                <button class="btn btn-sm btn-outline-danger ms-3" @click="retryLoadData">Retry</button>
             </div>
         </div>
 
@@ -27,7 +25,7 @@
                 <i class="bi bi-info-circle me-2"></i>
                 <div>
                     No data available for the selected filters.
-                    <br>
+                    <br />
                     <small>Try adjusting your filters or selecting a different time period.</small>
                 </div>
             </div>
@@ -35,22 +33,19 @@
 
         <!-- Chart Display -->
         <div v-else class="chart-container">
-            <!-- Enhanced Header -->
             <div class="chart-header mb-3">
                 <div class="title-section">
                     <h4 class="chart-title">{{ getChartTitle }}</h4>
-                    <span class="data-period" v-if="getDataPeriod">
-                        {{ getDataPeriod }}
-                    </span>
+                    <span class="data-period" v-if="getDataPeriod">{{ getDataPeriod }}</span>
                 </div>
 
                 <div class="chart-controls">
                     <!-- Chart Type Selection -->
                     <div class="control-group me-3">
                         <div class="btn-group" role="group">
-                            <button v-for="type in availableChartTypes" :key="type.value" class="btn"
+                            <button v-for="type in chartTypes" :key="type.value" class="btn"
                                 :class="[currentChartType === type.value ? 'btn-primary' : 'btn-outline-primary']"
-                                @click="updateChartType(type.value)" :title="type.description">
+                                @click="updateChartType(type.value)" :title="type.label">
                                 <i :class="type.icon" class="me-1"></i>
                                 {{ type.label }}
                             </button>
@@ -72,8 +67,9 @@
 
             <!-- Chart Area -->
             <div class="chart-area">
-                <apexchart ref="chart" :type="currentChartType" :options="chartOptions" :series="series" height="500"
-                    @markerClick="handleMarkerClick" @dataPointSelection="handleDataPointSelection" />
+                <apexchart ref="chart" :type="currentChartType" :options="computedChartOptions" :series="series"
+                    height="500" @markerClick="handleMarkerClick" @dataPointSelection="handleDataPointSelection" />
+
             </div>
 
             <!-- Enhanced Footer with Stats -->
@@ -121,6 +117,7 @@
                             <div v-if="selectedDataPoint">
                                 <div class="details-content">
                                     <!-- Dynamic content based on selected data point -->
+                                    <p>{{ selectedDataPoint.details }}</p>
                                 </div>
                             </div>
                         </div>
@@ -132,13 +129,18 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import VueApexCharts from 'vue3-apexcharts';
+import { ref, computed, watch, onMounted } from 'vue';
 
 const props = defineProps({
-    filteredData: {
-        type: Array,
-        required: true
+    chartData: {
+        type: Object,
+        required: true,
+        default: () => ({})
+    },
+    chartOptions: {
+        type: Object,
+        required: true,
+        default: () => ({})
     },
     activeFiltersList: {
         type: Array,
@@ -147,7 +149,6 @@ const props = defineProps({
     }
 });
 
-// Enhanced Component State
 const chart = ref(null);
 const loading = ref(false);
 const error = ref(null);
@@ -156,25 +157,22 @@ const showDataLabels = ref(true);
 const showLegend = ref(true);
 const selectedDataPoint = ref(null);
 
-// Chart Types Configuration
 const chartTypes = [
     { value: 'bar', label: 'Bar', icon: 'bi bi-bar-chart' },
     { value: 'line', label: 'Line', icon: 'bi bi-graph-up' },
     { value: 'area', label: 'Area', icon: 'bi bi-area-chart' }
 ];
 
-// Enhanced Computed Properties
 const isDataAvailable = computed(() => {
-    return props.filteredData && props.filteredData.length > 0;
+    return props.chartData && Object.keys(props.chartData).length > 0;
 });
 
 const getChartTitle = computed(() => {
     const baseTitle = 'Monitoring Report Analysis';
-    const filters = props.activeFiltersList
-        .map(filter => `${filter.label}`)
-        .join(' | ');
+    const filters = props.activeFiltersList.map(filter => `${filter.label}`).join(' | ');
     return filters ? `${baseTitle} (${filters})` : baseTitle;
 });
+
 
 const processedData = computed(() => {
     if (!props.filteredData) return {};
@@ -213,7 +211,6 @@ const processedData = computed(() => {
         return result;
     } catch (err) {
         console.error('Error processing data:', err);
-        error.value = 'Error processing chart data';
         return {};
     }
 });
@@ -239,148 +236,105 @@ const series = computed(() => {
     }
 });
 
-const totalCount = computed(() => {
-    return props.filteredData?.length || 0;
-});
+const totalCount = computed(() => props.chartData?.length || 0);
 
 const averageValue = computed(() => {
     if (!series.value.length) return 0;
-    const total = series.value.reduce((sum, series) =>
-        sum + series.data.reduce((a, b) => a + b, 0), 0);
+    const total = series.value.reduce((sum, series) => sum + series.data.reduce((a, b) => a + b, 0), 0);
     return Math.round(total / series.value.length);
 });
 
-const chartOptions = computed(() => {
-    return {
-        chart: {
-            type: currentChartType.value,
-            stacked: true,
-            toolbar: {
-                show: true,
-                tools: {
-                    download: false,
-                    selection: true,
-                    zoom: true,
-                    zoomin: true,
-                    zoomout: true,
-                    pan: true,
-                }
-            },
-            animations: {
+const computedChartOptions = computed(() => ({
+    chart: {
+        type: currentChartType.value,
+        stacked: true,
+        toolbar: {
+            show: true,
+            tools: {
+                download: false,
+                selection: true,
+                zoom: true,
+                zoomin: true,
+                zoomout: true,
+                pan: true,
+            }
+        },
+        animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 800,
+            animateGradually: {
                 enabled: true,
-                easing: 'easeinout',
-                speed: 800,
-                animateGradually: {
-                    enabled: true,
-                    delay: 150
-                },
-                dynamicAnimation: {
-                    enabled: true,
-                    speed: 350
-                }
+                delay: 150
             },
-            events: {
-                dataPointMouseEnter: function (event, chartContext, config) {
-                    document.body.style.cursor = 'pointer';
-                },
-                dataPointMouseLeave: function (event, chartContext, config) {
-                    document.body.style.cursor = 'default';
-                }
+            dynamicAnimation: {
+                enabled: true,
+                speed: 350
             }
         },
-        plotOptions: {
-            bar: {
-                horizontal: false,
-                columnWidth: '55%',
-                borderRadius: 4,
-                dataLabels: {
-                    position: 'top',
-                    maxItems: 100,
-                    hideOverflowingLabels: true
-                }
-            }
-        },
-        dataLabels: {
-            enabled: showDataLabels.value,
-            formatter: function (val) {
-                return val ? val.toLocaleString() : '0';
+        events: {
+            dataPointMouseEnter: () => {
+                document.body.style.cursor = 'pointer';
             },
+            dataPointMouseLeave: () => {
+                document.body.style.cursor = 'default';
+            }
+        }
+    },
+    plotOptions: {
+        bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            borderRadius: 4,
+            dataLabels: {
+                position: 'top',
+                maxItems: 100,
+                hideOverflowingLabels: true
+            }
+        }
+    },
+    dataLabels: {
+        enabled: showDataLabels.value,
+        formatter: val => (val ? val.toLocaleString() : '0'),
+        style: {
+            fontSize: '12px',
+            fontWeight: '500',
+            colors: ['#333']
+        }
+    },
+    xaxis: {
+        categories: ['Male', 'Female'],
+        labels: {
+            rotate: -45,
             style: {
-                fontSize: '12px',
-                fontWeight: '500',
-                colors: ['#333']
+                fontSize: '12px'
             }
+        }
+    },
+    yaxis: {
+        labels: {
+            formatter: val => val.toLocaleString()
         },
-        xaxis: {
-            categories: ['Male', 'Female'],
-            labels: {
-                rotate: -45,
-                style: {
-                    fontSize: '12px',
-                    fontFamily: 'inherit'
-                }
-            },
-            title: {
-                text: 'Gender Distribution',
-                style: {
-                    fontSize: '13px',
-                    fontWeight: 600
-                }
-            }
-        },
-        yaxis: {
-            title: {
-                text: 'Number of Individuals',
-                style: {
-                    fontSize: '13px',
-                    fontWeight: 600
-                }
-            },
-            labels: {
-                formatter: function (val) {
-                    return val.toLocaleString();
-                }
-            }
-        },
-        colors: ['#2B656F', '#4B93A2', '#6BB5C7', '#92D8E6'],
-        legend: {
-            show: showLegend.value,
-            position: 'top',
-            horizontalAlign: 'center',
-            fontSize: '13px',
-            markers: {
-                width: 12,
-                height: 12,
-                radius: 6
-            }
-        },
-        tooltip: {
-            shared: true,
-            intersect: false,
-            y: {
-                formatter: function (val) {
-                    return val.toLocaleString();
-                }
-            }
-        },
-        responsive: [{
-            breakpoint: 768,
-            options: {
-                plotOptions: {
-                    bar: {
-                        columnWidth: '80%'
-                    }
-                },
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }]
-    };
-});
+        min: 0,
+        max: Math.max(...(processedData.value.map(d => d.value) || [0])),
+        title: {
+            text: 'Number of Individuals'
+        }
+    },
+    tooltip: {
+        theme: 'light',
+        x: {
+            show: true
+        }
+    },
+    legend: {
+        position: 'bottom',
+        horizontalAlign: 'center',
+        show: showLegend.value
+    }
+}));
 
-// Methods
-const updateChartType = (type) => {
+const updateChartType = type => {
     currentChartType.value = type;
 };
 
@@ -450,7 +404,7 @@ watch(() => props.filteredData, async (newData) => {
         try {
             await new Promise(resolve => setTimeout(resolve, 500));
             if (chart.value) {
-                chart.value.updateOptions(chartOptions.value);
+                chart.value.updateOptions(computedChartOptions.value);
                 chart.value.updateSeries(series.value);
             }
         } catch (err) {
@@ -472,9 +426,6 @@ onMounted(() => {
     }
 });
 
-onUnmounted(() => {
-    // Cleanup if needed
-});
 </script>
 
 <style>

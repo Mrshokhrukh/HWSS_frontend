@@ -293,7 +293,7 @@
                                 </div>
 
                                 <div class="info-section"
-                                    :class="{ 'greyout': selectedUser.referred !== 'Not Referred' }">
+                                    :class="{ 'greyout': selectedUser.referred === 'Referred' }">
                                     <h5 class="section-title">Referral Status</h5>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -320,7 +320,7 @@
                                             @click="referCase" />
                                     </div>
                                 </div>
-                                <div v-if="selectedUser.referred !== 'Not Referred'" class="alert alert-warning mt-3">
+                                <div v-if="selectedUser.referred === 'Referred'" class="alert alert-warning mt-3">
                                     User Already Referred
                                 </div>
                             </div>
@@ -562,22 +562,23 @@ const referCase = async () => {
         console.error('Selected user is missing.');
         return;
     }
+    
     // Get self id from localstorage
     const counselor = JSON.parse(localStorage.getItem('userDetailsStore'));
     const counselorId = counselor.user.id;
     const selectedUserData = selectedUser.value;
     const referredToName = selectedUserData.official;
 
-    // Get form data
+    // Get form data - Fix: Use the correct user ID from the nested user object
     const formData = {
         referData: {
             referred_by: counselorId,
             referred_to_name: referredToName,
-            user: selectedUserData.id,
+            // Fix: Use the ServiceAndTreatment record's ID instead of user's ID
+            user: selectedUserData.user.id  // Changed from selectedUserData.id to selectedUserData.user.id
         },
     };
 
-    // console.log(formData);
     handleModalClose();
     Swal.fire({
         title: 'Confirm Save Changes!',
@@ -608,10 +609,12 @@ const referCase = async () => {
                     }
                 })
                 .catch(error => {
+                    // Improve error handling to show the specific error message from backend
+                    const errorMessage = error.response?.data?.error || 'Something went wrong!';
                     Swal.fire({
                         icon: 'error',
                         title: 'Oops...',
-                        text: 'Something went wrong!',
+                        text: errorMessage,
                         footer: 'Please try again later.',
                         confirmButtonText: 'OK'
                     })

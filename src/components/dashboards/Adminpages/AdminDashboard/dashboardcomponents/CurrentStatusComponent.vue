@@ -117,7 +117,7 @@ onMounted(() => {
         isLoading.value = false;
     }, 500);
 
-    console.log('jedha', props.serviceData)
+    console.log(props.serviceData)
 });
 
 </script>

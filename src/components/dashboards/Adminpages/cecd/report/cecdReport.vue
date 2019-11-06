@@ -56,7 +56,7 @@ import { ref, computed, inject, watch } from 'vue';
 import cecdMonitorReport from './cecdMonitorReport/cecdMonitorReport.vue';
 import cecdCaseStatusReport from './cecdCasestatusReport/cecdCaseStatusReport.vue';
 import cecdSeverityReport from './cecdSeverityReport/cecdSeverityReport.vue';
-import cecdSchoolenvReport from './cecdSchoolenvReport/cecdSchoolenvReport.vue';
+// import cecdSchoolenvReport from './cecdSchoolenvReport/cecdSchoolenvReport.vue';
 
 // Inject service and treatment data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');

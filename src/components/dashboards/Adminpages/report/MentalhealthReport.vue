@@ -1,16 +1,18 @@
 <template>
   <div class="filter-configurator">
     <div class="config-card">
+      <!-- Header with your gradient -->
       <div class="config-header">
         <h2 class="header-title">Data Configuration</h2>
         <div class="quick-actions">
-          <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text" @click="resetFilters"
+          <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text p-button-white" @click="resetFilters"
             :disabled="!hasFilters" />
         </div>
       </div>
 
       <div class="filter-content">
-        <div class="main-filters">
+        <!-- Primary Filters -->
+        <div class="filters-section">
           <div class="filter-group">
             <label>Report Type</label>
             <p-dropdown v-model="selectedReport" :options="reportTypes" optionLabel="label" class="w-full"
@@ -31,9 +33,9 @@
             </div>
           </template>
 
-          <div class="filter-section">
+          <div class="location-section">
             <h3 class="section-title">Location</h3>
-            <div class="filter-group-row">
+            <div class="location-inputs">
               <p-dropdown v-model="filters.region" :options="regions" class="w-full" placeholder="Region"
                 @change="handleRegionChange" />
               <p-dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" class="w-full"
@@ -42,29 +44,28 @@
           </div>
         </div>
 
-        <div class="additional-filters">
-          <div class="filter-section">
-            <h3 class="section-title">Demographics</h3>
-            <div class="filter-group">
-              <label>Age Group</label>
-              <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
-                placeholder="Select Age Groups" display="chip" />
-            </div>
-
-            <div class="filter-group">
-              <label>Gender</label>
-              <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full"
-                placeholder="Select Gender" display="chip" />
-            </div>
+        <!-- Secondary Filters -->
+        <div class="filters-section">
+          <div class="filter-group">
+            <label>Age Group</label>
+            <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
+              placeholder="Select Age Groups" display="chip" />
           </div>
 
-          <div class="filter-section">
+          <div class="filter-group">
+            <label>Gender</label>
+            <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full" placeholder="Select Gender"
+              display="chip" />
+          </div>
+
+          <div class="date-range-section">
             <h3 class="section-title">Date Range</h3>
             <p-calendar v-model="dateRange" selectionMode="range" class="w-full" placeholder="Select Date Range" />
           </div>
         </div>
       </div>
 
+      <!-- Active Filters -->
       <div v-if="hasFilters" class="active-filters">
         <div class="filter-chips">
           <p-chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label" removable
@@ -72,12 +73,14 @@
         </div>
       </div>
 
+      <!-- Actions -->
       <div class="filter-actions">
         <p-button label="Reset" severity="secondary" @click="resetFilters" :disabled="!hasFilters" />
         <p-button label="Apply Filters" @click="applyFilters" :disabled="!canApplyFilters" />
       </div>
     </div>
 
+    <!-- Reports Section -->
     <div v-if="showReport" class="report-container">
       <MHMonitorReport v-if="showMonitorReport" :filteredData="processedData" :activeFiltersList="activeFiltersList" />
       <MHCaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData"
@@ -168,12 +171,22 @@ const fetchData = async () => {
   }
 };
 
+let isApplyingFilters = false;
+
 const applyFilters = async () => {
-  showReport.value = false; // Reset report display before fetching
-  await fetchData(); // Get updated data
-  showReport.value = true; // Show report after fetching
+  isApplyingFilters = true;
+  showReport.value = false;
+  await fetchData();
+  showReport.value = true;
+  isApplyingFilters = false;
   toast.add({ severity: 'success', summary: 'Success', detail: 'Filters applied successfully', life: 3000 });
 };
+
+watch([selectedReport, filters, dateRange], () => {
+  if (!isApplyingFilters) {
+    showReport.value = false;
+  }
+}, { deep: true });
 
 const resetFilters = () => {
   selectedReport.value = null;
@@ -202,24 +215,27 @@ const removeFilter = (filterId) => {
 };
 
 // Watchers
-watch([selectedReport, filters, dateRange], () => { showReport.value = false; }, { deep: true });
+// watch([selectedReport, filters, dateRange], () => { showReport.value = false; }, { deep: true });
 </script>
 
 <style scoped>
 .filter-configurator {
   padding: 1.5rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
 }
 
 .config-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
   overflow: hidden;
 }
 
 .config-header {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-  padding: 1.25rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -234,40 +250,53 @@ watch([selectedReport, filters, dateRange], () => { showReport.value = false; },
 
 .filter-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   padding: 1.5rem;
 }
 
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 .filter-group {
-  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .filter-group label {
-  display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #4B5563;
-  margin-bottom: 0.5rem;
+  color: #475569;
 }
 
 .section-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #374151;
-  margin-bottom: 1rem;
+  color: #2B656F;
+  margin-bottom: 0.75rem;
 }
 
-.filter-group-row {
+.location-section,
+.date-range-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.location-inputs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
 }
 
 .active-filters {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
   padding: 1rem 1.5rem;
-  background: #F9FAFB;
-  border-top: 1px solid #E5E7EB;
 }
 
 .filter-chips {
@@ -281,7 +310,8 @@ watch([selectedReport, filters, dateRange], () => { showReport.value = false; },
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 /* PrimeVue Component Overrides */
@@ -294,24 +324,47 @@ watch([selectedReport, filters, dateRange], () => { showReport.value = false; },
 :deep(.p-dropdown-item),
 :deep(.p-multiselect-item) {
   padding: 0.75rem 1rem;
+  color: #475569;
 }
 
 :deep(.p-chip) {
-  background: #EEF2FF;
-  color: #4F46E5;
+  background: #e0f2f1;
+  color: #2B656F;
+  border: 1px solid #2B656F;
 }
 
-/* Loading State */
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
+:deep(.p-chip .p-chip-remove-icon) {
+  color: #2B656F;
+}
+
+:deep(.p-button) {
+  transition: all 0.2s ease;
+}
+
+:deep(.p-button-white) {
+  color: white !important;
+}
+
+:deep(.p-button-white:hover) {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-content {
+    grid-template-columns: 1fr;
+  }
+
+  .location-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column-reverse;
+  }
+
+  .filter-actions .p-button {
+    width: 100%;
+  }
 }
 </style>
