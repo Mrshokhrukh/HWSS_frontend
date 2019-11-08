@@ -15,18 +15,18 @@
                 <h4 class="dashboard-title">Service and Treatment List</h4>
                 <Button label="Refresh List" @click="getServiceList" class="refresh-btn rounded" icon="pi pi-refresh" />
             </div>
-            <DataTable :value="filteredRows" :paginator="true" :rows="10" :paginatorTemplate="paginatorTemplate"
+            <DataTable :value="processedRows" :paginator="true" :rows="10" :paginatorTemplate="paginatorTemplate"
                 :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
                 columnResizeMode="fit" class="custom-datatable">
-                <Column field="date" header="Date" sortable :body="formatDate"></Column>
-                <Column field="user.first_name" header="Name" sortable :body="formatFullName"></Column>
-                <Column field="user.date_of_birth" header="Age" sortable :body="calculateAge"></Column>
-                <Column field="user.gender" header="Sex" sortable></Column>
-                <Column field="assessment_status" header="Assessment Status" sortable :body="formatEmpty"></Column>
-                <Column field="case_status" header="Case Status" sortable :body="formatEmpty"></Column>
-                <Column field="counseling" header="Counseling" sortable :body="formatEmpty"></Column>
-                <Column field="follow_up" header="Follow Up" sortable :body="formatEmpty"></Column>
-                <Column field="comments" header="Comments" sortable :body="formatEmpty"></Column>
+                <Column field="date" header="Date" sortable :body="formatDate" />
+                <Column field="full_name" header="Name" sortable :body="fullNameTemplate" />
+                <Column field="age" header="Age" sortable :body="(slotProps) => calculateAge(slotProps.data.user)" />
+                <Column field="user.gender" header="Sex" sortable />
+                <Column field="assessment_status" header="Assessment Status" sortable :body="formatEmpty" />
+                <Column field="case_status" header="Case Status" sortable :body="formatEmpty" />
+                <Column field="counseling" header="Counseling" sortable :body="formatEmpty" />
+                <Column field="follow_up" header="Follow Up" sortable :body="formatEmpty" />
+                <Column field="comments" header="Comments" sortable :body="formatEmpty" />
                 <Column header="Actions">
                     <template #body="slotProps">
                         <Button label="View Details" class="view-details-btn rounded"
@@ -50,7 +50,7 @@
                             <div v-if="selectedUser" class="profile-card">
                                 <h4 class="profile-name">{{ selectedUser?.user?.first_name }} {{
                                     selectedUser?.user?.middle_name
-                                }} {{
+                                    }} {{
                                         selectedUser?.user?.last_name }}</h4>
                                 <ul class="profile-details">
                                     <li><strong>Age:</strong> {{ calculateAge(selectedUser?.user?.date_of_birth) }}</li>
@@ -292,8 +292,7 @@
                                     </div>
                                 </div>
 
-                                <div class="info-section"
-                                    :class="{ 'greyout': selectedUser.referred === 'Referred' }">
+                                <div class="info-section" :class="{ 'greyout': selectedUser.referred === 'Referred' }">
                                     <h5 class="section-title">Referral Status</h5>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -336,7 +335,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect } from 'vue';
+import { ref, computed, onMounted, watchEffect, watch } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import Swal from 'sweetalert2';
@@ -347,15 +346,18 @@ const selectedUser = ref(null);
 const officialOptions = ref([]);
 const filteredOfficials = ref([]);
 const selfRole = ref('');
-const isLoading = ref(true);
+const isLoading = ref(false);
 const hasError = ref(false);
 
 const rowData = ref([]);
 const searchQuery = ref('');
 const selectedFields = ref([
     'date',
-    'user.full_name',
-    'user.age',
+    'user.first_name',
+    'user.middle_name',
+    'user.last_name',
+    'full_name',
+    'age',
     'user.gender',
     'assessment_status',
     'case_status',
@@ -363,6 +365,41 @@ const selectedFields = ref([
     'follow_up',
     'comments',
 ]);
+
+
+const fullNames = ref(new Map());
+
+const formatFullName = async (record) => {
+    try {
+        if (!record || !record.user) {
+            console.error('Invalid record structure:', record);
+            return '';
+        }
+
+        const user = record.user;
+        const firstName = user.first_name || '';
+        const middleName = user.middle_name ? ` ${user.middle_name}` : '';
+        const lastName = user.last_name ? ` ${user.last_name}` : '';
+
+        const fullName = `${firstName}${middleName}${lastName}`.trim();
+        return fullName || '';
+    } catch (error) {
+        console.error('Error in formatFullName:', error);
+        return '';
+    }
+};
+
+// Replace the async fullNameTemplate with this synchronous version
+const fullNameTemplate = (rowData) => {
+    if (!rowData || !rowData.user) return '';
+
+    const user = rowData.user;
+    const firstName = user.first_name || '';
+    const middleName = user.middle_name ? ` ${user.middle_name}` : '';
+    const lastName = user.last_name ? ` ${user.last_name}` : '';
+
+    return `${firstName}${middleName}${lastName}`.trim();
+};
 
 const searchOfficials = (event) => {
     const query = event.query.toLowerCase();
@@ -396,7 +433,7 @@ const getSeverityClass = (severity) => {
 
 const filterSubstances = (assistData) => {
     if (!assistData) return {};
-    
+
     const substances = {};
     Object.keys(assistData).forEach(key => {
         if (key.endsWith('_measurement')) {
@@ -443,6 +480,16 @@ const filteredRows = computed(() => {
             return fieldValue?.toString().toLowerCase().includes(searchQuery.value.toLowerCase());
         })
     );
+});
+
+const processedRows = computed(() => {
+    if (!filteredRows.value) return [];
+
+    return filteredRows.value.map(row => ({
+        ...row,
+        full_name: fullNameTemplate(row),
+        age: calculateAge(row.user?.date_of_birth)
+    }));
 });
 
 const getServiceList = async () => {
@@ -494,7 +541,7 @@ const formatDate = (rowData) => {
 const calculateAge = (dob) => {
     const birthDate = new Date(dob);
     const ageDifMs = Date.now() - birthDate.getTime();
-    const ageDate = new Date(ageDifMs); // miliseconds from epoch
+    const ageDate = new Date(ageDifMs);
     return Math.abs(ageDate.getUTCFullYear() - 1970);
 };
 
@@ -562,7 +609,7 @@ const referCase = async () => {
         console.error('Selected user is missing.');
         return;
     }
-    
+
     // Get self id from localstorage
     const counselor = JSON.parse(localStorage.getItem('userDetailsStore'));
     const counselorId = counselor.user.id;
@@ -630,6 +677,18 @@ onMounted(() => {
     getServiceList();
 });
 
+
+watch(() => filteredRows.value, async (newRows) => {
+    if (!newRows) return;
+
+    // Update all full names
+    for (const row of newRows) {
+        if (!fullNames.value.has(row.id)) {
+            const formattedName = await formatFullName(row);
+            fullNames.value.set(row.id, formattedName);
+        }
+    }
+}, { immediate: true, deep: true });
 </script>
 
 

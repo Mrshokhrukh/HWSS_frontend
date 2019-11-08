@@ -45,7 +45,6 @@ declare module 'vue' {
     CecdMonitorReport: typeof import('./src/components/dashboards/Adminpages/cecd/report/cecdMonitorReport/cecdMonitorReport.vue')['default']
     CecdPersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/cecd/cecdProfile/cecdPersonalDetailsCard.vue')['default']
     CecdReport: typeof import('./src/components/dashboards/Adminpages/cecd/report/cecdReport.vue')['default']
-    CecdSchoolenvReport: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/ReportComponent/SchoolEnvReport/SchoolEnvReport.vue')['default']
     CecdScreeningData: typeof import('./src/components/dashboards/Adminpages/cecd/dashboardcard/cecdScreeningData.vue')['default']
     CecdSetting: typeof import('./src/components/dashboards/Adminpages/cecd/cecdSetting.vue')['default']
     CecdSeverityGraph: typeof import('./src/components/dashboards/Adminpages/cecd/report/cecdSeverityReport/cecdSeverityGraph.vue')['default']
