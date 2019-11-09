@@ -52,13 +52,14 @@ const users = ref([]);
 const tableSearch = ref('');
 const loadingPatients = ref(false);
 
-
 const columns = ref([
   { header: 'Date', field: 'date', frozen: true },
   { header: 'Name', field: 'name', frozen: true },
   { header: 'Age', field: 'age' },
   { header: 'Sex', field: 'sex' },
   { header: 'Past Diagnosis', field: 'pastDiagnosis' },
+  { header: 'Suicidal Measurement', field: 'suicidal_measurement' },
+  { header: 'suicidal_score', field: 'suicidal_score' },
   { header: 'PHQ Severity', field: 'phqSeverity' },
   { header: 'GAD Severity', field: 'gadSeverity' },
   { header: 'ACE Severity', field: 'aceSeverity' },
@@ -83,7 +84,7 @@ const onToggle = (val) => {
 
 const isRiskColumn = (field) => {
   return [
-    'phqSeverity', 'gadSeverity', 'aceSeverity', 'tobaccoRisk', 'alcoholRisk',
+    'suicidal_measurement','phqSeverity', 'gadSeverity', 'aceSeverity', 'tobaccoRisk', 'alcoholRisk',
     'cannabisRisk', 'cocaineRisk', 'amphetamineRisk', 'inhalantsRisk',
     'sedativeRisk', 'hallucinogensRisk', 'opioidsRisk', 'othersRisk',
     'nonMedicalInjectionUse'
@@ -202,6 +203,8 @@ onMounted(async () => {
             sex: user_details.sex,
             userAgencyName: user_details.PsAddDzongkhag,
             pastDiagnosis: submissionData.diagnosis || 'none',
+            suicidal_measurement: measurementData.suicidal_measurement || 'none',
+            suicidal_score: measurementData.suicidal_score || 'none',
             phqSeverity: measurementData.phq_measurement || 'none',
             gadSeverity: measurementData.gad_measurement || 'none',
             aceSeverity: measurementData.ace_measurement || 'none',
