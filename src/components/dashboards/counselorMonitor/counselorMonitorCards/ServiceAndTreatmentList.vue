@@ -50,7 +50,7 @@
                             <div v-if="selectedUser" class="profile-card">
                                 <h4 class="profile-name">{{ selectedUser?.user?.first_name }} {{
                                     selectedUser?.user?.middle_name
-                                    }} {{
+                                }} {{
                                         selectedUser?.user?.last_name }}</h4>
                                 <ul class="profile-details">
                                     <li><strong>Age:</strong> {{ calculateAge(selectedUser?.user?.date_of_birth) }}</li>
@@ -163,7 +163,7 @@
                                         <h3 class="severity-section-title">SUD Severity</h3>
                                         <div class="severity-pills">
                                             <template v-if="selectedUser.screening_data.assist_data">
-                                                <div v-for="(value, key) in filterSubstances(selectedUser.screening_data.assist_data)"
+                                                <div v-for="(value, key) in filterNonInjectionSubstances(selectedUser.screening_data.assist_data)"
                                                     :key="key" class="severity-pill"
                                                     :class="getRiskClass(value.measurement)">
                                                     {{ formatSubstanceName(key) }}: {{ value.measurement }}
@@ -171,9 +171,23 @@
                                             </template>
                                         </div>
                                     </div>
+
+                                    <div class="severity-section">
+                                        <h3 class="severity-section-title">Drug Intake by Injection</h3>
+                                        <div class="severity-pills">
+                                            <template
+                                                v-if="selectedUser.screening_data.assist_data?.injection_measurement">
+                                                <div class="severity-pill"
+                                                    :class="getRiskClass(selectedUser.screening_data.assist_data.injection_measurement)">
+                                                    Injection: {{
+                                                        selectedUser.screening_data.assist_data.injection_measurement }}
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div class="card">
+                                <div class="card" :class="{ 'disabled-section': selfRole === 'trained_professional' }">
                                     <div class="card-body">
                                         <!-- Header -->
                                         <h5 class="card-title mb-4">Services and Treatment</h5>
@@ -369,6 +383,15 @@ const selectedFields = ref([
 
 const fullNames = ref(new Map());
 
+const getUserRole = () => {
+    try {
+        const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+        selfRole.value = userDetails?.user?.role || '';
+    } catch (error) {
+        console.error('Error getting user role:', error);
+    }
+}
+
 const formatFullName = async (record) => {
     try {
         if (!record || !record.user) {
@@ -447,6 +470,22 @@ const filterSubstances = (assistData) => {
     return substances;
 };
 
+const filterNonInjectionSubstances = (assistData) => {
+    if (!assistData) return {};
+
+    const substances = {};
+    Object.keys(assistData).forEach(key => {
+        // Only include non-injection measurements
+        if (key.endsWith('_measurement') && !key.includes('injection')) {
+            const substanceName = key.replace('_measurement', '');
+            substances[substanceName] = {
+                measurement: assistData[key],
+                flag: assistData[`${substanceName}_flag`]
+            };
+        }
+    });
+    return substances;
+};
 const formatSubstanceName = (name) => {
     return name
         .split('_')
@@ -672,6 +711,7 @@ const referCase = async () => {
 };
 
 onMounted(() => {
+    getUserRole();
     const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
     myAgency.value = userDetails?.agency?.agencyName || '';
     getServiceList();
@@ -982,5 +1022,30 @@ watch(() => filteredRows.value, async (newRows) => {
 .error-message i {
     font-size: 2rem;
     margin-bottom: 0.5rem;
+}
+
+.disabled-section {
+    opacity: 0.6;
+    pointer-events: none;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.disabled-section::after {
+    content: "Access restricted for trained professionals";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    display: none;
+}
+
+.disabled-section:hover::after {
+    display: block;
 }
 </style>
