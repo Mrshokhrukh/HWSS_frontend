@@ -19,7 +19,7 @@
                 :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
                 columnResizeMode="fit" class="custom-datatable">
                 <Column field="date" header="Date" sortable :body="formatDate"></Column>
-                <Column field="user.first_name" header="Name" sortable :body="formatFullName"></Column>
+                <Column field="user.first_name + user.middle_name + user.last_name" header="Full Name" sortable :body="formatFullName"></Column>
                 <Column field="user.date_of_birth" header="Age" sortable :body="calculateAge"></Column>
                 <Column field="user.gender" header="Sex" sortable></Column>
                 <Column field="assessment_status" header="Assessment Status" sortable :body="formatEmpty"></Column>
