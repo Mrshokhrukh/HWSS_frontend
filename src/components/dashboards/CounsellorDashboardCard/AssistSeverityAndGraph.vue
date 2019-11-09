@@ -1,124 +1,178 @@
 <template>
-  <div v-if="isDataAvailable" class="dashboard-container">
-    <div class="row g-4">
-      <div class="col-lg-4">
-        <div class="card h-100 shadow-sm">
-          <div class="card-header bg-gradient-dark">
-            <h4 class="text-center mb-0 text-white">Substance Use</h4>
-          </div>
-          <div class="card-body d-flex flex-column">
-            <button class="btn btn-gradient-light mb-3 flex-fill" @click="handleLifetimeUsersClick">
-              <h2 class="mb-0">{{ totalLifetimeUsers }}</h2>
-              <p class="mb-0">Lifetime Users</p>
-            </button>
+  <div class="assist-severity-container">
+    <div v-if="!isLoading && hasData" class="dashboard-container">
+      <div class="row g-4">
+        <!-- Lifetime Users -->
+        <div class="col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-gradient-dark">
+              <h4 class="text-center mb-0 text-white">Substance Use</h4>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <button class="btn btn-gradient-light mb-3 flex-fill" @click="handleLifetimeUsersClick">
+                <h2 class="mb-0">{{ totalLifetimeUsers }}</h2>
+                <p class="mb-0">Lifetime Users</p>
+              </button>
 
-            <button class="btn btn-gradient-light mb-3 flex-fill" @click="handleActiveUsersClick">
-              <h2 class="mb-0">{{ totalActiveUsers }}</h2>
-              <p class="mb-0">Active Users</p>
-            </button>
+              <button class="btn btn-gradient-light mb-3 flex-fill" @click="handleActiveUsersClick">
+                <h2 class="mb-0">{{ totalActiveUsers }}</h2>
+                <p class="mb-0">Active Users</p>
+              </button>
 
-            <button class="btn btn-gradient-light flex-fill" @click="handleSubstanceRiskClick">
-              <h2 class="mb-0">{{ totalRiskUsers }}</h2>
-              <p class="mb-0">Substance Risk Levels</p>
-            </button>
+              <button class="btn btn-gradient-light flex-fill" @click="handleSubstanceRiskClick">
+                <h2 class="mb-0">{{ totalRiskUsers }}</h2>
+                <p class="mb-0">Substance Risk Levels</p>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="col-lg-8">
-        <div class="card h-100 shadow-sm">
-          <div class="card-header bg-gradient-dark">
-            <h4 class="text-center mb-0 text-white">{{ chartTitle }}</h4>
-          </div>
-          <div class="card-body d-flex justify-content-center align-items-center chart-container">
-            <canvas ref="chartCanvas"></canvas>
+        <!-- Chart Section -->
+        <div class="col-lg-8">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-gradient-dark">
+              <h4 class="text-center mb-0 text-white">{{ chartTitle }}</h4>
+            </div>
+            <div class="card-body d-flex justify-content-center align-items-center chart-container">
+              <canvas ref="chartCanvas"></canvas>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div v-else class="loading-container">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
+
+    <div v-else-if="isLoading" class="loading-container">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3">Loading data...</p>
     </div>
-    <p class="mt-3">Loading data...</p>
+
+    <div v-else class="no-data-container">
+      <p>No substance use data available.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, computed, watch, inject } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import Chart from 'chart.js/auto';
 
-const filteredData = inject('filteredData', []);
+const props = defineProps({
+  filteredData: {
+    type: Array,
+    required: true,
+    default: () => []
+  },
+  isLoading: {
+    type: Boolean,
+    default: false
+  }
+});
 
+// Chart references and configuration
 const chartCanvas = ref(null);
 let myChart = null;
 const chartTitle = ref('Substance Use Overview');
 
+// Check if we have valid data
+const hasData = computed(() => {
+  return Array.isArray(props.filteredData) &&
+    props.filteredData.length > 0 &&
+    props.filteredData.some(item => hasValidAssistData(item));
+});
+
+// Utility function to check for valid assist data
+const hasValidAssistData = (item) => {
+  return item?.assistData &&
+    Array.isArray(item.assistData) &&
+    item.assistData.length > 0;
+};
+
+// Colors for chart datasets
 const CHART_COLORS = {
   male: 'rgba(43, 101, 111, 0.8)',
   female: 'rgba(29, 72, 81, 0.8)',
   lowRisk: 'rgba(120, 224, 143, 0.8)',
   moderateRisk: 'rgba(255, 190, 118, 0.8)',
-  highRisk: 'rgba(235, 77, 75, 0.8)'
+  highRisk: 'rgba(235, 77, 75, 0.8)',
 };
 
-const isDataAvailable = computed(() => Array.isArray(filteredData.value) && filteredData.value.length > 0);
-
+// Total users calculations with null safety
 const totalLifetimeUsers = computed(() => {
-  if (!isDataAvailable.value) return 0;
-  return filteredData.value.filter(user => user.sudData?.lifetime?.substances_used?.length > 0).length;
+  if (!hasData.value) return 0;
+  return props.filteredData.filter(user =>
+    hasValidAssistData(user) &&
+    user.assistData.some(sub => sub?.risk_flag && sub.risk_flag !== 'none')
+  ).length;
 });
 
 const totalActiveUsers = computed(() => {
-  if (!isDataAvailable.value) return 0;
-  return filteredData.value.filter(user => user.sudData?.active?.substances_used?.length > 0).length;
+  if (!hasData.value) return 0;
+  return props.filteredData.filter(user =>
+    hasValidAssistData(user) &&
+    user.assistData.some(sub => sub?.risk_flag === 'severe')
+  ).length;
 });
 
 const totalRiskUsers = computed(() => {
-  if (!isDataAvailable.value) return 0;
-  return Object.values(substanceRiskLevels.value).reduce((total, risks) => 
-    total + risks['low risk'] + risks['moderate risk'] + risks['high risk'], 0);
+  if (!hasData.value) return 0;
+  return props.filteredData.reduce((total, user) => {
+    if (!hasValidAssistData(user)) return total;
+    return total + user.assistData.filter(sub => sub?.risk_flag && sub.risk_flag !== 'none').length;
+  }, 0);
 });
 
+// Substance Usage with null safety
 const substanceUsage = computed(() => {
-  if (!isDataAvailable.value) return { lifetime: {}, active: {} };
+  if (!hasData.value) return { lifetime: { male: {}, female: {} }, active: { male: {}, female: {} } };
+
   const usage = { lifetime: { male: {}, female: {} }, active: { male: {}, female: {} } };
 
-  filteredData.value.forEach(user => {
-    const lifetimeSubstances = user.sudData?.lifetime?.substances_used || [];
-    const activeSubstances = user.sudData?.active?.substances_used || [];
-    const gender = (user.sudData?.lifetime?.sex || user.sudData?.active?.sex || user.userDetails?.gender || 'Unknown').toLowerCase();
+  props.filteredData.forEach(user => {
+    if (!hasValidAssistData(user)) return;
 
-    if (gender === 'male' || gender === 'female') {
-      lifetimeSubstances.forEach(substance => {
-        usage.lifetime[gender][substance] = (usage.lifetime[gender][substance] || 0) + 1;
-      });
-      activeSubstances.forEach(substance => {
-        usage.active[gender][substance] = (usage.active[gender][substance] || 0) + 1;
-      });
-    }
+    const gender = user.user?.gender?.toLowerCase() || 'unknown';
+    if (gender !== 'male' && gender !== 'female') return;
+
+    user.assistData.forEach(substance => {
+      if (!substance?.substance__name || !substance?.risk_flag) return;
+
+      const substanceName = substance.substance__name;
+      if (substance.risk_flag !== 'none') {
+        // Lifetime
+        usage.lifetime[gender][substanceName] = (usage.lifetime[gender][substanceName] || 0) + 1;
+        // Active (severe risk)
+        if (substance.risk_flag === 'severe') {
+          usage.active[gender][substanceName] = (usage.active[gender][substanceName] || 0) + 1;
+        }
+      }
+    });
   });
 
   return usage;
 });
 
+// Risk Levels with null safety
 const substanceRiskLevels = computed(() => {
-  if (!isDataAvailable.value) return {};
-  const riskLevels = {};
-  const substances = [
-    'alcoholic', 'tobacco', 'cannabis', 'cocaine', 'amphetamine',
-    'inhalants', 'sedatives', 'hallucinogens', 'opioids'
-  ];
+  if (!hasData.value) return {};
 
-  filteredData.value.forEach(user => {
-    substances.forEach(substance => {
-      const measurement = user.measurementAssist[`${substance}_measurement`];
-      if (measurement) {
-        if (!riskLevels[substance]) {
-          riskLevels[substance] = { 'low risk': 0, 'moderate risk': 0, 'high risk': 0 };
-        }
-        riskLevels[substance][measurement]++;
+  const riskLevels = {};
+
+  props.filteredData.forEach(user => {
+    if (!hasValidAssistData(user)) return;
+
+    user.assistData.forEach(substance => {
+      if (!substance?.substance__name || !substance?.risk_flag) return;
+
+      const name = substance.substance__name;
+      const risk = substance.risk_flag.toLowerCase();
+
+      if (!riskLevels[name]) {
+        riskLevels[name] = { low: 0, moderate: 0, high: 0 };
+      }
+      if (risk !== 'none') {
+        riskLevels[name][risk]++;
       }
     });
   });
@@ -126,52 +180,49 @@ const substanceRiskLevels = computed(() => {
   return riskLevels;
 });
 
+// Chart rendering with error handling
 const displayChart = (data) => {
   if (!chartCanvas.value) return;
 
-  if (myChart) myChart.destroy();
-
-  myChart = new Chart(chartCanvas.value, {
-    type: 'bar',
-    data: data,
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Number of Users'
-          }
-        },
-        x: { stacked: true }
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { 
-          position: 'top',
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle'
-          }
-        },
-        title: {
-          display: true,
-          text: chartTitle.value
-        }
-      },
-      elements: {
-        bar: {
-          borderRadius: 8,
-        }
-      }
+  try {
+    if (myChart) {
+      myChart.destroy();
     }
-  });
+
+    myChart = new Chart(chartCanvas.value, {
+      type: 'bar',
+      data: data,
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Number of Users' },
+          },
+          x: { stacked: true },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: chartTitle.value },
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Error creating chart:', error);
+  }
 };
 
+// Button Handlers with null checks
 const handleLifetimeUsersClick = () => {
+  if (!hasData.value) return;
+
   chartTitle.value = 'Lifetime Substance Use by Gender';
-  const substances = [...new Set([...Object.keys(substanceUsage.value.lifetime.male), ...Object.keys(substanceUsage.value.lifetime.female)])];
+  const substances = [...new Set([
+    ...Object.keys(substanceUsage.value.lifetime.male),
+    ...Object.keys(substanceUsage.value.lifetime.female)
+  ])];
+
   displayChart({
     labels: substances,
     datasets: [
@@ -179,23 +230,23 @@ const handleLifetimeUsersClick = () => {
         label: 'Male',
         data: substances.map(substance => substanceUsage.value.lifetime.male[substance] || 0),
         backgroundColor: CHART_COLORS.male,
-        borderColor: CHART_COLORS.male,
-        borderWidth: 1
       },
       {
         label: 'Female',
         data: substances.map(substance => substanceUsage.value.lifetime.female[substance] || 0),
         backgroundColor: CHART_COLORS.female,
-        borderColor: CHART_COLORS.female,
-        borderWidth: 1
-      }
-    ]
+      },
+    ],
   });
 };
 
 const handleActiveUsersClick = () => {
   chartTitle.value = 'Active Substance Use by Gender';
-  const substances = [...new Set([...Object.keys(substanceUsage.value.active.male), ...Object.keys(substanceUsage.value.active.female)])];
+  const substances = [...new Set([
+    ...Object.keys(substanceUsage.value.active.male),
+    ...Object.keys(substanceUsage.value.active.female)
+  ])];
+
   displayChart({
     labels: substances,
     datasets: [
@@ -203,17 +254,13 @@ const handleActiveUsersClick = () => {
         label: 'Male',
         data: substances.map(substance => substanceUsage.value.active.male[substance] || 0),
         backgroundColor: CHART_COLORS.male,
-        borderColor: CHART_COLORS.male,
-        borderWidth: 1
       },
       {
         label: 'Female',
         data: substances.map(substance => substanceUsage.value.active.female[substance] || 0),
         backgroundColor: CHART_COLORS.female,
-        borderColor: CHART_COLORS.female,
-        borderWidth: 1
-      }
-    ]
+      },
+    ],
   });
 };
 
@@ -224,43 +271,44 @@ const handleSubstanceRiskClick = () => {
   const datasets = [
     {
       label: 'Low Risk',
-      data: substances.map(substance => substanceRiskLevels.value[substance]['low risk'] || 0),
+      data: substances.map(substance => substanceRiskLevels.value[substance].low || 0),
       backgroundColor: CHART_COLORS.lowRisk,
-      borderColor: CHART_COLORS.lowRisk,
-      borderWidth: 1
     },
     {
       label: 'Moderate Risk',
-      data: substances.map(substance => substanceRiskLevels.value[substance]['moderate risk'] || 0),
+      data: substances.map(substance => substanceRiskLevels.value[substance].moderate || 0),
       backgroundColor: CHART_COLORS.moderateRisk,
-      borderColor: CHART_COLORS.moderateRisk,
-      borderWidth: 1
     },
     {
       label: 'High Risk',
-      data: substances.map(substance => substanceRiskLevels.value[substance]['high risk'] || 0),
+      data: substances.map(substance => substanceRiskLevels.value[substance].high || 0),
       backgroundColor: CHART_COLORS.highRisk,
-      borderColor: CHART_COLORS.highRisk,
-      borderWidth: 1
-    }
+    },
   ];
 
   displayChart({ labels: substances, datasets });
 };
 
 onMounted(() => {
-  if (isDataAvailable.value) {
+  if (hasData.value && !props.isLoading) {
     handleLifetimeUsersClick();
   }
 });
 
-watch(filteredData, (newData) => {
-  if (Array.isArray(newData) && newData.length > 0) {
+watch(() => props.filteredData, () => {
+  if (hasData.value && !props.isLoading) {
     handleLifetimeUsersClick();
   }
 }, { deep: true });
 
+watch(() => props.isLoading, (newValue) => {
+  if (!newValue && hasData.value) {
+    handleLifetimeUsersClick();
+  }
+});
 </script>
+
+
 
 <style scoped>
 .dashboard-container {
@@ -315,7 +363,8 @@ watch(filteredData, (newData) => {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-h2, h4 {
+h2,
+h4 {
   color: #2B656F;
 }
 
@@ -341,5 +390,31 @@ h2, h4 {
   width: 3rem;
   height: 3rem;
   color: #2B656F;
+}
+
+.assist-severity-container {
+  width: 100%;
+  min-height: 400px;
+}
+
+.chart-container {
+  height: 400px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.no-data-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
 }
 </style>

@@ -15,33 +15,22 @@
     <div class="row mt-4" v-if="activeItem.title !== 'Assist'">
       <div class="col-md-4">
         <div class="card-container">
-          <SeverityIndicatorCard 
-            v-if="activeItem" 
-            :cardTitle="activeItem.title"
-            :filteredData="getRelevantData"
-            :isLoading="isLoading"
-          />
+          <SeverityIndicatorCard v-if="activeItem" :cardTitle="activeItem.title" :filteredData="getRelevantData"
+            :isLoading="isLoading" />
         </div>
       </div>
       <div class="col-md-8">
         <div class="card-container">
-          <SeverityGraphCard 
-            v-if="activeItem" 
-            :cardTitle="activeItem.title"
-            :filteredData="getRelevantData"
-            :isLoading="isLoading"
-          />
+          <SeverityGraphCard v-if="activeItem" :cardTitle="activeItem.title" :filteredData="getRelevantData"
+            :isLoading="isLoading" />
         </div>
       </div>
     </div>
 
-    <div class="row mt-4" v-else>
+    <div class="row mt-4" v-if="activeItem.title === 'Assist'">
       <div class="col-12">
         <div class="card-container">
-          <AssistSeverityAndGraph 
-            :filteredData="getAssistData"
-            :isLoading="isLoading"
-          />
+          <AssistSeverityAndGraph :filteredData="getAssistData" :isLoading="isLoading" />
         </div>
       </div>
     </div>
@@ -59,9 +48,9 @@ import SeverityIndicatorCard from './SeverityIndicatorCard.vue';
 
 // Constants for severity items with proper field mappings
 const SEVERITY_ITEMS = ref([
-  { 
-    count: '0', 
-    title: 'Suicidal Behavior', 
+  {
+    count: '0',
+    title: 'Suicidal Behavior',
     field: 'phq_data',
     dataField: 'phq_data',
     threshold: value => {
@@ -74,42 +63,45 @@ const SEVERITY_ITEMS = ref([
       }
     }
   },
-  { 
-    count: '0', 
-    title: 'Depression', 
+  {
+    count: '0',
+    title: 'Depression',
     field: 'phq_score',
-    dataField: 'phq_data', 
-    threshold: value => value >= 10 
+    dataField: 'phq_data',
+    threshold: value => value >= 10
   },
-  { 
-    count: '0', 
-    title: 'Anxiety', 
+  {
+    count: '0',
+    title: 'Anxiety',
     field: 'gad_score',
-    dataField: 'gad_data', 
-    threshold: value => value >= 10 
+    dataField: 'gad_data',
+    threshold: value => value >= 10
   },
-  { 
-    count: '0', 
-    title: 'ACE', 
+  {
+    count: '0',
+    title: 'ACE',
     field: 'ace_score',
-    dataField: 'ace_data', 
-    threshold: value => value >= 4 
+    dataField: 'ace_data',
+    threshold: value => value >= 4
   },
-  { 
-    count: '0', 
-    title: 'Assist', 
+  {
+    count: '0',
+    title: 'Assist',
     field: 'assist_data',
-    dataField: 'assist_data', 
+    dataField: 'assist_data',
     threshold: value => {
       try {
         const assistData = typeof value === 'string' ? JSON.parse(value) : value;
-        return assistData && assistData.some(item => item.risk_flag && item.risk_flag !== 'none');
+
+        // Ensure assistData is an array before calling .some()
+        return Array.isArray(assistData) && assistData.some(item => item.risk_flag && item.risk_flag !== 'none');
       } catch (e) {
         console.error("Error parsing assist_data:", e);
         return false;
       }
     }
   }
+
 ]);
 
 const activeIndex = ref(0);
@@ -136,14 +128,26 @@ const getRelevantData = computed(() => {
 const getAssistData = computed(() => {
   if (!filteredData.value.length) return [];
 
-  return filteredData.value.map(item => {
-    const screeningData = item.screening_data || {};
-    return {
-      ...item, // Pass the entire item as-is
-      assistData: screeningData.assist_data || [],
-    };
-  });
+  return filteredData.value
+    .filter(item => {
+      const screeningData = item.screening_data || {};
+      const assistData = screeningData.assist_data;
+
+      // Ensure assist_data is an array before calling .some()
+      return (
+        Array.isArray(assistData) &&
+        assistData.some(substance => substance.risk_flag && substance.risk_flag !== 'none')
+      );
+    })
+    .map(item => {
+      const screeningData = item.screening_data || {};
+      return {
+        user: item.user, // Include user details if needed
+        assistData: Array.isArray(screeningData.assist_data) ? screeningData.assist_data : [], // Ensure assistData is always an array
+      };
+    });
 });
+
 
 
 function isActive(index) {
@@ -201,15 +205,19 @@ const fetchAndFilterData = async () => {
 const updateSeverityCounts = () => {
   SEVERITY_ITEMS.value.forEach((item, index) => {
     let count = 0;
-    
+
     filteredData.value.forEach(entry => {
       const screeningData = entry.screening_data;
       if (!screeningData) return;
 
       const value = screeningData[item.field];
       if (value !== undefined && value !== null) {
-        if (item.threshold(value)) {
-          count++;
+        try {
+          if (item.threshold(value)) {
+            count++;
+          }
+        } catch (error) {
+          console.error(`Error evaluating threshold for ${item.title}:`, error);
         }
       }
     });
@@ -217,6 +225,7 @@ const updateSeverityCounts = () => {
     SEVERITY_ITEMS.value[index] = { ...item, count: count.toString() };
   });
 };
+
 
 onMounted(async () => {
   await fetchAndFilterData();

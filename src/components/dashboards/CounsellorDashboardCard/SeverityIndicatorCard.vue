@@ -1,4 +1,5 @@
 <template>
+  <!-- Main Card Container -->
   <div class="card text-center h-100 shadow-lg">
     <div class="card-header bg-gradient-primary">
       <h4 class="severity-title text-white mb-0 font-bold">{{ cardTitle }}</h4>
@@ -30,40 +31,55 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Modal -->
-    <div v-if="showModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h4 class="modal-title">{{ selectedData?.text }} Details</h4>
-          <button class="close-button" @click="closeModal">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="user-list">
-            <div v-for="(user, idx) in getUsersForSeverity" :key="idx" class="user-card">
-              <div class="user-header">
-                <div class="user-avatar">
-                  {{ getInitials(user.user?.first_name, user.user?.last_name) }}
+  <!-- First Modal - User List -->
+  <Teleport to="body">
+    <div v-if="showModal" class="modal-backdrop" @click="closeModal">
+      <div class="modal-wrapper" @click.stop>
+        <div class="modal-container">
+          <div class="modal-header">
+            <div class="header-content">
+              <div class="severity-indicator" :style="{ background: selectedData?.color }"></div>
+              <h4 class="modal-title">{{ selectedData?.text }} Patients</h4>
+            </div>
+            <button class="close-button" @click="closeModal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="user-cards-list">
+              <div v-for="(user, idx) in getUsersForSeverity" :key="idx" class="user-card">
+                <div class="user-avatar-section">
+                  <div class="avatar">
+                    {{ getInitials(user.user?.first_name, user.user?.last_name) }}
+                    <span class="status-badge" :style="{ background: selectedData?.color }">
+                      <i :class="selectedData?.icon"></i>
+                    </span>
+                  </div>
                 </div>
-                <div class="user-info">
-                  <h5>{{ user.user?.first_name }} {{ user.user?.last_name }}</h5>
-                  <p class="text-muted">{{ user.user?.email }}</p>
-                </div>
-              </div>
-              <div class="user-details">
-                <div class="detail-item">
-                  <span class="detail-label">Gender:</span>
-                  <span class="detail-value">{{ user.user?.gender || 'Not specified' }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Screening Date:</span>
-                  <span class="detail-value">{{ formatDate(user.screening_data?.submission_date) }}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Score:</span>
-                  <span class="detail-value" :class="getSeverityClass(selectedData?.text)">
-                    {{ getScoreForCard(user) }}
-                  </span>
+
+                <div class="user-info-section">
+                  <div class="user-primary-info">
+                    <h5 class="user-name">{{ user.user?.first_name }} {{ user.user?.last_name }}</h5>
+                    <p class="user-email">{{ user.user?.email }}</p>
+                  </div>
+
+                  <div class="assessment-info">
+                    <div class="score-badge" :class="getSeverityClass(selectedData?.text)">
+                      Score: {{ getScoreForCard(user) }}
+                    </div>
+                    <div class="additional-info">
+                      <span class="info-label">Screening Date:</span>
+                      <span class="info-value">{{ formatDate(user.screening_data?.submission_date) }}</span>
+                    </div>
+                  </div>
+
+                  <button class="view-details-btn" @click="viewUserDetails(user)">
+                    <i class="fas fa-chart-line"></i>
+                    View Details
+                  </button>
                 </div>
               </div>
             </div>
@@ -71,7 +87,153 @@
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Second Modal - Detailed User Report -->
+    <Dialog v-model:visible="showUserDetailsModal" :modal="true" :header="false" :closable="false"
+      class="detailed-modal">
+      <div class="detailed-modal-content">
+        <div class="detailed-modal-header">
+          <div class="patient-info">
+            <div class="patient-avatar">
+              {{ getInitials(selectedUserForDetails?.user?.first_name, selectedUserForDetails?.user?.last_name) }}
+            </div>
+            <div class="patient-details">
+              <h3>
+                {{ selectedUserForDetails?.user?.first_name }}
+                {{ selectedUserForDetails?.user?.last_name }}
+              </h3>
+              <span class="patient-id">ID: #{{ selectedUserForDetails?.user?.id }}</span>
+            </div>
+          </div>
+          <Button icon="pi pi-times" @click="closeUserDetails" class="close-detailed-modal" />
+        </div>
+
+        <div class="detailed-modal-body">
+          <div class="content-grid">
+            <!-- Patient Information Card -->
+            <div class="info-section">
+              <div class="info-card">
+                <h4>Basic Information</h4>
+                <div class="info-list">
+                  <div class="info-item">
+                    <i class="fas fa-birthday-cake"></i>
+                    <div class="item-content">
+                      <label>Age</label>
+                      <span>{{ calculateAge(selectedUserForDetails?.user?.date_of_birth) }} years</span>
+                    </div>
+                  </div>
+                  <div class="info-item">
+                    <i class="fas fa-venus-mars"></i>
+                    <div class="item-content">
+                      <label>Gender</label>
+                      <span>{{ selectedUserForDetails?.user?.gender }}</span>
+                    </div>
+                  </div>
+                  <div class="info-item">
+                    <i class="fas fa-phone"></i>
+                    <div class="item-content">
+                      <label>Contact</label>
+                      <span>{{ selectedUserForDetails?.user?.mob_number }}</span>
+                    </div>
+                  </div>
+                  <div class="info-item">
+                    <i class="fas fa-envelope"></i>
+                    <div class="item-content">
+                      <label>Email</label>
+                      <span>{{ selectedUserForDetails?.user?.email }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Assessment Results -->
+            <div class="assessment-section">
+              <div class="assessment-card mental-health">
+                <h4>Mental Health Assessment</h4>
+                <div class="assessment-grid">
+                  <div class="assessment-item"
+                    :class="getSeverityClass(selectedUserForDetails?.screening_data?.phq_interpretation)">
+                    <div class="item-header">
+                      <i class="fas fa-brain"></i>
+                      <h5>Depression (PHQ-9)</h5>
+                    </div>
+                    <div class="item-value">
+                      {{ selectedUserForDetails?.screening_data?.phq_interpretation || 'N/A' }}
+                    </div>
+                    <div class="item-score">
+                      Score: {{ selectedUserForDetails?.screening_data?.phq_score || 'N/A' }}
+                    </div>
+                  </div>
+
+                  <div class="assessment-item"
+                    :class="getSeverityClass(selectedUserForDetails?.screening_data?.gad_interpretation)">
+                    <div class="item-header">
+                      <i class="fas fa-head-side-virus"></i>
+                      <h5>Anxiety (GAD-7)</h5>
+                    </div>
+                    <div class="item-value">
+                      {{ selectedUserForDetails?.screening_data?.gad_interpretation || 'N/A' }}
+                    </div>
+                    <div class="item-score">
+                      Score: {{ selectedUserForDetails?.screening_data?.gad_score || 'N/A' }}
+                    </div>
+                  </div>
+
+                  <div class="assessment-item"
+                    :class="getSeverityClass(selectedUserForDetails?.screening_data?.ace_interpretation)">
+                    <div class="item-header">
+                      <i class="fas fa-chart-line"></i>
+                      <h5>ACE Score</h5>
+                    </div>
+                    <div class="item-value">
+                      {{ selectedUserForDetails?.screening_data?.ace_interpretation || 'N/A' }}
+                    </div>
+                    <div class="item-score">
+                      Score: {{ selectedUserForDetails?.screening_data?.ace_score || 'N/A' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Substance Use Assessment -->
+              <div class="assessment-card substance-use">
+                <h4>Substance Use Assessment</h4>
+                <div class="substance-grid">
+                  <template v-if="selectedUserForDetails?.screening_data?.assist_data">
+                    <div
+                      v-for="(value, key) in filterNonInjectionSubstances(selectedUserForDetails.screening_data.assist_data)"
+                      :key="key" class="substance-item" :class="getRiskClass(value.measurement)">
+                      <div class="substance-header">
+                        <i class="fas fa-flask"></i>
+                        <h5>{{ formatSubstanceName(key) }}</h5>
+                      </div>
+                      <div class="substance-risk" :class="getRiskTextClass(value.measurement)">
+                        {{ value.measurement }}
+                      </div>
+                    </div>
+                  </template>
+
+                  <div v-if="selectedUserForDetails?.screening_data?.assist_data?.injection_measurement"
+                    class="substance-item injection-item"
+                    :class="getRiskClass(selectedUserForDetails.screening_data.assist_data.injection_measurement)">
+                    <div class="substance-header">
+                      <i class="fas fa-syringe"></i>
+                      <h5>Injection Usage</h5>
+                    </div>
+                    <div class="substance-risk"
+                      :class="getRiskTextClass(selectedUserForDetails.screening_data.assist_data.injection_measurement)">
+                      {{ selectedUserForDetails.screening_data.assist_data.injection_measurement }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  </Teleport>
 </template>
 
 <script setup>
@@ -94,6 +256,74 @@ const props = defineProps({
 
 const showModal = ref(false);
 const selectedData = ref(null);
+const showUserDetailsModal = ref(false);
+const selectedUserForDetails = ref(null);
+
+const viewUserDetails = (user) => {
+  selectedUserForDetails.value = user;
+  showUserDetailsModal.value = true;
+};
+
+const closeUserDetails = () => {
+  selectedUserForDetails.value = null;
+  showUserDetailsModal.value = false;
+};
+
+const calculateAge = (dob) => {
+  const birthDate = new Date(dob);
+  const ageDifMs = Date.now() - birthDate.getTime();
+  const ageDate = new Date(ageDifMs);
+  return Math.abs(ageDate.getUTCFullYear() - 1970);
+};
+
+const filterNonInjectionSubstances = (assistData) => {
+  if (!assistData) return {};
+
+  const substances = {};
+  Object.keys(assistData).forEach((key) => {
+    if (key.endsWith('_measurement') && !key.includes('injection')) {
+      const substanceName = key.replace('_measurement', '');
+      substances[substanceName] = {
+        measurement: assistData[key],
+      };
+    }
+  });
+  return substances;
+};
+
+const formatSubstanceName = (name) => {
+  return name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const getRiskClass = (measurement) => {
+  switch (measurement?.toLowerCase()) {
+    case 'high risk':
+      return 'risk-high bg-red-50 border-red-200';
+    case 'moderate risk':
+      return 'risk-moderate bg-yellow-50 border-yellow-200';
+    case 'low risk':
+      return 'risk-low bg-green-50 border-green-200';
+    default:
+      return 'bg-gray-50 border-gray-200';
+  }
+};
+
+const getRiskTextClass = (measurement) => {
+  switch (measurement?.toLowerCase()) {
+    case 'high risk':
+      return 'text-red-700';
+    case 'moderate risk':
+      return 'text-yellow-700';
+    case 'low risk':
+      return 'text-green-700';
+    default:
+      return 'text-gray-700';
+  }
+};
+
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -115,7 +345,7 @@ const getInitials = (firstName, lastName) => {
 // Get score based on card type
 const getScoreForCard = (user) => {
   const screeningData = user.screening_data || {};
-  
+
   switch (props.cardTitle.toLowerCase()) {
     case 'suicidal behavior': {
       try {
@@ -151,7 +381,7 @@ const getSeverityClass = (severity) => {
 // Get filtered users for selected severity
 const getUsersForSeverity = computed(() => {
   if (!selectedData.value) return [];
-  
+
   return props.filteredData.filter(user => {
     const screeningData = user.screening_data || {};
     const measurement = getMeasurementForCard(screeningData);
@@ -311,6 +541,7 @@ const getSeverityOrder = (value) => {
 </script>
 
 <style scoped>
+/* Base Card Styles */
 .card {
   border: none;
   border-radius: 1.25rem;
@@ -334,6 +565,7 @@ const getSeverityOrder = (value) => {
   font-size: 1.5rem;
 }
 
+/* Severity Card Styles */
 .severity-card {
   display: block;
   text-decoration: none;
@@ -356,6 +588,7 @@ const getSeverityOrder = (value) => {
   color: white;
 }
 
+/* Indicator Styles */
 .indicator-info {
   display: flex;
   align-items: center;
@@ -376,6 +609,7 @@ const getSeverityOrder = (value) => {
   color: white;
 }
 
+/* Count Info Styles */
 .count-info {
   display: flex;
   align-items: center;
@@ -393,175 +627,722 @@ const getSeverityOrder = (value) => {
   color: white;
 }
 
+/* ========================= */
+/* COMMON & GENERIC STYLES */
+/* ========================= */
+button {
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Typography */
+.text-center {
+  text-align: center;
+}
+
+.text-white {
+  color: white;
+}
+
+.text-gray {
+  color: #6b7280;
+}
+
+.text-primary {
+  color: #2B656F;
+}
+
+
+/* ========================= */
+/* CARD BASE STYLES */
+/* ========================= */
+.card {
+  background: white;
+  border: none;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 20px rgba(43, 101, 111, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(43, 101, 111, 0.15);
+}
+
+.card-header {
+  border-bottom: none;
+  padding: 1.75rem;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+/* ========================= */
+/* BUTTON STYLES */
+/* ========================= */
+.btn-primary {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1D4851 0%, #0E3238 100%);
+}
+
+.btn-light {
+  background: #f9fafb;
+  color: #333;
+}
+
+.btn-light:hover {
+  background: #f3f4f6;
+}
+
+/* ========================= */
+/* SPINNER */
+/* ========================= */
 .spinner-border {
   width: 3rem;
   height: 3rem;
   color: #2B656F;
+  animation: spin 1s linear infinite;
 }
 
-.modal-overlay {
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================= */
+/* MODAL BASE STYLES */
+/* ========================= */
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
+  justify-content: center;
+  z-index: 1050;
 }
 
-.modal-content {
-  background: white;
-  border-radius: 1rem;
-  width: 90%;
+.modal-wrapper {
+  width: 95%;
   max-width: 800px;
+  /* Reduced for single column layout */
   max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  margin: 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
+/* Modal Header */
 .modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  background: #2B656F;
+  padding: 1rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-  color: white;
-  border-radius: 1rem 1rem 0 0;
 }
 
-.modal-title {
-  margin: 0;
-  font-weight: 600;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-}
-
-.close-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.modal-body {
-  padding: 1.5rem;
-}
-
-.user-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.user-card {
-  background: #f8fafc;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.user-header {
+.header-content {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
 }
 
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+.severity-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.modal-title {
   color: white;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  cursor: pointer;
 }
 
-.user-info h5 {
-  margin: 0;
-  color: #1f2937;
-  font-weight: 600;
-}
-
-.user-info p {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.user-details {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.detail-item {
+/* User Cards List */
+.user-cards-list {
+  padding: 1.5rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  background: white;
-  border-radius: 0.5rem;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.detail-label {
-  color: #4b5563;
+.user-card {
+  display: flex;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
+  gap: 1.5rem;
+  transition: all 0.2s;
+}
+
+.user-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Avatar Section */
+.user-avatar-section {
+  flex-shrink: 0;
+}
+
+.avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: #2B656F;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.status-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-badge i {
+  font-size: 8px;
+  color: white;
+}
+
+/* User Info Section */
+.user-info-section {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-primary-info {
+  margin-bottom: 0.5rem;
+}
+
+.user-name {
+  color: #1f2937;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.user-email {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Assessment Info */
+.assessment-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.score-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.additional-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-label {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.info-value {
+  color: #1f2937;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
-.detail-value {
+/* View Details Button */
+.view-details-btn {
+  align-self: flex-start;
+  padding: 0.5rem 1rem;
+  background: #2B656F;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.view-details-btn:hover {
+  background: #1D4851;
+}
+
+.view-details-btn i {
+  font-size: 0.9rem;
+}
+
+/* Severity Classes */
+.severity-low {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.severity-moderate {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.severity-high {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Modal Body Scroll */
+.modal-body {
+  max-height: calc(90vh - 70px);
+  overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+  .user-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .assessment-info {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .view-details-btn {
+    align-self: center;
+  }
+}
+
+/* Details Button */
+.details-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.details-button:hover {
+  background: linear-gradient(135deg, #1D4851 0%, #0E3238 100%);
+}
+
+.detailed-modal {
+  max-width: 1200px !important;
+  width: 95vw !important;
+  margin: 20px !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.detailed-modal-content {
+  background: #f8fafc;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailed-modal-header {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.patient-avatar {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
   font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.patient-details {
+  color: white;
+}
+
+.patient-details h3 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.patient-id {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.close-detailed-modal {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  transition: all 0.2s !important;
+}
+
+.close-detailed-modal:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Detailed Modal Body */
+.detailed-modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+}
+
+/* Info Section Styles */
+.info-section .info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.info-card h4 {
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.info-item i {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2B656F;
+  font-size: 1rem;
+}
+
+.item-content {
+  flex-grow: 1;
+}
+
+.item-content label {
+  display: block;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.item-content span {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Assessment Section Styles */
+.assessment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.assessment-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.assessment-card h4 {
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.assessment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.assessment-item {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: transform 0.2s;
+}
+
+.assessment-item:hover {
+  transform: translateY(-2px);
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.item-header i {
+  color: #2B656F;
+  font-size: 1.25rem;
+}
+
+.item-header h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.item-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.item-score {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Substance Use Grid */
+.substance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.substance-item {
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+.substance-item:hover {
+  transform: translateY(-2px);
+}
+
+.substance-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.substance-header i {
+  color: #2B656F;
+}
+
+.substance-header h5 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.substance-risk {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.risk-high {
+  border-color: rgb(239, 68, 68);
+  background-color: rgb(254, 226, 226);
+}
+
+.risk-moderate {
+  border-color: rgb(234, 179, 8);
+  background-color: rgb(254, 249, 195);
+}
+
+.risk-low {
+  border-color: rgb(34, 197, 94);
+  background-color: rgb(220, 252, 231);
+}
+
+/* Text colors for risk levels */
+.text-red-700 {
+  color: rgb(185, 28, 28);
+}
+
+.text-yellow-700 {
+  color: rgb(161, 98, 7);
+}
+
+.text-green-700 {
+  color: rgb(21, 128, 61);
+}
+
+.injection-item {
+  background: #fee2e2;
+}
+
+/* Severity Classes */
+.severity-low {
+  background: #dcfce7;
+}
+
+.severity-moderate {
+  background: #fef3c7;
+}
+
+.severity-high {
+  background: #fee2e2;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .assessment-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
-  .modal-content {
-    width: 95%;
-    max-height: 95vh;
-  }
-
-  .user-card {
+  .detailed-modal-header {
     padding: 1rem;
   }
 
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    font-size: 0.875rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .card-header {
-    padding: 1.25rem;
-  }
-
-  .severity-title {
+  .patient-avatar {
+    width: 48px;
+    height: 48px;
     font-size: 1.25rem;
   }
 
-  .card-content {
-    padding: 1rem;
-  }
-
-  .indicator-title {
-    font-size: 1rem;
-  }
-
-  .count-display h2 {
+  .patient-details h3 {
     font-size: 1.5rem;
   }
 
-  .status-icon {
-    font-size: 1.1rem;
+  .detailed-modal-body {
+    padding: 1rem;
+  }
+
+  .assessment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-container {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: center;
+  }
+
+  .info-item i {
+    margin: 0 auto;
   }
 }
 </style>

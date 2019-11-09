@@ -454,21 +454,21 @@ const getSeverityClass = (severity) => {
     }
 };
 
-const filterSubstances = (assistData) => {
-    if (!assistData) return {};
+// const filterSubstances = (assistData) => {
+//     if (!assistData) return {};
 
-    const substances = {};
-    Object.keys(assistData).forEach(key => {
-        if (key.endsWith('_measurement')) {
-            const substanceName = key.replace('_measurement', '');
-            substances[substanceName] = {
-                measurement: assistData[key],
-                flag: assistData[`${substanceName}_flag`]
-            };
-        }
-    });
-    return substances;
-};
+//     const substances = {};
+//     Object.keys(assistData).forEach(key => {
+//         if (key.endsWith('_measurement')) {
+//             const substanceName = key.replace('_measurement', '');
+//             substances[substanceName] = {
+//                 measurement: assistData[key],
+//                 flag: assistData[`${substanceName}_flag`]
+//             };
+//         }
+//     });
+//     return substances;
+// };
 
 const filterNonInjectionSubstances = (assistData) => {
     if (!assistData) return {};
