@@ -84,7 +84,7 @@ const onToggle = (val) => {
 
 const isRiskColumn = (field) => {
   return [
-    'suicidal_measurement','phqSeverity', 'gadSeverity', 'aceSeverity', 'tobaccoRisk', 'alcoholRisk',
+    'suicidal_measurement', 'suicidal_score', 'phqSeverity', 'gadSeverity', 'aceSeverity', 'tobaccoRisk', 'alcoholRisk',
     'cannabisRisk', 'cocaineRisk', 'amphetamineRisk', 'inhalantsRisk',
     'sedativeRisk', 'hallucinogensRisk', 'opioidsRisk', 'othersRisk',
     'nonMedicalInjectionUse'
