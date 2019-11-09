@@ -1,5 +1,5 @@
 <template>
-    <div class="container-fluid screening-test p-4 card">
+    <div :key="componentKey" class="container-fluid screening-test p-4 card">
         <!-- VueConfetti component -->
         <div style="z-index: 9999" class="text-center mx-auto d-none" v-if="showConfetti">
             <ConfettiExplosion :particleCount="200" :particleSize="10" :duration="5000" :force="0.8" />
@@ -189,6 +189,7 @@ const stronglyDisagreeSelected = reactive({});
 const router = useRouter();
 const storedResponses = ref({});
 const assistq2substances = ref([]);
+const componentKey = ref(0);
 
 const testResponses = reactive({
     responses: [],
@@ -664,7 +665,7 @@ const progressPercentage = computed(() => {
 function handleAnswerSelection(option, substance) {
     const rawOption = toRaw(option);
 
-    if (rawOption.option === "Never, not used in the last 3 months") {
+    if (rawOption.id === 166) {
 
         // Normalize substance name for comparison
         const normalizedSubstance = substance.toLowerCase().trim();
@@ -677,7 +678,7 @@ function handleAnswerSelection(option, substance) {
         // If the substance is found, update its disabled property to true
         if (index !== -1) {
             assistq2substances.value[index].disabled = true;
-            assistq2substances.value[index].selectedOption = rawOption.option; // Optionally, update selected option
+            assistq2substances.value[index].selectedOption = rawOption.option;
         }
 
     }
@@ -1034,7 +1035,7 @@ function flushStore() {
         text: "Are you sure you want to reset your progress?",
         icon: "warning",
         showCancelButton: true,
-        confirmButtonText: "Yes, reset it!",
+        confirmButtonText: "Yes, reset it!"
     }).then((result) => {
         if (result.isConfirmed) {
             progressStore.resetStore();
@@ -1045,14 +1046,18 @@ function flushStore() {
             localStorage.removeItem("submissionData");
             testResponses.responses = [];
             testResponses.responses = [];
+
+            // Increment componentKey to trigger re-render
+            componentKey.value += 1;
+
             Swal.fire({
-                title: "Cleaned Successfully",
+                title: "Reset Successfully",
                 text: "The store has been flushed successfully.",
                 icon: "success",
                 timer: 500,
-                showConfirmButton: false,
-            }).then(() => {
-                location.reload();
+                showConfirmButton: false
+            }).then(() => { 
+                router.push("/student-dashboard/screening");
             });
         }
     });
