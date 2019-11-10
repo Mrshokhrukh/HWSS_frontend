@@ -78,16 +78,8 @@ const chartTitle = ref('Substance Use Overview');
 // Check if we have valid data
 const hasData = computed(() => {
   return Array.isArray(props.filteredData) &&
-    props.filteredData.length > 0 &&
-    props.filteredData.some(item => hasValidAssistData(item));
+    props.filteredData.length > 0;
 });
-
-// Utility function to check for valid assist data
-const hasValidAssistData = (item) => {
-  return item?.assistData &&
-    Array.isArray(item.assistData) &&
-    item.assistData.length > 0;
-};
 
 // Colors for chart datasets
 const CHART_COLORS = {
@@ -102,43 +94,49 @@ const CHART_COLORS = {
 const totalLifetimeUsers = computed(() => {
   if (!hasData.value) return 0;
   return props.filteredData.filter(user =>
-    hasValidAssistData(user) &&
-    user.assistData.some(sub => sub?.risk_flag && sub.risk_flag !== 'none')
+    user.screening_data?.assist_data &&
+    Array.isArray(user.screening_data.assist_data)
   ).length;
 });
 
 const totalActiveUsers = computed(() => {
   if (!hasData.value) return 0;
-  return props.filteredData.filter(user =>
-    hasValidAssistData(user) &&
-    user.assistData.some(sub => sub?.risk_flag === 'severe')
-  ).length;
+  return props.filteredData.filter(user => {
+    const assistData = user.screening_data?.assist_data;
+    return assistData && Array.isArray(assistData) &&
+      assistData.some(sub => sub?.risk_flag === 'severe');
+  }).length;
 });
 
 const totalRiskUsers = computed(() => {
   if (!hasData.value) return 0;
-  return props.filteredData.reduce((total, user) => {
-    if (!hasValidAssistData(user)) return total;
-    return total + user.assistData.filter(sub => sub?.risk_flag && sub.risk_flag !== 'none').length;
-  }, 0);
+  let count = 0;
+  props.filteredData.forEach(user => {
+    const assistData = user.screening_data?.assist_data;
+    if (assistData && Array.isArray(assistData)) {
+      count += assistData.filter(sub => sub?.risk_flag && sub.risk_flag !== 'none').length;
+    }
+  });
+  return count;
 });
 
 // Substance Usage with null safety
 const substanceUsage = computed(() => {
-  if (!hasData.value) return { lifetime: { male: {}, female: {} }, active: { male: {}, female: {} } };
-
   const usage = { lifetime: { male: {}, female: {} }, active: { male: {}, female: {} } };
 
+  if (!hasData.value) return usage;
+
   props.filteredData.forEach(user => {
-    if (!hasValidAssistData(user)) return;
+    const assistData = user.screening_data?.assist_data;
+    if (!assistData || !Array.isArray(assistData)) return;
 
     const gender = user.user?.gender?.toLowerCase() || 'unknown';
     if (gender !== 'male' && gender !== 'female') return;
 
-    user.assistData.forEach(substance => {
-      if (!substance?.substance__name || !substance?.risk_flag) return;
+    assistData.forEach(substance => {
+      if (!substance?.substance_name || !substance?.risk_flag) return;
 
-      const substanceName = substance.substance__name;
+      const substanceName = substance.substance_name;
       if (substance.risk_flag !== 'none') {
         // Lifetime
         usage.lifetime[gender][substanceName] = (usage.lifetime[gender][substanceName] || 0) + 1;
@@ -155,17 +153,18 @@ const substanceUsage = computed(() => {
 
 // Risk Levels with null safety
 const substanceRiskLevels = computed(() => {
-  if (!hasData.value) return {};
-
   const riskLevels = {};
 
+  if (!hasData.value) return riskLevels;
+
   props.filteredData.forEach(user => {
-    if (!hasValidAssistData(user)) return;
+    const assistData = user.screening_data?.assist_data;
+    if (!assistData || !Array.isArray(assistData)) return;
 
-    user.assistData.forEach(substance => {
-      if (!substance?.substance__name || !substance?.risk_flag) return;
+    assistData.forEach(substance => {
+      if (!substance?.substance_name || !substance?.risk_flag) return;
 
-      const name = substance.substance__name;
+      const name = substance.substance_name;
       const risk = substance.risk_flag.toLowerCase();
 
       if (!riskLevels[name]) {
@@ -187,6 +186,15 @@ const displayChart = (data) => {
   try {
     if (myChart) {
       myChart.destroy();
+    }
+
+    if (!data.labels.length) {
+      const ctx = chartCanvas.value.getContext('2d');
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#666';
+      ctx.fillText('No data available', chartCanvas.value.width / 2, chartCanvas.value.height / 2);
+      return;
     }
 
     myChart = new Chart(chartCanvas.value, {
@@ -215,13 +223,16 @@ const displayChart = (data) => {
 
 // Button Handlers with null checks
 const handleLifetimeUsersClick = () => {
-  if (!hasData.value) return;
-
   chartTitle.value = 'Lifetime Substance Use by Gender';
   const substances = [...new Set([
     ...Object.keys(substanceUsage.value.lifetime.male),
     ...Object.keys(substanceUsage.value.lifetime.female)
   ])];
+
+  if (substances.length === 0) {
+    displayChart({ labels: [], datasets: [] });
+    return;
+  }
 
   displayChart({
     labels: substances,
@@ -247,6 +258,11 @@ const handleActiveUsersClick = () => {
     ...Object.keys(substanceUsage.value.active.female)
   ])];
 
+  if (substances.length === 0) {
+    displayChart({ labels: [], datasets: [] });
+    return;
+  }
+
   displayChart({
     labels: substances,
     datasets: [
@@ -267,6 +283,11 @@ const handleActiveUsersClick = () => {
 const handleSubstanceRiskClick = () => {
   chartTitle.value = 'Substance Risk Levels';
   const substances = Object.keys(substanceRiskLevels.value);
+
+  if (substances.length === 0) {
+    displayChart({ labels: [], datasets: [] });
+    return;
+  }
 
   const datasets = [
     {
@@ -307,8 +328,6 @@ watch(() => props.isLoading, (newValue) => {
   }
 });
 </script>
-
-
 
 <style scoped>
 .dashboard-container {

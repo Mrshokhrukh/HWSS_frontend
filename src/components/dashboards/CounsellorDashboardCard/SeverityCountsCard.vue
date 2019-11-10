@@ -127,27 +127,8 @@ const getRelevantData = computed(() => {
 // Computed property specifically for ASSIST data
 const getAssistData = computed(() => {
   if (!filteredData.value.length) return [];
-
-  return filteredData.value
-    .filter(item => {
-      const screeningData = item.screening_data || {};
-      const assistData = screeningData.assist_data;
-
-      // Ensure assist_data is an array before calling .some()
-      return (
-        Array.isArray(assistData) &&
-        assistData.some(substance => substance.risk_flag && substance.risk_flag !== 'none')
-      );
-    })
-    .map(item => {
-      const screeningData = item.screening_data || {};
-      return {
-        user: item.user, // Include user details if needed
-        assistData: Array.isArray(screeningData.assist_data) ? screeningData.assist_data : [], // Ensure assistData is always an array
-      };
-    });
+  return filteredData.value;
 });
-
 
 
 function isActive(index) {
