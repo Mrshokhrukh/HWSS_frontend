@@ -30,7 +30,7 @@
     <div class="row mt-4" v-if="activeItem.title === 'Assist'">
       <div class="col-12">
         <div class="card-container">
-          <AssistSeverityAndGraph :filteredData="getAssistData" :isLoading="isLoading" />
+          <AssistSeverityAndGraph :data="assistStructuredData" :isLoading="isLoading" />
         </div>
       </div>
     </div>
@@ -46,13 +46,11 @@ import SeverityGraphCard from './SeverityGraphCard.vue';
 import AssistSeverityAndGraph from './AssistSeverityAndGraph.vue';
 import SeverityIndicatorCard from './SeverityIndicatorCard.vue';
 
-// Constants for severity items with proper field mappings
 const SEVERITY_ITEMS = ref([
   {
     count: '0',
     title: 'Suicidal Behavior',
     field: 'phq_data',
-    dataField: 'phq_data',
     threshold: value => {
       try {
         const phqData = JSON.parse(value);
@@ -67,68 +65,166 @@ const SEVERITY_ITEMS = ref([
     count: '0',
     title: 'Depression',
     field: 'phq_score',
-    dataField: 'phq_data',
     threshold: value => value >= 10
   },
   {
     count: '0',
     title: 'Anxiety',
     field: 'gad_score',
-    dataField: 'gad_data',
     threshold: value => value >= 10
   },
   {
     count: '0',
     title: 'ACE',
     field: 'ace_score',
-    dataField: 'ace_data',
     threshold: value => value >= 4
   },
   {
     count: '0',
     title: 'Assist',
     field: 'assist_data',
-    dataField: 'assist_data',
     threshold: value => {
+      if (!value) return false;
+
       try {
         const assistData = typeof value === 'string' ? JSON.parse(value) : value;
 
-        // Ensure assistData is an array before calling .some()
-        return Array.isArray(assistData) && assistData.some(item => item.risk_flag && item.risk_flag !== 'none');
-      } catch (e) {
-        console.error("Error parsing assist_data:", e);
+        if (Array.isArray(assistData)) {
+          return assistData.some(item => item?.risk_flag && item.risk_flag !== 'none');
+        }
+
+        return Object.keys(assistData).some(key =>
+          key.includes('_flag') && assistData[key] !== 'none'
+        );
+      } catch (error) {
+        console.error('Error parsing assist_data:', error);
         return false;
       }
     }
   }
-
 ]);
 
 const activeIndex = ref(0);
 const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
 const filteredData = ref([]);
+const assistStructuredData = ref({
+  total: 0,
+  substances: {}
+});
 const isLoading = ref(true);
 const error = ref(null);
 
-// Computed property to get relevant data based on active item
 const getRelevantData = computed(() => {
   if (!activeItem.value || !filteredData.value.length) return [];
-
-  return filteredData.value.map(item => {
-    const screeningData = item.screening_data || {};
-    return {
-      ...item,
-      screeningData: screeningData,
-    };
-  });
-});
-
-
-// Computed property specifically for ASSIST data
-const getAssistData = computed(() => {
-  if (!filteredData.value.length) return [];
   return filteredData.value;
 });
+
+const processAssistData = () => {
+  const structured = {
+    total: 0,
+    substances: {}
+  };
+
+  filteredData.value.forEach(item => {
+    const assistData = item.screening_data?.assist_data;
+
+    if (assistData) {
+      structured.total++;
+
+      // Parse and normalize assist data
+      const parsedAssistData = typeof assistData === 'string' ? JSON.parse(assistData) : assistData;
+
+      if (Array.isArray(parsedAssistData)) {
+        // Handle array format (Type 1)
+        parsedAssistData.forEach(substance => {
+          const name = substance.substance__name || substance.substance_name || 'Unknown Substance';
+          const risk = substance.risk_flag ? substance.risk_flag.toLowerCase() : 'low';
+
+          // Normalize substance names
+          const normalizedSubstance = normalizeSubstanceName(name);
+
+          if (!structured.substances[normalizedSubstance]) {
+            structured.substances[normalizedSubstance] = { high: 0, moderate: 0, low: 0 };
+          }
+
+          if (risk === 'severe' || risk === 'high') structured.substances[normalizedSubstance].high++;
+          else if (risk === 'moderate') structured.substances[normalizedSubstance].moderate++;
+          else structured.substances[normalizedSubstance].low++;
+        });
+      } else if (typeof parsedAssistData === 'object') {
+        // Handle object format (Type 2)
+        Object.keys(parsedAssistData).forEach(key => {
+          if (key.endsWith('_flag') && parsedAssistData[key]) {
+            const substanceKey = key.replace('_flag', '');
+            const measurementKey = `${substanceKey}_measurement`;
+
+            const risk = parsedAssistData[measurementKey]
+              ? parsedAssistData[measurementKey].toLowerCase()
+              : parsedAssistData[key].toLowerCase();
+
+            // Map substanceKey to substance name
+            const normalizedSubstance = mapSubstanceKeyToName(substanceKey);
+
+            if (!structured.substances[normalizedSubstance]) {
+              structured.substances[normalizedSubstance] = { high: 0, moderate: 0, low: 0 };
+            }
+
+            if (risk === 'severe' || risk === 'high risk' || risk === 'red') {
+              structured.substances[normalizedSubstance].high++;
+            } else if (risk === 'moderate' || risk === 'moderate risk' || risk === 'yellow') {
+              structured.substances[normalizedSubstance].moderate++;
+            } else {
+              structured.substances[normalizedSubstance].low++;
+            }
+          }
+        });
+      }
+    }
+  });
+
+  assistStructuredData.value = structured;
+  console.log('Processed Assist Data:', assistStructuredData.value);
+};
+
+// Helper function to normalize substance names from Type 1
+const normalizeSubstanceName = (name) => {
+  const substanceMap = {
+    'Tobacco products (cigarettes, chewing tobacco etc)': 'Tobacco',
+    'Alcoholic beverages (beer, wine, spirits, ara etc.)': 'Alcohol',
+    'Cannabis (marijuana, pot, grass, hash, black etc.)': 'Cannabis',
+    'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc.)': 'Opioids',
+    'Cocaine': 'Cocaine',
+    'Amphetamine-type stimulants (meth, ecstasy, yebe, diet pills etc.)': 'Amphetamines',
+    'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': 'Inhalants',
+    'Sedatives or Sleeping Pills (N-10, diazepam etc.)': 'Sedatives',
+    'Hallucinogens (LSD, trips, Ketamine, etc.)': 'Hallucinogens',
+    'Other - specify': 'Other',
+    'Any Drug': 'Any Drug'
+    // Add more mappings as needed
+  };
+
+  return substanceMap[name] || name;
+};
+
+// Helper function to map substance keys from Type 2 to names
+const mapSubstanceKeyToName = (key) => {
+  const substanceMap = {
+    tobacco: 'Tobacco',
+    alcoholic: 'Alcohol',
+    cannabis: 'Cannabis',
+    opioids: 'Opioids',
+    cocaine: 'Cocaine',
+    amphetamine: 'Amphetamines',
+    inhalants: 'Inhalants',
+    sedatives: 'Sedatives',
+    hallucinogens: 'Hallucinogens',
+    injection: 'Injection',
+    other: 'Other'
+    // Add more mappings as needed
+  };
+
+  return substanceMap[key] || key;
+};
 
 
 function isActive(index) {
@@ -148,9 +244,7 @@ const getUserDetailsFromStorage = () => {
 
   try {
     const userDetails = JSON.parse(userDetailsString);
-    return {
-      agencyName: userDetails?.agency?.agencyName || 'Unknown Agency'
-    };
+    return { agencyName: userDetails?.agency?.agencyName || 'Unknown Agency' };
   } catch (error) {
     console.error('Error parsing user details:', error);
     return { agencyName: 'Unknown Agency' };
@@ -169,12 +263,16 @@ const fetchAndFilterData = async () => {
 
     filteredData.value = dataArray.filter(item => {
       const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
-      const screeningDate = item.screening_data?.submission_date;
-      const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-      return agencyMatch && submissionYear === currentYear;
+      const screeningData = item.screening_data;
+      const submissionYear = screeningData?.submission_date
+        ? new Date(screeningData.submission_date).getFullYear()
+        : null;
+
+      return agencyMatch && screeningData && submissionYear === currentYear;
     });
 
     updateSeverityCounts();
+    processAssistData();
     isLoading.value = false;
   } catch (err) {
     console.error('Error fetching data:', err);
@@ -214,10 +312,12 @@ onMounted(async () => {
 
 watchEffect(() => {
   if (filteredData.value.length > 0) {
+    processAssistData();
     updateSeverityCounts();
   }
 });
 </script>
+
 
 <style scoped>
 .severity-dashboard {

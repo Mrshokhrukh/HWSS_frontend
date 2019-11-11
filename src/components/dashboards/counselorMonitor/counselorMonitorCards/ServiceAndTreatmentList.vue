@@ -522,9 +522,8 @@ const filteredRows = computed(() => {
 });
 
 const processedRows = computed(() => {
-    if (!filteredRows.value) return [];
-
-    return filteredRows.value.map(row => ({
+    if (!rowData.value) return [];
+    return rowData.value.map(row => ({
         ...row,
         full_name: fullNameTemplate(row),
         age: calculateAge(row.user?.date_of_birth)
@@ -536,10 +535,17 @@ const getServiceList = async () => {
         isLoading.value = true;
         hasError.value = false;
         const response = await axios.get(endpoints.newServiceAndTreatment);
+        const currentYear = new Date().getFullYear();
+        
         rowData.value = response.data.filter(row => {
-            const agencyName = row?.user?.active_agency?.agency_name;
-            return agencyName === myAgency.value;
+            const agencyMatch =
+                row?.user?.active_agency?.agency_name?.trim().toLowerCase() === myAgency.value.trim().toLowerCase();
+            const screeningDate = row?.screening_data?.submission_date;
+            const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+
+            return agencyMatch && submissionYear === currentYear;
         });
+        console.log("Filtered Rows:", rowData.value);
     } catch (error) {
         hasError.value = true;
         console.error('Error fetching data:', error);
@@ -713,7 +719,7 @@ const referCase = async () => {
 onMounted(() => {
     getUserRole();
     const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
-    myAgency.value = userDetails?.agency?.agencyName || '';
+    myAgency.value = userDetails?.agency?.agencyName || 'Unknown Agency';
     getServiceList();
 });
 

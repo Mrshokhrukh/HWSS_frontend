@@ -22,8 +22,8 @@
       <div
         v-if="(selectedOption === 'generalReport' && isSchoolCounselor) || (selectedOption === 'generalReport' && isClinicalCounselor)"
         class="table-container">
-        <DataTable :value="reportData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
-          :sortOrder="1" class="custom-table">
+        <DataTable :value="filteredReportData" :paginator="true" :rows="10" :resizableColumns="true"
+          sortField="username" :sortOrder="1" class="custom-table">
 
           <!-- Display user-related columns -->
           <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
@@ -187,7 +187,7 @@
 
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
@@ -211,7 +211,7 @@ const options = [
 ];
 
 const tableFields = [
-  { key: 'username', header: 'Username' },
+  // { key: 'username', header: 'Username' },
   { key: 'full_name', header: 'Full Name' },
   { key: 'gender', header: 'Gender' },
   { key: 'dob', header: 'Date of Birth' },
@@ -244,32 +244,6 @@ const gyalsungTableFields = [
   { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
   { key: 'suicidal_score', header: 'Suicidal Score', taggable: true }
 ];
-
-// Fetch report data from API
-const fetchReportDataFromAPI = async () => {
-  try {
-    const response = await axios.get(endpoints.newServiceAndTreatment);
-    const dataArray = response.data || [];
-
-    // Extract agencyName from localStorage
-    const userAgencyName = getUserDetailsFromStorage();
-
-    if (isGyalsungCounselor.value) {
-      // Filter gyalsungData by agencyName
-      gyalsungData.value = dataArray
-        .filter(item => item.screening_data && item.user?.active_agency?.agency_name === userAgencyName)
-        .map(transformGyalsungData);
-    } else {
-      // Filter reportData by agencyName
-      reportData.value = dataArray
-        .filter(item => item.user && item.user?.active_agency?.agency_name === userAgencyName)
-        .map(transformData);
-    }
-  } catch (error) {
-    console.error('Error fetching report data:', error);
-  }
-};
-
 
 // Transform the main dataset to match the table structure
 const transformData = (item) => {
@@ -409,20 +383,70 @@ const getPassword = () => {
 // Determine user role and fetch data accordingly
 const getUserDetailsFromStorage = () => {
   const userDetailsString = localStorage.getItem('userDetailsStore');
-  if (userDetailsString) {
-    const { user: { role }, agency: { agencyName } } = JSON.parse(userDetailsString);
-
-    if (role === 'gyalsung_counselor') {
-      isGyalsungCounselor.value = true;
-    } else if (role === 'school_counselor') {
-      isSchoolCounselor.value = true;
-    } else if (role === 'clinical_counselor') {
-      isClinicalCounselor.value = true;
-    }
-
-    return agencyName; // Return the extracted agency name
+  if (!userDetailsString) {
+    console.error('No userDetailsStore found in localStorage');
+    return { agencyName: 'Unknown Agency', role: 'unknown' };
   }
-  return null;
+
+  try {
+    const userDetails = JSON.parse(userDetailsString);
+    console.log('UserDetails:', userDetails);
+    return {
+      agencyName: userDetails?.agency?.agencyName || 'Unknown Agency',
+      role: userDetails?.user?.role || 'unknown',
+    };
+  } catch (error) {
+    console.error('Error parsing user details:', error);
+    return { agencyName: 'Unknown Agency', role: 'unknown' };
+  }
+};
+
+// Add this computed property to filter data by current year and agency
+const filteredReportData = computed(() => {
+  return reportData.value || [];
+});
+
+
+// Update your fetchReportDataFromAPI function
+const fetchReportDataFromAPI = async () => {
+  try {
+    const response = await axios.get(endpoints.newServiceAndTreatment);
+    const dataArray = response.data || [];
+    console.log('API Data:', dataArray);
+
+    const { agencyName } = getUserDetailsFromStorage();
+    const currentYear = new Date().getFullYear();
+    console.log('Agency Name from LocalStorage:', agencyName, 'Current Year:', currentYear);
+
+    // Filter and transform the data
+    reportData.value = dataArray
+      .filter(item => {
+        const agencyMatch =
+          item.user?.active_agency?.agency_name?.trim().toLowerCase() === agencyName.trim().toLowerCase();
+        const screeningDate = item.screening_data?.submission_date;
+        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+        console.log('Agency Match:', agencyMatch, 'Screening Date:', screeningDate, 'Submission Year:', submissionYear);
+
+        return agencyMatch && submissionYear === currentYear;
+      })
+      .map(transformData);
+
+    console.log('Filtered Results:', reportData.value);
+
+    if (isGyalsungCounselor.value) {
+      gyalsungData.value = dataArray
+        .filter(item => {
+          const agencyMatch =
+            item.user?.active_agency?.agency_name?.trim().toLowerCase() === agencyName.trim().toLowerCase();
+          const screeningDate = item.screening_data?.submission_date;
+          const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+          return agencyMatch && submissionYear === currentYear;
+        })
+        .map(transformGyalsungData);
+    }
+  } catch (error) {
+    console.error('Error fetching report data:', error);
+  }
 };
 
 const severityText = (value) => {
@@ -431,26 +455,36 @@ const severityText = (value) => {
     blue: 'Mild',
     green: 'None',
     yellow: 'Moderate',
-    grey: 'Not Applicable'
+    grey: 'None'
   };
-  return textMapping[value] || 'Not Applicable'; 
+  return textMapping[value] || 'None';
 };
 
 const severityClass = (value) => {
   const severityMapping = {
     red: 'danger',
-    blue: 'info', 
+    blue: 'info',
     green: 'success',
     yellow: 'warning',
     grey: 'secondary'
   };
-  return severityMapping[value] || 'secondary'; 
+  return severityMapping[value] || 'secondary';
 };
 
 onMounted(() => {
-  getUserDetailsFromStorage();
+  const { role } = getUserDetailsFromStorage();
+
+  if (role === 'school_counselor') {
+    isSchoolCounselor.value = true;
+  } else if (role === 'clinical_counselor') {
+    isClinicalCounselor.value = true;
+  } else if (role === 'gyalsung_counselor') {
+    isGyalsungCounselor.value = true;
+  }
+
   fetchReportDataFromAPI();
 });
+
 </script>
 
 

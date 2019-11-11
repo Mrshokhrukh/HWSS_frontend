@@ -190,6 +190,8 @@ const router = useRouter();
 const storedResponses = ref({});
 const assistq2substances = ref([]);
 const componentKey = ref(0);
+const disabledSubstances = reactive({});
+
 
 const testResponses = reactive({
     responses: [],
@@ -359,22 +361,14 @@ watch(currentQuestionIndex, (newIndex) => {
             }
         }
     }
+
     if (currentQuestion.value.text === "In the past three months, how often have you used:") {
         setTimeout(() => {
             runAssistQ2Logic();
         }, 800);
     }
-    if (
-        currentQuestion.value.text ===
-        "Has a friend or relative or anyone else ever expressed concern (or worry) about your use of (FIRST DRUG, SECOND DRUG, ETC.)" ||
-        currentQuestion.value.text ===
-        "Has a friend or relative or anyone else ever expressed concern (or worry) about your use?"
-    ) {
-        assistq2substances.value.forEach((substance) => {
-            substance.disabled = false;
-        });
-    }
 });
+
 
 const handleStorageChange = () => {
     const updatedAnsweredSubstances = JSON.parse(
@@ -665,22 +659,9 @@ const progressPercentage = computed(() => {
 function handleAnswerSelection(option, substance) {
     const rawOption = toRaw(option);
 
-    if (rawOption.id === 166) {
-
-        // Normalize substance name for comparison
+    if (currentQuestion.value.id === 49 && rawOption.id === 166) {
         const normalizedSubstance = substance.toLowerCase().trim();
-
-        // Find the index of the substance in the assistq2substances array
-        const index = assistq2substances.value.findIndex(
-            (sub) => sub.substance.toLowerCase().trim() === normalizedSubstance
-        );
-
-        // If the substance is found, update its disabled property to true
-        if (index !== -1) {
-            assistq2substances.value[index].disabled = true;
-            assistq2substances.value[index].selectedOption = rawOption.option;
-        }
-
+        disabledSubstances[normalizedSubstance] = true;
     }
 
     if (currentQuestionSetName.value === "ASSIST") {
@@ -1081,16 +1062,11 @@ function runAssistQ2Logic() {
         const updatedSubstances = [];
         rows.forEach((row) => {
             const substanceName = row.querySelector("td:first-child").innerText.trim();
-            const options = [];
-            row.querySelectorAll('input[type="radio"]').forEach((input) => {
-                options.push({
-                    id: input.value,
-                    option: input.nextSibling.textContent.trim(),
-                });
-            });
+            const normalizedSubstance = substanceName.toLowerCase().trim();
+
             updatedSubstances.push({
                 substance: substanceName,
-                disabled: false,
+                disabled: disabledSubstances[normalizedSubstance] || false,
             });
         });
 
@@ -1099,10 +1075,13 @@ function runAssistQ2Logic() {
 }
 
 const isSubstanceDisabled = (substance) => {
-    const foundSubstance = assistq2substances.value.find(
-        (sub) => sub.substance.toLowerCase() === substance.toLowerCase()
-    );
-    return foundSubstance ? foundSubstance.disabled : false;
+    const disabledQuestionIds = [49, 50, 51, 52, 56, 57, 58];
+    if (disabledQuestionIds.includes(currentQuestion.value.id)) {
+        const normalizedSubstance = substance.toLowerCase().trim();
+        return disabledSubstances[normalizedSubstance] || false;
+    } else {
+        return false;
+    }
 };
 
 function saveTextResponse(questionId) {
