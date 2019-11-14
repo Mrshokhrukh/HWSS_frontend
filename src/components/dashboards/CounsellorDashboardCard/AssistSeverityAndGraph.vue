@@ -9,23 +9,17 @@
               <h4 class="text-center mb-0 text-white">Substance Use</h4>
             </div>
             <div class="card-body d-flex flex-column">
-              <button 
-                :class="buttonClass('risk')"
-                @click="handleSubstanceRiskClick">
+              <button :class="buttonClass('risk')" @click="handleSubstanceRiskClick">
                 <h2 class="mb-0">{{ totalRiskUsers }}</h2>
                 <p class="mb-0">Substance Risk Levels</p>
               </button>
 
-              <button 
-                :class="buttonClass('lifetime')"
-                @click="handleLifetimeUsersClick">
+              <button :class="buttonClass('lifetime')" @click="handleLifetimeUsersClick">
                 <h2 class="mb-0">{{ totalLifetimeUsers }}</h2>
                 <p class="mb-0">Lifetime Users</p>
               </button>
 
-              <button 
-                :class="buttonClass('active')"
-                @click="handleActiveUsersClick">
+              <button :class="buttonClass('active')" @click="handleActiveUsersClick">
                 <h2 class="mb-0">{{ totalActiveUsers }}</h2>
                 <p class="mb-0">Active Users</p>
               </button>
@@ -89,13 +83,6 @@ const hasData = computed(() => {
   return props.data.total > 0 && Object.keys(props.data.substances).length > 0;
 });
 
-// Updated color scheme with semi-transparency
-const CHART_COLORS = {
-  lowRisk: 'rgba(43, 101, 111, 0.7)',    // Main theme color
-  moderateRisk: 'rgba(86, 130, 137, 0.7)', // Lighter variation
-  highRisk: 'rgba(29, 72, 81, 0.7)'      // Darker variation
-};
-
 // Chart rendering
 const displayChart = (type = 'risk') => {
   if (!chartCanvas.value) return;
@@ -118,13 +105,21 @@ const displayChart = (type = 'risk') => {
 
   if (!hasData.value) return;
 
-  const substances = Object.keys(props.data.substances);
+  // Sort substances alphabetically
+  const substances = Object.keys(props.data.substances).sort((a, b) => a.localeCompare(b));
+
+  const CHART_COLORS = {
+    lowRisk: 'rgba(43,101,111)',     // Cool blue
+    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange
+    highRisk: 'rgba(203, 67, 53, 0.7)'       // Deep red
+  };
+
   const datasets = [
     {
       label: 'Low Risk',
       data: substances.map(substance => props.data.substances[substance]?.low || 0),
       backgroundColor: CHART_COLORS.lowRisk,
-      borderColor: 'rgba(43, 101, 111, 1)',
+      borderColor: 'rgba(43,101,111, 1)',
       borderWidth: 1,
       borderRadius: 8,
       barPercentage: 0.8,
@@ -133,7 +128,7 @@ const displayChart = (type = 'risk') => {
       label: 'Moderate Risk',
       data: substances.map(substance => props.data.substances[substance]?.moderate || 0),
       backgroundColor: CHART_COLORS.moderateRisk,
-      borderColor: 'rgba(86, 130, 137, 1)',
+      borderColor: 'rgba(229, 149, 61, 1)',
       borderWidth: 1,
       borderRadius: 8,
       barPercentage: 0.8,
@@ -142,7 +137,7 @@ const displayChart = (type = 'risk') => {
       label: 'High Risk',
       data: substances.map(substance => props.data.substances[substance]?.high || 0),
       backgroundColor: CHART_COLORS.highRisk,
-      borderColor: 'rgba(29, 72, 81, 1)',
+      borderColor: 'rgba(203, 67, 53, 1)',
       borderWidth: 1,
       borderRadius: 8,
       barPercentage: 0.8,
@@ -157,8 +152,8 @@ const displayChart = (type = 'risk') => {
     },
     options: {
       scales: {
-        y: {
-          beginAtZero: true,
+        x: {
+          stacked: true,
           grid: {
             display: false
           },
@@ -170,8 +165,9 @@ const displayChart = (type = 'risk') => {
             color: 'rgba(43, 101, 111, 0.8)'
           }
         },
-        x: {
+        y: {
           stacked: true,
+          beginAtZero: true,
           grid: {
             display: false
           },
@@ -326,18 +322,13 @@ onMounted(() => {
   border-radius: 0 0 1rem 1rem;
 }
 
-.loading-container, .no-data-container {
+.loading-container,
+.no-data-container {
   min-height: 400px;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 1rem;
   border: none;
 }
-
-
-
-
-
-
 
 .btn:hover {
   transform: translateY(-2px);

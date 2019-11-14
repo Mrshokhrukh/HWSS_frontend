@@ -28,33 +28,27 @@ import RescreeningList from "@/components/dashboards/counselorMonitor/counselorM
 import ServiceAndTreatmentList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/ServiceAndTreatmentList.vue";
 import ReferralList from "@/components/dashboards/counselorMonitor/counselorMonitorCards/ReferralList.vue";
 
-// Default tab is set to ServiceAndTreatmentList
 const activeTab = ref('ServiceAndTreatmentList');
 
-// Tab configuration
 const tabs = [
     { key: 'RescreeningList', label: 'Rescreening', component: RescreeningList },
     { key: 'ServiceAndTreatmentList', label: 'Service & Treatment', component: ServiceAndTreatmentList },
     { key: 'ReferralList', label: 'Referrals', component: ReferralList }
 ];
 
-// User role from localStorage
 const userRole = ref(null);
 
-// Fetch user role from localStorage and set default tab if necessary
 onMounted(() => {
     const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
     if (userDetails && userDetails.user) {
         userRole.value = userDetails.user.role;
     }
-    
-    // If the role is clinical_counselor, default the tab to ServiceAndTreatmentList
+
     if (userRole.value === 'clinical_counselor') {
         activeTab.value = 'ServiceAndTreatmentList';
     }
 });
 
-// Filter out Rescreening tab if role is clinical_counselor
 const filteredTabs = computed(() => {
     if (userRole.value === 'clinical_counselor') {
         return tabs.filter(tab => tab.key !== 'RescreeningList');
@@ -62,12 +56,10 @@ const filteredTabs = computed(() => {
     return tabs;
 });
 
-// Change the active tab
 const changeTab = (tabName) => {
     activeTab.value = tabName;
 };
 
-// Compute the active component based on the active tab
 const activeComponent = computed(() => {
     const currentTab = filteredTabs.value.find(tab => tab.key === activeTab.value);
     return currentTab ? currentTab.component : null;
@@ -118,7 +110,7 @@ const activeComponent = computed(() => {
 
 .fade-enter-active,
 .fade-leave-active {
-    transition: opacity 0.3s ease;
+    transition: opacity 0.1s ease;
 }
 
 .fade-enter-from,

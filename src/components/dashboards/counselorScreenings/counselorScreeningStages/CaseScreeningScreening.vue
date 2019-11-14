@@ -48,6 +48,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import endpoints from '@/api';
+import { getUserScreenedData, setUserScreenedData } from '@/indexedDBHelper';
 
 const router = useRouter();
 
@@ -134,10 +135,7 @@ const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdCaseBa
 
 const submitAssessments = async () => {
     try {
-
         const userId = ClientUserIdCaseBase;
-
-        // Gather data from localStorage
         const getDataFromLocalStorage = (key) => {
             try {
                 const data = localStorage.getItem(`${key}_set_counselor_screening`);
@@ -173,6 +171,7 @@ const submitAssessments = async () => {
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
 
         clearLocalStorageData();
+        await incrementUserScreenedToday();
 
         // Show success message
         Swal.fire({
@@ -197,6 +196,27 @@ const submitAssessments = async () => {
             confirmButtonText: 'OK'
         });
     }
+};
+
+const incrementUserScreenedToday = async () => {
+  const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+  const userId = userDetailsStore ? userDetailsStore.user.id : null;
+
+  if (userId) {
+    const userData = await getUserScreenedData(userId);
+    const today = new Date().toLocaleDateString();
+
+    if (userData && userData.screeningDate === today) {
+      userData.count += 1;
+    } else {
+      userData.count = 1;
+      userData.screeningDate = today;
+    }
+
+    await setUserScreenedData(userId, userData);
+  } else {
+    console.error('User ID not found, cannot increment userScreenedToday.');
+  }
 };
 
 const calculateAssistRiskSeverity = (assistData) => {

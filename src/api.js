@@ -5,8 +5,8 @@ function getBaseUrl() {
     const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
     return `${apiProtocol}://${apiHost}:${apiPort}`;
   } else {
-    return import.meta.env.VITE_PRODUCTION_API_URL;
-    // return 'http://localhost:8123';
+    // return import.meta.env.VITE_PRODUCTION_API_URL;
+    return 'http://localhost:8123';
   }
 }
 
@@ -89,6 +89,7 @@ const endpoints = {
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
   getSUDData: `${measurementBaseUrl}/get-sud-data/`,//life time use current
   getSchoolEnvData: `${measurementBaseUrl}/get-school-env-data/`,
+  getDiagnosis: `${measurementBaseUrl}/diagnosis/`,
 
   // Monitoring endpoints
   getRescreeningList: `${monitoringBaseUrl}/check-rescreening-flags/`,

@@ -142,6 +142,15 @@
 
                                 <div class="info-section">
                                     <div class="severity-section">
+                                        <h3 class="severity-section-title">Past Mental Health Records</h3>
+                                        <ul>
+                                            <li v-for="(diagnosis, index) in selectedUser?.diagnosis" :key="index">
+                                                {{ diagnosis }}
+                                            </li>
+                                        </ul>
+                                        <p v-if="!selectedUser?.diagnosis?.length">No diagnosis available.</p>
+                                    </div>
+                                    <div class="severity-section">
                                         <h3 class="severity-section-title">Mental Health Severity</h3>
                                         <div class="severity-pills">
                                             <div class="severity-pill"
@@ -356,7 +365,9 @@ import Swal from 'sweetalert2';
 import AutoComplete from 'primevue/autocomplete';
 
 const showModal = ref(false);
-const selectedUser = ref(null);
+const selectedUser = ref({
+    diagnosis: []
+});
 const officialOptions = ref([]);
 const filteredOfficials = ref([]);
 const selfRole = ref('');
@@ -449,26 +460,12 @@ const getSeverityClass = (severity) => {
         case 'mild':
         case 'low risk':
             return 'risk-low';
+        case 'no risk':
+            return 'risk-low';
         default:
             return '';
     }
 };
-
-// const filterSubstances = (assistData) => {
-//     if (!assistData) return {};
-
-//     const substances = {};
-//     Object.keys(assistData).forEach(key => {
-//         if (key.endsWith('_measurement')) {
-//             const substanceName = key.replace('_measurement', '');
-//             substances[substanceName] = {
-//                 measurement: assistData[key],
-//                 flag: assistData[`${substanceName}_flag`]
-//             };
-//         }
-//     });
-//     return substances;
-// };
 
 const filterNonInjectionSubstances = (assistData) => {
     if (!assistData) return {};
@@ -536,7 +533,7 @@ const getServiceList = async () => {
         hasError.value = false;
         const response = await axios.get(endpoints.newServiceAndTreatment);
         const currentYear = new Date().getFullYear();
-        
+
         rowData.value = response.data.filter(row => {
             const agencyMatch =
                 row?.user?.active_agency?.agency_name?.trim().toLowerCase() === myAgency.value.trim().toLowerCase();
@@ -545,7 +542,6 @@ const getServiceList = async () => {
 
             return agencyMatch && submissionYear === currentYear;
         });
-        console.log("Filtered Rows:", rowData.value);
     } catch (error) {
         hasError.value = true;
         console.error('Error fetching data:', error);
@@ -553,6 +549,7 @@ const getServiceList = async () => {
         isLoading.value = false;
     }
 };
+
 
 watchEffect(async () => {
     if (selectedUser.value && selectedUser.value.refer_to) {
@@ -569,10 +566,12 @@ watchEffect(async () => {
     }
 });
 
-const viewDetails = (user) => {
+const viewDetails = async (user) => {
     selectedUser.value = user;
     showModal.value = true;
+    await fetchUserdiagnosis(user.user.id);
 };
+
 const handleModalClose = () => {
     selectedUser.value = null;
     showModal.value = false;
@@ -666,8 +665,7 @@ const referCase = async () => {
         referData: {
             referred_by: counselorId,
             referred_to_name: referredToName,
-            // Fix: Use the ServiceAndTreatment record's ID instead of user's ID
-            user: selectedUserData.user.id  // Changed from selectedUserData.id to selectedUserData.user.id
+            user: selectedUserData.user.id
         },
     };
 
@@ -714,6 +712,20 @@ const referCase = async () => {
                 });
         }
     });
+};
+
+const fetchUserdiagnosis = async (userId) => {
+    try {
+        const response = await axios.get(`${endpoints.getDiagnosis}${userId}/`);
+        if (response.status === 200 && response.data) {
+            selectedUser.value.diagnosis = response.data.diagnosis || [];
+        } else {
+            selectedUser.value.diagnosis = ["No diagnosis"];
+        }
+    } catch (error) {
+        console.error('Error fetching diagnosis:', error);
+        selectedUser.value.diagnosis = ["Error fetching diagnosis"];
+    }
 };
 
 onMounted(() => {

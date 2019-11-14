@@ -133,6 +133,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import endpoints from '@/api';
+import { getUserScreenedData, setUserScreenedData } from '@/indexedDBHelper';
 
 const emit = defineEmits(['proceedToSelectTools']);
 
@@ -159,13 +160,21 @@ const dzongkhags = [
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
-const resetIfNewDay = () => {
-    const today = new Date().toLocaleDateString();
-    const storedDate = localStorage.getItem(`screeningDate_${userId}`);
+const userScreenedToday = ref(0);
 
-    if (!storedDate || storedDate !== today) {
-        resetUserScreenedToday();
-        localStorage.setItem(`screeningDate_${userId}`, today);
+const resetIfNewDay = async () => {
+    const today = new Date().toLocaleDateString();
+    const userData = await getUserScreenedData(userId);
+
+    if (!userData || userData.screeningDate !== today) {
+        // Reset the count to 0 and update the date
+        await setUserScreenedData(userId, {
+            count: 0,
+            screeningDate: today,
+        });
+        userScreenedToday.value = 0;
+    } else {
+        userScreenedToday.value = userData.count;
     }
 };
 
@@ -211,9 +220,6 @@ const resetUserScreenedToday = () => {
 if (!localStorage.getItem(`userScreenedToday_${userId}`)) {
     resetUserScreenedToday();
 }
-
-// Define reactive variable for userScreenedToday
-const userScreenedToday = ref(0);
 
 // Watch for changes in userScreenedToday and update local storage accordingly
 watch(userScreenedToday, (newValue) => {
@@ -265,33 +271,9 @@ const showAlert = () => {
         icon: 'warning',
         title: 'Daily Limit Reached',
         text: 'You have reached the maximum limit for screening today.',
-        showConfirmButton: true
+        showConfirmButton: true,
     });
 };
-
-// Increment the userScreenedToday counter on "Proceed to Select Tools" button click
-const incrementOnButtonClicked = () => {
-    if (!isFormDeactivated.value) {
-        incrementUserScreenedToday();
-    } else {
-        showAlert();
-    }
-};
-
-// Define a function to increment the userScreenedToday counter
-const incrementUserScreenedToday = () => {
-    const userData = JSON.parse(localStorage.getItem(`userScreenedToday_${userId}`));
-
-    if (userData.count < maxUsersPerDay) {
-        userScreenedToday.value = userData.count + 1;
-        userData.count += 1;
-        localStorage.setItem(`userScreenedToday_${userId}`, JSON.stringify(userData));
-    } else {
-        showAlert();
-        disableFormFields(); // Disable the form fields when the limit is reached
-    }
-};
-
 
 const submitForm = async () => {
     if (!validateCID(CID.value)) {
@@ -406,12 +388,10 @@ watch(DOB, (newValue) => {
 
 const proceedToSelectTools = async () => {
     try {
-        const responseData = await submitForm(); // Wait for form submission
-        if (responseData) { // Check if form submission was successful
+        const responseData = await submitForm();
+        if (responseData) {
             emit('proceedToSelectTools');
-            incrementOnButtonClicked();
         } else {
-            // Handle case where form submission failed
             console.error('Form submission failed');
         }
     } catch (error) {
@@ -419,11 +399,10 @@ const proceedToSelectTools = async () => {
     }
 };
 
-
 const disableFormFields = () => {
     const form = document.querySelector('form');
     const inputFields = form.querySelectorAll('input, select, textarea, button');
-    inputFields.forEach(field => {
+    inputFields.forEach((field) => {
         field.disabled = true;
     });
 };
@@ -434,15 +413,11 @@ watch(isFormDeactivated, (newValue) => {
     }
 });
 
-onMounted(() => {
-    // incrementUserScreenedToday();
-    resetIfNewDay();
-    const userData = JSON.parse(localStorage.getItem(`userScreenedToday_${userId}`));
-    if (userData) {
-        userScreenedToday.value = userData.count;
-        if (userScreenedToday.value === 10) {
-            showAlert()
-        }
+onMounted(async () => {
+    await resetIfNewDay();
+    if (userScreenedToday.value >= maxUsersPerDay) {
+        showAlert();
+        disableFormFields();
     }
 });
 

@@ -6,18 +6,16 @@
 
         <div class="questions-container">
             <!-- First two static questions -->
-            <div class="question-card mb-4 p-4 rounded-lg shadow-sm" v-for="(question, index) in [
-                'Feeling nervous, anxious, or on edge',
-                'Not being able to stop or control worrying'
-            ]" :key="index">
+            <div v-for="(question, index) in staticQuestions" :key="index"
+                class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
                     <h6 class="question-text mb-3">{{ question }}</h6>
                     <div class="options-grid">
-                        <div v-for="(option, optIndex) in currentQuestion[0].answers" :key="option.id"
+                        <div v-for="option in currentQuestion[0]?.answers || []" :key="option.id"
                             class="option-item text-center">
                             <label class="radio-label">
-                                <input type="radio" :value="optIndex" :v-model="index === 0 ? question1 : question2"
-                                    required class="radio-input" />
+                                <input type="radio" :value="option.points" v-model="staticAnswers[index]" required
+                                    class="radio-input" />
                                 <span class="option-text">{{ option.option }}</span>
                             </label>
                         </div>
@@ -73,14 +71,18 @@ import { ref, computed, inject } from 'vue';
 const emit = defineEmits(['goToNext', 'goBack']);
 
 // Define reactive variables for storing selected options for static questions
-const question1 = ref(null);
-const question2 = ref(null);
+const staticQuestions = [
+    'Feeling nervous, anxious, or on edge',
+    'Not being able to stop or control worrying'
+];
+
+const staticAnswers = ref([null, null]);
 
 // Compute total score based on selected options for all questions
 const totalScore = computed(() => {
     let score = 0;
-    score += parseInt(question1.value || 0);
-    score += parseInt(question2.value || 0);
+    score += parseInt(staticAnswers.value[0] || 0);
+    score += parseInt(staticAnswers.value[1] || 0);
 
     for (const text of currentQuestion.value) {
         const selectedOption = text.selectedOption;
@@ -94,12 +96,24 @@ const totalScore = computed(() => {
 
 const handleAnswerSelection = (option, text) => {
     text.selectedOption = option;
-}
+};
 
-const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
+const counselorScreeningQuestions = inject('counselorScreeningQuestions');
 
-const currentQuestion = ref(counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'GAD7').questions);
-
+const currentQuestion = computed(() => {
+    if (!counselorScreeningQuestions || !counselorScreeningQuestions.value) {
+        return [];
+    }
+    const caseScreening = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
+    if (!caseScreening) {
+        return [];
+    }
+    const gad7Set = caseScreening.question_sets.find(set => set.name === 'GAD7');
+    if (!gad7Set) {
+        return [];
+    }
+    return gad7Set.questions;
+});
 
 const GADQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
 
@@ -129,24 +143,31 @@ const interpretationClass = computed(() => {
 
 const proceed = () => {
     const responses = [];
-    for (const text of currentQuestion.value) {
-        const response = {
+
+    // Include static questions
+    staticQuestions.forEach((question, index) => {
+        responses.push({
+            question,
+            selectedOption: staticAnswers.value[index],
+            score: parseInt(staticAnswers.value[index] || 0)
+        });
+    });
+
+    // Include dynamic questions
+    currentQuestion.value.forEach(text => {
+        responses.push({
             question: text.text,
             selectedOption: text.selectedOption ? text.selectedOption.option : null,
             score: text.selectedOption ? text.selectedOption.points : 0
-        };
-        responses.push(response);
-    }
+        });
+    });
 
-    // Get total score and interpretation from computed properties
     const totalScoreValue = totalScore.value;
     const interpretationValue = interpretation.value;
 
-    // Save responses, total score, and interpretation to local storage
     const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
     localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
 
-    // Emit the goToNext event
     emit('goToNext', 'GAD7');
 };
 

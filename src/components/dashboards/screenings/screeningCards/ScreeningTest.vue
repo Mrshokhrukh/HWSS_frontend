@@ -792,17 +792,14 @@ function filterSubstances(substances) {
 }
 
 const jumpToNextQuestion = () => {
-    // Custom skip logic for specific "ASSIST" question
     if (currentQuestion.value.text === "In the past three months, how often have you used:") {
         const allSubstancesDisabled = assistq2substances.value.every(substance => substance.disabled);
         if (allSubstancesDisabled) {
-            // Skip 4 questions if all substances are disabled
             currentQuestionIndex.value += 4;
             return;
         }
     }
 
-    // Handle "ASSIST" set navigation with validation checks
     if (currentQuestionSetName.value === "ASSIST") {
         if (!checkInvalidInputs()) {
             const allSubstancesNo = Object.values(substanceAnswered).every(
@@ -817,7 +814,6 @@ const jumpToNextQuestion = () => {
         }
     }
 
-    // Move to the next question in sorted order
     currentQuestionIndex.value++;
 };
 
@@ -1037,7 +1033,7 @@ function flushStore() {
                 icon: "success",
                 timer: 500,
                 showConfirmButton: false
-            }).then(() => { 
+            }).then(() => {
                 router.push("/student-dashboard/screening");
             });
         }

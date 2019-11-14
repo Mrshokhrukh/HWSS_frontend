@@ -6,18 +6,16 @@
 
         <div class="questions-container">
             <!-- First two static questions -->
-            <div class="question-card mb-4 p-4 rounded-lg shadow-sm" v-for="(question, index) in [
-                'Little interest or pleasure in doing things',
-                'Feeling down, depressed or hopeless'
-            ]" :key="index">
+            <div v-for="(question, index) in staticQuestions" :key="index"
+                class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
                     <h6 class="question-text mb-3">{{ question }}</h6>
                     <div class="options-grid">
-                        <div v-for="(option, optIndex) in currentQuestion[0].answers" :key="option.id"
+                        <div v-for="option in currentQuestion[0]?.answers || []" :key="option.id"
                             class="option-item text-center">
                             <label class="radio-label">
-                                <input type="radio" :value="optIndex" :v-model="index === 0 ? question1 : question2"
-                                    required class="radio-input" />
+                                <input type="radio" :value="option.points" v-model="staticAnswers[index]" required
+                                    class="radio-input" />
                                 <span class="option-text">{{ option.option }}</span>
                             </label>
                         </div>
@@ -30,13 +28,12 @@
                 <div class="question-content">
                     <h6 class="question-text mb-3">{{ text.text }}</h6>
                     <div class="options-grid">
-                        <div v-for="option in currentQuestion[0].answers" :key="option.id"
+                        <div v-for="option in currentQuestion[0]?.answers || []" :key="option.id"
                             class="option-item text-center">
                             <label class="radio-label">
                                 <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
                                     :name="'question_' + text.id" required class="radio-input" />
                                 <span class="option-text">{{ option.option }}</span>
-                                <span class="d-none">{{ option.points }}</span>
                             </label>
                         </div>
                     </div>
@@ -72,16 +69,50 @@ import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 
-// Define reactive variables for storing selected options for static questions
-const question1 = ref(null);
-const question2 = ref(null);
+// Static questions and their answers
+const staticQuestions = [
+    'Little interest or pleasure in doing things',
+    'Feeling down, depressed or hopeless'
+];
 
-// Compute total score based on selected options for all questions
+// Store answers for static questions
+const staticAnswers = ref([null, null]);
+
+// Handle answer selection for dynamic questions
+const handleAnswerSelection = (option, text) => {
+    text.selectedOption = option;
+};
+
+// Retrieve PHQ questions
+const counselorScreeningQuestions = inject('counselorScreeningQuestions');
+
+const currentQuestion = computed(() => {
+    if (!counselorScreeningQuestions || !counselorScreeningQuestions.value) {
+        return [];
+    }
+    const caseScreening = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
+    if (!caseScreening) {
+        return [];
+    }
+    const phq9Set = caseScreening.question_sets.find(set => set.name === 'PHQ9');
+    if (!phq9Set) {
+        return [];
+    }
+    return phq9Set.questions;
+});
+
+// Define PHQ question text
+const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
+
+// Compute total score
 const totalScore = computed(() => {
     let score = 0;
-    score += parseInt(question1.value || 0);
-    score += parseInt(question2.value || 0);
 
+    // Sum static answers
+    score += parseInt(staticAnswers.value[0] || 0);
+    score += parseInt(staticAnswers.value[1] || 0);
+
+    // Sum dynamic question scores
     for (const text of currentQuestion.value) {
         const selectedOption = text.selectedOption;
         if (selectedOption) {
@@ -92,35 +123,22 @@ const totalScore = computed(() => {
     return score;
 });
 
-
-// Handle selection of answer for dynamic questions
-const handleAnswerSelection = (option, text) => {
-    text.selectedOption = option;
-};
-
-// Retrieve PHQ questions from injected data
-const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
-const currentQuestion = ref(counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'PHQ9').questions);
-
-// Define PHQ question
-const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
-
 // Compute interpretation based on total score
 const interpretation = computed(() => {
     if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
-        return 'Non or Minimal';
+        return 'None or Minimal';
     } else if (totalScore.value >= 5 && totalScore.value <= 9) {
         return 'Mild';
     } else if (totalScore.value >= 10 && totalScore.value <= 14) {
         return 'Moderate';
-    } else if (totalScore.value >= 15 && totalScore.value <= 18) {
+    } else if (totalScore.value >= 15 && totalScore.value <= 19) {
         return 'Moderately Severe';
     } else {
         return 'Severe';
     }
 });
 
-// Compute interpretation class based on total score
+// Compute interpretation class
 const interpretationClass = computed(() => {
     if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
         return 'bg-primary bg-opacity-50 text-primary';
@@ -138,27 +156,36 @@ const interpretationClass = computed(() => {
 // Proceed to the next step
 const proceed = () => {
     const responses = [];
-    for (const text of currentQuestion.value) {
-        const response = {
+
+    // Collect static question responses
+    staticQuestions.forEach((question, index) => {
+        responses.push({
+            question,
+            selectedOption: staticAnswers.value[index],
+            score: parseInt(staticAnswers.value[index] || 0)
+        });
+    });
+
+    // Collect dynamic question responses
+    currentQuestion.value.forEach(text => {
+        responses.push({
             question: text.text,
             selectedOption: text.selectedOption ? text.selectedOption.option : null,
             score: text.selectedOption ? text.selectedOption.points : 0
-        };
-        responses.push(response);
-    }
+        });
+    });
 
-    // Get total score and interpretation from computed properties
+    // Save responses, total score, and interpretation
     const totalScoreValue = totalScore.value;
     const interpretationValue = interpretation.value;
 
-    // Save responses, total score, and interpretation to local storage
     const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
     localStorage.setItem('PHQ_set_counselor_screening', JSON.stringify(data));
 
-    // Emit the goToNext event
     emit('goToNext', 'PHQ9');
 };
 </script>
+
 
 <style scoped>
 .phq-container {
