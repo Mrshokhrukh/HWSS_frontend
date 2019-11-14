@@ -664,6 +664,23 @@ function handleAnswerSelection(option, substance) {
         disabledSubstances[normalizedSubstance] = true;
     }
 
+    // After processing the answer, check if all substances are disabled
+    if (currentQuestion.value.id === 49) {
+        const allSubstancesDisabled = currentQuestion.value.substances.every((substance) => {
+            const normalizedSubstance = substance.toLowerCase().trim();
+            return disabledSubstances[normalizedSubstance];
+        });
+
+        if (allSubstancesDisabled) {
+            // Jump to question 53
+            const indexOfQuestion53 = questions.value.findIndex(q => q.id === 53);
+            if (indexOfQuestion53 !== -1) {
+                currentQuestionIndex.value = indexOfQuestion53;
+                return;
+            }
+        }
+    }
+
     if (currentQuestionSetName.value === "ASSIST") {
         logQuestionAndResponse(option, substance);
         updateSubstanceAnswered(option, substance);
@@ -792,11 +809,20 @@ function filterSubstances(substances) {
 }
 
 const jumpToNextQuestion = () => {
-    if (currentQuestion.value.text === "In the past three months, how often have you used:") {
-        const allSubstancesDisabled = assistq2substances.value.every(substance => substance.disabled);
+    if (currentQuestion.value.id === 49) {
+        // Check if all substances are disabled
+        const allSubstancesDisabled = currentQuestion.value.substances.every((substance) => {
+            const normalizedSubstance = substance.toLowerCase().trim();
+            return disabledSubstances[normalizedSubstance];
+        });
+
         if (allSubstancesDisabled) {
-            currentQuestionIndex.value += 4;
-            return;
+            // Jump to question 53
+            const indexOfQuestion53 = questions.value.findIndex(q => q.id === 53);
+            if (indexOfQuestion53 !== -1) {
+                currentQuestionIndex.value = indexOfQuestion53;
+                return;
+            }
         }
     }
 
