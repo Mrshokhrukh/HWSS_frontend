@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/indexedDBHelper.js
 export function openDatabase() {
     return new Promise((resolve, reject) => {

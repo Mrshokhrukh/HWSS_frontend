@@ -50,7 +50,7 @@
                             <div v-if="selectedUser" class="profile-card">
                                 <h4 class="profile-name">{{ selectedUser?.user?.first_name }} {{
                                     selectedUser?.user?.middle_name
-                                }} {{
+                                    }} {{
                                         selectedUser?.user?.last_name }}</h4>
                                 <ul class="profile-details">
                                     <li><strong>Age:</strong> {{ calculateAge(selectedUser?.user?.date_of_birth) }}</li>
@@ -171,11 +171,11 @@
                                     <div class="severity-section">
                                         <h3 class="severity-section-title">SUD Severity</h3>
                                         <div class="severity-pills">
-                                            <template v-if="selectedUser.screening_data.assist_data">
-                                                <div v-for="(value, key) in filterNonInjectionSubstances(selectedUser.screening_data.assist_data)"
-                                                    :key="key" class="severity-pill"
-                                                    :class="getRiskClass(value.measurement)">
-                                                    {{ formatSubstanceName(key) }}: {{ value.measurement }}
+                                            <template v-if="selectedUser.substanceRisks">
+                                                <div v-for="(value, key) in selectedUser.substanceRisks" :key="key"
+                                                    class="severity-pill" :class="getRiskClass(value.measurement)">
+                                                    {{ formatSubstanceName(value.substanceName) }}: {{ value.measurement
+                                                    }}
                                                 </div>
                                             </template>
                                         </div>
@@ -184,14 +184,13 @@
                                     <div class="severity-section">
                                         <h3 class="severity-section-title">Drug Intake by Injection</h3>
                                         <div class="severity-pills">
-                                            <template
-                                                v-if="selectedUser.screening_data.assist_data?.injection_measurement">
+                                            <template v-if="selectedUser.injectionRisk !== 'None'">
                                                 <div class="severity-pill"
-                                                    :class="getRiskClass(selectedUser.screening_data.assist_data.injection_measurement)">
-                                                    Injection: {{
-                                                        selectedUser.screening_data.assist_data.injection_measurement }}
+                                                    :class="getRiskClass(selectedUser.injectionRisk.measurement)">
+                                                    Injection: {{ selectedUser.injectionRisk.measurement }}
                                                 </div>
                                             </template>
+                                            <p v-else>Injection: None</p>
                                         </div>
                                     </div>
                                 </div>
@@ -467,41 +466,74 @@ const getSeverityClass = (severity) => {
     }
 };
 
-const filterNonInjectionSubstances = (assistData) => {
-    if (!assistData) return {};
+const filterNonInjectionSubstances = (data) => {
+    if (!data) return {};
 
     const substances = {};
-    Object.keys(assistData).forEach(key => {
-        // Only include non-injection measurements
-        if (key.endsWith('_measurement') && !key.includes('injection')) {
-            const substanceName = key.replace('_measurement', '');
-            substances[substanceName] = {
-                measurement: assistData[key],
-                flag: assistData[`${substanceName}_flag`]
-            };
-        }
-    });
+
+    if (Array.isArray(data)) {
+        data.forEach(substance => {
+            const nameKey = substance.substance__name || substance.substance_name;
+            if (nameKey && nameKey !== 'Injection') {
+                substances[nameKey] = {
+                    measurement: substance.risk_flag,
+                    substanceName: nameKey
+                };
+            }
+        });
+    } else if (typeof data === 'object') {
+        Object.keys(data).forEach(key => {
+            if (key.endsWith('_measurement') && !key.includes('injection')) {
+                const substanceName = key.replace('_measurement', '');
+                substances[substanceName] = {
+                    measurement: data[key],
+                    substanceName: formatSubstanceName(substanceName)
+                };
+            }
+        });
+    }
+
     return substances;
 };
-const formatSubstanceName = (name) => {
-    return name
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-};
 
-const getRiskClass = (measurement) => {
-    switch (measurement?.toLowerCase()) {
-        case 'high risk':
-            return 'risk-high';
-        case 'moderate risk':
-            return 'risk-moderate';
-        case 'low risk':
-            return 'risk-low';
-        default:
-            return '';
+const getSubstanceRisks = (user) => {
+    if (user.screening_data && user.screening_data.assist_data) {
+        return filterNonInjectionSubstances(user.screening_data.assist_data);
+    } else if (user.case_substance_risks) {
+        return filterNonInjectionSubstances(user.case_substance_risks);
+    } else if (user.event_substance_risks) {
+        return filterNonInjectionSubstances(user.event_substance_risks);
+    } else {
+        return {};
     }
 };
+
+const formatSubstanceName = (name) => {
+    if (!name) return '';
+    // Remove anything inside parentheses and trim extra spaces
+    const cleanName = name.replace(/\(.*?\)/g, '').trim();
+    // Split by spaces or hyphens and pick the first word to simplify
+    const simplifiedName = cleanName.split(/[\s-]+/).map(word => {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    });
+    return simplifiedName[0]; // Return only the first simplified word
+};
+
+
+const getRiskClass = (risk) => {
+    if (!risk) return '';
+    const riskLower = risk.toLowerCase();
+    if (riskLower.includes('severe') || riskLower.includes('high risk')) {
+        return 'risk-high';
+    } else if (riskLower.includes('moderate') || riskLower.includes('moderate risk')) {
+        return 'risk-moderate';
+    } else if (riskLower.includes('mild') || riskLower.includes('low risk') || riskLower.includes('none')) {
+        return 'risk-low';
+    } else {
+        return '';
+    }
+};
+
 
 const myAgency = ref('');
 
@@ -568,15 +600,65 @@ watchEffect(async () => {
 
 const viewDetails = async (user) => {
     selectedUser.value = user;
+    // Process the substance risks and store them
+    selectedUser.value.substanceRisks = getSubstanceRisks(user);
+    selectedUser.value.injectionRisk = getInjectionRisk(user);
     showModal.value = true;
     await fetchUserdiagnosis(user.user.id);
+};
+
+const getInjectionRisk = (user) => {
+    if (user.screening_data) {
+        const assistData = user.screening_data.assist_data;
+        if (assistData) {
+            if (assistData.injection_measurement) {
+                return {
+                    measurement: assistData.injection_measurement,
+                    flag: assistData.injection_flag
+                };
+            }
+            if (Array.isArray(assistData)) {
+                const injectionData = assistData.find(substance => 
+                    substance.substance__name?.toLowerCase().includes('injection')
+                );
+                if (injectionData) {
+                    return {
+                        measurement: injectionData.measurement || injectionData.risk_flag,
+                        flag: injectionData.risk_flag
+                    };
+                }
+            }
+        }
+    }
+    if (user.case_substance_risks) {
+        const injectionRisk = user.case_substance_risks.find(substance =>
+            substance.substance_name?.toLowerCase().includes('injection')
+        );
+        if (injectionRisk) {
+            return {
+                measurement: injectionRisk.risk_flag,
+                flag: injectionRisk.risk_flag
+            };
+        }
+    }
+    if (user.event_substance_risks) {
+        const injectionRisk = user.event_substance_risks.find(substance =>
+            substance.substance_name?.toLowerCase().includes('injection')
+        );
+        if (injectionRisk) {
+            return {
+                measurement: injectionRisk.risk_flag,
+                flag: injectionRisk.risk_flag
+            };
+        }
+    }
+    return "None";
 };
 
 const handleModalClose = () => {
     selectedUser.value = null;
     showModal.value = false;
 };
-
 
 const formatDate = (rowData) => {
     return new Date(rowData.date).toLocaleDateString();

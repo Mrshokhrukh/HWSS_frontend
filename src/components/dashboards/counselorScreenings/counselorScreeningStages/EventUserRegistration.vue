@@ -11,10 +11,10 @@
                     <h4 class="mb-3">Client Details</h4>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="CID" class="form-label">CID</label>
-                            <input type="number" class="form-control hwss-primary" id="CID" v-model="CID" required
-                                min="11">
+                            <label for="CID" class="form-label">CID / Student Code / Work Permit</label>
+                            <input type="text" class="form-control hwss-primary" id="CID" v-model="CID">
                         </div>
+
                         <div class="col-md-4 mb-3">
                             <label for="clientFullName" class="form-label">Full Name</label>
                             <input type="text" class="form-control hwss-primary" id="clientFullName"
@@ -70,7 +70,7 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="email" class="form-label">Email address</label>
-                            <input type="email" class="form-control hwss-primary" id="email" v-model="email" required>
+                            <input type="email" class="form-control hwss-primary" id="email" v-model="email">
                         </div>
                     </div>
                 </div>
@@ -116,14 +116,9 @@ const showParentalStatus = computed(() => {
     return userRole.value !== 'clinical_counselor';
 });
 
-const validateCID = (cid) => {
-    const cidPattern = /^[1235]\d{10}$/;
-    return cidPattern.test(cid);
-};
 
 const isProceedButtonActive = computed(() => {
-    return validateCID(CID.value) &&
-        clientFullName.value !== '' &&
+    return clientFullName.value !== '' &&
         DOB.value !== '' &&
         gender.value !== '' &&
         (showParentalStatus.value ? parentalStatus.value !== '' : true) &&
@@ -134,15 +129,6 @@ const isProceedButtonActive = computed(() => {
 });
 
 const submitForm = async () => {
-    if (!validateCID(CID.value)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid CID',
-            text: 'CID must be 11 digits and start with 1, 2, 3, or 5.',
-        });
-        return;
-    }
-
     if (!showParentalStatus.value) {
         parentalStatus.value = "None";
     }
@@ -155,6 +141,8 @@ const submitForm = async () => {
         if (getCounselorName && getCounselorName.user) {
             const userAgency = getCounselorName.agency?.agencyName || 'Unknown Agency';
             const userAgencyCode = getCounselorName.agency?.agencyCode || 'Unknown Code';
+
+            const fallbackEmail = email.value && email.value.trim() !== '' ? email.value : 'no_email@gmail.com';
             const formData = {
                 userData: {
                     username: username,
@@ -165,7 +153,7 @@ const submitForm = async () => {
                     parentalStatus: parentalStatus.value,
                     currentAddress: currentAddress.value,
                     phoneNumber: phoneNumber.value,
-                    email: email.value,
+                    email: fallbackEmail,
                     counselorName: `${getCounselorName.user.firstName} ${getCounselorName.user.lastName}`,
                     dzongkhag: dzongkhag.value,
                 },
@@ -279,13 +267,6 @@ watch(DOB, (newValue) => {
         calculatedAge.value;
     }
 });
-
-watch(CID, (newCID) => {
-    if (newCID && !validateCID(newCID)) {
-        console.warn('CID must be 11 digits and start with 1, 2, 3, or 5');
-    }
-});
-
 </script>
 
 <style scoped>

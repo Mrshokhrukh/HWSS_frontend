@@ -61,7 +61,7 @@
                 <div class="form-grid pb-4">
                     <div class="form-group">
                         <label for="CID">CID / Student Code / Work Permit</label>
-                        <input type="text" id="CID" v-model="CID" required min="11">
+                        <input type="text" id="CID" v-model="CID" required>
                     </div>
 
                     <div class="form-group">
@@ -182,8 +182,6 @@ const showParentalStatus = computed(() => {
     return userRole.value !== 'clinical_counselor';
 });
 
-const validateCID = (cid) => /^[1235]\d{10}$/.test(cid);
-
 const calculatedAge = computed(() => {
     if (!DOB.value) return '';
     const birthDate = new Date(DOB.value);
@@ -235,7 +233,6 @@ const isAllFieldsFilled = computed(() => {
         caseName.value !== '' &&
         purpose.value !== '' &&
         dzongkhag.value !== '' &&
-        validateCID(CID.value) &&
         clientFullName.value !== '' &&
         DOB.value !== '' &&
         gender.value !== '' &&
@@ -276,14 +273,6 @@ const showAlert = () => {
 };
 
 const submitForm = async () => {
-    if (!validateCID(CID.value)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Invalid CID',
-            text: 'CID must be 11 digits and start with 1, 2, 3, or 5.',
-        });
-        return;
-    }
     if (!showParentalStatus.value) {
         parentalStatus.value = "None"; // Default value for clinical counselors
     }
@@ -368,7 +357,6 @@ const submitForm = async () => {
         }
     }
 };
-
 
 const makeUserName = () => {
     return new Promise((resolve) => {

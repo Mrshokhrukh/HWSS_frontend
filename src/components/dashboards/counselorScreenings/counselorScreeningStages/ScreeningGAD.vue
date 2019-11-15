@@ -5,14 +5,13 @@
         </div>
 
         <div class="questions-container">
-            <!-- First two static questions -->
+            <!-- Static questions -->
             <div v-for="(question, index) in staticQuestions" :key="index"
                 class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
                     <h6 class="question-text mb-3">{{ question }}</h6>
                     <div class="options-grid">
-                        <div v-for="option in currentQuestion[0]?.answers || []" :key="option.id"
-                            class="option-item text-center">
+                        <div v-for="option in defaultAnswers" :key="option.id" class="option-item text-center">
                             <label class="radio-label">
                                 <input type="radio" :value="option.points" v-model="staticAnswers[index]" required
                                     class="radio-input" />
@@ -24,17 +23,15 @@
             </div>
 
             <!-- Dynamic questions -->
-            <div v-for="text in currentQuestion" :key="text" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+            <div v-for="text in currentQuestion" :key="text.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
                     <h6 class="question-text mb-3">{{ text.text }}</h6>
                     <div class="options-grid">
-                        <div v-for="option in currentQuestion[0].answers" :key="option.id"
-                            class="option-item text-center">
+                        <div v-for="option in defaultAnswers" :key="option.id" class="option-item text-center">
                             <label class="radio-label">
                                 <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
                                     :name="'question_' + text.id" required class="radio-input" />
                                 <span class="option-text">{{ option.option }}</span>
-                                <span class="d-none">{{ option.points }}</span>
                             </label>
                         </div>
                     </div>
@@ -45,7 +42,7 @@
             <div class="results-card p-4 rounded-lg shadow-sm">
                 <div class="result-row mb-2">
                     <strong>Total:</strong>
-                    <span class="result-value">{{ !totalScore ? '0' : totalScore }}</span>
+                    <span class="result-value">{{ totalScore }}</span>
                 </div>
                 <div class="result-row">
                     <strong>Interpretation:</strong>
@@ -56,9 +53,8 @@
             </div>
         </div>
 
-        <!-- Navigation buttons -->
         <div class="footer d-flex mt-4">
-            <button class="nav-button" @click="goBack">Back</button>
+            <button class="nav-button" @click="$emit('goBack')">Back</button>
             <div class="flex-grow-1"></div>
             <button class="nav-button" @click="proceed">Next</button>
         </div>
@@ -70,59 +66,77 @@ import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 
-// Define reactive variables for storing selected options for static questions
+// Initialize static questions with default data to prevent blank screen
 const staticQuestions = [
     'Feeling nervous, anxious, or on edge',
     'Not being able to stop or control worrying'
 ];
 
+const defaultAnswers = [
+    { id: 0, option: "Not at all", points: 0 },
+    { id: 1, option: "Several days", points: 1 },
+    { id: 2, option: "More than half the days", points: 2 },
+    { id: 3, option: "Nearly everyday", points: 3 }
+];
+
+// Define fallback questions in case injection fails
+const fallbackQuestions = [
+    { id: 14, text: 'Worrying too much about different things', answers: defaultAnswers },
+    { id: 15, text: 'Trouble relaxing', answers: defaultAnswers },
+    { id: 16, text: 'Being so restless that it is hard to sit still', answers: defaultAnswers },
+    { id: 17, text: 'Becoming easily annoyed or irritable', answers: defaultAnswers },
+    { id: 18, text: 'Feeling afraid, as if something awful might happen', answers: defaultAnswers }
+];
+
 const staticAnswers = ref([null, null]);
+const counselorScreeningQuestions = inject('counselorScreeningQuestions', ref(null));
 
-// Compute total score based on selected options for all questions
-const totalScore = computed(() => {
-    let score = 0;
-    score += parseInt(staticAnswers.value[0] || 0);
-    score += parseInt(staticAnswers.value[1] || 0);
-
-    for (const text of currentQuestion.value) {
-        const selectedOption = text.selectedOption;
-        if (selectedOption) {
-            score += selectedOption.points;
-        }
-    }
-
-    return score;
-});
-
-const handleAnswerSelection = (option, text) => {
-    text.selectedOption = option;
-};
-
-const counselorScreeningQuestions = inject('counselorScreeningQuestions');
-
+// Computed property with fallback
 const currentQuestion = computed(() => {
-    if (!counselorScreeningQuestions || !counselorScreeningQuestions.value) {
-        return [];
+    if (!counselorScreeningQuestions?.value) {
+        return fallbackQuestions;
     }
+    
     const caseScreening = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
     if (!caseScreening) {
-        return [];
+        return fallbackQuestions;
     }
+    
     const gad7Set = caseScreening.question_sets.find(set => set.name === 'GAD7');
-    if (!gad7Set) {
-        return [];
+    if (!gad7Set?.questions) {
+        return fallbackQuestions;
     }
+    
     return gad7Set.questions;
 });
 
 const GADQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
 
+// Compute total score with null check
+const totalScore = computed(() => {
+    let score = 0;
+    
+    // Add static answers
+    score += parseInt(staticAnswers.value[0] || 0);
+    score += parseInt(staticAnswers.value[1] || 0);
+    
+    // Add dynamic answers
+    for (const text of currentQuestion.value) {
+        if (text.selectedOption) {
+            score += parseInt(text.selectedOption.points || 0);
+        }
+    }
+    
+    return score;
+});
+
 const interpretation = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
+    const score = totalScore.value;
+    if (score >= 0 && score <= 4 || score === null || isNaN(score)) {
         return 'Minimal';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
+    } else if (score >= 5 && score <= 9) {
         return 'Mild';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
+    } else if (score >= 10 && score <= 14) {
         return 'Moderate';
     } else {
         return 'Severe';
@@ -130,20 +144,27 @@ const interpretation = computed(() => {
 });
 
 const interpretationClass = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
+    const score = totalScore.value;
+    if (score >= 0 && score <= 4 || score === null || isNaN(score)) {
         return 'bg-primary bg-opacity-50 text-primary';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
+    } else if (score >= 5 && score <= 9) {
         return 'bg-success bg-opacity-50 text-success';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
+    } else if (score >= 10 && score <= 14) {
         return 'bg-warning bg-opacity-50 text-warning';
     } else {
         return 'bg-danger bg-opacity-50 text-danger';
     }
 });
 
+const handleAnswerSelection = (option, text) => {
+    if (text) {
+        text.selectedOption = option;
+    }
+};
+
 const proceed = () => {
     const responses = [];
-
+    
     // Include static questions
     staticQuestions.forEach((question, index) => {
         responses.push({
@@ -152,7 +173,7 @@ const proceed = () => {
             score: parseInt(staticAnswers.value[index] || 0)
         });
     });
-
+    
     // Include dynamic questions
     currentQuestion.value.forEach(text => {
         responses.push({
@@ -161,16 +182,16 @@ const proceed = () => {
             score: text.selectedOption ? text.selectedOption.points : 0
         });
     });
-
-    const totalScoreValue = totalScore.value;
-    const interpretationValue = interpretation.value;
-
-    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
+    
+    const data = {
+        responses,
+        totalScore: totalScore.value,
+        interpretation: interpretation.value
+    };
+    
     localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
-
     emit('goToNext', 'GAD7');
 };
-
 </script>
 
 <style scoped>

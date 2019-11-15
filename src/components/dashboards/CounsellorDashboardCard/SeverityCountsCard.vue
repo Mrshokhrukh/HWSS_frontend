@@ -287,17 +287,65 @@ const updateSeverityCounts = () => {
 
     filteredData.value.forEach(entry => {
       const screeningData = entry.screening_data;
+
       if (!screeningData) return;
 
-      const value = screeningData[item.field];
-      if (value !== undefined && value !== null) {
+      // Normalize the value based on the field type
+      let value = screeningData[item.field];
+      if (value === undefined || value === null) return;
+
+      // Handle different data formats
+      if (typeof value === 'string') {
+        try {
+          value = JSON.parse(value); // Parse JSON strings
+        } catch (error) {
+          console.warn(`Error parsing value for ${item.field}`, error);
+        }
+      }
+
+      if (Array.isArray(value)) {
+        // If it's an array, check each entry
+        value.forEach(subEntry => {
+          try {
+            if (item.threshold(subEntry)) {
+              count++;
+            }
+          } catch (error) {
+            console.error(`Error evaluating threshold for ${item.title} (array):`, error);
+          }
+        });
+      } else if (typeof value === 'object') {
+        // If it's an object, pass it directly to the threshold function
         try {
           if (item.threshold(value)) {
             count++;
           }
         } catch (error) {
-          console.error(`Error evaluating threshold for ${item.title}:`, error);
+          console.error(`Error evaluating threshold for ${item.title} (object):`, error);
         }
+      } else {
+        // For primitive values
+        try {
+          if (item.threshold(value)) {
+            count++;
+          }
+        } catch (error) {
+          console.error(`Error evaluating threshold for ${item.title} (primitive):`, error);
+        }
+      }
+
+      // Consider additional fields like case_substance_risks or event_substance_risks
+      if (item.field === 'assist_data') {
+        const assistRisks = entry.case_substance_risks || entry.event_substance_risks || [];
+        assistRisks.forEach(risk => {
+          try {
+            if (item.threshold(risk.risk_flag)) {
+              count++;
+            }
+          } catch (error) {
+            console.error(`Error evaluating threshold for assist_data risks:`, error);
+          }
+        });
       }
     });
 

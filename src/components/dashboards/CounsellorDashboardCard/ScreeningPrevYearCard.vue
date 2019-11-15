@@ -20,7 +20,7 @@
                     <Chart type="bar" :data="chartDisplayData" :options="chartOptions" style="height: 250px;"/>
                 </div>
                 <div v-else class="no-data-message text-center">
-                    <h6 class="py-4">No data found</h6>
+                    <h6 class="my-5 py-4">No data found</h6>
                 </div>
             </div>
             <div v-if="isSchoolCounselor" class="text-center">
@@ -246,7 +246,7 @@ const processData = (dataArray) => {
     const filteredData = dataArray.filter(item => {
         const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
         const screeningDate = item.screening_data?.submission_date;
-        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() - 1 : null;
         return agencyMatch && submissionYear === currentYear;
     });
 

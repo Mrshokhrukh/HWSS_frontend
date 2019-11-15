@@ -112,8 +112,8 @@
 
       <!-- Gyalsung Report Table (for gyalsung counselors) -->
       <div v-if="isGyalsungCounselor" class="table-container">
-        <DataTable :value="gyalsungData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
-          :sortOrder="1" class="custom-table">
+        <DataTable :value="filteredGyalsungData" :paginator="true" :rows="10" :resizableColumns="true"
+          sortField="username" :sortOrder="1" class="custom-table">
 
           <!-- Display user-related columns for Gyalsung reports -->
           <Column v-for="field in gyalsungTableFields" :key="field.key" :field="field.key" :header="field.header"
@@ -403,9 +403,56 @@ const getUserDetailsFromStorage = () => {
 
 // Add this computed property to filter data by current year and agency
 const filteredReportData = computed(() => {
-  return reportData.value || [];
+  if (!globalFilter.value || !reportData.value) {
+    return reportData.value || [];
+  }
+
+  const searchTerm = globalFilter.value.toLowerCase().trim();
+
+  return reportData.value.filter(item => {
+    // Search through all relevant fields
+    return (
+      // Basic info
+      (item.full_name?.toLowerCase().includes(searchTerm)) ||
+      (item.username?.toLowerCase().includes(searchTerm)) ||
+      (item.identity_number?.toLowerCase().includes(searchTerm)) ||
+      (item.mobile_number?.toLowerCase().includes(searchTerm)) ||
+      (item.ps_add_village?.toLowerCase().includes(searchTerm)) ||
+      // Scores
+      (item.phq9_score?.toLowerCase().includes(searchTerm)) ||
+      (item.gad7_score?.toLowerCase().includes(searchTerm)) ||
+      (item.suicidal_score?.toLowerCase().includes(searchTerm)) ||
+      (item.ace_score?.toLowerCase().includes(searchTerm)) ||
+      // Status fields
+      (item.assessment_status?.toLowerCase().includes(searchTerm)) ||
+      (item.case_status?.toLowerCase().includes(searchTerm)) ||
+      (item.counseling?.toLowerCase().includes(searchTerm)) ||
+      (item.follow_up?.toLowerCase().includes(searchTerm)) ||
+      (item.referred?.toLowerCase().includes(searchTerm))
+    );
+  });
 });
 
+const filteredGyalsungData = computed(() => {
+  if (!globalFilter.value || !gyalsungData.value) {
+    return gyalsungData.value || [];
+  }
+
+  const searchTerm = globalFilter.value.toLowerCase().trim();
+
+  return gyalsungData.value.filter(item => {
+    return (
+      (item.username?.toLowerCase().includes(searchTerm)) ||
+      (item.full_name?.toLowerCase().includes(searchTerm)) ||
+      (item.identity_number?.toLowerCase().includes(searchTerm)) ||
+      (item.mobile_number?.toLowerCase().includes(searchTerm)) ||
+      (item.academy_code?.toLowerCase().includes(searchTerm)) ||
+      (item.phq9_score?.toLowerCase().includes(searchTerm)) ||
+      (item.gad7_score?.toLowerCase().includes(searchTerm)) ||
+      (item.suicidal_score?.toLowerCase().includes(searchTerm))
+    );
+  });
+});
 
 // Update your fetchReportDataFromAPI function
 const fetchReportDataFromAPI = async () => {
