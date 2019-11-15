@@ -25,36 +25,27 @@
           <!-- Notifications -->
           <li class="nav-item dropdown">
             <a class="nav-link nav-icon position-relative" href="#" role="button" data-bs-toggle="dropdown"
-              aria-expanded="false" v-b-tooltip.hover title="Notifications">
+              aria-expanded="false" v-b-tooltip.hover title="Notifications" @click="handleDropdownToggle(true)">
               <i class="fas fa-bell"></i>
               <span v-if="unreadNotificationsCount > 0" class="notification-badge">
                 {{ unreadNotificationsCount }}
               </span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
-              <li v-for="(notification, index) in notifications" :key="index">
-                <a class="dropdown-item notification-item" href="#" :class="{ 'unread': !notification.read }"
-                  @click="handleNotificationClick(notification)">
-                  <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0">
-                      <img :src="notification.senderAvatar" alt="Sender Avatar" class="rounded-circle" width="40"
-                        height="40">
-                    </div>
-                    <div class="flex-grow-1 ms-3">
-                      <p class="notification-sender">{{ notification.sender }}</p>
-                      <p class="notification-message">{{ notification.message }}</p>
-                      <small class="notification-time">{{ formatTimestamp(notification.timestamp) }}</small>
-                    </div>
+              <li v-for="notification in notifications" :key="notification.id" class="dropdown-item-container">
+                <!-- Add this wrapper class -->
+                <a class="dropdown-item notification-item" href="#"
+                  :class="{ 'unread': notification.notification_status === 'unread' }"
+                  @click.prevent="handleNotificationClick(notification)">
+                  <div class="notification-content">
+                    <p class="notification-message">{{ notification.notification }}</p>
+                    <small class="notification-time">{{ formatTimestamp(notification.created_at) }}</small>
                   </div>
                 </a>
               </li>
               <li v-if="notifications.length === 0">
                 <span class="dropdown-item text-muted">No notifications</span>
               </li>
-              <li>
-                <hr class="dropdown-divider">
-              </li>
-              <li><a class="dropdown-item text-center" href="#">View all notifications</a></li>
             </ul>
           </li>
 
@@ -93,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { formatDistanceToNow } from 'date-fns';
 import { useUserDetailsStore } from '@/stores/userDetails';
@@ -107,24 +98,76 @@ const router = useRouter();
 const userDetailsStore = useUserDetailsStore();
 
 const notifications = ref([]);
+const isNotificationOpen = ref(false);
 
-const unreadNotificationsCount = computed(() => notifications.value.filter(n => !n.read).length);
+// Computed property for unread notifications count
+const unreadNotificationsCount = computed(() =>
+  notifications.value.filter(n => n.notification_status === 'unread').length
+);
 
-const handleNotificationClick = (notification) => {
-  notification.read = true;
+// Function to fetch notifications
+const fetchNotifications = async () => {
+  try {
+    const userId = userDetailsStore.user.id;
+    const response = await axios.get(`${endpoints.getNotifications}${userId}/`);
+    notifications.value = response.data.notifications.sort((a, b) => {
+      // Sort by status (unread first) and then by date
+      if (a.notification_status === b.notification_status) {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
+      return a.notification_status === 'unread' ? -1 : 1;
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+  }
+};
+
+// Function to mark notification as read
+const markAsRead = async (notificationId) => {
+  try {
+    await axios.post(endpoints.markNotificationAsRead, {
+      notification_id: notificationId
+    });
+    // Update local notification status
+    const notification = notifications.value.find(n => n.id === notificationId);
+    if (notification) {
+      notification.notification_status = 'read';
+    }
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+  }
+};
+
+// Handle notification click with delayed mark as read
+const handleNotificationClick = async (notification) => {
+  if (notification.notification_status === 'unread') {
+    // Set a timeout to mark as read after 5 seconds
+    setTimeout(() => {
+      markAsRead(notification.id);
+    }, 2000);
+  }
 };
 
 const formattedUserRole = computed(() => {
-  // Replace underscores with spaces and capitalize each word
   return userRole.value
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 });
 
-const formatTimestamp = (timestamp) => {
-  return formatDistanceToNow(timestamp, { addSuffix: true });
+const handleDropdownToggle = (isOpen) => {
+  isNotificationOpen.value = isOpen;
 };
+
+// Format timestamp using date-fns
+const formatTimestamp = (timestamp) => {
+  return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+};
+
+// Fetch notifications when component mounts
+onMounted(() => {
+  fetchNotifications();
+});
 
 const fullName = computed(() => {
   const { firstName, middleName, lastName } = userDetailsStore.user;
@@ -215,7 +258,6 @@ const settingsPath = computed(() => {
 </script>
 
 <style scoped>
-
 .brand-text {
   color: #1D4851;
   font-weight: 700;
@@ -254,6 +296,14 @@ const settingsPath = computed(() => {
   border: none;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
+  right: 0;
+  left: auto;
+  /* Add these new properties */
+  position: absolute;
+  max-width: calc(100vw - 20px);
+  /* Prevent overflow on mobile */
+  transform-origin: top right;
+  margin-top: 10px;
 }
 
 .notification-item {
@@ -279,11 +329,61 @@ const settingsPath = computed(() => {
   font-size: 0.9rem;
   color: #6c757d;
   margin-bottom: 0.2rem;
+  word-wrap: break-word;
+  /* Add this */
+  white-space: normal;
+  /* Add this */
+  line-height: 1.4;
+  /* Add this for better readability */
+}
+
+@media (max-width: 576px) {
+  .notification-dropdown {
+    width: calc(100vw - 20px);
+    position: fixed;
+    top: 60px;
+    /* Adjust based on your navbar height */
+    right: 10px;
+  }
+
+  .notification-item {
+    padding: 0.5rem;
+  }
+}
+
+.nav-item.dropdown {
+  position: relative;
+}
+
+.dropdown-item {
+  white-space: normal;
+  width: 100%;
+}
+
+.notification-content {
+  padding: 8px 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .notification-time {
   font-size: 0.8rem;
   color: #adb5bd;
+}
+
+.notification-item.unread {
+  background-color: #f0f7ff;
+}
+
+.notification-item.unread .notification-message {
+  font-weight: 600;
+}
+
+.notification-time {
+  display: block;
+  margin-top: 4px;
+  color: #666;
+  font-size: 0.8rem;
 }
 
 .user-dropdown {

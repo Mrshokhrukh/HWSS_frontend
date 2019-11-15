@@ -5,8 +5,8 @@ function getBaseUrl() {
     const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
     return `${apiProtocol}://${apiHost}:${apiPort}`;
   } else {
-    return import.meta.env.VITE_PRODUCTION_API_URL;
-    // return 'http://localhost:8123';
+    // return import.meta.env.VITE_PRODUCTION_API_URL;
+    return 'http://localhost:8123';
   }
 }
 
@@ -102,6 +102,8 @@ const endpoints = {
   updateReferralStatus: `${monitoringBaseUrl}/update-referral-status/`,
   rejectReferral: `${monitoringBaseUrl}/reject-referral/`,
   acceptReferral: `${monitoringBaseUrl}/accept-referral/`,
+  getNotifications: `${monitoringBaseUrl}/get-notification/`,
+  markNotificationAsRead: `${monitoringBaseUrl}/notifications/mark-as-read/`,
 
   // Reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,

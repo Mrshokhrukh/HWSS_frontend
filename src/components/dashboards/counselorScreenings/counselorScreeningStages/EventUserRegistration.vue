@@ -69,7 +69,7 @@
                                 required maxlength="8">
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="email" class="form-label">Email address</label>
+                            <label for="email" class="form-label">Email address (Optional)</label>
                             <input type="email" class="form-control hwss-primary" id="email" v-model="email">
                         </div>
                     </div>
@@ -124,25 +124,26 @@ const isProceedButtonActive = computed(() => {
         (showParentalStatus.value ? parentalStatus.value !== '' : true) &&
         currentAddress.value !== '' &&
         dzongkhag.value !== '' &&
-        phoneNumber.value !== '' &&
-        email.value !== '';
+        phoneNumber.value !== ''
 });
 
 const submitForm = async () => {
     if (!showParentalStatus.value) {
         parentalStatus.value = "None";
     }
+
     try {
-        // Await the username generation
         const username = await makeUserName();
         const getCounselorName = JSON.parse(localStorage.getItem('userDetailsStore'));
 
-        // Ensure getCounselorName is not null and user is defined
         if (getCounselorName && getCounselorName.user) {
             const userAgency = getCounselorName.agency?.agencyName || 'Unknown Agency';
             const userAgencyCode = getCounselorName.agency?.agencyCode || 'Unknown Code';
 
-            const fallbackEmail = email.value && email.value.trim() !== '' ? email.value : 'no_email@gmail.com';
+            let fallbackEmail = email.value && email.value.trim() !== ''
+                ? email.value
+                : generateBaseEmail(DOB.value);
+
             const formData = {
                 userData: {
                     username: username,
@@ -162,57 +163,115 @@ const submitForm = async () => {
                 },
                 agencyData: {
                     agency_code: userAgencyCode,
-                    agency_name: userAgency
+                    agency_name: userAgency,
                 },
             };
-            // Send a submit request to the endpoint
+
             const response = await axios.post(endpoints.registerCounselorEventUser, formData);
 
             const userId = response.data.userId;
             localStorage.setItem('ClientUserIdEventBase', userId);
-            return response.data; // Return the response data
+            return response.data;
         } else {
             throw new Error('User details not found in localStorage');
         }
-
     } catch (error) {
-        // Handle errors
         console.error('Error submitting form:', error);
 
-        if (error.response && error.response.data && error.response.data.error.includes('Duplicate entry')) {
-            // Show a confirmation dialog using SweetAlert
-            const confirmDuplicate = await Swal.fire({
-                icon: 'warning',
-                title: 'Duplicate Entry',
-                text: 'Seems like this user was already screened. Do you wish to continue with existing user data?',
-                showCancelButton: true,
-                confirmButtonText: 'Yes',
-                cancelButtonText: 'No'
-            });
-
-            if (confirmDuplicate.isConfirmed) {
-                try {
-                    const response = await axios.post(endpoints.registerCounselorUser, this.formData);
-
-                    const userId = response.data.userId;
-                    localStorage.setItem('ClientUserIdCaseBase', userId);
-                    return response.data;
-                } catch (resendError) {
-                    console.error('Error resending form:', resendError);
-                    throw resendError;
+        if (error.response && error.response.data) {
+            if (error.response.data.error.includes('duplicate key value violates unique constraint')) {
+                retryCounter++;
+                if (retryCounter > 5) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Too Many Attempts',
+                        text: 'We were unable to generate a unique email address. Please contact support.',
+                    });
+                    throw new Error('Too many retries for email generation');
                 }
+
+                const newEmail = generateUniqueEmail(DOB.value);
+
+                const confirmRetry = await Swal.fire({
+                    icon: 'info',
+                    title: retryCounter === 1
+                        ? 'Email Auto-Generated'
+                        : 'Duplicate Email Detected',
+                    text: retryCounter === 1
+                        ? `You didn't provide an email. We generated one: ${newEmail}. Do you want to use it?`
+                        : `The generated email already exists. Retry with this email: ${newEmail}?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Proceed',
+                    cancelButtonText: 'Cancel',
+                });
+
+                if (confirmRetry.isConfirmed) {
+                    email.value = newEmail; // Update email in the form model
+                    return submitForm(); // Retry with the new email
+                } else {
+                    throw new Error('User canceled retry');
+                }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Error',
+                    text: error.response.data.error || 'An unknown error occurred.',
+                });
             }
         } else {
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: `Mobile number too long, please use Bhutanese standard mobile number excluding country code.`,
+                title: 'Network or Server Error',
+                text: 'Please check your internet connection or contact support.',
             });
-            throw error;
         }
 
-    };
-}
+        throw error;
+    }
+};
+
+const getFirstAndLastName = () => {
+    const nameParts = clientFullName.value.trim().split(' ').filter(Boolean);
+    let firstName = '';
+    let lastName = '';
+
+    if (nameParts.length === 1) {
+        firstName = nameParts[0];
+        lastName = nameParts[0][0]; // Initial of first name
+    } else if (nameParts.length >= 2) {
+        firstName = nameParts[0];
+        lastName = nameParts[nameParts.length - 1];
+    }
+
+    return { firstName, lastName };
+};
+
+const generateBaseEmail = (dob) => {
+    const { firstName, lastName } = getFirstAndLastName();
+    const yearOfBirth = dob.slice(2, 4); // Last two digits of birth year
+    const currentYear = new Date().getFullYear().toString().slice(-2); // Last two digits of current year
+    const formattedFirstName = firstName.toLowerCase().replace(/[^a-z]/g, '');
+    const formattedLastName = lastName.toLowerCase().replace(/[^a-z]/g, '');
+    return `${formattedFirstName}_${formattedLastName}${yearOfBirth}${currentYear}@email.com`;
+};
+
+let retryCounter = 0; // To limit retries and avoid infinite loops
+
+const generateUniqueEmail = (dob) => {
+    const { firstName, lastName } = getFirstAndLastName();
+    const baseEmail = generateBaseEmail(dob);
+
+    if (retryCounter === 0) return baseEmail;
+
+    const variations = [
+        `${firstName[0]}${lastName}${dob.slice(2, 4)}`, // First initial + last name + birth year
+        `${firstName}${lastName[0]}${dob.slice(2, 4)}`, // First name + last initial + birth year
+        `${lastName}${dob.slice(2, 4)}${retryCounter}`, // Last name + birth year + counter
+    ];
+
+    const variation = variations[retryCounter % variations.length];
+    return `${variation.toLowerCase()}@email.com`;
+};
 
 const calculatedAge = computed(() => {
     if (!DOB.value) return '';
@@ -240,11 +299,17 @@ const calculatedAge = computed(() => {
 
 const makeUserName = () => {
     return new Promise((resolve) => {
-        const fullName = clientFullName.value;
+        const { firstName, lastName } = getFirstAndLastName();
         const dob = DOB.value;
+        const yearOfBirth = dob.slice(2, 4); // Last two digits of birth year
 
-        const username = `${fullName}${dob}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-        resolve(username);
+        let usernameBase = `${firstName.toLowerCase()}_${lastName.toLowerCase()}${yearOfBirth}`;
+
+        if (retryCounter > 0) {
+            usernameBase += retryCounter; // Append retryCounter to ensure uniqueness
+        }
+
+        resolve(usernameBase.replace(/[^a-z0-9_]/g, '')); // Remove special characters
     });
 };
 

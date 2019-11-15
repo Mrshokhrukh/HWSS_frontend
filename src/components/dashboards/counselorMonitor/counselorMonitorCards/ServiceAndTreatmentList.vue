@@ -735,7 +735,6 @@ const referCase = async () => {
         console.error('Selected user is missing.');
         return;
     }
-
     // Get self id from localstorage
     const counselor = JSON.parse(localStorage.getItem('userDetailsStore'));
     const counselorId = counselor.user.id;
@@ -769,7 +768,8 @@ const referCase = async () => {
                             showConfirmButton: false,
                             timer: 1500
                         });
-                        window.location.reload();
+                        // Refresh the component data
+                        getServiceList(); // Call the method to refresh the list
                     } else {
                         Swal.fire({
                             icon: 'error',
@@ -777,11 +777,10 @@ const referCase = async () => {
                             text: 'Something went wrong!',
                             footer: 'Please try again later.',
                             confirmButtonText: 'OK'
-                        })
+                        });
                     }
                 })
                 .catch(error => {
-                    // Improve error handling to show the specific error message from backend
                     const errorMessage = error.response?.data?.error || 'Something went wrong!';
                     Swal.fire({
                         icon: 'error',
@@ -789,7 +788,7 @@ const referCase = async () => {
                         text: errorMessage,
                         footer: 'Please try again later.',
                         confirmButtonText: 'OK'
-                    })
+                    });
                     console.error('Error saving data:', error);
                 });
         }

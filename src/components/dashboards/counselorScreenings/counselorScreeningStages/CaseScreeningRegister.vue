@@ -137,16 +137,6 @@ import { getUserScreenedData, setUserScreenedData } from '@/indexedDBHelper';
 
 const emit = defineEmits(['proceedToSelectTools']);
 
-const maxUsersPerDay = 10;
-
-// Get the user's ID from localStorage
-const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
-const userRole = ref(userDetailsStore?.user?.role || '');
-const userId = userDetailsStore ? userDetailsStore.user.id : null;
-
-const caseName = ref('');
-const purpose = ref('');
-const dzongkhag = ref('');
 const CID = ref('');
 const clientFullName = ref('');
 const DOB = ref('');
@@ -155,28 +145,18 @@ const parentalStatus = ref('');
 const currentAddress = ref('');
 const phoneNumber = ref('');
 const email = ref('');
+const dzongkhag = ref('');
+const maxUsersPerDay = ref(10);
+const caseName = ref('');
+const purpose = ref('');
 const dzongkhags = [
     'Bumthang', 'Chhukha', 'Dagana', 'Gasa', 'Haa', 'Lhuentse', 'Mongar', 'Paro', 'Pemagatshel', 'Punakha',
     'Samdrup Jongkhar', 'Samtse', 'Sarpang', 'Thimphu', 'Trashigang', 'Trashiyangtse', 'Trongsa', 'Tsirang', 'Wangdue Phodrang', 'Zhemgang'
 ];
 
-const userScreenedToday = ref(0);
-
-const resetIfNewDay = async () => {
-    const today = new Date().toLocaleDateString();
-    const userData = await getUserScreenedData(userId);
-
-    if (!userData || userData.screeningDate !== today) {
-        // Reset the count to 0 and update the date
-        await setUserScreenedData(userId, {
-            count: 0,
-            screeningDate: today,
-        });
-        userScreenedToday.value = 0;
-    } else {
-        userScreenedToday.value = userData.count;
-    }
-};
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userRole = ref(userDetailsStore?.user?.role || '');
+const userId = userDetailsStore ? userDetailsStore.user.id : null;
 
 const showParentalStatus = computed(() => {
     return userRole.value !== 'clinical_counselor';
@@ -205,6 +185,68 @@ const calculatedAge = computed(() => {
 
     return age;
 });
+
+// Helper function to get first and last names
+const getFirstAndLastName = () => {
+    const nameParts = clientFullName.value.trim().split(' ').filter(Boolean);
+    let firstName = '';
+    let lastName = '';
+
+    if (nameParts.length === 1) {
+        firstName = nameParts[0];
+        lastName = nameParts[0][0]; // Initial of first name
+    } else if (nameParts.length >= 2) {
+        firstName = nameParts[0];
+        lastName = nameParts[nameParts.length - 1];
+    }
+
+    return { firstName, lastName };
+};
+
+let retryCounter = 0; 
+
+const generateBaseEmail = (dob) => {
+    const { firstName, lastName } = getFirstAndLastName();
+    const yearOfBirth = dob.slice(2, 4); // Last two digits of birth year
+    const currentYear = new Date().getFullYear().toString().slice(-2); // Last two digits of current year
+    const formattedFirstName = firstName.toLowerCase().replace(/[^a-z]/g, '');
+    const formattedLastName = lastName.toLowerCase().replace(/[^a-z]/g, '');
+    return `${formattedFirstName}_${formattedLastName}${yearOfBirth}${currentYear}@email.com`;
+};
+
+const generateUniqueEmail = (dob) => {
+    const { firstName, lastName } = getFirstAndLastName();
+    const baseEmail = generateBaseEmail(dob);
+
+    if (retryCounter === 0) return baseEmail;
+
+    const variations = [
+        `${firstName[0]}${lastName}${dob.slice(2, 4)}`, // First initial + last name + birth year
+        `${firstName}${lastName[0]}${dob.slice(2, 4)}`, // First name + last initial + birth year
+        `${lastName}${dob.slice(2, 4)}${retryCounter}`, // Last name + birth year + counter
+    ];
+
+    const variation = variations[retryCounter % variations.length];
+    return `${variation.toLowerCase()}@email.com`;
+};
+
+const userScreenedToday = ref(0);
+
+const resetIfNewDay = async () => {
+    const today = new Date().toLocaleDateString();
+    const userData = await getUserScreenedData(userId);
+
+    if (!userData || userData.screeningDate !== today) {
+        // Reset the count to 0 and update the date
+        await setUserScreenedData(userId, {
+            count: 0,
+            screeningDate: today,
+        });
+        userScreenedToday.value = 0;
+    } else {
+        userScreenedToday.value = userData.count;
+    }
+};
 
 // Define a function to reset the userScreenedToday counter
 const resetUserScreenedToday = () => {
@@ -238,8 +280,7 @@ const isAllFieldsFilled = computed(() => {
         gender.value !== '' &&
         (showParentalStatus.value ? parentalStatus.value !== '' : true) &&
         currentAddress.value !== '' &&
-        phoneNumber.value !== '' &&
-        email.value !== ''
+        phoneNumber.value !== ''
     );
 });
 
@@ -277,15 +318,17 @@ const submitForm = async () => {
         parentalStatus.value = "None"; // Default value for clinical counselors
     }
     try {
-        // Await the username generation
         const username = await makeUserName();
         const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
 
-        // Ensure userDetails and its user and agency properties exist
         if (userDetails && userDetails.user) {
             const getCounselorName = userDetails;
-            const userAgency = userDetails.agency?.agencyName || 'Unknown Agency'; // Handle case where agency is undefined
-            const userAgencyCode = userDetails.agency?.agencyCode || 'Unknown Code'; // Handle case where agencyCode is undefined
+            const userAgency = userDetails.agency?.agencyName || 'Unknown Agency';
+            const userAgencyCode = userDetails.agency?.agencyCode || 'Unknown Code';
+
+            let fallbackEmail = email.value && email.value.trim() !== ''
+                ? email.value
+                : generateBaseEmail(DOB.value);
 
             const formData = {
                 userData: {
@@ -301,7 +344,7 @@ const submitForm = async () => {
                     parentalStatus: parentalStatus.value,
                     currentAddress: currentAddress.value,
                     phoneNumber: phoneNumber.value,
-                    email: email.value,
+                    email: fallbackEmail,
                     counselorName: `${getCounselorName.user.firstName} ${getCounselorName.user.lastName}`,
                 },
                 userAgencyData: {
@@ -325,46 +368,72 @@ const submitForm = async () => {
     } catch (error) {
         console.error('Error submitting form:', error);
 
-        if (error.response && error.response.data && error.response.data.error.includes('Duplicate entry')) {
-            const confirmDuplicate = await Swal.fire({
-                icon: 'warning',
-                title: 'Duplicate Entry',
-                text: 'Seems like this user was already screened. Do you wish to continue with existing user data?',
-                showCancelButton: true,
-                confirmButtonText: 'Yes',
-                cancelButtonText: 'No'
-            });
-
-            if (confirmDuplicate.isConfirmed) {
-                try {
-                    const response = await axios.post(endpoints.registerCounselorUser, this.formData);
-                    const userId = response.data.userId;
-                    localStorage.setItem('ClientUserIdCaseBase', userId);
-                    return response.data;
-                } catch (resendError) {
-                    console.error('Error resending form:', resendError);
-                    throw resendError;
+        if (error.response && error.response.data) {
+            if (error.response.data.error.includes('duplicate key value violates unique constraint')) {
+                retryCounter++;
+                if (retryCounter > 5) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Too Many Attempts',
+                        text: 'We were unable to generate a unique email address. Please contact support.',
+                    });
+                    throw new Error('Too many retries for email generation');
                 }
+
+                const newEmail = generateUniqueEmail(DOB.value);
+
+                const confirmRetry = await Swal.fire({
+                    icon: 'info',
+                    title: retryCounter === 1
+                        ? 'Email Auto-Generated'
+                        : 'Duplicate Email Detected',
+                    text: retryCounter === 1
+                        ? `You didn't provide an email. We generated one: ${newEmail}. Do you want to use it?`
+                        : `The generated email already exists. Retry with this email: ${newEmail}?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Proceed',
+                    cancelButtonText: 'Cancel',
+                });
+
+                if (confirmRetry.isConfirmed) {
+                    email.value = newEmail; // Update email in the form model
+                    return submitForm(); // Retry with the new email
+                } else {
+                    throw new Error('User canceled retry');
+                }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Error',
+                    text: error.response.data.error || 'An unknown error occurred.',
+                });
             }
         } else {
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: `Mobile number too long, please use Bhutanese standard mobile number excluding country code.`,
+                title: 'Network or Server Error',
+                text: 'Please check your internet connection or contact support.',
             });
-
-            throw error;
         }
+
+        throw error;
     }
 };
 
+
 const makeUserName = () => {
     return new Promise((resolve) => {
-        const fullName = clientFullName.value;
+        const { firstName, lastName } = getFirstAndLastName();
         const dob = DOB.value;
-        const username = `${fullName}${dob}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const yearOfBirth = dob.slice(2, 4); // Last two digits of birth year
 
-        resolve(username);
+        let usernameBase = `${firstName.toLowerCase()}_${lastName.toLowerCase()}${yearOfBirth}`;
+
+        if (retryCounter > 0) {
+            usernameBase += retryCounter; // Append retryCounter to ensure uniqueness
+        }
+
+        resolve(usernameBase.replace(/[^a-z0-9_]/g, '')); // Remove special characters
     });
 };
 
@@ -403,7 +472,7 @@ watch(isFormDeactivated, (newValue) => {
 
 onMounted(async () => {
     await resetIfNewDay();
-    if (userScreenedToday.value >= maxUsersPerDay) {
+    if (userScreenedToday.value >= maxUsersPerDay.value) {
         showAlert();
         disableFormFields();
     }

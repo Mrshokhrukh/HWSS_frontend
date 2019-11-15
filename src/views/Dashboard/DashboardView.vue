@@ -13,7 +13,7 @@
           <div class="row">
             <div class="col-12 mb-4 mt-3 card bg-light"
               v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard">
-              <TopNavbarCard />
+              <TopNavbarCard :key="topNavbarKey" />
             </div>
             <div class="col-12 mb-4"
               v-if="currentComponent === StudentDashboard || currentComponent === PublicDashboard">
@@ -34,7 +34,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useUserDetailsStore } from '@/stores/userDetails';
 import endpoints from '@/api';
 import axios from 'axios';
@@ -51,6 +52,9 @@ import HelplineServices from "@/components/dashboards/screenings/screeningCards/
 
 // Refs
 const sidebarOpen = ref(false);
+const topNavbarKey = ref(0); // Reactive key for re-rendering TopNavbarCard
+const route = useRoute(); // Current route
+
 // Store
 const userDetailsStore = useUserDetailsStore();
 
@@ -70,7 +74,7 @@ const currentComponent = computed(() => {
     case 'sud_admin':
     case 'aaa_admin':
     case 'cecd_admin':
-        return AdminDashboard;
+      return AdminDashboard;
     case 'rd_admin':
       return AdminDashboard2;
     default:
@@ -83,6 +87,11 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
+// Watch for route changes to refresh the TopNavbarCard
+watch(route, () => {
+  topNavbarKey.value += 1; // Increment key to re-render TopNavbarCard
+});
+
 // Axios call on mounted for dashboards except Student and Public
 onMounted(async () => {
   if (currentComponent.value !== StudentDashboard && currentComponent.value !== PublicDashboard) {
@@ -94,5 +103,4 @@ onMounted(async () => {
     }
   }
 });
-
 </script>
