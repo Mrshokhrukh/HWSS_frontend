@@ -136,9 +136,9 @@ const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
 const counselorName = ref(`${userDetails.user.firstName} ${userDetails.user.lastName}`);
 const eventStatus = ref('');
 const selectedTool = ref('');
+const counselorId = userDetails.user.id;
 
 // console.log(counselorName.value);
-
 const submitForm = async () => {
     try {
         const eventData = {
@@ -150,7 +150,8 @@ const submitForm = async () => {
             duration: duration.value,
             counselor: counselorName.value,
             total_users: totalUsers.value,
-            selected_tool: selectedTool.value
+            selected_tool: selectedTool.value,
+            created_by: counselorId  // Include the counselor's user ID
         };
 
         const createResponse = await axios.post(endpoints.createEventScreening, eventData);
@@ -177,7 +178,7 @@ const submitForm = async () => {
 
 const fetchEventStatus = async () => {
     try {
-        const response = await axios.get(endpoints.getEventInfo(counselorName.value));
+        const response = await axios.get(endpoints.getEventInfo(counselorId));
 
         if (response.status === 200) {
             const eventData = response.data;
