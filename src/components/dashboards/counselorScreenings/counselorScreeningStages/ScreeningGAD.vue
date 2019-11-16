@@ -1,5 +1,5 @@
 <template>
-    <div class="gad-container">
+    <div >
         <div class="question-header p-4 mb-4 rounded-lg">
             <h4 class="text-white mb-0">{{ GADQuestion }}</h4>
         </div>
@@ -195,11 +195,6 @@ const proceed = () => {
 </script>
 
 <style scoped>
-.gad-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
 .question-header {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     border-radius: 10px;
