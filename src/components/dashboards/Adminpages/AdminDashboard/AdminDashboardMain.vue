@@ -23,7 +23,7 @@ import DashboardView from './adminDashboardpage.vue';
 import ApprovalView from './approval/ApprovalView.vue';
 import ReportView from './ReportComponent/ReportComponent.vue';
 import HelpView from './HelpView.vue';
-import SettingsView from './SettingsView.vue';
+import SettingsView from './setting/SettingsView.vue';
 
 const route = useRoute();
 const newServiceAndTreatment = ref([]);
