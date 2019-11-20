@@ -49,7 +49,7 @@
 
 
 <script setup>
-import { ref, computed, inject, reactive } from 'vue';
+import { ref, computed, inject, reactive, watch } from 'vue';
 import Swal from 'sweetalert2';
 
 const emit = defineEmits(['goToNext', 'goBack']);
@@ -63,7 +63,7 @@ const testResponses = reactive({
     responses: [],
     logs: []
 });
-
+let alertShown = false;
 const otherSubstance = ref('');
 
 const isOtherSubstanceLocked = computed(() => {
@@ -108,16 +108,16 @@ const disabledSubstancesQ345 = computed(() => {
 const shouldDisableSubstance = (substance) => {
     // Question 67's disable logic applies throughout
     const isDisabledFromQ67 = disabledSubstances.value.includes(substance);
-    
+
     // Question 68's disable logic applies to next 3 questions based on position
     const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
     const currentPosition = currentQuestionIndex.value - 1;
-    const isInQ68Range = q68Index !== -1 && 
-                        currentPosition >= q68Index && 
-                        currentPosition <= q68Index + 3;
-    
+    const isInQ68Range = q68Index !== -1 &&
+        currentPosition >= q68Index &&
+        currentPosition <= q68Index + 3;
+
     const isDisabledFromQ68 = isInQ68Range && disabledSubstancesQ345.value.includes(substance);
-    
+
     return isDisabledFromQ67 || isDisabledFromQ68;
 };
 
@@ -311,6 +311,7 @@ const jumpToNextQuestion = () => {
         }
         if (currentQuestionIndex.value < filteredQuestions.value.length) {
             currentQuestionIndex.value++;
+            checkAllSubstancesDisabled();
         } else {
             console.log('No more questions.');
         }
@@ -455,12 +456,44 @@ const watchQuestion68Responses = () => {
             allowOutsideClick: false,
         }).then((result) => {
             if (result.isConfirmed) {
-                // Skip next 3 questions regardless of their IDs
-                currentQuestionIndex.value += 4; // Current + 4 means skipping 3 questions
+                currentQuestionIndex.value += 4; 
             }
         });
     }
 };
+
+function checkAllSubstancesDisabled() {
+    if (alertShown) return; 
+    if (currentQuestion.value) {
+        const allSubstances = currentQuestion.value.substances;
+        const enabledSubstances = allSubstances.filter(
+            (substance) => !shouldDisableSubstance(substance)
+        );
+
+        if (enabledSubstances.length === 0) {
+            alertShown = true;
+            Swal.fire({
+                title: 'No Substances Selected',
+                text: 'No substances have been marked. The test for ASSIST will end here.',
+                icon: 'info',
+                confirmButtonText: 'Proceed',
+                allowOutsideClick: false,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    proceed();
+                }
+            });
+        }
+    }
+}
+
+watch(
+    () => currentQuestion.value,
+    () => {
+        checkAllSubstancesDisabled();
+    },
+    { immediate: true }
+);
 </script>
 
 <style scoped>

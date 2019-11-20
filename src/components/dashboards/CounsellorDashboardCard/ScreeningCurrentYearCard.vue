@@ -20,7 +20,9 @@
                     <Chart type="bar" :data="chartDisplayData" :options="chartOptions" style="height: 250px;"/>
                 </div>
                 <div v-else class="no-data-message text-center">
-                    <h6 class="my-5 py-4">No data found</h6>
+                    <div class="py-4">
+                        <h6 class="my-5 py-5">No data found</h6>
+                    </div>
                 </div>
             </div>
             <div v-if="isSchoolCounselor" class="text-center">
@@ -318,7 +320,7 @@ onMounted(() => {
 
 .chart-container {
     position: relative;
-    height: 250px; /* Increased height */
+    height: auto; /* Increased height */
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
