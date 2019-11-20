@@ -1,43 +1,48 @@
 <template>
-    <div>
-        <table class="table mb-4 table-borderless">
-            <thead class="border-bottom align-middle">
-                <tr class="text-capitalize">
-                    <th class="text-capitalize fs-6 text-black">{{ GADQuestion }}</th>
-                    <th v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
-                        {{ option.option }}
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="text in currentQuestion" :key="text">
-                    <td class="text-capitalize">{{ text.text }}</td>
-                    <td v-for="option in currentQuestion[0].answers" :key="option.id" class="text-center">
-                        <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
-                            :name="'question_' + text.id" required />
-                        <span class="d-none">{{ option.points }}</span>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="text-capitalize"><strong>Total</strong></td>
-                    <td class="text-center" colspan="5">
-                        <!-- Adjust the colspan according to the number of <td> elements in the row -->
-                        <strong>{{ totalScore }}</strong>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="text-capitalize"><strong>Interpretation</strong></td>
-                    <td class="text-center" :class="interpretationClass" colspan="5">
-                        <!-- Adjust the colspan according to the number of <td> elements in the row -->
-                        <strong>{{ interpretation }}</strong>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="footer d-flex">
-            <button class="btn hwss-btn" @click="goBack">Back</button>
-            <div class="flex-grow-1"></div> <!-- This ensures the buttons span all the width -->
-            <button class="btn hwss-btn" @click="proceed">Next</button>
+    <div class="ace-container">
+        <div class="question-header p-4 mb-4 rounded-lg">
+            <h4 class="text-white mb-0">{{ GADQuestion }}</h4>
+        </div>
+
+        <div class="questions-container">
+            <!-- Questions -->
+            <div v-for="text in currentQuestion" :key="text" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+                <div class="question-content">
+                    <h3 class="question-text mb-3">{{ text.text }}</h3>
+                    <div class="options-grid">
+                        <div v-for="option in currentQuestion[0].answers" :key="option.id"
+                            class="option-item text-center">
+                            <label class="radio-label">
+                                <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
+                                    :name="'question_' + text.id" required class="radio-input" />
+                                <span class="option-text">{{ option.option }}</span>
+                                <span class="d-none">{{ option.points }}</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results card -->
+            <div class="results-card p-4 rounded-lg shadow-sm">
+                <div class="result-row mb-2">
+                    <strong>Total:</strong>
+                    <span class="result-value">{{ totalScore }}</span>
+                </div>
+                <div class="result-row">
+                    <strong>Interpretation:</strong>
+                    <span class="result-value" :class="interpretationClass">
+                        {{ interpretation }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="footer d-flex mt-4">
+            <button class="nav-button" @click="goBack">Back</button>
+            <div class="flex-grow-1"></div>
+            <button class="nav-button" @click="proceed">Next</button>
         </div>
     </div>
 </template>
@@ -115,15 +120,132 @@ const proceed = () => {
 </script>
 
 <style scoped>
-.bg-m-severe {
-    background: rgba(255, 99, 71, 0.5) !important;
+.ace-container {
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-.text-m-severe {
-    color: tomato !important;
+.question-header {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    border-radius: 10px;
 }
 
-input[type="radio"] {
-    scale: 1.5;
+.question-card {
+    background: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 10px;
+}
+
+.question-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.question-text {
+    color: #2B656F;
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.radio-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.radio-input {
+    cursor: pointer;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0;
+    transition: transform 0.2s ease;
+}
+
+.radio-input:hover {
+    transform: scale(1.1);
+}
+
+.option-text {
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+.results-card {
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.nav-button {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.nav-button:hover {
+    opacity: 0.9;
+}
+
+/* Interpretation classes with gradient backgrounds */
+.bg-primary {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%) !important;
+    color: white !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #34D399 0%, #059669 100%) !important;
+    color: white !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%) !important;
+    color: white !important;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.25rem;
+}
+
+/* Additional styles for ACE-specific needs */
+.question-card {
+    background: white;
+    border-color: rgba(43, 101, 111, 0.1);
+}
+
+.question-text {
+    color: #2B656F;
+    font-weight: 500;
+}
+
+@media (max-width: 640px) {
+    .options-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .question-text {
+        font-size: 1rem;
+    }
 }
 </style>

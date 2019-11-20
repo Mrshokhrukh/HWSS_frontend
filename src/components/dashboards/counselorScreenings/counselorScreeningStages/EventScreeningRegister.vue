@@ -1,5 +1,14 @@
 <template>
     <div class="screening-form-container">
+        <!-- Loading Overlay -->
+        <div v-if="isLoading" class="loading-overlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p class="loading-text">Processing your request...</p>
+                <p class="loading-subtext">Please wait while we create your event screening.</p>
+            </div>
+        </div>
+
         <!-- Header Section -->
         <div class="form-header">
             <h3 class="title">Description</h3>
@@ -105,8 +114,9 @@
 
         <!-- Button Section -->
         <div class="form-actions">
-            <button type="button" class="proceed-button" @click="proceed">
-                Register Event <i class="fas fa-arrow-right"></i>
+            <button type="button" class="proceed-button" @click="proceed" :disabled="isLoading">
+                <span v-if="!isLoading">Register Event <i class="fas fa-arrow-right"></i></span>
+                <span v-else>Processing...</span>
             </button>
         </div>
     </div>
@@ -120,6 +130,7 @@ import endpoints from '@/api';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const isLoading = ref(false);
 
 const emit = defineEmits(['proceedToEventSelectTools', 'goBack', 'logEmit']);
 
@@ -141,6 +152,7 @@ const counselorId = userDetails.user.id;
 // console.log(counselorName.value);
 const submitForm = async () => {
     try {
+        isLoading.value = true;
         const eventData = {
             event_name: eventName.value,
             event_purpose: purpose.value,
@@ -151,12 +163,11 @@ const submitForm = async () => {
             counselor: counselorName.value,
             total_users: totalUsers.value,
             selected_tool: selectedTool.value,
-            created_by: counselorId  // Include the counselor's user ID
+            created_by: counselorId
         };
 
         const createResponse = await axios.post(endpoints.createEventScreening, eventData);
 
-        // Handle successful response
         if (createResponse.status === 201) {
             Swal.fire({
                 title: 'Event Screening Created',
@@ -173,6 +184,8 @@ const submitForm = async () => {
             text: 'Failed to create event screening.',
             icon: 'error'
         });
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -227,33 +240,33 @@ onMounted(() => {
 });
 
 const proceed = async () => {
-    // Get today's date and remove time part
-    const todayDate = new Date(today).setHours(0, 0, 0, 0);
-    const selectedStartDate = new Date(startDate.value).setHours(0, 0, 0, 0);
-    const selectedEndDate = new Date(endDate.value).setHours(0, 0, 0, 0);
-
-    // Check if the start date is earlier than today
-    if (selectedStartDate < todayDate) {
-        Swal.fire({
-            title: 'Invalid Date',
-            text: 'The event start date cannot be earlier than today.',
-            icon: 'error'
-        });
-        return; // Stop form submission
-    }
-
-    // Check if the end date is earlier than the start date
-    if (selectedEndDate < selectedStartDate) {
-        Swal.fire({
-            title: 'Invalid Date Range',
-            text: 'The end date cannot be earlier than the start date.',
-            icon: 'error'
-        });
-        return; // Stop form submission
-    }
-
     try {
+        isLoading.value = true;
+        const todayDate = new Date(today).setHours(0, 0, 0, 0);
+        const selectedStartDate = new Date(startDate.value).setHours(0, 0, 0, 0);
+        const selectedEndDate = new Date(endDate.value).setHours(0, 0, 0, 0);
+
+        // Validation checks
+        if (selectedStartDate < todayDate) {
+            Swal.fire({
+                title: 'Invalid Date',
+                text: 'The event start date cannot be earlier than today.',
+                icon: 'error'
+            });
+            return;
+        }
+
+        if (selectedEndDate < selectedStartDate) {
+            Swal.fire({
+                title: 'Invalid Date Range',
+                text: 'The end date cannot be earlier than the start date.',
+                icon: 'error'
+            });
+            return;
+        }
+
         await submitForm();
+        
         Swal.fire({
             title: 'Event Screening Created',
             text: 'Proceeding to tool selection.',
@@ -271,6 +284,8 @@ const proceed = async () => {
             text: 'Failed to create event screening.',
             icon: 'error'
         });
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -293,6 +308,60 @@ const dzongkhags = [
 </script>
 
 <style scoped>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2B656F;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    color: #2B656F;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Update your existing proceed-button styles */
+.proceed-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
 /* Reusing the style from the previous component */
 .screening-form-container {
     background: linear-gradient(135deg, #e6f3f5, #f0f7f8);

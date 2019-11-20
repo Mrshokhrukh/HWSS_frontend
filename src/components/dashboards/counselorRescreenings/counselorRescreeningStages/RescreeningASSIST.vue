@@ -1,44 +1,52 @@
 <template>
-    <div>
-        <table class="table mb-4 table-borderless">
-            <thead class="border-bottom align-middle">
-                <tr class="text-capitalize">
-                    <th class="text-capitalize fs-6 text-black">{{ currentQuestion.text }}</th>
-                    <th v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
-                        {{ option.option }}
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(substance, index) in currentQuestion.substances" :key="index">
-                    <td class="text-capitalize"
-                        :class="{ 'text-secondary': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
+    <div v-if="currentQuestion" class="questionnaire-container">
+        <div class="question-header">
+            <h2 class="question-text">{{ currentQuestion.text }}</h2>
+            <div class="options-legend">
+                <span v-for="option in currentQuestion.answers" :key="option.id" class="option-label">
+                    {{ option.option }}
+                </span>
+            </div>
+        </div>
 
-                        <template v-if="substance !== 'Other - specify'">
-                            {{ substance }}
-                        </template>
-                        <template v-else>
-                            <input type="text" placeholder="Other - specify" v-model="otherSubstance"
-                                :readonly="isOtherSubstanceLocked"
-                                :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)">
-                        </template>
-                    </td>
-                    <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">
+        <div class="substances-grid">
+            <div v-for="(substance, index) in currentQuestion.substances" :key="index" class="substance-card"
+                :class="{ 'disabled': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
+
+                <div class="substance-name">
+                    <template v-if="substance !== 'Other - specify'">
+                        {{ substance }}
+                    </template>
+                    <template v-else>
+                        <input type="text" class="other-input" placeholder="Other - specify" v-model="otherSubstance"
+                            :readonly="isOtherSubstanceLocked"
+                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
+                    </template>
+                </div>
+
+                <div class="options-group">
+                    <label v-for="option in currentQuestion.answers" :key="option.id" class="radio-label">
                         <input type="radio" :value="option" @change="handleAnswerSelection(option, substance)"
                             :name="'question_' + index"
                             :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="footer d-flex">
-            <button class="btn hwss-btn d-none" @click="goBack">Back</button>
-            <div class="flex-grow-1"></div> <!-- This ensures the buttons span all the width -->
-            <button v-if="isLastQuestion" class="btn hwss-btn" @click="proceed">Next</button>
-            <button v-else class="btn hwss-btn" @click="jumpToNextQuestion">Next</button>
+                        <span class="radio-custom"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <button class="nav-btn back-btn d-none" @click="goBack">Back</button>
+            <div class="flex-grow-1"></div>
+            <button v-if="isLastQuestion" class="nav-btn next-btn" @click="proceed">Next</button>
+            <button v-else class="nav-btn next-btn" @click="jumpToNextQuestion">Next</button>
         </div>
     </div>
+    <div v-else class="no-questions">
+        <p>No more questions for the selected age group.</p>
+    </div>
 </template>
+
 
 <script setup>
 import { ref, computed, inject, reactive } from 'vue';
@@ -46,7 +54,6 @@ import Swal from 'sweetalert2';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 const substanceAnswered = reactive({});
-const questions = ref([]);
 const answers = reactive({});
 const showAnswerAllPrompt = ref(false);
 const currentQuestionIndex = ref(1);
@@ -63,51 +70,87 @@ const isOtherSubstanceLocked = computed(() => {
     return currentQuestionIndex.value > 1;
 });
 
+const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
+
 const disabledSubstances = computed(() => {
     const question1Responses = testResponses.question1Responses || {};
 
-    const disabledSubstances = currentQuestion.value.substances.filter(substance => {
-        return question1Responses[substance] === 'No';
-    });
-
-    return disabledSubstances;
+    if (currentQuestionIndex.value > 1) {
+        return currentQuestion.value.substances.filter(substance => {
+            return question1Responses[substance] === 'No';
+        });
+    }
+    return [];
 });
 
 const disabledSubstancesQ345 = computed(() => {
     const question2Responses = testResponses.question2Responses || {};
+    const currentQuestion = filteredQuestions.value[currentQuestionIndex.value - 1];
 
-    const disabledSubstances = currentQuestion.value.substances.filter(substance => {
-        return question2Responses[substance] === 'Never, not used in the last 3 months';
-    });
+    // Get the index of question 68 in our filtered questions
+    const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
 
-    return disabledSubstances;
+    if (q68Index === -1) return []; // Question 68 not found
+
+    // Only apply this disable logic for question 68 and the next 3 questions
+    const currentPosition = currentQuestionIndex.value - 1; // 0-based index
+    const isInRange = currentPosition >= q68Index && currentPosition <= q68Index + 3;
+
+    if (isInRange) {
+        return currentQuestion.substances.filter(substance => {
+            return question2Responses[substance]?.id === 242;
+        });
+    }
+    return [];
 });
 
 // Function to check if a substance should be disabled
 const shouldDisableSubstance = (substance) => {
-    return disabledSubstances.value.includes(substance);
+    // Question 67's disable logic applies throughout
+    const isDisabledFromQ67 = disabledSubstances.value.includes(substance);
+    
+    // Question 68's disable logic applies to next 3 questions based on position
+    const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
+    const currentPosition = currentQuestionIndex.value - 1;
+    const isInQ68Range = q68Index !== -1 && 
+                        currentPosition >= q68Index && 
+                        currentPosition <= q68Index + 3;
+    
+    const isDisabledFromQ68 = isInQ68Range && disabledSubstancesQ345.value.includes(substance);
+    
+    return isDisabledFromQ67 || isDisabledFromQ68;
 };
 
 const currentQuestionSetName = computed(() => {
     return 'ASSIST';
 });
 
-const totalScore = computed(() => {
-    let score = 0;
-    for (const text of currentQuestion.value) {
-        const selectedOption = text.selectedOption;
-        if (selectedOption !== undefined) {
-            score += selectedOption.points;
-        }
-    }
-    return score;
-});
-
 const handleAnswerSelection = (option, substance) => {
-    if (!option) {
-        console.error('ASSIST: Null pointer exception in handleAnswerSelection. option is null');
-        return;
+    if (!option || !substance) return;
+
+    if (!testResponses.question2Responses) {
+        testResponses.question2Responses = {};
     }
+
+    if (currentQuestion.value.id === 68) {  // Check for specific question ID
+        testResponses.question2Responses[substance] = {
+            id: option.id,
+            option: option.option
+        };
+        watchQuestion68Responses();
+    }
+
+    if (currentQuestion.value.id === 67) {
+        if (!testResponses.question1Responses) {
+            testResponses.question1Responses = {};
+        }
+
+        testResponses.question1Responses[substance] = {
+            id: option.id,
+            option: option.option
+        };
+    }
+
     if (!substance && currentQuestionSetName.value === 'ASSIST') {
         console.error('ASSIST: Null pointer exception in handleAnswerSelection. substance is null');
         return;
@@ -116,45 +159,23 @@ const handleAnswerSelection = (option, substance) => {
     updateSubstanceAnswered(option, substance);
 }
 
-const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
-const questionsWithIndex = counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'CNE ASSIST').questions.map((question, index) => ({
-    ...question,
-    index: index + 1
-}));
-
 const currentQuestion = computed(() => {
-    return questionsWithIndex.find(question => question.index === currentQuestionIndex.value);
+    const questions = filteredQuestions.value;
+    if (!questions.length) return null;
+
+    const currentIndex = currentQuestionIndex.value - 1;
+    if (currentIndex < 0 || currentIndex >= questions.length) {
+        console.error('Invalid question index:', currentIndex);
+        return null;
+    }
+
+    return questions[currentIndex];
 });
 
 const isLastQuestion = computed(() => {
-    return currentQuestionIndex.value === questionsWithIndex.length;
+    return currentQuestionIndex.value >= filteredQuestions.value.length;
 });
 
-// eslint-disable-next-line no-unused-vars
-const interpretation = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4) {
-        return 'Minimal';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
-        return 'Mild';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'Moderate';
-    } else {
-        return 'Severe';
-    }
-});
-
-// eslint-disable-next-line no-unused-vars
-const interpretationClass = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4) {
-        return 'bg-primary bg-opacity-50 text-primary';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
-        return 'bg-success bg-opacity-50 text-success';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'bg-warning bg-opacity-50 text-warning';
-    } else {
-        return 'bg-danger bg-opacity-50 text-danger';
-    }
-});
 
 let assistAnswer = [];
 
@@ -193,6 +214,7 @@ function logQuestionAndResponse(option, substance) {
 
     const answer = response.trim();
 
+    // Check if the question is from the ASSIST set
     if (questionSetName === 'ASSIST') {
         if (currentQuestionIndex.value === 1) {
             if (!testResponses.question1Responses) {
@@ -217,6 +239,7 @@ function logQuestionAndResponse(option, substance) {
         }
     }
 
+    // Update or add the log entry to testResponses.responses array
     const index = findLoggedQuestionIndex(questionText, substance);
     if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
         testResponses.responses[index] = logEntry;
@@ -233,7 +256,6 @@ const proceed = () => {
     localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
     emit('goToNext', 'ASSIST');
 };
-
 
 const currentQuestionText = computed(() => {
     return currentQuestion.value ? currentQuestion.value.text : '';
@@ -274,37 +296,30 @@ function checkAllSubstancesAnswered(countYes) {
     }
 }
 
-function jumpToNextRelevantSet(setToSkip) {
-    const nextIndex = findNextSetIndex(setToSkip);
-    if (nextIndex !== -1) {
-        currentQuestionIndex.value = nextIndex;
-    } else {
-        console.error(`No question set found after skipping ${setToSkip}`);
-    }
-}
-
-function findNextSetIndex(setToSkip) {
-    return questions.value.findIndex(
-        (question, index) => question.setName !== setToSkip && index > currentQuestionIndex.value
-    );
-}
-
 const jumpToNextQuestion = () => {
     try {
-        if (!checkInvalidInputs()) {
-            const allSubstancesNo = Object.values(substanceAnswered).every(answer => answer === 'No' || answer === 'Yes');
-            if (allSubstancesNo) {
-                jumpToNextRelevantSet('ASSIST');
-            }
-            currentQuestionIndex.value++;
+        if (!checkInvalidInputs()) return;
+
+        // Special handling for question 67
+        if (currentQuestion.value?.id === 67) {
+            Object.entries(testResponses.question1Responses || {}).forEach(([substance, response]) => {
+                if (response.id === 241) {
+                    substanceAnswered[substance] = false;
+                }
+            });
+            saveSubstanceAnswersToLocalStorage();
         }
-        currentQuestionIndex.value++;
+        
+        if (currentQuestionIndex.value < filteredQuestions.value.length) {
+            currentQuestionIndex.value++;
+        } else {
+            console.log('No more questions.');
+        }
     } catch (e) {
         console.error('jumpToNextQuestion threw an error', e);
         throw e;
     }
 };
-
 
 const goBack = () => {
     if (currentQuestionIndex.value > 1) {
@@ -315,11 +330,7 @@ const goBack = () => {
 const checkInvalidInputs = () => {
     try {
         const invalidInputs = document.querySelectorAll('input:required:invalid');
-        if (invalidInputs == null) {
-            console.error('InvalidInputs is null');
-            return false;
-        }
-        if (invalidInputs.length > 0) {
+        if (invalidInputs && invalidInputs.length > 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Incomplete Form',
@@ -360,18 +371,288 @@ function updateSubstanceAnswered(option, substance) {
         updateSubstanceCount();
     }
 }
+
+const filteredQuestions = computed(() => {
+    // Get Case Screening set
+    const caseScreeningSet = counselorScreeningQuestions.value.find(set =>
+        set.name === 'Case Screening'
+    );
+
+    if (!caseScreeningSet) {
+        console.error('Case Screening set not found');
+        return [];
+    }
+
+    // Get CNE ASSIST set
+    const cneAssistSet = caseScreeningSet.question_sets.find(set =>
+        set.name === 'CNE ASSIST'
+    );
+
+    if (!cneAssistSet) {
+        console.error('CNE ASSIST question set not found');
+        return [];
+    }
+
+    // Get client age group, with validation
+    const validAgeGroups = ['Below 14', '15 to 17', 'Above 18'];
+    const clientAgeGroup = sessionStorage.getItem('clientAgeGroup');
+
+    if (!validAgeGroups.includes(clientAgeGroup)) {
+        console.error('Invalid age group:', clientAgeGroup);
+        return [];
+    }
+
+    // First sort questions by ID
+    const sortedQuestions = [...cneAssistSet.questions].sort((a, b) => {
+        return Number(a.id) - Number(b.id);
+    });
+
+    // Then filter by age group
+    const ageFilteredQuestions = sortedQuestions.filter(question => {
+        if (!question.age_group_tags || question.age_group_tags.length === 0) {
+            return true;
+        }
+        return question.age_group_tags.includes(clientAgeGroup);
+    });
+
+    const indexedQuestions = ageFilteredQuestions.map((question, index) => ({
+        ...question,
+        sequentialIndex: index + 1,
+        originalIndex: sortedQuestions.indexOf(question) + 1
+    }));
+
+    console.log('Filtered and sorted questions:', indexedQuestions);
+    return indexedQuestions;
+});
+
+const watchQuestion68Responses = () => {
+    // Only proceed if we're on question 68
+    if (currentQuestion.value?.id !== 68) return;
+
+    const activeSubstances = currentQuestion.value.substances.filter(substance =>
+        !disabledSubstances.value.includes(substance)
+    );
+
+    const question2Responses = testResponses.question2Responses || {};
+
+    // Check if all active substances have been answered
+    const allSubstancesAnswered = activeSubstances.every(substance =>
+        question2Responses[substance]?.id !== undefined
+    );
+
+    if (!allSubstancesAnswered) return;
+
+    // Check if ALL active substances are answered with 242
+    const allNeverUsed = activeSubstances.every(substance =>
+        question2Responses[substance]?.id === 242
+    );
+
+    if (allNeverUsed) {
+        Swal.fire({
+            title: 'No Recent Substance Use',
+            text: 'The user has not used any substances in the past 3 months, skipping the next irrelevant questions.',
+            icon: 'info',
+            confirmButtonText: 'Proceed',
+            allowOutsideClick: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Skip next 3 questions regardless of their IDs
+                currentQuestionIndex.value += 4; // Current + 4 means skipping 3 questions
+            }
+        });
+    }
+};
 </script>
 
 <style scoped>
-.bg-m-severe {
-    background: rgba(255, 99, 71, 0.5) !important;
+.questionnaire-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem;
 }
 
-.text-m-severe {
-    color: tomato !important;
+.question-header {
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    color: white;
 }
 
-input[type="radio"] {
-    scale: 1.5;
+.question-text {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.options-legend {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.option-label {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+}
+
+.substances-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+.substance-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.substance-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.substance-card.disabled {
+    opacity: 0.2;
+    background: #f5f5f5;
+}
+
+.substance-name {
+    font-weight: 500;
+    color: #2B656F;
+    flex: 1;
+}
+
+.options-group {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.radio-label {
+    position: relative;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.radio-label input[type="radio"] {
+    opacity: 0;
+    position: absolute;
+}
+
+.radio-custom {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #2B656F;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 12px;
+    height: 12px;
+    background: #2B656F;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.radio-label input[type="radio"]:checked+.radio-custom::after {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.radio-label:hover .radio-custom {
+    border-color: #1D4851;
+    box-shadow: 0 0 0 4px rgba(43, 101, 111, 0.1);
+}
+
+.other-input {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.other-input:focus {
+    outline: none;
+    border-color: #2B656F;
+    box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.1);
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.nav-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.next-btn {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+}
+
+.next-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(43, 101, 111, 0.2);
+}
+
+.back-btn {
+    background: transparent;
+    border: 2px solid #2B656F;
+    color: #2B656F;
+}
+
+.back-btn:hover {
+    background: rgba(43, 101, 111, 0.1);
+}
+
+.no-questions {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .questionnaire-container {
+        padding: 1rem;
+    }
+
+    .substance-card {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .options-group {
+        justify-content: center;
+    }
 }
 </style>

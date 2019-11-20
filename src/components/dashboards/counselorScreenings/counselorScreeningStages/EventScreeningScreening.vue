@@ -54,6 +54,10 @@ const currentScreeningComponent = ref(null);
 const selectedMenu = ref(null);
 const menus = ref([]);
 const nextMenu = ref(null);
+const isSubmitting = ref(false);
+
+const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdEventBase')) || [];
+const eventId = JSON.parse(localStorage.getItem('eventId')) || [];
 
 // Define component mapping
 const componentMap = {
@@ -78,14 +82,12 @@ onMounted(() => {
     if (savedMenus) {
         menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
-    } else {
-        // console.log('No menu saved');
     }
 });
 
 // Watch for changes in selected menu and save to local storage
 watch(selectedMenu, (newValue) => {
-    localStorage.setItem('selectedMenu', JSON.stringify([newValue])); // Store selected menu as an array
+    localStorage.setItem('selectedMenu', JSON.stringify([newValue]));
 });
 
 const handleChangeComponent = (nextMenuName) => {
@@ -96,8 +98,9 @@ const handleChangeComponent = (nextMenuName) => {
     const index = selectedTools.findIndex(tool => tool.name === nextMenuName);
 
     let nextToolName;
-    if (index !== -1 && index < selectedTools.length - 1) nextToolName = selectedTools[index + 1].name;
-    else {
+    if (index !== -1 && index < selectedTools.length - 1) {
+        nextToolName = selectedTools[index + 1].name;
+    } else {
         Swal.fire({
             icon: 'question',
             title: 'All tests have been completed',
@@ -107,7 +110,12 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
-                submitAssessments();
+                // Check if submission is already in progress
+                if (!isSubmitting.value) {
+                    submitAssessments();
+                } else {
+                    console.log('Submission already in progress');
+                }
             }
         });
         return;
@@ -130,24 +138,29 @@ const handleChangeComponent = (nextMenuName) => {
     currentScreeningComponent.value = componentMap[nextToolName];
 };
 
-
-const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdEventBase')) || [];
-const eventId = JSON.parse(localStorage.getItem('eventId')) || [];
-
 const submitAssessments = async () => {
-    try {
+    if (isSubmitting.value) return; // Prevent multiple submissions
+    isSubmitting.value = true; // Lock the submission process
 
+    Swal.fire({
+        title: 'Submitting...',
+        text: 'Please wait while your assessments are being submitted.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
         const userId = ClientUserIdCaseBase;
         const submissionEventId = eventId;
 
-        // Gather data from localStorage
         const getDataFromLocalStorage = (key) => {
             try {
                 const data = localStorage.getItem(`${key}_set_counselor_screening`);
-                return data ? JSON.parse(data) : {}; // Ensure data is always a JSON object
+                return data ? JSON.parse(data) : {};
             } catch (error) {
                 console.error(`Error parsing ${key} data:`, error);
-                return {}; // Return an empty object if parsing fails
+                return {};
             }
         };
 
@@ -157,7 +170,6 @@ const submitAssessments = async () => {
         const assistData = getDataFromLocalStorage('ASSIST');
         const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
 
-        // Construct form data
         const formData = new FormData();
         formData.append('userId', userId);
         formData.append('gadData', JSON.stringify(gadData));
@@ -165,7 +177,6 @@ const submitAssessments = async () => {
         formData.append('aceData', JSON.stringify(aceData));
         formData.append('eventId', submissionEventId);
 
-        // Calculate risk severity for ASSIST data if available
         if (assistData && assistData.length > 0) {
             const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
             formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
@@ -173,58 +184,40 @@ const submitAssessments = async () => {
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
 
-        // console.log('Form Data:', formData);
-
-        // eslint-disable-next-line no-unused-vars
         const response = await axios.post(endpoints.eventScreenSubmission, formData);
-        // console.log('Response:', response);
-
-        // Update sessionStorage
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
-
-        // Clear localStorage data for assessments
         clearLocalStorageData();
-
-        // Show success message
+        console.info(response)
         Swal.fire({
             icon: 'success',
             title: 'Assessments Submitted Successfully',
             text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            // Check if there are remaining user IDs
-            if (ClientUserIdCaseBase.length > 0) {
-                // Stay on rescreening route
-                window.location.reload();
-            } else {
-                // All assessments submitted, redirect to counselor dashboard
-                router.push('/counselor-dashboard');
-            }
+            router.push('/counselor-dashboard');
         });
     } catch (error) {
         console.error('Error submitting assessments:', error);
-        // Show error message
         Swal.fire({
             icon: 'error',
             title: 'Error',
             text: 'Failed to submit assessments. Please try again later.',
             confirmButtonText: 'OK'
         });
+    } finally {
+        isSubmitting.value = false; // Unlock the submission process
     }
 };
 
 // Function to calculate risk severity for ASSIST data
 const calculateAssistRiskSeverity = (assistData) => {
     const substanceScores = {};
-    // Loop through ASSIST data and calculate scores for each substance
     assistData.forEach(entry => {
         const substanceName = entry.substance;
         const point = entry.point;
-        // Add point to the substance's total score
         substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
     });
 
-    // Define threshold values for risk severity
     const thresholds = {
         mild: 3,
         moderate: 5,
@@ -251,8 +244,6 @@ const calculateAssistRiskSeverity = (assistData) => {
         assistRiskSeverity[substanceName] += ` (${score})`;
     }
 
-    // console.log('Assist Risk Severity:', assistRiskSeverity);
-
     return assistRiskSeverity;
 };
 
@@ -268,13 +259,8 @@ const clearLocalStorageData = () => {
     localStorage.removeItem('approvedSelectedTools');
     localStorage.removeItem('ClientUserIdEventBase');
     localStorage.removeItem('ClientUserIdCaseBase');
-
 };
-
 </script>
-
-
-
 
 <style scoped>
 .hwss-icon {

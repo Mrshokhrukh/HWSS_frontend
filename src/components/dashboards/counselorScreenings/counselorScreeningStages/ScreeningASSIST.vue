@@ -3,42 +3,32 @@
         <div class="question-header">
             <h2 class="question-text">{{ currentQuestion.text }}</h2>
             <div class="options-legend">
-                <span v-for="option in currentQuestion.answers" :key="option.id" 
-                      class="option-label">
+                <span v-for="option in currentQuestion.answers" :key="option.id" class="option-label">
                     {{ option.option }}
                 </span>
             </div>
         </div>
 
         <div class="substances-grid">
-            <div v-for="(substance, index) in currentQuestion.substances" 
-                 :key="index"
-                 class="substance-card"
-                 :class="{ 'disabled': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
-                
+            <div v-for="(substance, index) in currentQuestion.substances" :key="index" class="substance-card"
+                :class="{ 'disabled': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
+
                 <div class="substance-name">
                     <template v-if="substance !== 'Other - specify'">
                         {{ substance }}
                     </template>
                     <template v-else>
-                        <input type="text" 
-                               class="other-input"
-                               placeholder="Other - specify" 
-                               v-model="otherSubstance"
-                               :readonly="isOtherSubstanceLocked"
-                               :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)">
+                        <input type="text" class="other-input" placeholder="Other - specify" v-model="otherSubstance"
+                            :readonly="isOtherSubstanceLocked"
+                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
                     </template>
                 </div>
 
                 <div class="options-group">
-                    <label v-for="option in currentQuestion.answers" 
-                           :key="option.id" 
-                           class="radio-label">
-                        <input type="radio" 
-                               :value="option" 
-                               @change="handleAnswerSelection(option, substance)"
-                               :name="'question_' + index"
-                               :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
+                    <label v-for="option in currentQuestion.answers" :key="option.id" class="radio-label">
+                        <input type="radio" :value="option" @change="handleAnswerSelection(option, substance)"
+                            :name="'question_' + index"
+                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
                         <span class="radio-custom"></span>
                     </label>
                 </div>
@@ -48,12 +38,8 @@
         <div class="footer">
             <button class="nav-btn back-btn d-none" @click="goBack">Back</button>
             <div class="flex-grow-1"></div>
-            <button v-if="isLastQuestion" 
-                    class="nav-btn next-btn" 
-                    @click="proceed">Next</button>
-            <button v-else 
-                    class="nav-btn next-btn" 
-                    @click="jumpToNextQuestion">Next</button>
+            <button v-if="isLastQuestion" class="nav-btn next-btn" @click="proceed">Next</button>
+            <button v-else class="nav-btn next-btn" @click="jumpToNextQuestion">Next</button>
         </div>
     </div>
     <div v-else class="no-questions">
@@ -84,32 +70,55 @@ const isOtherSubstanceLocked = computed(() => {
     return currentQuestionIndex.value > 1;
 });
 
-const clientAgeGroup = sessionStorage.getItem('clientAgeGroup');
-
 const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
 
 const disabledSubstances = computed(() => {
     const question1Responses = testResponses.question1Responses || {};
 
-    const disabledSubstances = currentQuestion.value.substances.filter(substance => {
-        return question1Responses[substance] === 'No';
-    });
-
-    return disabledSubstances;
+    if (currentQuestionIndex.value > 1) {
+        return currentQuestion.value.substances.filter(substance => {
+            return question1Responses[substance] === 'No';
+        });
+    }
+    return [];
 });
 
 const disabledSubstancesQ345 = computed(() => {
     const question2Responses = testResponses.question2Responses || {};
-    const disabledSubstances = currentQuestion.value.substances.filter(substance => {
-        return question2Responses[substance] === 'Never, not used in the last 3 months';
-    });
+    const currentQuestion = filteredQuestions.value[currentQuestionIndex.value - 1];
 
-    return disabledSubstances;
+    // Get the index of question 68 in our filtered questions
+    const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
+
+    if (q68Index === -1) return []; // Question 68 not found
+
+    // Only apply this disable logic for question 68 and the next 3 questions
+    const currentPosition = currentQuestionIndex.value - 1; // 0-based index
+    const isInRange = currentPosition >= q68Index && currentPosition <= q68Index + 3;
+
+    if (isInRange) {
+        return currentQuestion.substances.filter(substance => {
+            return question2Responses[substance]?.id === 242;
+        });
+    }
+    return [];
 });
 
 // Function to check if a substance should be disabled
 const shouldDisableSubstance = (substance) => {
-    return disabledSubstances.value.includes(substance);
+    // Question 67's disable logic applies throughout
+    const isDisabledFromQ67 = disabledSubstances.value.includes(substance);
+    
+    // Question 68's disable logic applies to next 3 questions based on position
+    const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
+    const currentPosition = currentQuestionIndex.value - 1;
+    const isInQ68Range = q68Index !== -1 && 
+                        currentPosition >= q68Index && 
+                        currentPosition <= q68Index + 3;
+    
+    const isDisabledFromQ68 = isInQ68Range && disabledSubstancesQ345.value.includes(substance);
+    
+    return isDisabledFromQ67 || isDisabledFromQ68;
 };
 
 const currentQuestionSetName = computed(() => {
@@ -117,10 +126,31 @@ const currentQuestionSetName = computed(() => {
 });
 
 const handleAnswerSelection = (option, substance) => {
-    if (!option) {
-        console.error('ASSIST: Null pointer exception in handleAnswerSelection. option is null');
-        return;
+    if (!option || !substance) return;
+
+    if (!testResponses.question2Responses) {
+        testResponses.question2Responses = {};
     }
+
+    if (currentQuestion.value.id === 68) {  // Check for specific question ID
+        testResponses.question2Responses[substance] = {
+            id: option.id,
+            option: option.option
+        };
+        watchQuestion68Responses();
+    }
+
+    if (currentQuestion.value.id === 67) {
+        if (!testResponses.question1Responses) {
+            testResponses.question1Responses = {};
+        }
+
+        testResponses.question1Responses[substance] = {
+            id: option.id,
+            option: option.option
+        };
+    }
+
     if (!substance && currentQuestionSetName.value === 'ASSIST') {
         console.error('ASSIST: Null pointer exception in handleAnswerSelection. substance is null');
         return;
@@ -130,13 +160,20 @@ const handleAnswerSelection = (option, substance) => {
 }
 
 const currentQuestion = computed(() => {
-  return filteredQuestions.value[currentQuestionIndex.value - 1]; 
+    const questions = filteredQuestions.value;
+    if (!questions.length) return null;
+
+    const currentIndex = currentQuestionIndex.value - 1;
+    if (currentIndex < 0 || currentIndex >= questions.length) {
+        console.error('Invalid question index:', currentIndex);
+        return null;
+    }
+
+    return questions[currentIndex];
 });
 
-
-
 const isLastQuestion = computed(() => {
-  return currentQuestionIndex.value >= filteredQuestions.value.length;
+    return currentQuestionIndex.value >= filteredQuestions.value.length;
 });
 
 
@@ -169,7 +206,7 @@ function logQuestionAndResponse(option, substance) {
         setName: questionSetName,
         response: response,
         point: point,
-        substance: substance || null, 
+        substance: substance || null,
         diagnosis: null,
     };
 
@@ -216,12 +253,12 @@ function logQuestionAndResponse(option, substance) {
 }
 
 const proceed = () => {
-  localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
-  emit('goToNext', 'ASSIST');
+    localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
+    emit('goToNext', 'ASSIST');
 };
 
 const currentQuestionText = computed(() => {
-  return currentQuestion.value ? currentQuestion.value.text : '';
+    return currentQuestion.value ? currentQuestion.value.text : '';
 });
 
 function findLoggedQuestionIndex(question, substance) {
@@ -260,20 +297,28 @@ function checkAllSubstancesAnswered(countYes) {
 }
 
 const jumpToNextQuestion = () => {
-  try {
-    if (checkInvalidInputs()) {
-      if (currentQuestionIndex.value < filteredQuestions.value.length) {
-        currentQuestionIndex.value++;
-      } else {
-        console.log('No more questions.');
-      }
-    }
-  } catch (e) {
-    console.error('jumpToNextQuestion threw an error', e);
-    throw e;
-  }
-};
+    try {
+        if (!checkInvalidInputs()) return;
 
+        // Special handling for question 67
+        if (currentQuestion.value?.id === 67) {
+            Object.entries(testResponses.question1Responses || {}).forEach(([substance, response]) => {
+                if (response.id === 241) {
+                    substanceAnswered[substance] = false;
+                }
+            });
+            saveSubstanceAnswersToLocalStorage();
+        }
+        if (currentQuestionIndex.value < filteredQuestions.value.length) {
+            currentQuestionIndex.value++;
+        } else {
+            console.log('No more questions.');
+        }
+    } catch (e) {
+        console.error('jumpToNextQuestion threw an error', e);
+        throw e;
+    }
+};
 
 const goBack = () => {
     if (currentQuestionIndex.value > 1) {
@@ -290,7 +335,7 @@ const checkInvalidInputs = () => {
                 title: 'Incomplete Form',
                 text: 'Please fill in all required fields before proceeding.',
             });
-            return false; 
+            return false;
         }
         return true;
     } catch (error) {
@@ -327,29 +372,95 @@ function updateSubstanceAnswered(option, substance) {
 }
 
 const filteredQuestions = computed(() => {
-  const caseScreeningSet = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
+    // Get Case Screening set
+    const caseScreeningSet = counselorScreeningQuestions.value.find(set =>
+        set.name === 'Case Screening'
+    );
 
-  if (!caseScreeningSet) {
-    console.error('Case Screening set not found');
-    return [];
-  }
+    if (!caseScreeningSet) {
+        console.error('Case Screening set not found');
+        return [];
+    }
 
-  const cneAssistSet = caseScreeningSet.question_sets.find(set => set.name === 'CNE ASSIST');
+    // Get CNE ASSIST set
+    const cneAssistSet = caseScreeningSet.question_sets.find(set =>
+        set.name === 'CNE ASSIST'
+    );
 
-  if (!cneAssistSet) {
-    console.error('CNE ASSIST question set not found');
-    return [];
-  }
+    if (!cneAssistSet) {
+        console.error('CNE ASSIST question set not found');
+        return [];
+    }
 
-  const sortedQuestions = cneAssistSet.questions.sort((a, b) => a.id - b.id);
-  const ageGroupFilteredQuestions = sortedQuestions.filter(question => question.age_group_tags.includes(clientAgeGroup));
+    // Get client age group, with validation
+    const validAgeGroups = ['Below 14', '15 to 17', 'Above 18'];
+    const clientAgeGroup = sessionStorage.getItem('clientAgeGroup');
 
-  return ageGroupFilteredQuestions.map((question, index) => ({
-    ...question,
-    index: index + 1
-  }));
+    if (!validAgeGroups.includes(clientAgeGroup)) {
+        console.error('Invalid age group:', clientAgeGroup);
+        return [];
+    }
+
+    // First sort questions by ID
+    const sortedQuestions = [...cneAssistSet.questions].sort((a, b) => {
+        return Number(a.id) - Number(b.id);
+    });
+
+    // Then filter by age group
+    const ageFilteredQuestions = sortedQuestions.filter(question => {
+        if (!question.age_group_tags || question.age_group_tags.length === 0) {
+            return true;
+        }
+        return question.age_group_tags.includes(clientAgeGroup);
+    });
+
+    const indexedQuestions = ageFilteredQuestions.map((question, index) => ({
+        ...question,
+        sequentialIndex: index + 1,
+        originalIndex: sortedQuestions.indexOf(question) + 1
+    }));
+
+    console.log('Filtered and sorted questions:', indexedQuestions);
+    return indexedQuestions;
 });
 
+const watchQuestion68Responses = () => {
+    // Only proceed if we're on question 68
+    if (currentQuestion.value?.id !== 68) return;
+
+    const activeSubstances = currentQuestion.value.substances.filter(substance =>
+        !disabledSubstances.value.includes(substance)
+    );
+
+    const question2Responses = testResponses.question2Responses || {};
+
+    // Check if all active substances have been answered
+    const allSubstancesAnswered = activeSubstances.every(substance =>
+        question2Responses[substance]?.id !== undefined
+    );
+
+    if (!allSubstancesAnswered) return;
+
+    // Check if ALL active substances are answered with 242
+    const allNeverUsed = activeSubstances.every(substance =>
+        question2Responses[substance]?.id === 242
+    );
+
+    if (allNeverUsed) {
+        Swal.fire({
+            title: 'No Recent Substance Use',
+            text: 'The user has not used any substances in the past 3 months, skipping the next irrelevant questions.',
+            icon: 'info',
+            confirmButtonText: 'Proceed',
+            allowOutsideClick: false,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Skip next 3 questions regardless of their IDs
+                currentQuestionIndex.value += 4; // Current + 4 means skipping 3 questions
+            }
+        });
+    }
+};
 </script>
 
 <style scoped>
@@ -410,7 +521,7 @@ const filteredQuestions = computed(() => {
 }
 
 .substance-card.disabled {
-    opacity: 0.6;
+    opacity: 0.2;
     background: #f5f5f5;
 }
 
@@ -461,7 +572,7 @@ const filteredQuestions = computed(() => {
     transition: all 0.2s ease;
 }
 
-.radio-label input[type="radio"]:checked + .radio-custom::after {
+.radio-label input[type="radio"]:checked+.radio-custom::after {
     transform: translate(-50%, -50%) scale(1);
 }
 
@@ -532,13 +643,13 @@ const filteredQuestions = computed(() => {
     .questionnaire-container {
         padding: 1rem;
     }
-    
+
     .substance-card {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
     }
-    
+
     .options-group {
         justify-content: center;
     }

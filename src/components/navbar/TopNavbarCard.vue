@@ -33,15 +33,17 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
               <li v-for="notification in notifications" :key="notification.id" class="dropdown-item-container">
-                <!-- Add this wrapper class -->
-                <a class="dropdown-item notification-item" href="#"
-                  :class="{ 'unread': notification.notification_status === 'unread' }"
-                  @click.prevent="handleNotificationClick(notification)">
-                  <div class="notification-content">
+                <div class="notification-item d-flex"
+                  :class="{ 'unread': notification.notification_status === 'unread' }">
+                  <div class="notification-content flex-grow-1">
                     <p class="notification-message">{{ notification.notification }}</p>
                     <small class="notification-time">{{ formatTimestamp(notification.created_at) }}</small>
                   </div>
-                </a>
+                  <button v-if="notification.notification_status === 'unread'" class="mark-read-btn"
+                    @click.stop="markAsRead(notification.id)" v-b-tooltip.hover title="Mark as read">
+                    <i class="fas fa-check"></i>
+                  </button>
+                </div>
               </li>
               <li v-if="notifications.length === 0">
                 <span class="dropdown-item text-muted">No notifications</span>
@@ -128,23 +130,13 @@ const markAsRead = async (notificationId) => {
     await axios.post(endpoints.markNotificationAsRead, {
       notification_id: notificationId
     });
-    // Update local notification status
+    // Update local notification status immediately
     const notification = notifications.value.find(n => n.id === notificationId);
     if (notification) {
       notification.notification_status = 'read';
     }
   } catch (error) {
     console.error('Error marking notification as read:', error);
-  }
-};
-
-// Handle notification click with delayed mark as read
-const handleNotificationClick = async (notification) => {
-  if (notification.notification_status === 'unread') {
-    // Set a timeout to mark as read after 5 seconds
-    setTimeout(() => {
-      markAsRead(notification.id);
-    }, 2000);
   }
 };
 
@@ -310,6 +302,29 @@ const settingsPath = computed(() => {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e9ecef;
   transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mark-read-btn {
+  background: none;
+  border: none;
+  color: #2B656F;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+}
+
+.mark-read-btn:hover {
+  background-color: #e9ecef;
+  color: #1D4851;
 }
 
 .notification-item:hover {
