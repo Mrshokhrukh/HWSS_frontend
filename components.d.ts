@@ -205,6 +205,7 @@ declare module 'vue' {
     SUDCurrentUseGraph: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDCurrentUseGraph.vue')['default']
     SUDCurrentUseTable: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDCurrentUseTable.vue')['default']
     SudDashboard: typeof import('./src/components/dashboards/Adminpages/Sud/SudDashboard.vue')['default']
+    SUDdashboardChart: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/dashboardcomponents/SUDdashboardChart.vue')['default']
     SUDGraph: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDGraph.vue')['default']
     SudHelp: typeof import('./src/components/dashboards/Adminpages/Sud/SudHelp/SudHelp.vue')['default']
     SUDLIfeTimeGraph: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDLIfeTimeGraph.vue')['default']
