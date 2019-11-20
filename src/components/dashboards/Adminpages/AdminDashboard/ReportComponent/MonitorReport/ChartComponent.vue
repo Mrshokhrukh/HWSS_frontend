@@ -1,285 +1,58 @@
+# ChartComponent.vue
 <template>
-    <div class="chart-wrapper">
-        <!-- Loading State with Progress -->
-        <div v-if="loading" class="chart-loading">
-            <div class="loading-content">
-                <div class="spinner-border text-primary mb-2" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <div class="loading-text">Processing data...</div>
-            </div>
-        </div>
-
-        <!-- Error State with Retry -->
-        <div v-else-if="error" class="chart-error">
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                {{ error }}
-                <button class="btn btn-sm btn-outline-danger ms-3" @click="retryLoadData">Retry</button>
-            </div>
-        </div>
-
-        <!-- No Data State with Better UI -->
-        <div v-else-if="!isDataAvailable" class="chart-no-data">
-            <div class="alert alert-info d-flex align-items-center">
-                <i class="bi bi-info-circle me-2"></i>
-                <div>
-                    No data available for the selected filters.
-                    <br />
-                    <small>Try adjusting your filters or selecting a different time period.</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Chart Display -->
-        <div v-else class="chart-container">
-            <div class="chart-header mb-3">
-                <div class="title-section">
-                    <h4 class="chart-title">{{ getChartTitle }}</h4>
-                    <span class="data-period" v-if="getDataPeriod">{{ getDataPeriod }}</span>
-                </div>
-
-                <div class="chart-controls">
-                    <!-- Chart Type Selection -->
-                    <div class="control-group me-3">
-                        <div class="btn-group" role="group">
-                            <button v-for="type in chartTypes" :key="type.value" class="btn"
-                                :class="[currentChartType === type.value ? 'btn-primary' : 'btn-outline-primary']"
-                                @click="updateChartType(type.value)" :title="type.label">
-                                <i :class="type.icon" class="me-1"></i>
-                                {{ type.label }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- View Options -->
-                    <div class="control-group">
-                        <button class="btn btn-outline-secondary" @click="toggleDataLabels"
-                            :class="{ active: showDataLabels }">
-                            <i class="bi bi-123"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" @click="toggleLegend" :class="{ active: showLegend }">
-                            <i class="bi bi-list-ul"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chart Area -->
-            <div class="chart-area">
-                <apexchart ref="chart" :type="currentChartType" :options="computedChartOptions" :series="series"
-                    height="500" @markerClick="handleMarkerClick" @dataPointSelection="handleDataPointSelection" />
-
-            </div>
-
-            <!-- Enhanced Footer with Stats -->
-            <div class="chart-footer mt-3">
-                <div class="row align-items-center">
-                    <div class="col">
-                        <div class="stats-container">
-                            <div class="stat-item">
-                                <span class="stat-label">Total:</span>
-                                <strong class="stat-value">{{ formatNumber(totalCount) }}</strong>
-                                <span class="stat-unit">individuals</span>
-                            </div>
-                            <div class="stat-item" v-if="averageValue">
-                                <span class="stat-label">Average:</span>
-                                <strong class="stat-value">{{ formatNumber(averageValue) }}</strong>
-                                <span class="stat-unit">per category</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-auto">
-                        <div class="btn-group">
-                            <button class="btn btn-outline-primary" @click="downloadChart('png')">
-                                <i class="bi bi-download me-1"></i>Image
-                            </button>
-                            <button class="btn btn-outline-primary" @click="downloadChart('csv')">
-                                <i class="bi bi-file-spreadsheet me-1"></i>CSV
-                            </button>
-                            <button class="btn btn-outline-primary" @click="downloadChart('svg')">
-                                <i class="bi bi-file-earmark-code me-1"></i>SVG
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Data Point Details Modal -->
-            <div class="modal fade" id="dataDetailsModal" tabindex="-1" ref="detailsModal">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Data Point Details</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div v-if="selectedDataPoint">
-                                <div class="details-content">
-                                    <!-- Dynamic content based on selected data point -->
-                                    <p>{{ selectedDataPoint.details }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="chart-container">
+        <h3 class="text-center mb-4">{{ chartTitle }}</h3>
+        <div style="height: 400px">
+            <apexchart v-if="chartOptions" type="bar" height="100%" :options="chartOptions" :series="chartSeries" />
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, watch } from 'vue'
+import VueApexCharts from 'vue3-apexcharts'
 
 const props = defineProps({
-    chartData: {
-        type: Object,
-        required: true,
-        default: () => ({})
-    },
-    chartOptions: {
-        type: Object,
-        required: true,
-        default: () => ({})
+    filteredData: {
+        type: Array,
+        required: true
     },
     activeFiltersList: {
         type: Array,
-        required: true,
-        default: () => []
+        required: true
     }
-});
+})
 
-const chart = ref(null);
-const loading = ref(false);
-const error = ref(null);
-const currentChartType = ref('bar');
-const showDataLabels = ref(true);
-const showLegend = ref(true);
-const selectedDataPoint = ref(null);
+const chartTitle = ref('')
+const chartOptions = ref(null)
+const chartSeries = ref(null)
 
-const chartTypes = [
-    { value: 'bar', label: 'Bar', icon: 'bi bi-bar-chart' },
-    { value: 'line', label: 'Line', icon: 'bi bi-graph-up' },
-    { value: 'area', label: 'Area', icon: 'bi bi-area-chart' }
-];
+// Custom color themes based on #28555F
+const colorThemes = {
+    screening: ['#28555F', '#3D7A87'],     // Base teal and lighter teal
+    counseling: ['#28555F', '#4B959E', '#5EBFB5'],  // Teal progression
+    assessment: ['#28555F', '#3D7A87'],     // Two-tone teal
+    referred: ['#28555F', '#3D7A87'],       // Two-tone teal
+    followUp: ['#28555F', '#3D7A87', '#4B959E']  // Three-tone teal
+}
 
-const isDataAvailable = computed(() => {
-    return props.chartData && Object.keys(props.chartData).length > 0;
-});
-
-const getChartTitle = computed(() => {
-    const baseTitle = 'Monitoring Report Analysis';
-    const filters = props.activeFiltersList.map(filter => `${filter.label}`).join(' | ');
-    return filters ? `${baseTitle} (${filters})` : baseTitle;
-});
-
-
-const processedData = computed(() => {
-    if (!props.filteredData) return {};
-
-    try {
-        const result = {
-            screening: { male: {}, female: {} },
-            counseling: { male: {}, female: {} },
-            referral: { male: {}, female: {} },
-            assessment: { male: {}, female: {} }
-        };
-
-        props.filteredData.forEach(item => {
-            const gender = item.user?.gender?.toLowerCase();
-            if (!gender || !['male', 'female'].includes(gender)) return;
-
-            // Process screening data
-            const screeningStatus = item.screening_data ?
-                (typeof item.screening_data === 'string' && item.screening_data !== "Data not available" ? 'Screened' : 'Not Screened') :
-                'Not Available';
-            result.screening[gender][screeningStatus] = (result.screening[gender][screeningStatus] || 0) + 1;
-
-            // Process counseling data with proper status handling
-            const counselingStatus = item.counseling || 'No Counseling';
-            result.counseling[gender][counselingStatus] = (result.counseling[gender][counselingStatus] || 0) + 1;
-
-            // Process referral data with detailed status
-            const referralStatus = item.referred || 'Not Referred';
-            result.referral[gender][referralStatus] = (result.referral[gender][referralStatus] || 0) + 1;
-
-            // Process assessment data
-            const assessmentStatus = item.assessment_status || 'Not Conducted';
-            result.assessment[gender][assessmentStatus] = (result.assessment[gender][assessmentStatus] || 0) + 1;
-        });
-
-        return result;
-    } catch (err) {
-        console.error('Error processing data:', err);
-        return {};
-    }
-});
-
-const series = computed(() => {
-    if (!isDataAvailable.value) return [];
-
-    try {
-        const data = processedData.value;
-        return Object.entries(data).map(([category, genderData]) => {
-            const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-            const maleValues = Object.values(genderData.male);
-            const femaleValues = Object.values(genderData.female);
-
-            return {
-                name: categoryName,
-                data: [...maleValues, ...femaleValues]
-            };
-        });
-    } catch (err) {
-        console.error('Error generating series:', err);
-        return [];
-    }
-});
-
-const totalCount = computed(() => props.chartData?.length || 0);
-
-const averageValue = computed(() => {
-    if (!series.value.length) return 0;
-    const total = series.value.reduce((sum, series) => sum + series.data.reduce((a, b) => a + b, 0), 0);
-    return Math.round(total / series.value.length);
-});
-
-const computedChartOptions = computed(() => ({
+const baseChartOptions = {
     chart: {
-        type: currentChartType.value,
-        stacked: true,
+        type: 'bar',
+        stacked: false,
         toolbar: {
             show: true,
             tools: {
-                download: false,
-                selection: true,
-                zoom: true,
-                zoomin: true,
-                zoomout: true,
-                pan: true,
+                download: true,
+                selection: false,
+                zoom: false,
+                zoomin: false,
+                zoomout: false,
+                pan: false,
+                reset: false
             }
         },
-        animations: {
-            enabled: true,
-            easing: 'easeinout',
-            speed: 800,
-            animateGradually: {
-                enabled: true,
-                delay: 150
-            },
-            dynamicAnimation: {
-                enabled: true,
-                speed: 350
-            }
-        },
-        events: {
-            dataPointMouseEnter: () => {
-                document.body.style.cursor = 'pointer';
-            },
-            dataPointMouseLeave: () => {
-                document.body.style.cursor = 'default';
-            }
-        }
+        background: '#FFFFFF'
     },
     plotOptions: {
         bar: {
@@ -287,216 +60,369 @@ const computedChartOptions = computed(() => ({
             columnWidth: '55%',
             borderRadius: 4,
             dataLabels: {
-                position: 'top',
-                maxItems: 100,
-                hideOverflowingLabels: true
+                position: 'top'
             }
-        }
+        },
     },
     dataLabels: {
-        enabled: showDataLabels.value,
-        formatter: val => (val ? val.toLocaleString() : '0'),
+        enabled: true,
+        formatter: function (val) {
+            return val.toFixed(0)
+        },
         style: {
             fontSize: '12px',
-            fontWeight: '500',
-            colors: ['#333']
-        }
+            colors: ['#333333']
+        },
+        offsetY: -20
+    },
+    stroke: {
+        show: true,
+        width: 2,
+        colors: ['transparent']
     },
     xaxis: {
-        categories: ['Male', 'Female'],
+        categories: [],
         labels: {
-            rotate: -45,
             style: {
-                fontSize: '12px'
+                fontSize: '12px',
+                colors: '#28555F'
             }
         }
     },
     yaxis: {
-        labels: {
-            formatter: val => val.toLocaleString()
-        },
-        min: 0,
-        max: Math.max(...(processedData.value.map(d => d.value) || [0])),
         title: {
-            text: 'Number of Individuals'
+            text: 'Count',
+            style: {
+                color: '#28555F'
+            }
+        },
+        labels: {
+            formatter: function (val) {
+                return Math.floor(val)
+            },
+            style: {
+                colors: '#28555F'
+            }
         }
     },
+    fill: {
+        opacity: 0.85
+    },
     tooltip: {
-        theme: 'light',
-        x: {
-            show: true
+        theme: 'dark',
+        y: {
+            formatter: function (val) {
+                return Math.floor(val)
+            }
+        },
+        style: {
+            fontSize: '12px'
         }
     },
     legend: {
-        position: 'bottom',
+        position: 'top',
         horizontalAlign: 'center',
-        show: showLegend.value
-    }
-}));
-
-const updateChartType = type => {
-    currentChartType.value = type;
-};
-
-const toggleDataLabels = () => {
-    showDataLabels.value = !showDataLabels.value;
-};
-
-const toggleLegend = () => {
-    showLegend.value = !showLegend.value;
-};
-
-const formatNumber = (num) => {
-    return new Intl.NumberFormat().format(num);
-};
-
-const downloadChart = async (format = 'csv') => {
-    try {
-        if (!chart.value) return;
-
-        if (format === 'csv') {
-            const csvData = [
-                ['Category', 'Male', 'Female'],
-                ...Object.entries(processedData.value).map(([category, data]) => [
-                    category,
-                    Object.values(data.male).reduce((a, b) => a + b, 0),
-                    Object.values(data.female).reduce((a, b) => a + b, 0)
-                ])
-            ];
-
-            const csvContent = csvData.map(row => row.join(',')).join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `chart-data-${new Date().toISOString().slice(0, 10)}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-        } else {
-            await chart.value?.chart?.exportToFile(format);
+        fontSize: '14px',
+        labels: {
+            colors: '#28555F'
+        },
+        markers: {
+            width: 12,
+            height: 12,
+            radius: 2
         }
-    } catch (err) {
-        console.error('Error downloading chart:', err);
-        error.value = 'Error downloading chart';
+    },
+    grid: {
+        borderColor: '#E5E7EB',
+        row: {
+            colors: ['#F9FAFB', 'transparent'],
+            opacity: 0.5
+        }
     }
-};
+}
 
-const retryLoadData = async () => {
-    error.value = null;
-    loading.value = true;
-    try {
-        // Implement retry logic here
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // Refresh data processing
-    } catch (err) {
-        error.value = 'Error retrying data load';
-    } finally {
-        loading.value = false;
-    }
-};
+const processScreeningData = () => {
+    const screenedMale = props.filteredData.filter(d =>
+        d.user.gender === 'Male' &&
+        d.screening_data &&
+        typeof d.screening_data === 'object' &&
+        (d.screening_data.phq_score !== null ||
+            d.screening_data.gad_score !== null ||
+            d.screening_data.ace_score !== null)
+    ).length
 
-// Watchers
-watch(() => props.filteredData, async (newData) => {
-    if (newData) {
-        loading.value = true;
-        error.value = null;
+    const screenedFemale = props.filteredData.filter(d =>
+        d.user.gender === 'Female' &&
+        d.screening_data &&
+        typeof d.screening_data === 'object' &&
+        (d.screening_data.phq_score !== null ||
+            d.screening_data.gad_score !== null ||
+            d.screening_data.ace_score !== null)
+    ).length
 
-        try {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            if (chart.value) {
-                chart.value.updateOptions(computedChartOptions.value);
-                chart.value.updateSeries(series.value);
+    const notScreenedMale = props.filteredData.filter(d =>
+        d.user.gender === 'Male' &&
+        (!d.screening_data ||
+            typeof d.screening_data !== 'object' ||
+            (!d.screening_data.phq_score &&
+                !d.screening_data.gad_score &&
+                !d.screening_data.ace_score))
+    ).length
+
+    const notScreenedFemale = props.filteredData.filter(d =>
+        d.user.gender === 'Female' &&
+        (!d.screening_data ||
+            typeof d.screening_data !== 'object' ||
+            (!d.screening_data.phq_score &&
+                !d.screening_data.gad_score &&
+                !d.screening_data.ace_score))
+    ).length
+
+    return {
+        options: {
+            ...baseChartOptions,
+            colors: colorThemes.screening,
+            xaxis: {
+                categories: ['Screened', 'Not Screened']
             }
-        } catch (err) {
-            console.error('Error updating chart:', err);
-            error.value = 'Error updating chart data';
-        } finally {
-            loading.value = false;
-        }
+        },
+        series: [
+            {
+                name: 'Male',
+                data: [screenedMale, notScreenedMale]
+            },
+            {
+                name: 'Female',
+                data: [screenedFemale, notScreenedFemale]
+            }
+        ]
     }
-}, { deep: true });
+}
 
-// Lifecycle Hooks
-onMounted(() => {
-    if (isDataAvailable.value) {
-        console.log('Chart mounted with data:', {
-            seriesCount: series.value.length,
-            totalRecords: totalCount.value
-        });
+const processCounselingData = () => {
+    const statuses = ['Waiting List', 'Availed', 'Not Required']
+    const maleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Male' && d.counseling === status
+        ).length
+    )
+    const femaleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Female' && d.counseling === status
+        ).length
+    )
+
+    return {
+        options: {
+            ...baseChartOptions,
+            colors: colorThemes.counseling,
+            xaxis: {
+                categories: statuses,
+                title: {
+                    text: 'Counseling Status'
+                }
+            }
+        },
+        series: [
+            {
+                name: 'Male',
+                data: maleData
+            },
+            {
+                name: 'Female',
+                data: femaleData
+            }
+        ]
     }
-});
+}
 
+const processAssessmentData = () => {
+    const statuses = ['Conducted', 'Not Conducted']
+    const maleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Male' && d.assessment_status === status
+        ).length
+    )
+    const femaleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Female' && d.assessment_status === status
+        ).length
+    )
+
+    return {
+        options: {
+            ...baseChartOptions,
+            colors: colorThemes.assessment,
+            xaxis: {
+                categories: statuses,
+                title: {
+                    text: 'Assessment Status'
+                }
+            }
+        },
+        series: [
+            {
+                name: 'Male',
+                data: maleData
+            },
+            {
+                name: 'Female',
+                data: femaleData
+            }
+        ]
+    }
+}
+
+const processReferralData = () => {
+    const statuses = ['Awaiting', 'Referred']
+    const maleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Male' && d.referred === status
+        ).length
+    )
+    const femaleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Female' && d.referred === status
+        ).length
+    )
+
+    return {
+        options: {
+            ...baseChartOptions,
+            colors: colorThemes.referred,
+            xaxis: {
+                categories: statuses,
+                title: {
+                    text: 'Referral Status'
+                }
+            }
+        },
+        series: [
+            {
+                name: 'Male',
+                data: maleData
+            },
+            {
+                name: 'Female',
+                data: femaleData
+            }
+        ]
+    }
+}
+
+const processFollowUpData = () => {
+    const statuses = ['Treatment Completed', 'Undergoing Treatment', null]
+    const labels = ['Completed', 'Ongoing', 'No Follow-up']
+
+    const maleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Male' && d.follow_up === status
+        ).length
+    )
+    const femaleData = statuses.map(status =>
+        props.filteredData.filter(d =>
+            d.user.gender === 'Female' && d.follow_up === status
+        ).length
+    )
+
+    return {
+        options: {
+            ...baseChartOptions,
+            colors: colorThemes.followUp,
+            xaxis: {
+                categories: labels,
+                title: {
+                    text: 'Follow-up Status'
+                }
+            }
+        },
+        series: [
+            {
+                name: 'Male',
+                data: maleData
+            },
+            {
+                name: 'Female',
+                data: femaleData
+            }
+        ]
+    }
+}
+
+const updateChart = () => {
+    const activeFilter = props.activeFiltersList[0]
+    if (!activeFilter) return
+
+    let chartData
+    switch (activeFilter) {
+        case 'screening':
+            chartData = processScreeningData()
+            chartTitle.value = 'Screening Status by Gender'
+            break
+        case 'counseling':
+            chartData = processCounselingData()
+            chartTitle.value = 'Counseling Status by Gender'
+            break
+        case 'assessment_status':
+            chartData = processAssessmentData()
+            chartTitle.value = 'Assessment Status by Gender'
+            break
+        case 'referred':
+            chartData = processReferralData()
+            chartTitle.value = 'Referral Status by Gender'
+            break
+        case 'follow_up':
+            chartData = processFollowUpData()
+            chartTitle.value = 'Follow-up Status by Gender'
+            break
+        default:
+            chartData = null
+            chartTitle.value = ''
+    }
+
+    if (chartData) {
+        chartOptions.value = chartData.options
+        chartSeries.value = chartData.series
+    }
+}
+
+// Watch for changes in props
+watch(
+    [() => props.filteredData, () => props.activeFiltersList],
+    () => {
+        updateChart()
+    },
+    { immediate: true }
+)
 </script>
 
-<style>
-.chart-wrapper {
-    position: relative;
-    min-height: 500px;
-    padding: 1rem;
-    background: #fff;
+<style scoped>
+.chart-container {
+    padding: 20px;
+    background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.chart-loading {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.9);
-    z-index: 10;
+:deep(.apexcharts-tooltip) {
+    background: #28555F !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
-.chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+:deep(.apexcharts-tooltip-title) {
+    background: #1F4147 !important;
+    border-bottom: 1px solid #3D7A87 !important;
+    font-weight: 600;
 }
 
-.chart-title {
-    margin: 0;
-    font-size: 1.25rem;
-    color: #2B656F;
+:deep(.apexcharts-xaxis-label),
+:deep(.apexcharts-yaxis-label) {
+    fill: #28555F !important;
 }
 
-.chart-area {
-    position: relative;
-    height: 500px;
-}
-
-.chart-footer {
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
-}
-
-.total-count {
-    color: #666;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .chart-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .chart-controls {
-        width: 100%;
-    }
-
-    .btn-group {
-        width: 100%;
-        display: flex;
-    }
-
-    .btn-group .btn {
-        flex: 1;
-    }
+:deep(.apexcharts-legend-text) {
+    color: #28555F !important;
 }
 </style>
