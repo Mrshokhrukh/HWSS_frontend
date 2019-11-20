@@ -191,6 +191,8 @@ const storedResponses = ref({});
 const assistq2substances = ref([]);
 const componentKey = ref(0);
 const disabledSubstances = reactive({});
+const q49Answers = reactive({});
+const answeredSubstances = reactive({});
 
 
 const testResponses = reactive({
@@ -264,8 +266,6 @@ let logEntry = {
 
 const showConfetti = ref(false);
 const showMessage = ref(false);
-const answeredSubstances = ref({});
-// const answeredQ2Substances = ref({});
 
 // Get user age from localStorage
 const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
@@ -662,22 +662,55 @@ function handleAnswerSelection(option, substance) {
     if (currentQuestion.value.id === 49 && rawOption.id === 166) {
         const normalizedSubstance = substance.toLowerCase().trim();
         disabledSubstances[normalizedSubstance] = true;
-    }
-
-    // After processing the answer, check if all substances are disabled
-    if (currentQuestion.value.id === 49) {
-        const allSubstancesDisabled = currentQuestion.value.substances.every((substance) => {
-            const normalizedSubstance = substance.toLowerCase().trim();
-            return disabledSubstances[normalizedSubstance];
+        
+        // Track answers for question 49
+        q49Answers[normalizedSubstance] = rawOption.id;
+        
+        // Check if all substances have been answered with ID 166
+        const allSubstances = currentQuestion.value.substances;
+        const allAnsweredWith166 = allSubstances.every(sub => {
+            const normalizedSub = sub.toLowerCase().trim();
+            return q49Answers[normalizedSub] === 166;
         });
-
-        if (allSubstancesDisabled) {
-            // Jump to question 53
-            const indexOfQuestion53 = questions.value.findIndex(q => q.id === 53);
-            if (indexOfQuestion53 !== -1) {
-                currentQuestionIndex.value = indexOfQuestion53;
-                return;
-            }
+        
+        // If all substances answered never used
+        if (allAnsweredWith166) {
+            showConfetti.value = true;
+            Swal.fire({
+                icon: 'success',
+                title: '<div class="text-center"><span style="font-size: 48px;">🎉</span></div>',
+                html: `
+                    <div class="text-center">
+                        <h2 class="mb-4">Congratulations!</h2>
+                        <p class="mb-3">Thank you for not using any substances in the past 3 months.</p>
+                        <p>We're proud of you!</p>
+                        <div style="font-size: 48px; margin-top: 20px;">👏</div>
+                    </div>
+                `,
+                confirmButtonText: 'Proceed',
+                allowOutsideClick: false,
+                customClass: {
+                    popup: 'congratulatory-modal',
+                    confirmButton: 'swal-button'
+                },
+                didOpen: () => {
+                    const modal = Swal.getPopup();
+                    if (modal) {
+                        modal.style.width = '80%';
+                        modal.style.maxWidth = '600px';
+                        modal.style.padding = '30px';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Jump to question 53
+                    const indexOfQuestion53 = questions.value.findIndex(q => q.id === 53);
+                    if (indexOfQuestion53 !== -1) {
+                        currentQuestionIndex.value = indexOfQuestion53;
+                    }
+                    showConfetti.value = false;
+                }
+            });
         }
     }
 
@@ -703,7 +736,13 @@ function handleAnswerSelection(option, substance) {
     }
 }
 
+function resetQ49State() {
+    Object.keys(q49Answers).forEach(key => delete q49Answers[key]);
+    showConfetti.value = false;
+}
+
 answers.substanceName = "";
+
 function updateSubstanceAnswered(option, substance) {
     const answer = option.option.trim();
     if (answer === "Yes" || answer === "No") {
@@ -1032,40 +1071,6 @@ function isSelectedAnswer(option) {
     return existingAnswer && existingAnswer.answer.id === option.id;
 }
 
-function flushStore() {
-    Swal.fire({
-        title: "Confirm Reset",
-        text: "Are you sure you want to reset your progress?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, reset it!"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            progressStore.resetStore();
-            localStorage.removeItem("answeredSubstances");
-            localStorage.removeItem("otherSubstanceName");
-            localStorage.removeItem("submissionData");
-            localStorage.removeItem("progress");
-            localStorage.removeItem("submissionData");
-            testResponses.responses = [];
-            testResponses.responses = [];
-
-            // Increment componentKey to trigger re-render
-            componentKey.value += 1;
-
-            Swal.fire({
-                title: "Reset Successfully",
-                text: "The store has been flushed successfully.",
-                icon: "success",
-                timer: 500,
-                showConfirmButton: false
-            }).then(() => {
-                router.push("/student-dashboard/screening");
-            });
-        }
-    });
-}
-
 function renderSubstanceOptions(substance) {
     const otherSubstanceName = localStorage.getItem("otherSubstanceName");
     return substance === "Other - specify"
@@ -1121,6 +1126,37 @@ function hasRelevantKeywords(questionText) {
     return keywords.some(keyword => questionText.toLowerCase().includes(keyword));
 }
 
+function flushStore() {
+    Swal.fire({
+        title: "Confirm Reset",
+        text: "Are you sure you want to reset your progress?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, reset it!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            progressStore.resetStore();
+            resetQ49State(); // Add this line
+            localStorage.removeItem("answeredSubstances");
+            localStorage.removeItem("otherSubstanceName");
+            localStorage.removeItem("submissionData");
+            localStorage.removeItem("progress");
+            testResponses.responses = [];
+            componentKey.value += 1;
+
+            Swal.fire({
+                title: "Reset Successfully",
+                text: "The store has been flushed successfully.",
+                icon: "success",
+                timer: 500,
+                showConfirmButton: false
+            }).then(() => {
+                router.push("/student-dashboard/screening");
+            });
+        }
+    });
+}
+
 // Computed property to format question text if relevant keywords are present
 const formattedQuestionText = computed(() => {
     if (hasRelevantKeywords(currentQuestionText.value)) {
@@ -1154,6 +1190,10 @@ const formattedQuestionText = computed(() => {
     }
     // Default return if no keywords match
     return `<div>${currentQuestionText.value}</div>`;
+});
+
+onMounted(() => {
+    resetQ49State();
 });
 </script>
 

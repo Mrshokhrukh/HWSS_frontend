@@ -91,7 +91,14 @@ const isRiskColumn = (field) => {
   ].includes(field);
 };
 
+const calculateAgeGroup = (age) => {
+  if (age < 14) return "Below 14";
+  if (age >= 14 && age <= 17) return "15 to 17";
+  return "Above 18";
+};
+
 const handleRescreen = (user) => {
+  const ageGroup = calculateAgeGroup(user.age);
   const message = `Do you wish to rescreen ${user.name}?`;
 
   Swal.fire({
@@ -102,8 +109,8 @@ const handleRescreen = (user) => {
     cancelButtonText: 'Cancel',
   }).then((result) => {
     if (result.isConfirmed) {
-      const userId = user.id;
-      sessionStorage.setItem('RescreeningUserID', JSON.stringify(userId));
+      sessionStorage.setItem('RescreeningUserID', JSON.stringify(user.id));
+      sessionStorage.setItem('clientAgeGroup', ageGroup);
       router.push('/counselor-dashboard/counselor-rescreening');
     }
   });
