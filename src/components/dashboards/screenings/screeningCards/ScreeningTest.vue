@@ -193,6 +193,7 @@ const componentKey = ref(0);
 const disabledSubstances = reactive({});
 const q49Answers = reactive({});
 const answeredSubstances = reactive({});
+const q49SubstanceAnswers = reactive({});
 
 
 const testResponses = reactive({
@@ -659,58 +660,74 @@ const progressPercentage = computed(() => {
 function handleAnswerSelection(option, substance) {
     const rawOption = toRaw(option);
 
-    if (currentQuestion.value.id === 49 && rawOption.id === 166) {
+    if (currentQuestion.value.id === 49) {
         const normalizedSubstance = substance.toLowerCase().trim();
-        disabledSubstances[normalizedSubstance] = true;
-        
-        // Track answers for question 49
+
+        q49SubstanceAnswers[substance] = option.option;
         q49Answers[normalizedSubstance] = rawOption.id;
-        
-        // Check if all substances have been answered with ID 166
-        const allSubstances = currentQuestion.value.substances;
-        const allAnsweredWith166 = allSubstances.every(sub => {
-            const normalizedSub = sub.toLowerCase().trim();
-            return q49Answers[normalizedSub] === 166;
-        });
-        
-        // If all substances answered never used
-        if (allAnsweredWith166) {
-            showConfetti.value = true;
-            Swal.fire({
-                icon: 'success',
-                title: '<div class="text-center"><span style="font-size: 48px;">🎉</span></div>',
-                html: `
-                    <div class="text-center">
-                        <h2 class="mb-4">Congratulations!</h2>
-                        <p class="mb-3">Thank you for not using any substances in the past 3 months.</p>
-                        <p>We're proud of you!</p>
-                        <div style="font-size: 48px; margin-top: 20px;">👏</div>
-                    </div>
-                `,
-                confirmButtonText: 'Proceed',
-                allowOutsideClick: false,
-                customClass: {
-                    popup: 'congratulatory-modal',
-                    confirmButton: 'swal-button'
-                },
-                didOpen: () => {
-                    const modal = Swal.getPopup();
-                    if (modal) {
-                        modal.style.width = '80%';
-                        modal.style.maxWidth = '600px';
-                        modal.style.padding = '30px';
-                    }
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Jump to question 53
-                    const indexOfQuestion53 = questions.value.findIndex(q => q.id === 53);
-                    if (indexOfQuestion53 !== -1) {
-                        currentQuestionIndex.value = indexOfQuestion53;
-                    }
-                    showConfetti.value = false;
-                }
+
+        if (rawOption.id === 166) {
+            disabledSubstances[normalizedSubstance] = true;
+        }
+
+        const filteredSubstances = filterSubstances(currentQuestion.value.substances);
+        const allAnswered = filteredSubstances.every(sub => q49SubstanceAnswers[sub]);
+
+        if (allAnswered) {
+            const allAnsweredWith166 = filteredSubstances.every(sub => {
+                const normalizedSub = sub.toLowerCase().trim();
+                return q49Answers[normalizedSub] === 166;
             });
+
+            if (allAnsweredWith166) {
+                // Show congratulatory message
+                showConfetti.value = true;
+                Swal.fire({
+                    icon: 'success',
+                    title: '<div class="text-center"><span style="font-size: 48px;">🎉</span></div>',
+                    html: `
+                        <div class="text-center">
+                            <h2 class="mb-4">Congratulations!</h2>
+                            <p class="mb-3">Thank you for not using any substances in the past 3 months.</p>
+                            <p>We're proud of you!</p>
+                            <div style="font-size: 48px; margin-top: 20px;">👏</div>
+                        </div>
+                    `,
+                    confirmButtonText: 'Proceed',
+                    allowOutsideClick: false,
+                    customClass: {
+                        popup: 'congratulatory-modal',
+                        confirmButton: 'swal-button'
+                    },
+                    didOpen: () => {
+                        const modal = Swal.getPopup();
+                        if (modal) {
+                            modal.style.width = '80%';
+                            modal.style.maxWidth = '600px';
+                            modal.style.padding = '30px';
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let nextQuestionId;
+
+                        if (userAgeGroup === "Above 18") {
+                            nextQuestionId = 53;
+                        } else if (userAgeGroup === "15 to 17") {
+                            nextQuestionId = 59;
+                        } else if (userAgeGroup === "Below 14") {
+                            nextQuestionId = 59;
+                        }
+
+                        const indexOfNextQuestion = questions.value.findIndex(q => q.id === nextQuestionId);
+                        if (indexOfNextQuestion !== -1) {
+                            currentQuestionIndex.value = indexOfNextQuestion;
+                        }
+
+                        showConfetti.value = false;
+                    }
+                });
+            }
         }
     }
 
@@ -1195,6 +1212,21 @@ const formattedQuestionText = computed(() => {
 onMounted(() => {
     resetQ49State();
 });
+
+// watch(currentQuestion, (newQuestion) => {
+//     if (newQuestion && newQuestion.id === 49) {
+//         const enabledSubstances = filterSubstances(newQuestion.substances);
+//         const numberOfEnabledSubstances = enabledSubstances.length;
+
+//         Swal.fire({
+//             icon: "info",
+//             title: "You have reached question 49",
+//             text: `This is question 49 in the ASSIST questionnaire. You have ${numberOfEnabledSubstances} substances enabled.`,
+//             confirmButtonText: "OK",
+//         });
+//     }
+// });
+
 </script>
 
 <style scoped>
