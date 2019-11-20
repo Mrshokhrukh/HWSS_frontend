@@ -53,10 +53,17 @@ const SEVERITY_ITEMS = ref([
     field: 'phq_data',
     threshold: value => {
       try {
-        const phqData = JSON.parse(value);
-        const suicidalThoughts = phqData.responses[6];
-        return suicidalThoughts && suicidalThoughts.score >= 2;
+        // Handle both string and object inputs
+        const phqData = typeof value === 'string' ? JSON.parse(value) : value;
+
+        // Check if the data has responses array
+        if (phqData && phqData.responses) {
+          const suicidalThoughts = phqData.responses[6];
+          return suicidalThoughts && suicidalThoughts.score >= 2;
+        }
+        return false;
       } catch (e) {
+        console.error('Error evaluating suicidal behavior threshold:', e);
         return false;
       }
     }
@@ -303,49 +310,47 @@ const updateSeverityCounts = () => {
         }
       }
 
-      if (Array.isArray(value)) {
-        // If it's an array, check each entry
-        value.forEach(subEntry => {
+      // Special handling for assist_data to prevent double counting
+      if (item.field === 'assist_data') {
+        try {
+          if (item.threshold(value)) {
+            count++;
+            // Skip the rest of the iteration since we've counted this case
+            return;
+          }
+        } catch (error) {
+          console.error(`Error evaluating threshold for ${item.title}:`, error);
+        }
+      } else {
+        // Regular handling for non-assist data
+        if (Array.isArray(value)) {
+          // If it's an array, check each entry
           try {
-            if (item.threshold(subEntry)) {
+            if (value.some(subEntry => item.threshold(subEntry))) {
               count++;
             }
           } catch (error) {
             console.error(`Error evaluating threshold for ${item.title} (array):`, error);
           }
-        });
-      } else if (typeof value === 'object') {
-        // If it's an object, pass it directly to the threshold function
-        try {
-          if (item.threshold(value)) {
-            count++;
-          }
-        } catch (error) {
-          console.error(`Error evaluating threshold for ${item.title} (object):`, error);
-        }
-      } else {
-        // For primitive values
-        try {
-          if (item.threshold(value)) {
-            count++;
-          }
-        } catch (error) {
-          console.error(`Error evaluating threshold for ${item.title} (primitive):`, error);
-        }
-      }
-
-      // Consider additional fields like case_substance_risks or event_substance_risks
-      if (item.field === 'assist_data') {
-        const assistRisks = entry.case_substance_risks || entry.event_substance_risks || [];
-        assistRisks.forEach(risk => {
+        } else if (typeof value === 'object') {
+          // If it's an object, pass it directly to the threshold function
           try {
-            if (item.threshold(risk.risk_flag)) {
+            if (item.threshold(value)) {
               count++;
             }
           } catch (error) {
-            console.error(`Error evaluating threshold for assist_data risks:`, error);
+            console.error(`Error evaluating threshold for ${item.title} (object):`, error);
           }
-        });
+        } else {
+          // For primitive values
+          try {
+            if (item.threshold(value)) {
+              count++;
+            }
+          } catch (error) {
+            console.error(`Error evaluating threshold for ${item.title} (primitive):`, error);
+          }
+        }
       }
     });
 

@@ -102,20 +102,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, inject } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import MonitorReport from './MonitorReport/MonitorReport.vue';
 import CaseStatusReport from './CaseStatusReport/CaseStatusReport.vue';
 import SeverityReport from './SeverityReport/SeverityReport.vue';
 import SchoolEnvReport from './SchoolEnvReport/SchoolEnvReport.vue';
 
-const props = defineProps({
-    serviceData: {
-        type: Array,
-        required: true,
-        default: () => []
-    }
-});
 
 const toast = useToast();
 
@@ -123,7 +116,7 @@ const userRole = computed(() => {
     const savedUserRole = JSON.parse(localStorage.getItem('userDetailsStore'));
     return savedUserRole?.user?.role || '';
 });
-
+const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 // Filter Options
 const baseReportTypes = [
     { label: 'Monitor Report', value: 'monitor' },
@@ -160,7 +153,7 @@ const filters = ref({
     gender: []
 });
 const showReport = ref(false);
-const processedData = ref(props.serviceData);
+const processedData = ref(serviceAndTreatmentData.serviceData);
 
 // Computed properties for reports
 const showMonitorReport = computed(() => selectedReport.value?.value === 'monitor');
@@ -222,7 +215,7 @@ const activeFiltersList = computed(() => {
 const applyFilters = () => {
     try {
         showReport.value = false;
-        processedData.value = filterData(props.serviceData);
+        processedData.value = filterData(serviceAndTreatmentData.value);
         showReport.value = true;
         toast.add({
             severity: 'success',
@@ -391,7 +384,7 @@ watch([selectedReport, filters, dateRange], () => {
 }, { deep: true });
 
 // Watch for props changes
-watch(() => props.serviceData, (newData) => {
+watch(() => serviceAndTreatmentData.serviceData, (newData) => {
     processedData.value = newData;
 }, { immediate: true });
 </script>
