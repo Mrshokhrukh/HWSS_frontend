@@ -8,18 +8,27 @@
                     <button v-for="substance in substances" :key="substance" @click="setActiveButton(substance)"
                         :class="['substance-btn', { active: activeButton === substance }]">
                         {{ substance }}
+                        <span v-if="getTotalCount(substance)" class="count-badge">
+                            {{ getTotalCount(substance) }}
+                        </span>
                     </button>
                 </div>
             </div>
             <div class="charts-section">
                 <div class="chart-card">
-                    <h4 class="chart-title">High Risk Count by Gender</h4>
+                    <h4 class="chart-title">
+                        High Risk Count by Gender
+                        <span class="total-count">(Total: {{ getHighRiskTotal() }})</span>
+                    </h4>
                     <div class="chart-container">
                         <canvas id="donutChartTotal"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <h4 class="chart-title">Moderate Risk Count by Gender</h4>
+                    <h4 class="chart-title">
+                        Moderate Risk Count by Gender
+                        <span class="total-count">(Total: {{ getModerateRiskTotal() }})</span>
+                    </h4>
                     <div class="chart-container">
                         <canvas id="donutChartModerate"></canvas>
                     </div>
@@ -42,16 +51,14 @@ import Chart from 'chart.js/auto';
 const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 const activeButton = ref(null);
 
-// Chart instances
 let donutChartTotalInstance = null;
 let donutChartModerateInstance = null;
 let barChartInstance = null;
 
-// Theme colors
 const chartTheme = {
-    male: '#2c6975',      // Teal for male data
-    female: '#000000',    // Black for female data
-    noData: '#e6e6e6',    // Light gray for no data
+    male: '#275C65',      // Bright blue for male data
+    female: '#8AC2AF',    // Pink for female data
+    noData: '#E6E6E6',    // Light gray for no data
     background: '#ffffff', // White background
     text: '#2B656F'       // Teal text color
 };
@@ -62,44 +69,67 @@ const substances = [
 ];
 
 const substanceKeyMapping = {
-    'Tobacco': 'tobacco',
-    'Alcohol': 'alcoholic',
-    'Cannabis': 'cannabis',
-    'Cocaine': 'cocaine',
-    'Amphetamine-type': 'amphetamine',
-    'Inhalant': 'inhalants',
-    'Sedative': 'sedatives',
-    'Hallucinate': 'hallucinogens',
-    'Opioids': 'opioids',
-    'Others': 'other'
+    'Tobacco': { key: 'tobacco', searchTerms: ['tobacco'] },
+    'Alcohol': { key: 'alcoholic', searchTerms: ['alcohol', 'alcoholic'] },
+    'Cannabis': { key: 'cannabis', searchTerms: ['cannabis', 'marijuana'] },
+    'Cocaine': { key: 'cocaine', searchTerms: ['cocaine'] },
+    'Amphetamine-type': { key: 'amphetamine', searchTerms: ['amphetamine', 'meth', 'ecstasy'] },
+    'Inhalant': { key: 'inhalants', searchTerms: ['inhalant', 'dendrite'] },
+    'Sedative': { key: 'sedatives', searchTerms: ['sedative', 'sleeping'] },
+    'Hallucinate': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd'] },
+    'Opioids': { key: 'opioids', searchTerms: ['opioid', 'heroin', 'morphine'] },
+    'Others': { key: 'other', searchTerms: ['other'] }
 };
 
 function extractMeasurementData(data) {
     if (!data) return [];
 
     return data.reduce((results, item) => {
+        const processedData = {
+            gender: item.user?.gender || "unknown",
+        };
+
+        // Check screening_data.assist_data
         if (item.screening_data?.assist_data) {
             const assistData = Array.isArray(item.screening_data.assist_data) ?
                 item.screening_data.assist_data :
                 [item.screening_data.assist_data];
-
-            const processedData = {
-                gender: item.user?.gender || "unknown",
-            };
 
             assistData.forEach(assist => {
                 if (assist.substance__name) {
                     const substance = assist.substance__name.toLowerCase();
                     const riskLevel = assist.risk_flag || "no data";
 
-                    Object.entries(substanceKeyMapping).forEach(([key, value]) => {
-                        if (substance.includes(value.toLowerCase())) {
-                            processedData[value] = riskLevel;
+                    Object.entries(substanceKeyMapping).forEach(([_, value]) => {
+                        if (value.searchTerms.some(term => substance.includes(term.toLowerCase()))) {
+                            processedData[value.key] = riskLevel;
                         }
                     });
                 }
             });
+        }
 
+        // Check event_substance_risks
+        if (item.event_substance_risks) {
+            item.event_substance_risks.forEach(risk => {
+                if (risk.substance_name) {
+                    const substance = risk.substance_name.toLowerCase();
+                    const riskLevel = risk.risk_flag || "no data";
+
+                    Object.entries(substanceKeyMapping).forEach(([_, value]) => {
+                        if (value.searchTerms.some(term => substance.includes(term.toLowerCase()))) {
+                            // Only update if not already set or if current risk is higher
+                            if (!processedData[value.key] ||
+                                (riskLevel.includes('severe') && !processedData[value.key].includes('severe'))) {
+                                processedData[value.key] = riskLevel;
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        if (Object.keys(processedData).length > 1) { // If we have more than just gender
             results.push(processedData);
         }
         return results;
@@ -110,26 +140,59 @@ function countRiskLevels(data) {
     const initialCounts = {};
 
     Object.values(substanceKeyMapping).forEach(substance => {
-        initialCounts[`${substance}_moderate_male`] = 0;
-        initialCounts[`${substance}_moderate_female`] = 0;
-        initialCounts[`${substance}_high_male`] = 0;
-        initialCounts[`${substance}_high_female`] = 0;
+        initialCounts[`${substance.key}_moderate_male`] = 0;
+        initialCounts[`${substance.key}_moderate_female`] = 0;
+        initialCounts[`${substance.key}_high_male`] = 0;
+        initialCounts[`${substance.key}_high_female`] = 0;
     });
 
     return data.reduce((counts, personData) => {
-        Object.entries(substanceKeyMapping).forEach(([_, substanceKey]) => {
-            const riskLevel = personData[substanceKey]?.toLowerCase();
+        Object.entries(substanceKeyMapping).forEach(([_, substance]) => {
+            const riskLevel = personData[substance.key]?.toLowerCase();
             const gender = personData.gender.toLowerCase();
 
             if (riskLevel?.includes('moderate')) {
-                counts[`${substanceKey}_moderate_${gender}`]++;
+                counts[`${substance.key}_moderate_${gender}`]++;
             } else if (riskLevel?.includes('severe')) {
-                counts[`${substanceKey}_high_${gender}`]++;
+                counts[`${substance.key}_high_${gender}`]++;
             }
         });
         return counts;
     }, initialCounts);
 }
+
+const getTotalCount = (substance) => {
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[substance].key;
+
+    if (!substanceKey) return 0;
+
+    return counts[`${substanceKey}_high_male`] +
+        counts[`${substanceKey}_high_female`] +
+        counts[`${substanceKey}_moderate_male`] +
+        counts[`${substanceKey}_moderate_female`];
+};
+
+const getHighRiskTotal = () => {
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[activeButton.value]?.key;
+
+    if (!substanceKey) return 0;
+
+    return counts[`${substanceKey}_high_male`] + counts[`${substanceKey}_high_female`];
+};
+
+const getModerateRiskTotal = () => {
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[activeButton.value]?.key;
+
+    if (!substanceKey) return 0;
+
+    return counts[`${substanceKey}_moderate_male`] + counts[`${substanceKey}_moderate_female`];
+};
 
 const chartOptions = {
     responsive: true,
@@ -144,7 +207,9 @@ const chartOptions = {
                     family: "'Arial', sans-serif",
                     weight: '600'
                 },
-                padding: 20
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
             }
         },
         tooltip: {
@@ -152,7 +217,13 @@ const chartOptions = {
             titleColor: '#fff',
             bodyColor: '#fff',
             padding: 12,
-            displayColors: true
+            displayColors: true,
+            callbacks: {
+                label: (context) => {
+                    if (context.raw === 0) return `${context.dataset.label}: No data`;
+                    return `${context.dataset.label}: ${context.raw} users`;
+                }
+            }
         }
     }
 };
@@ -203,7 +274,7 @@ function renderChart(type, canvasId, data, options) {
 function updateCharts() {
     const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
     const counts = countRiskLevels(extractedData);
-    const substanceKey = substanceKeyMapping[activeButton.value];
+    const substanceKey = substanceKeyMapping[activeButton.value]?.key;
 
     if (!substanceKey) return;
 
@@ -263,7 +334,7 @@ function updateCharts() {
                             context.chart.data.datasets[0].data[0] === 1) {
                             return 'No data available';
                         }
-                        return `${context.label}: ${context.raw}`;
+                        return `${context.label}: ${context.raw} users`;
                     }
                 }
             }
@@ -288,17 +359,6 @@ function updateCharts() {
                 },
                 grid: {
                     color: 'rgba(43, 101, 111, 0.1)'
-                }
-            }
-        },
-        plugins: {
-            ...chartOptions.plugins,
-            tooltip: {
-                callbacks: {
-                    label: (context) => {
-                        if (context.raw === 0) return `${context.dataset.label}: No data`;
-                        return `${context.dataset.label}: ${context.raw}`;
-                    }
                 }
             }
         }
