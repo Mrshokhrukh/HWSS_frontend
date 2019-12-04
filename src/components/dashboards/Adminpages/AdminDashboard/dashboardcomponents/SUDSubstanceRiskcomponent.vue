@@ -56,11 +56,11 @@ let donutChartModerateInstance = null;
 let barChartInstance = null;
 
 const chartTheme = {
-    male: '#275C65',      // Bright blue for male data
-    female: '#8AC2AF',    // Pink for female data
-    noData: '#E6E6E6',    // Light gray for no data
-    background: '#ffffff', // White background
-    text: '#2B656F'       // Teal text color
+    male: '#275C65',      // Darker teal for male
+    female: '#8AC2AF',    // Lighter teal for female
+    noData: '#E6E6E6',
+    background: '#ffffff',
+    text: '#2B656F'
 };
 
 const substances = [
@@ -69,17 +69,28 @@ const substances = [
 ];
 
 const substanceKeyMapping = {
-    'Tobacco': { key: 'tobacco', searchTerms: ['tobacco'] },
-    'Alcohol': { key: 'alcoholic', searchTerms: ['alcohol', 'alcoholic'] },
-    'Cannabis': { key: 'cannabis', searchTerms: ['cannabis', 'marijuana'] },
+    'Tobacco': { key: 'tobacco', searchTerms: ['tobacco', 'cigarette'] },
+    'Alcohol': { key: 'alcoholic', searchTerms: ['alcohol', 'alcoholic', 'beer', 'wine', 'spirits'] },
+    'Cannabis': { key: 'cannabis', searchTerms: ['cannabis', 'marijuana', 'hash'] },
     'Cocaine': { key: 'cocaine', searchTerms: ['cocaine'] },
     'Amphetamine-type': { key: 'amphetamine', searchTerms: ['amphetamine', 'meth', 'ecstasy'] },
-    'Inhalant': { key: 'inhalants', searchTerms: ['inhalant', 'dendrite'] },
-    'Sedative': { key: 'sedatives', searchTerms: ['sedative', 'sleeping'] },
-    'Hallucinate': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd'] },
-    'Opioids': { key: 'opioids', searchTerms: ['opioid', 'heroin', 'morphine'] },
+    'Inhalant': { key: 'inhalants', searchTerms: ['inhalant', 'dendrite', 'glue', 'petrol'] },
+    'Sedative': { key: 'sedatives', searchTerms: ['sedative', 'sleeping', 'diazepam'] },
+    'Hallucinate': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd', 'ketamine'] },
+    'Opioids': { key: 'opioids', searchTerms: ['opioid', 'heroin', 'morphine', 'fentanyl', 'codeine'] },
     'Others': { key: 'other', searchTerms: ['other'] }
 };
+
+function parseRiskLevel(riskFlag) {
+    if (!riskFlag) return { level: 'none', score: 0 };
+
+    const riskLower = riskFlag.toLowerCase();
+    const score = parseInt(riskFlag.match(/\((\d+)\)/)?.[1] || 0);
+
+    if (riskLower.includes('severe') || score >= 27) return { level: 'high', score };
+    if (riskLower.includes('moderate') || score >= 4) return { level: 'moderate', score };
+    return { level: 'none', score };
+}
 
 function extractMeasurementData(data) {
     if (!data) return [];
@@ -87,51 +98,48 @@ function extractMeasurementData(data) {
     return data.reduce((results, item) => {
         const processedData = {
             gender: item.user?.gender || "unknown",
+            risks: {}
         };
 
-        // Check screening_data.assist_data
-        if (item.screening_data?.assist_data) {
-            const assistData = Array.isArray(item.screening_data.assist_data) ?
-                item.screening_data.assist_data :
-                [item.screening_data.assist_data];
+        // Helper to process substance risks
+        const processSubstanceRisk = (substance, riskFlag) => {
+            const substanceMatch = Object.entries(substanceKeyMapping).find(([_, value]) =>
+                value.searchTerms.some(term => substance.toLowerCase().includes(term))
+            );
 
-            assistData.forEach(assist => {
-                if (assist.substance__name) {
-                    const substance = assist.substance__name.toLowerCase();
-                    const riskLevel = assist.risk_flag || "no data";
+            if (substanceMatch) {
+                const [_, value] = substanceMatch;
+                const riskInfo = parseRiskLevel(riskFlag);
 
-                    Object.entries(substanceKeyMapping).forEach(([_, value]) => {
-                        if (value.searchTerms.some(term => substance.includes(term.toLowerCase()))) {
-                            processedData[value.key] = riskLevel;
-                        }
-                    });
+                if (!processedData.risks[value.key] ||
+                    riskInfo.score > parseRiskLevel(processedData.risks[value.key]).score) {
+                    processedData.risks[value.key] = riskFlag;
                 }
-            });
-        }
+            }
+        };
 
         // Check event_substance_risks
-        if (item.event_substance_risks) {
+        if (item.event_substance_risks?.length > 0) {
             item.event_substance_risks.forEach(risk => {
-                if (risk.substance_name) {
-                    const substance = risk.substance_name.toLowerCase();
-                    const riskLevel = risk.risk_flag || "no data";
-
-                    Object.entries(substanceKeyMapping).forEach(([_, value]) => {
-                        if (value.searchTerms.some(term => substance.includes(term.toLowerCase()))) {
-                            // Only update if not already set or if current risk is higher
-                            if (!processedData[value.key] ||
-                                (riskLevel.includes('severe') && !processedData[value.key].includes('severe'))) {
-                                processedData[value.key] = riskLevel;
-                            }
-                        }
-                    });
+                if (risk.substance_name && risk.risk_flag) {
+                    processSubstanceRisk(risk.substance_name, risk.risk_flag);
                 }
             });
         }
 
-        if (Object.keys(processedData).length > 1) { // If we have more than just gender
+        // Check case_substance_risks
+        if (item.case_substance_risks?.length > 0) {
+            item.case_substance_risks.forEach(risk => {
+                if (risk.substance_name && risk.risk_flag) {
+                    processSubstanceRisk(risk.substance_name, risk.risk_flag);
+                }
+            });
+        }
+
+        if (Object.keys(processedData.risks).length > 0) {
             results.push(processedData);
         }
+
         return results;
     }, []);
 }
@@ -147,16 +155,18 @@ function countRiskLevels(data) {
     });
 
     return data.reduce((counts, personData) => {
-        Object.entries(substanceKeyMapping).forEach(([_, substance]) => {
-            const riskLevel = personData[substance.key]?.toLowerCase();
-            const gender = personData.gender.toLowerCase();
+        const gender = personData.gender.toLowerCase();
 
-            if (riskLevel?.includes('moderate')) {
-                counts[`${substance.key}_moderate_${gender}`]++;
-            } else if (riskLevel?.includes('severe')) {
-                counts[`${substance.key}_high_${gender}`]++;
+        Object.entries(personData.risks).forEach(([substanceKey, riskFlag]) => {
+            const { level } = parseRiskLevel(riskFlag);
+
+            if (level === 'high') {
+                counts[`${substanceKey}_high_${gender}`]++;
+            } else if (level === 'moderate') {
+                counts[`${substanceKey}_moderate_${gender}`]++;
             }
         });
+
         return counts;
     }, initialCounts);
 }
@@ -165,8 +175,6 @@ const getTotalCount = (substance) => {
     const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
     const counts = countRiskLevels(extractedData);
     const substanceKey = substanceKeyMapping[substance].key;
-
-    if (!substanceKey) return 0;
 
     return counts[`${substanceKey}_high_male`] +
         counts[`${substanceKey}_high_female`] +
