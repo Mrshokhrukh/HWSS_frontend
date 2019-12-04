@@ -1,15 +1,17 @@
-# DashboardView.vue
 <template>
     <div class="dashboard-container p-4">
         <!-- Core Dashboard Components -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <!-- Conditional rendering based on user role -->
+            <!-- Conditional rendering of SUD Dashboard/Current Status (Now First) -->
             <sud-dashboard-chart v-if="userRole === 'sud_admin'" :userData="userData"
                 :serviceData="serviceAndTreatmentData" class="mt-4" />
             <current-status-component v-else :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
 
+            <!-- Table Total Screening Component (Now Second) -->
             <table-total-screening-component :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
-            <chart-component :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
+
+            <!-- Substance Risk Component (Now Third) -->
+            <SUDSubstanceRiskcomponent :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
         </div>
 
         <!-- Dynamic Role-Specific Components -->
@@ -26,6 +28,7 @@ import CurrentStatusComponent from './dashboardcomponents/CurrentStatusComponent
 import TableTotalScreeningComponent from './dashboardcomponents/TableTotalScreeningComponent.vue'
 import ChartComponent from './dashboardcomponents/ChartComponent.vue'
 import SudDashboardChart from './dashboardcomponents/SUDdashboardChart.vue'
+import SUDSubstanceRiskcomponent from './dashboardcomponents/SUDSubstanceRiskcomponent.vue';
 
 const props = defineProps({
     userData: {
@@ -54,4 +57,5 @@ const userRole = computed(() => {
 const additionalComponents = computed(() => {
     return props.roleConfig?.dashboard?.additionalComponents || []
 })
+console.log("daa for sud",serviceAndTreatmentData)
 </script>

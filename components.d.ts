@@ -217,6 +217,7 @@ declare module 'vue' {
     SudSetting: typeof import('./src/components/dashboards/Adminpages/Sud/SudSetting.vue')['default']
     SUDSeverityReport: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDSeverityReport.vue')['default']
     SudSubstanceCard: typeof import('./src/components/dashboards/Adminpages/Sud/SudSubstanceCard.vue')['default']
+    SUDSubstanceRiskcomponent: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/dashboardcomponents/SUDSubstanceRiskcomponent.vue')['default']
     SUDTable: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDSevirityReport/SUDTable.vue')['default']
     SUDTableLayer: typeof import('./src/components/dashboards/Adminpages/Sud/sudreport/SUDMonitorReport/SUDTableLayer.vue')['default']
     SudTotalScreening: typeof import('./src/components/dashboards/Adminpages/Sud/SudTotalScreening.vue')['default']

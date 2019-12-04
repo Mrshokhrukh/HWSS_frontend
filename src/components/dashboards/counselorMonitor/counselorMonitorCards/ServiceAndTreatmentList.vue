@@ -50,7 +50,7 @@
                             <div v-if="selectedUser" class="profile-card">
                                 <h4 class="profile-name">{{ selectedUser?.user?.first_name }} {{
                                     selectedUser?.user?.middle_name
-                                }} {{
+                                    }} {{
                                         selectedUser?.user?.last_name }}</h4>
                                 <ul class="profile-details">
                                     <li><strong>Age:</strong> {{ calculateAge(selectedUser?.user?.date_of_birth) }}</li>
@@ -492,18 +492,18 @@ const filterNonInjectionSubstances = (data) => {
         });
     }
 
-    
+
     return substances;
 };
 
 const getSubstanceRisks = (user) => {
     if (user.screening_data && user.screening_data.assist_data) {
         const risks = filterNonInjectionSubstances(user.screening_data.assist_data);
-        
+
         return risks;
     } else if (user.case_substance_risks) {
         const risks = filterNonInjectionSubstances(user.case_substance_risks);
-       
+
         return risks;
     } else if (user.event_substance_risks) {
         const risks = filterNonInjectionSubstances(user.event_substance_risks);
