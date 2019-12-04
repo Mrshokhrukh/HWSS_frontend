@@ -142,41 +142,53 @@ const baseChartOptions = {
 }
 
 const processScreeningData = () => {
+    const isScreened = (d) => {
+        // Check screening_data
+        if (d.screening_data && typeof d.screening_data === 'object') {
+            // Check for any scores
+            if (d.screening_data.phq_score !== null ||
+                d.screening_data.gad_score !== null ||
+                d.screening_data.ace_score !== null) {
+                return true;
+            }
+
+            // Check for assist_data
+            if (Array.isArray(d.screening_data.assist_data) &&
+                d.screening_data.assist_data.length > 0) {
+                return true;
+            }
+        }
+
+        // Check event_substance_risks
+        if (Array.isArray(d.event_substance_risks) &&
+            d.event_substance_risks.length > 0) {
+            return true;
+        }
+
+        // Check case_substance_risks
+        if (Array.isArray(d.case_substance_risks) &&
+            d.case_substance_risks.length > 0) {
+            return true;
+        }
+
+        return false;
+    };
+
     const screenedMale = props.filteredData.filter(d =>
-        d.user.gender === 'Male' &&
-        d.screening_data &&
-        typeof d.screening_data === 'object' &&
-        (d.screening_data.phq_score !== null ||
-            d.screening_data.gad_score !== null ||
-            d.screening_data.ace_score !== null)
-    ).length
+        d.user.gender === 'Male' && isScreened(d)
+    ).length;
 
     const screenedFemale = props.filteredData.filter(d =>
-        d.user.gender === 'Female' &&
-        d.screening_data &&
-        typeof d.screening_data === 'object' &&
-        (d.screening_data.phq_score !== null ||
-            d.screening_data.gad_score !== null ||
-            d.screening_data.ace_score !== null)
-    ).length
+        d.user.gender === 'Female' && isScreened(d)
+    ).length;
 
     const notScreenedMale = props.filteredData.filter(d =>
-        d.user.gender === 'Male' &&
-        (!d.screening_data ||
-            typeof d.screening_data !== 'object' ||
-            (!d.screening_data.phq_score &&
-                !d.screening_data.gad_score &&
-                !d.screening_data.ace_score))
-    ).length
+        d.user.gender === 'Male' && !isScreened(d)
+    ).length;
 
     const notScreenedFemale = props.filteredData.filter(d =>
-        d.user.gender === 'Female' &&
-        (!d.screening_data ||
-            typeof d.screening_data !== 'object' ||
-            (!d.screening_data.phq_score &&
-                !d.screening_data.gad_score &&
-                !d.screening_data.ace_score))
-    ).length
+        d.user.gender === 'Female' && !isScreened(d)
+    ).length;
 
     return {
         options: {
@@ -196,8 +208,8 @@ const processScreeningData = () => {
                 data: [screenedFemale, notScreenedFemale]
             }
         ]
-    }
-}
+    };
+};
 
 const processCounselingData = () => {
     const statuses = ['Waiting List', 'Availed', 'Not Required']
