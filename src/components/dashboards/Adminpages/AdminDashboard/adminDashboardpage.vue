@@ -1,15 +1,18 @@
-# DashboardView.vue
 <template>
     <div class="dashboard-container p-4">
         <!-- Core Dashboard Components -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <!-- Conditional rendering based on user role -->
+            <!-- Conditional rendering of SUD Dashboard/Current Status -->
             <sud-dashboard-chart v-if="userRole === 'sud_admin'" :userData="userData"
                 :serviceData="serviceAndTreatmentData" class="mt-4" />
             <current-status-component v-else :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
 
+            <!-- Table Total Screening Component -->
             <table-total-screening-component :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
-            <chart-component :userData="userData" :serviceData="serviceAndTreatmentData" class="mt-4" />
+
+            <!-- Conditional Risk Component -->
+            <component :is="isSUDUser ? SUDSubstanceRiskcomponent : ChartComponent" :userData="userData"
+                :serviceData="serviceAndTreatmentData" class="mt-4" />
         </div>
 
         <!-- Dynamic Role-Specific Components -->
@@ -26,6 +29,7 @@ import CurrentStatusComponent from './dashboardcomponents/CurrentStatusComponent
 import TableTotalScreeningComponent from './dashboardcomponents/TableTotalScreeningComponent.vue'
 import ChartComponent from './dashboardcomponents/ChartComponent.vue'
 import SudDashboardChart from './dashboardcomponents/SUDdashboardChart.vue'
+import SUDSubstanceRiskcomponent from './dashboardcomponents/SUDSubstanceRiskcomponent.vue'
 
 const props = defineProps({
     userData: {
@@ -38,7 +42,6 @@ const props = defineProps({
     }
 })
 
-// Inject the service and treatment data provided by the parent
 const serviceAndTreatmentData = inject('serviceAndTreatmentData', [])
 
 // Get user role from userData
@@ -48,6 +51,11 @@ const userRole = computed(() => {
         return JSON.parse(userDetails)?.user?.role || ''
     }
     return ''
+})
+
+// Check if user is SUD related
+const isSUDUser = computed(() => {
+    return ['sud_admin', 'sud_counselor', 'sud'].includes(userRole.value)
 })
 
 // Get additional components from role config

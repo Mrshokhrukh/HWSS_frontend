@@ -174,8 +174,7 @@
                                             <template v-if="selectedUser.substanceRisks">
                                                 <div v-for="(value, key) in selectedUser.substanceRisks" :key="key"
                                                     class="severity-pill" :class="getRiskClass(value.measurement)">
-                                                    {{ formatSubstanceName(value.substanceName) }}: {{ value.measurement
-                                                    }}
+                                                    {{ formatSubstanceName(key) }}: {{ value.measurement }}
                                                 </div>
                                             </template>
                                         </div>
@@ -474,8 +473,8 @@ const filterNonInjectionSubstances = (data) => {
     if (Array.isArray(data)) {
         data.forEach(substance => {
             const nameKey = substance.substance__name || substance.substance_name;
-            if (nameKey && nameKey !== 'Injection') {
-                substances[nameKey] = {
+            if (nameKey) {
+                substances[nameKey.toLowerCase()] = {
                     measurement: substance.risk_flag,
                     substanceName: nameKey
                 };
@@ -483,9 +482,9 @@ const filterNonInjectionSubstances = (data) => {
         });
     } else if (typeof data === 'object') {
         Object.keys(data).forEach(key => {
-            if (key.endsWith('_measurement') && !key.includes('injection')) {
+            if (key.endsWith('_measurement')) {
                 const substanceName = key.replace('_measurement', '');
-                substances[substanceName] = {
+                substances[substanceName.toLowerCase()] = {
                     measurement: data[key],
                     substanceName: formatSubstanceName(substanceName)
                 };
@@ -493,16 +492,22 @@ const filterNonInjectionSubstances = (data) => {
         });
     }
 
+
     return substances;
 };
 
 const getSubstanceRisks = (user) => {
     if (user.screening_data && user.screening_data.assist_data) {
-        return filterNonInjectionSubstances(user.screening_data.assist_data);
+        const risks = filterNonInjectionSubstances(user.screening_data.assist_data);
+
+        return risks;
     } else if (user.case_substance_risks) {
-        return filterNonInjectionSubstances(user.case_substance_risks);
+        const risks = filterNonInjectionSubstances(user.case_substance_risks);
+
+        return risks;
     } else if (user.event_substance_risks) {
-        return filterNonInjectionSubstances(user.event_substance_risks);
+        const risks = filterNonInjectionSubstances(user.event_substance_risks);
+        return risks;
     } else {
         return {};
     }
@@ -510,13 +515,33 @@ const getSubstanceRisks = (user) => {
 
 const formatSubstanceName = (name) => {
     if (!name) return '';
-    // Remove anything inside parentheses and trim extra spaces
-    const cleanName = name.replace(/\(.*?\)/g, '').trim();
-    // Split by spaces or hyphens and pick the first word to simplify
-    const simplifiedName = cleanName.split(/[\s-]+/).map(word => {
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    });
-    return simplifiedName[0]; // Return only the first simplified word
+
+    // Create a mapping for simplified names
+    const nameMapping = {
+        'tobacco products': 'Tobacco',
+        'alcoholic beverages': 'Alcoholic',
+        'cannabis': 'Cannabis',
+        'cocaine': 'Cocaine',
+        'amphetamine-type stimulants': 'Amphetamine',
+        'inhalants': 'Inhalants',
+        'sedatives or sleeping pills': 'Sedatives',
+        'hallucinogens': 'Hallucinogens',
+        'opioids': 'Opioids',
+        'other - specify': 'Other'
+    };
+
+    // Get the base name (before any parentheses)
+    const baseName = name.split('(')[0].trim().toLowerCase();
+
+    // Find the matching simplified name
+    for (const [key, value] of Object.entries(nameMapping)) {
+        if (baseName.includes(key)) {
+            return value;
+        }
+    }
+
+    // If no match found, return the capitalized first word
+    return baseName.split(' ')[0].charAt(0).toUpperCase() + baseName.split(' ')[0].slice(1);
 };
 
 
@@ -618,7 +643,7 @@ const getInjectionRisk = (user) => {
                 };
             }
             if (Array.isArray(assistData)) {
-                const injectionData = assistData.find(substance => 
+                const injectionData = assistData.find(substance =>
                     substance.substance__name?.toLowerCase().includes('injection')
                 );
                 if (injectionData) {

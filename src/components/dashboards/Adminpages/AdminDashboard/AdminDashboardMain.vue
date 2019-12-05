@@ -28,32 +28,36 @@ import SettingsView from './setting/SettingsView.vue';
 const route = useRoute();
 const newServiceAndTreatment = ref([]);
 
-// Role configuration object
+// Updated role configuration with dashboard component settings
 const roleConfig = {
     mh_admin: {
         dashboard: {
             component: DashboardView,
-            additionalComponents: ['DashboardCurrentStatus', 'TableTotalScreening', 'ChartCard']
+            additionalComponents: ['DashboardCurrentStatus', 'TableTotalScreening', 'ChartComponent']
         },
         approval: { component: ApprovalView },
         report: { component: ReportView },
         help: { component: HelpView },
         settings: { component: SettingsView },
-        dataFilter: (data) => data // No specific filtering for mh_admin
+        dataFilter: (data) => data
     },
     sud_admin: {
         dashboard: {
             component: DashboardView,
-            additionalComponents: ['SudTotalScreening', 'SudSubstanceCard']
+            additionalComponents: ['SudTotalScreening', 'SUDSubstanceRiskcomponent'],
+            riskComponent: 'SUDSubstanceRiskcomponent'
         },
         approval: { component: ApprovalView },
         report: { component: ReportView },
         help: { component: HelpView },
         settings: { component: SettingsView },
-        dataFilter: (data) => data // No specific filtering for sud_admin
+        dataFilter: (data) => data
     },
     aaa_admin: {
-        dashboard: { component: DashboardView },
+        dashboard: {
+            component: DashboardView,
+            riskComponent: 'ChartComponent'
+        },
         report: { component: ReportView },
         help: { component: HelpView },
         settings: { component: SettingsView },
@@ -63,7 +67,10 @@ const roleConfig = {
         })
     },
     cecd_admin: {
-        dashboard: { component: DashboardView },
+        dashboard: {
+            component: DashboardView,
+            riskComponent: 'ChartComponent'
+        },
         report: { component: ReportView },
         help: { component: HelpView },
         settings: { component: SettingsView },
@@ -73,13 +80,26 @@ const roleConfig = {
         })
     },
     rd_admin: {
-        dashboard: { component: DashboardView },
+        dashboard: {
+            component: DashboardView,
+            riskComponent: 'ChartComponent'
+        },
         help: { component: HelpView },
         settings: { component: SettingsView },
-        dataFilter: (data) => data // No specific filtering for rd_admin
+        dataFilter: (data) => data
     }
 };
 
+// Provide the risk component type to child components
+const getRiskComponentType = computed(() => {
+    const role = userRole.value;
+    return roleConfig[role]?.dashboard?.riskComponent || 'ChartComponent';
+});
+
+provide('riskComponentType', getRiskComponentType);
+provide('serviceAndTreatmentData', newServiceAndTreatment);
+
+// Rest of your existing code...
 const userRole = computed(() => {
     const savedUserRole = JSON.parse(localStorage.getItem('userDetailsStore'));
     return savedUserRole?.user?.role || '';
@@ -111,6 +131,7 @@ const currentComponent = computed(() => {
     return null;
 });
 
+// Your existing functions...
 const userDetailsInLocal = () => {
     const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
     if (userDetails) {
@@ -135,8 +156,6 @@ const fetchServiceAndTreatmentData = async () => {
         newServiceAndTreatment.value = [];
     }
 };
-
-provide('serviceAndTreatmentData', newServiceAndTreatment);
 
 onMounted(() => {
     fetchServiceAndTreatmentData();

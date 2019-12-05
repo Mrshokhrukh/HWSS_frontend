@@ -47,7 +47,6 @@ import { ref, computed, watch, onMounted } from 'vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 
-// Props definition
 const props = defineProps({
     serviceData: {
         type: Array,
@@ -56,35 +55,63 @@ const props = defineProps({
     }
 });
 
-// State management
 const isLoading = ref(true);
 const error = ref(null);
 
-// Helper function to check valid screening data
+// Improved screening data validation
 const hasScreeningData = (item) => {
-    return typeof item.screening_data === 'object' &&
-        item.screening_data !== null &&
-        item.screening_data?.id;
+    // Check for event_substance_risks
+    if (Array.isArray(item.event_substance_risks) && item.event_substance_risks.length > 0) {
+        return true;
+    }
+
+    // Check for case_substance_risks
+    if (Array.isArray(item.case_substance_risks) && item.case_substance_risks.length > 0) {
+        return true;
+    }
+
+    // Check for screening_data
+    if (item.screening_data) {
+        // Check if it's an object with data
+        if (typeof item.screening_data === 'object' && item.screening_data !== null) {
+            return true;
+        }
+        // Handle case where screening_data is a string "Data not available"
+        if (item.screening_data === "Data not available") {
+            return false;
+        }
+    }
+
+    return false;
 };
 
-// Helper function for gender determination
 const getGender = (item) => {
-    const userGender = item.user?.gender?.toLowerCase();
-    if (userGender === 'male' || userGender === 'female') return userGender;
+    if (!item.user) return null;
 
-    if (item.screening_data?.gender) {
-        const screeningGender = item.screening_data.gender.toLowerCase();
-        if (screeningGender === 'm') return 'male';
-        if (screeningGender === 'f') return 'female';
-    }
+    const userGender = item.user.gender?.toLowerCase();
+    if (userGender === 'male' || userGender === 'female') return userGender;
 
     return null;
 };
 
-// Computed property for total gender counts
+const isWithinLastWeek = (dateStr) => {
+    try {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        oneWeekAgo.setHours(0, 0, 0, 0);
+
+        const itemDate = new Date(dateStr);
+        itemDate.setHours(0, 0, 0, 0);
+
+        return !isNaN(itemDate.getTime()) && itemDate >= oneWeekAgo;
+    } catch {
+        return false;
+    }
+};
+
 const genderCounts = computed(() => {
     try {
-        if (!props.serviceData) return { male: 0, female: 0 };
+        if (!Array.isArray(props.serviceData)) return { male: 0, female: 0 };
 
         return props.serviceData.reduce((acc, item) => {
             if (hasScreeningData(item)) {
@@ -101,18 +128,12 @@ const genderCounts = computed(() => {
     }
 });
 
-// Computed property for weekly gender counts
 const weeklyGenderCounts = computed(() => {
     try {
-        if (!props.serviceData) return { male: 0, female: 0 };
-
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        if (!Array.isArray(props.serviceData)) return { male: 0, female: 0 };
 
         return props.serviceData.reduce((acc, item) => {
-            const itemDate = new Date(item.date);
-
-            if (!isNaN(itemDate) && itemDate >= oneWeekAgo && hasScreeningData(item)) {
+            if (hasScreeningData(item) && isWithinLastWeek(item.date)) {
                 const gender = getGender(item);
                 if (gender === 'male') acc.male++;
                 if (gender === 'female') acc.female++;
@@ -126,7 +147,6 @@ const weeklyGenderCounts = computed(() => {
     }
 });
 
-// Table data computed properties
 const table1Data = computed(() => [
     {
         header: 'Total New Entry',
