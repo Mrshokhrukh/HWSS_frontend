@@ -18,6 +18,19 @@
         <!-- Primary Filters -->
         <form @submit.prevent="applyFilters" class="primary-filters">
           <div class="filter-grid">
+            <!-- Year Filter -->
+            <div class="filter-item">
+              <label class="filter-label">Year</label>
+              <Dropdown v-model="filters.year" :options="availableYears" optionLabel="name" placeholder="Select Year"
+                class="w-full" :filter="true" :showClear="true">
+                <template #value="slotProps">
+                  <div class="dropdown-value">
+                    <i class="pi pi-calendar mr-2"></i>
+                    <span>{{ slotProps.value?.name || 'Select Year' }}</span>
+                  </div>
+                </template>
+              </Dropdown>
+            </div>
             <!-- Region Selection -->
             <div class="filter-item">
               <label class="filter-label">Region</label>
@@ -76,6 +89,20 @@
                 </template>
               </Dropdown>
             </div>
+          </div>
+
+          <!-- Active Agency Selection (only visible for cluster) -->
+          <div class="filter-item" v-if="filters.organization?.code === 'CLUSTER' && filters.agency">
+            <label class="filter-label">Active Agency</label>
+            <Dropdown v-model="filters.activeAgency" :options="availableActiveAgencies" optionLabel="name"
+              placeholder="Select Active Agency" class="w-full" :filter="true" :showClear="true">
+              <template #value="slotProps">
+                <div class="dropdown-value">
+                  <i class="pi pi-building mr-2"></i>
+                  <span>{{ slotProps.value?.name || 'Select Active Agency' }}</span>
+                </div>
+              </template>
+            </Dropdown>
           </div>
 
           <!-- Additional Filters -->
@@ -229,7 +256,28 @@ const filters = reactive({
   ageGroups: [],
   classes: [],
   currentStatus: null,
-  statusValue: null
+  statusValue: null,
+  year: null,
+  activeAgency: null
+});
+
+// Computed property for available years
+const availableYears = computed(() => {
+  if (!serviceAndTreatmentData.value) return [];
+
+  // Get unique years from screening_data submission_dates
+  const years = new Set(
+    serviceAndTreatmentData.value
+      .filter(item => item.screening_data?.submission_date)
+      .map(item => new Date(item.screening_data.submission_date).getFullYear())
+  );
+
+  return Array.from(years)
+    .sort((a, b) => b - a) // Sort in descending order
+    .map(year => ({
+      code: year.toString(),
+      name: year.toString()
+    }));
 });
 
 // Constants and Options
@@ -240,9 +288,14 @@ const regions = [
 ];
 
 const organizations = [
-  { code: 'SCHOOL', name: 'School' },
-  { code: 'GYALSUUNG', name: 'Gyalsuung' },
-  { code: 'RCSC', name: 'RCSC' }
+  { code: 'EVENT_BASED', name: 'Event Based' },
+  { code: 'CASE_BASED', name: 'Case Based' },
+  { code: 'CLUSTER', name: 'Cluster' }
+];
+
+const clusterTypes = [
+  { code: 'GYALSUNG', name: 'Gyalsung' },
+  { code: 'SCHOOL', name: 'School' }
 ];
 
 const ageGroups = [
@@ -296,23 +349,62 @@ const availableDzongkhags = computed(() => {
 const filteredAgencies = computed(() => {
   if (!serviceAndTreatmentData.value || !filters.organization) return [];
 
-  const agencies = new Set();
-  serviceAndTreatmentData.value.forEach(item => {
-    const agencyName = item.user?.agency_details?.agency?.agency_name;
-    if (agencyName) {
-      if (filters.organization.code === 'SCHOOL' && agencyName.toLowerCase().includes('school')) {
-        agencies.add(agencyName);
-      } else if (filters.organization.code === 'GYALSUUNG' && agencyName.toLowerCase().includes('gyalsung')) {
-        agencies.add(agencyName);
-      } else if (filters.organization.code === 'RCSC' &&
-        !agencyName.toLowerCase().includes('school') &&
-        !agencyName.toLowerCase().includes('gyalsung')) {
-        agencies.add(agencyName);
-      }
-    }
-  });
+  switch (filters.organization.code) {
+    case 'EVENT_BASED':
+      return Array.from(new Set(
+        serviceAndTreatmentData.value
+          .filter(item => item.screening_data?.event)
+          .map(item => ({
+            code: `Event ${item.screening_data.event}`,
+            name: `Event ${item.screening_data.event}`
+          }))
+      ));
 
-  return Array.from(agencies).map(name => ({
+    case 'CASE_BASED':
+      const caseAgencies = new Set();
+      serviceAndTreatmentData.value
+        .filter(item => item.screening_data?.case)
+        .forEach(item => {
+          if (item.user?.active_agency?.agency_name) {
+            caseAgencies.add(item.user.active_agency.agency_name);
+          }
+        });
+      return Array.from(caseAgencies).map(name => ({
+        code: name,
+        name
+      }));
+
+    case 'CLUSTER':
+      // Just return school/gyalsung options
+      return clusterTypes;
+
+    default:
+      return [];
+  }
+});
+
+// Add a new computed property for school agencies
+const availableActiveAgencies = computed(() => {
+  if (!filters.organization?.code === 'CLUSTER' || !filters.agency) return [];
+
+  const uniqueAgencies = new Set();
+
+  // Only process items that don't have event or case in screening_data
+  serviceAndTreatmentData.value
+    .filter(item => !item.screening_data?.event && !item.screening_data?.case)
+    .forEach(item => {
+      const agencyName = item.user?.active_agency?.agency_name;
+      if (agencyName) {
+        const lowerAgencyName = agencyName.toLowerCase();
+        if (filters.agency.code === 'SCHOOL' && lowerAgencyName.includes('school')) {
+          uniqueAgencies.add(agencyName);
+        } else if (filters.agency.code === 'GYALSUNG' && lowerAgencyName.includes('gyalsung')) {
+          uniqueAgencies.add(agencyName);
+        }
+      }
+    });
+
+  return Array.from(uniqueAgencies).map(name => ({
     code: name,
     name
   }));
@@ -362,7 +454,12 @@ const activeFilters = computed(() => {
   if (filters.region) active.push({ key: 'region', label: `Region: ${filters.region.name}` });
   if (filters.dzongkhag) active.push({ key: 'dzongkhag', label: `Dzongkhag: ${filters.dzongkhag.name}` });
   if (filters.organization) active.push({ key: 'organization', label: `Organization: ${filters.organization.name}` });
-  if (filters.agency) active.push({ key: 'agency', label: `Agency: ${filters.agency.name}` });
+  if (filters.activeAgency) {
+    active.push({
+      key: 'activeAgency',
+      label: `Active Agency: ${filters.activeAgency.name}`
+    });
+  }
   if (filters.ageGroups.length) {
     active.push({
       key: 'ageGroups',
@@ -381,6 +478,12 @@ const activeFilters = computed(() => {
       label: `${filters.currentStatus.name}: ${filters.statusValue.name}`
     });
   }
+  if (filters.year) {
+    active.push({
+      key: 'year',
+      label: `Screening Year: ${filters.year.name}`
+    });
+  }
 
   return active;
 });
@@ -391,6 +494,7 @@ const handleRegionChange = () => {
 
 const handleOrganizationChange = () => {
   filters.agency = null;
+  filters.activeAgency = null;
   filters.classes = [];
 };
 
@@ -435,7 +539,10 @@ const removeFilter = (filterKey) => {
     filters.dzongkhag = null;
   } else if (filterKey === 'organization') {
     filters.agency = null;
+    filters.activeAgency = null;
     filters.classes = [];
+  } else if (filterKey === 'agency') {
+    filters.activeAgency = null;
   } else if (filterKey === 'currentStatus') {
     filters.statusValue = null;
   }
@@ -489,23 +596,53 @@ const filteredData = computed(() => {
 
     // Organization and Agency filtering
     if (filters.organization) {
-      const agencyName = item.user?.agency_details?.agency?.agency_name?.toLowerCase() || '';
-
       switch (filters.organization.code) {
-        case 'SCHOOL':
-          match = match && agencyName.includes('school');
+        case 'EVENT_BASED':
+          match = match && !!item.screening_data?.event;
+          if (filters.agency) {
+            match = match && `Event ${item.screening_data.event}` === filters.agency.code;
+          }
           break;
-        case 'GYALSUUNG':
-          match = match && agencyName.includes('gyalsung');
-          break;
-        case 'RCSC':
-          match = match && !agencyName.includes('school') &&
-            !agencyName.includes('gyalsung');
-          break;
-      }
 
-      if (filters.agency) {
-        match = match && item.user?.agency_details?.agency?.agency_name === filters.agency.code;
+        case 'CASE_BASED':
+          match = match && !!item.screening_data?.case;
+          if (filters.agency) {
+            match = match && item.user?.active_agency?.agency_name === filters.agency.code;
+          }
+          break;
+
+        case 'CLUSTER':
+          // First check - no event or case for cluster screenings
+          match = match && !item.screening_data?.event && !item.screening_data?.case;
+
+          if (filters.agency?.code === 'SCHOOL') {
+            const agencyName = (item.user?.active_agency?.agency_name || '').toLowerCase();
+            const agencyDetailsName = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
+
+            // Check if either active_agency or agency_details contains 'school'
+            match = match && (
+              agencyName.includes('school') ||
+              agencyDetailsName.includes('school')
+            );
+
+            // If specific school is selected in Active Agency dropdown
+            if (filters.activeAgency) {
+              match = match && item.user?.active_agency?.agency_name === filters.activeAgency.code;
+            }
+          } else if (filters.agency?.code === 'GYALSUNG') {
+            const agencyName = (item.user?.active_agency?.agency_name || '').toLowerCase();
+            const agencyDetailsName = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
+
+            match = match && (
+              agencyName.includes('gyalsung') ||
+              agencyDetailsName.includes('gyalsung')
+            );
+
+            if (filters.activeAgency) {
+              match = match && item.user?.active_agency?.agency_name === filters.activeAgency.code;
+            }
+          }
+          break;
       }
     }
 
@@ -535,6 +672,11 @@ const filteredData = computed(() => {
           match = match && item.counseling === filters.statusValue.code;
           break;
       }
+    }
+    // Year filtering based on screening_data submission_date
+    if (filters.year && item.screening_data?.submission_date) {
+      const submissionYear = new Date(item.screening_data.submission_date).getFullYear();
+      match = match && submissionYear.toString() === filters.year.code;
     }
 
     return match;
