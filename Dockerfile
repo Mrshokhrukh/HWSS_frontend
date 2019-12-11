@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies using npm
-RUN if [ -f package-lock.json ]; then npm ci; \
-    else npm install; \
+RUN if [ -f yarn.lock ]; then yarn install --check-files; \
+    else yarn install; \
     fi
 
 # Copy project files and build
