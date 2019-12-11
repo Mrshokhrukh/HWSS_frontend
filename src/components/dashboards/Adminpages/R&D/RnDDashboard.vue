@@ -134,33 +134,58 @@
                 </template>
               </MultiSelect>
             </div>
+          </div>
 
-            <!-- Status Filters -->
-            <div class="filter-item">
-              <label class="filter-label">Current Status</label>
-              <Dropdown v-model="filters.currentStatus" :options="statusTypes" optionLabel="name"
-                placeholder="Select Status Type" class="w-full" :filter="true" :showClear="true">
-                <template #value="slotProps">
-                  <div class="dropdown-value">
-                    <i class="pi pi-chart-bar mr-2"></i>
-                    <span>{{ slotProps.value?.name || 'Select Status Type' }}</span>
-                  </div>
-                </template>
-              </Dropdown>
+          <!-- Status Filters Section -->
+          <div class="status-filters-container">
+            <div class="status-filters-header">
+              <i class="pi pi-sliders-h"></i>
+              <h6>Status Filters</h6>
             </div>
+            <div class="status-grid">
+              <!-- Assessment Status -->
+              <div class="filter-item">
+                <label class="filter-label">
+                  <i class="pi pi-check-circle"></i>
+                  Assessment Status
+                </label>
+                <Dropdown v-model="filters.statusValue" :options="statusTypes" optionLabel="name"
+                  placeholder="Select Assessment Status" class="w-full" :filter="true" :showClear="true">
+                </Dropdown>
+              </div>
 
-            <div class="filter-item">
-              <label class="filter-label">Status Value</label>
-              <Dropdown v-model="filters.statusValue" :options="currentStatusValues" optionLabel="name"
-                placeholder="Select Status" class="w-full" :disabled="!filters.currentStatus" :filter="true"
-                :showClear="true">
-                <template #value="slotProps">
-                  <div class="dropdown-value">
-                    <i class="pi pi-tag mr-2"></i>
-                    <span>{{ slotProps.value?.name || 'Select Status' }}</span>
-                  </div>
-                </template>
-              </Dropdown>
+              <!-- Case Status -->
+              <div class="filter-item">
+                <label class="filter-label">
+                  <i class="pi pi-folder"></i>
+                  Case Status
+                </label>
+                <Dropdown v-model="filters.caseStatus" :options="caseStatusTypes" optionLabel="name"
+                  placeholder="Select Case Status" class="w-full" :filter="true" :showClear="true">
+                </Dropdown>
+              </div>
+
+              <!-- Counseling Status -->
+              <div class="filter-item">
+                <label class="filter-label">
+                  <i class="pi pi-users"></i>
+                  Counseling Status
+                </label>
+                <Dropdown v-model="filters.counselingStatus" :options="counselingStatusTypes" optionLabel="name"
+                  placeholder="Select Counseling Status" class="w-full" :filter="true" :showClear="true">
+                </Dropdown>
+              </div>
+
+              <!-- Follow Up Status -->
+              <div class="filter-item">
+                <label class="filter-label">
+                  <i class="pi pi-clock"></i>
+                  Follow Up Status
+                </label>
+                <Dropdown v-model="filters.followUpStatus" :options="followUpStatusTypes" optionLabel="name"
+                  placeholder="Select Follow Up Status" class="w-full" :filter="true" :showClear="true">
+                </Dropdown>
+              </div>
             </div>
           </div>
 
@@ -258,7 +283,10 @@ const filters = reactive({
   currentStatus: null,
   statusValue: null,
   year: null,
-  activeAgency: null
+  activeAgency: null,
+  caseStatus: null,
+  counselingStatus: null,
+  followUpStatus: null,
 });
 
 // Computed property for available years
@@ -299,11 +327,11 @@ const clusterTypes = [
 ];
 
 const ageGroups = [
-  { code: '13-15', name: '13-15 years' },
-  { code: '16-18', name: '16-18 years' },
-  { code: '19-21', name: '19-21 years' },
-  { code: '22-24', name: '22-24 years' },
-  { code: '25+', name: '25+ years' }
+  { code: 'UNDER_10', name: 'Under 10 years' },
+  { code: '10_19', name: '10-19 years' },
+  { code: '20_24', name: '20-24 years' },
+  { code: '25_60', name: '25-60 years' },
+  { code: 'OVER_60', name: 'Over 60 years' }
 ];
 
 const schoolClasses = [
@@ -324,9 +352,36 @@ const schoolClasses = [
 
 
 const statusTypes = [
-  { code: 'MENTAL_HEALTH', name: 'Mental Health Status' },
-  { code: 'REFERRAL', name: 'Referral Status' },
-  { code: 'CURRENT', name: 'Current Status' }
+  { code: 'Conducted', name: 'Conducted' },
+  { code: 'Not Conducted', name: 'Not Conducted' }
+];
+
+
+const caseStatusTypes = [
+  { code: 'On Going', name: 'On Going' },
+  { code: 'Case Closed', name: 'Case Closed' },
+  { code: 'Case Discontinued', name: 'Case Discontinued' }
+];
+
+const counselingStatusTypes = [
+  { code: 'Availed', name: 'Availed' },
+  { code: 'Not Required', name: 'Not Required' },
+  { code: 'Waiting List', name: 'Waiting List' }
+];
+
+const followUpStatusTypes = [
+  { code: 'Treatment Completed', name: 'Treatment Completed' },
+  { code: 'Undergoing Treatment', name: 'Undergoing Treatment' },
+  { code: 'Completed Counselling Sessions', name: 'Completed Counselling Sessions' },
+  { code: 'Unwilling to Undergo Treatment', name: 'Unwilling to Undergo Treatment' },
+  { code: 'Undergone Rehabilitation', name: 'Undergone Rehabilitation' },
+  { code: 'Undergoing Rehabilitation', name: 'Undergoing Rehabilitation' },
+  { code: 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)', name: 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)' },
+  { code: 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)', name: 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)' },
+  { code: 'School-based SUD Treatment and Care', name: 'School-based SUD Treatment and Care' },
+  { code: 'Institution-based SUD Treatment and Care', name: 'Institution-based SUD Treatment and Care' },
+  { code: 'Follow-up Drug Test Conducted', name: 'Follow-up Drug Test Conducted' },
+  { code: 'Detention-based SUD Treatment and Care', name: 'Detention-based SUD Treatment and Care' }
 ];
 
 // Computed Properties
@@ -414,20 +469,9 @@ const currentStatusValues = computed(() => {
   if (!filters.currentStatus) return [];
 
   const statusMap = {
-    MENTAL_HEALTH: [
-      { code: 'WAITING', name: 'Waiting/Pending' },
-      { code: 'IN_PROGRESS', name: 'In Progress' },
-      { code: 'COMPLETED', name: 'Completed' }
-    ],
-    REFERRAL: [
-      { code: 'NOT_REFERRED', name: 'Not Referred' },
-      { code: 'REFERRED', name: 'Referred' },
-      { code: 'IN_PROGRESS', name: 'In Progress' }
-    ],
-    CURRENT: [
-      { code: 'ACTIVE', name: 'Active' },
-      { code: 'INACTIVE', name: 'Inactive' },
-      { code: 'DISCONTINUED', name: 'Discontinued' }
+    ASSESSMENT: [
+      { code: 'Conducted', name: 'Conducted' },
+      { code: 'Not Conducted', name: 'Not Conducted' }
     ]
   };
 
@@ -473,15 +517,37 @@ const activeFilters = computed(() => {
     });
   }
   if (filters.currentStatus && filters.statusValue) {
-    active.push({
-      key: 'status',
-      label: `${filters.currentStatus.name}: ${filters.statusValue.name}`
-    });
+    if (filters.currentStatus.code === 'ASSESSMENT') {
+      active.push({
+        key: 'status',
+        label: `Assessment Status: ${filters.statusValue.name}`
+      });
+    }
   }
   if (filters.year) {
     active.push({
       key: 'year',
       label: `Screening Year: ${filters.year.name}`
+    });
+  }
+  if (filters.caseStatus) {
+    active.push({
+      key: 'caseStatus',
+      label: `Case Status: ${filters.caseStatus.name}`
+    });
+  }
+
+  if (filters.counselingStatus) {
+    active.push({
+      key: 'counselingStatus',
+      label: `Counseling Status: ${filters.counselingStatus.name}`
+    });
+  }
+
+  if (filters.followUpStatus) {
+    active.push({
+      key: 'followUpStatus',
+      label: `Follow Up Status: ${filters.followUpStatus.name}`
     });
   }
 
@@ -512,12 +578,12 @@ const calculateAge = (dateOfBirth) => {
 };
 
 const getAgeGroup = (age) => {
-  if (age < 13) return null;
-  if (age <= 15) return '13-15';
-  if (age <= 18) return '16-18';
-  if (age <= 21) return '19-21';
-  if (age <= 24) return '22-24';
-  return '25+';
+  if (age < 10) return 'UNDER_10';
+  if (age >= 10 && age <= 19) return '10_19';
+  if (age >= 20 && age <= 24) return '20_24';
+  if (age >= 25 && age <= 60) return '25_60';
+  if (age > 60) return 'OVER_60';
+  return null;
 };
 
 const resetFilters = () => {
@@ -660,23 +726,30 @@ const filteredData = computed(() => {
     }
 
     // Status filtering
-    if (filters.currentStatus && filters.statusValue) {
-      switch (filters.currentStatus.code) {
-        case 'MENTAL_HEALTH':
-          match = match && item.case_status === filters.statusValue.code;
-          break;
-        case 'REFERRAL':
-          match = match && item.referred === filters.statusValue.code;
-          break;
-        case 'CURRENT':
-          match = match && item.counseling === filters.statusValue.code;
-          break;
-      }
+    if (filters.statusValue) {
+      match = match && item.assessment_status === filters.statusValue.code;
+      console.log('Assessment Status match:', {
+        expected: filters.statusValue.code,
+        actual: item.assessment_status,
+        matches: item.assessment_status === filters.statusValue.code
+      });
+    }
+
+    if (filters.caseStatus) {
+      match = match && item.case_status === filters.caseStatus.code;
     }
     // Year filtering based on screening_data submission_date
     if (filters.year && item.screening_data?.submission_date) {
       const submissionYear = new Date(item.screening_data.submission_date).getFullYear();
       match = match && submissionYear.toString() === filters.year.code;
+    }
+
+    if (filters.counselingStatus) {
+      match = match && item.counseling === filters.counselingStatus.code;
+    }
+
+    if (filters.followUpStatus) {
+      match = match && item.follow_up === filters.followUpStatus.code;
     }
 
     return match;
@@ -818,8 +891,81 @@ onMounted(() => {
 
 .filter-label {
   font-weight: 500;
-  color: var(--text-color-secondary);
+  color: #fff;
   margin-bottom: 0.25rem;
+  background: #2B5B65;
+  padding: 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(43, 101, 111, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+.filter-label i {
+  color: rgb(255, 255, 255);
+}
+
+.status-filters-container {
+  background: rgba(43, 101, 111, 0.02);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(43, 101, 111, 0.1);
+}
+
+.status-filters-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(43, 101, 111, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-filters-header h6 {
+  margin: 0;
+  color: #2B656F;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Enhanced dropdown styling for status filters */
+.status-filters-container :deep(.p-dropdown) {
+  background: white;
+  border-width: 1px;
+  transition: all 0.2s ease;
+}
+
+.status-filters-container :deep(.p-dropdown:hover) {
+  border-color: #2B656F;
+  transform: translateY(-1px);
+}
+
+.status-filters-container :deep(.p-dropdown.p-focus) {
+  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.15);
+}
+
+/* Fancy separator for status section */
+.status-section-separator {
+  height: 1px;
+  background: linear-gradient(90deg,
+      rgba(43, 101, 111, 0) 0%,
+      rgba(43, 101, 111, 0.2) 50%,
+      rgba(43, 101, 111, 0) 100%);
+  margin: 2rem 0;
+}
+
+.filter-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: rgba(43, 101, 111, 0.2);
 }
 
 .dropdown-value {
