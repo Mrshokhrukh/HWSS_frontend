@@ -299,6 +299,10 @@ const filters = reactive({
   caseStatus: null,
   counselingStatus: null,
   followUpStatus: null,
+  activeAgency: null,
+  caseStatus: null,
+  counselingStatus: null,
+  followUpStatus: null,
 });
 
 // Computed property for available years
@@ -339,6 +343,11 @@ const clusterTypes = [
 ];
 
 const ageGroups = [
+  { code: 'UNDER_10', name: 'Under 10 years' },
+  { code: '10_19', name: '10-19 years' },
+  { code: '20_24', name: '20-24 years' },
+  { code: '25_60', name: '25-60 years' },
+  { code: 'OVER_60', name: 'Over 60 years' }
   { code: 'UNDER_10', name: 'Under 10 years' },
   { code: '10_19', name: '10-19 years' },
   { code: '20_24', name: '20-24 years' },
@@ -481,6 +490,9 @@ const currentStatusValues = computed(() => {
     ASSESSMENT: [
       { code: 'Conducted', name: 'Conducted' },
       { code: 'Not Conducted', name: 'Not Conducted' }
+    ASSESSMENT: [
+      { code: 'Conducted', name: 'Conducted' },
+      { code: 'Not Conducted', name: 'Not Conducted' }
     ]
   };
 
@@ -532,11 +544,37 @@ const activeFilters = computed(() => {
         label: `Assessment Status: ${filters.statusValue.name}`
       });
     }
+    if (filters.currentStatus.code === 'ASSESSMENT') {
+      active.push({
+        key: 'status',
+        label: `Assessment Status: ${filters.statusValue.name}`
+      });
+    }
   }
   if (filters.year) {
     active.push({
       key: 'year',
       label: `Screening Year: ${filters.year.name}`
+    });
+  }
+  if (filters.caseStatus) {
+    active.push({
+      key: 'caseStatus',
+      label: `Case Status: ${filters.caseStatus.name}`
+    });
+  }
+
+  if (filters.counselingStatus) {
+    active.push({
+      key: 'counselingStatus',
+      label: `Counseling Status: ${filters.counselingStatus.name}`
+    });
+  }
+
+  if (filters.followUpStatus) {
+    active.push({
+      key: 'followUpStatus',
+      label: `Follow Up Status: ${filters.followUpStatus.name}`
     });
   }
   if (filters.caseStatus) {
@@ -587,6 +625,12 @@ const calculateAge = (dateOfBirth) => {
 };
 
 const getAgeGroup = (age) => {
+  if (age < 10) return 'UNDER_10';
+  if (age >= 10 && age <= 19) return '10_19';
+  if (age >= 20 && age <= 24) return '20_24';
+  if (age >= 25 && age <= 60) return '25_60';
+  if (age > 60) return 'OVER_60';
+  return null;
   if (age < 10) return 'UNDER_10';
   if (age >= 10 && age <= 19) return '10_19';
   if (age >= 20 && age <= 24) return '20_24';
@@ -760,11 +804,30 @@ const filteredData = computed(() => {
 
     if (filters.caseStatus) {
       match = match && item.case_status === filters.caseStatus.code;
+    if (filters.statusValue) {
+      match = match && item.assessment_status === filters.statusValue.code;
+      console.log('Assessment Status match:', {
+        expected: filters.statusValue.code,
+        actual: item.assessment_status,
+        matches: item.assessment_status === filters.statusValue.code
+      });
+    }
+
+    if (filters.caseStatus) {
+      match = match && item.case_status === filters.caseStatus.code;
     }
     // Year filtering based on screening_data submission_date
     if (filters.year && item.screening_data?.submission_date) {
       const submissionYear = new Date(item.screening_data.submission_date).getFullYear();
       match = match && submissionYear.toString() === filters.year.code;
+    }
+
+    if (filters.counselingStatus) {
+      match = match && item.counseling === filters.counselingStatus.code;
+    }
+
+    if (filters.followUpStatus) {
+      match = match && item.follow_up === filters.followUpStatus.code;
     }
 
     if (filters.counselingStatus) {
@@ -1001,7 +1064,81 @@ onMounted(() => {
 .filter-label {
   font-weight: 500;
   color: #fff;
+  color: #fff;
   margin-bottom: 0.25rem;
+  background: #2B5B65;
+  padding: 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(43, 101, 111, 0.1);
+  display: flex;
+  align-items: center;
+}
+
+.filter-label i {
+  color: rgb(255, 255, 255);
+}
+
+.status-filters-container {
+  background: rgba(43, 101, 111, 0.02);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(43, 101, 111, 0.1);
+}
+
+.status-filters-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(43, 101, 111, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-filters-header h6 {
+  margin: 0;
+  color: #2B656F;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Enhanced dropdown styling for status filters */
+.status-filters-container :deep(.p-dropdown) {
+  background: white;
+  border-width: 1px;
+  transition: all 0.2s ease;
+}
+
+.status-filters-container :deep(.p-dropdown:hover) {
+  border-color: #2B656F;
+  transform: translateY(-1px);
+}
+
+.status-filters-container :deep(.p-dropdown.p-focus) {
+  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.15);
+}
+
+/* Fancy separator for status section */
+.status-section-separator {
+  height: 1px;
+  background: linear-gradient(90deg,
+      rgba(43, 101, 111, 0) 0%,
+      rgba(43, 101, 111, 0.2) 50%,
+      rgba(43, 101, 111, 0) 100%);
+  margin: 2rem 0;
+}
+
+.filter-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-color: rgba(43, 101, 111, 0.2);
   background: #2B5B65;
   padding: 1.25rem;
   border-radius: 8px;
