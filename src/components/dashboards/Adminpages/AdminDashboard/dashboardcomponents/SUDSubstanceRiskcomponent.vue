@@ -85,17 +85,27 @@ function parseRiskLevel(riskFlag) {
     if (!riskFlag) return { level: 'none', score: 0 };
 
     const riskLower = riskFlag.toLowerCase();
+
+    // Handle numeric scores if present
     const score = parseInt(riskFlag.match(/\((\d+)\)/)?.[1] || 0);
 
-    if (riskLower.includes('severe') || score >= 27) return { level: 'high', score };
-    if (riskLower.includes('moderate') || score >= 4) return { level: 'moderate', score };
-    return { level: 'none', score };
+    // Check specific flags from your data
+    if (riskLower === 'high' || score >= 27) return { level: 'high', score: score || 27 };
+    if (riskLower === 'moderate' || score >= 4) return { level: 'moderate', score: score || 4 };
+    if (riskLower === 'low') return { level: 'low', score: score || 1 };
+    return { level: 'none', score: 0 };
 }
 
+
 function extractMeasurementData(data) {
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
 
     return data.reduce((results, item) => {
+        // Skip if no valid data
+        if (typeof item.screening_data === 'string') {
+            return results;
+        }
+
         const processedData = {
             gender: item.user?.gender || "unknown",
             risks: {}
@@ -104,7 +114,8 @@ function extractMeasurementData(data) {
         // Helper to process substance risks
         const processSubstanceRisk = (substance, riskFlag) => {
             const substanceMatch = Object.entries(substanceKeyMapping).find(([_, value]) =>
-                value.searchTerms.some(term => substance.toLowerCase().includes(term))
+                value.searchTerms.some(term =>
+                    substance.toLowerCase().includes(term.toLowerCase()))
             );
 
             if (substanceMatch) {
@@ -118,8 +129,17 @@ function extractMeasurementData(data) {
             }
         };
 
-        // Check event_substance_risks
-        if (item.event_substance_risks?.length > 0) {
+        // Case 1: Process assist_data from screening_data (cluster tests)
+        if (item.screening_data?.assist_data) {
+            item.screening_data.assist_data.forEach(risk => {
+                if (risk.substance__name && risk.risk_flag && (!risk.measurement || risk.measurement > 0)) {
+                    processSubstanceRisk(risk.substance__name, risk.risk_flag);
+                }
+            });
+        }
+
+        // Case 2: Process event_substance_risks at root level
+        if (item.event_substance_risks) {
             item.event_substance_risks.forEach(risk => {
                 if (risk.substance_name && risk.risk_flag) {
                     processSubstanceRisk(risk.substance_name, risk.risk_flag);
@@ -127,8 +147,8 @@ function extractMeasurementData(data) {
             });
         }
 
-        // Check case_substance_risks
-        if (item.case_substance_risks?.length > 0) {
+        // Case 3: Process case_substance_risks at root level
+        if (item.case_substance_risks) {
             item.case_substance_risks.forEach(risk => {
                 if (risk.substance_name && risk.risk_flag) {
                     processSubstanceRisk(risk.substance_name, risk.risk_flag);
@@ -136,7 +156,9 @@ function extractMeasurementData(data) {
             });
         }
 
+        // Only add to results if we found some risks
         if (Object.keys(processedData.risks).length > 0) {
+            console.log(`Found risks for user ${item.id}:`, processedData.risks);
             results.push(processedData);
         }
 
@@ -382,8 +404,11 @@ const setActiveButton = (buttonName) => {
     updateCharts();
 };
 
-watch(serviceAndTreatmentData, () => {
+watch(serviceAndTreatmentData, (newVal) => {
+    console.log('Service and Treatment Data changed:', newVal?.length, 'records');
     if (activeButton.value) {
+        const extractedData = extractMeasurementData(newVal);
+        console.log('Extracted Data:', extractedData.length, 'records with risks');
         updateCharts();
     }
 }, { deep: true });

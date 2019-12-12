@@ -1,6 +1,6 @@
 <template>
     <div class="screening-data-container">
-        <h1 class="text-center fw-bold mb-4" style="color: #2c6975;">Current Status in Bhutan</h1>
+        <h1 class="text-center fw-bold mb-4" style="color: #2c6975;">SUD Treatment Status in Bhutan</h1>
         <div class="card shadow-sm outer-card">
             <div class="card-body">
                 <div class="card inner-card">
@@ -28,22 +28,56 @@ const treatmentData = inject('serviceAndTreatmentData');
 const chartCanvas = ref(null);
 let chart = null;
 
-const backgroundColors = [
-    'rgba(44, 105, 117, 1)', 'rgba(114, 190, 203, 1)',
-    'rgba(104, 178, 160, 1)', 'rgba(180, 213, 191, 1)',
-    'rgba(0, 0, 0, 1)', 'rgba(255, 99, 132, 1)',
-    'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
-    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)'
-];
+// Define the mapping of status labels
+const statusMapping = {
+    'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)': 'Primary Phase',
+    'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)': 'Continuing Care',
+    'Undergoing Rehabilitation': 'Undergoing Rehabilitation',
+    'Treatment Completed': 'Treatment Completed',
+    'Unwilling to Undergo Treatment': 'Non-compliance'
+};
+
+// Define consistent colors for each category
+const categoryColors = {
+    'Primary Phase': 'rgba(44, 105, 117, 1)',
+    'Continuing Care': 'rgba(114, 190, 203, 1)',
+    'Undergoing Rehabilitation': 'rgba(104, 178, 160, 1)',
+    'Treatment Completed': 'rgba(180, 213, 191, 1)',
+    'Non-compliance': 'rgba(255, 99, 132, 1)'
+};
 
 function countFollowUpValues(data) {
-    return data.reduce((counts, item) => {
-        const value = item.follow_up;
-        if (value && value.trim() !== '') {
-            counts[value] = (counts[value] || 0) + 1;
+    // Initialize counts with all categories set to 0
+    const counts = {
+        'Primary Phase': 0,
+        'Continuing Care': 0,
+        'Undergoing Rehabilitation': 0,
+        'Treatment Completed': 0,
+        'Non-compliance': 0
+    };
+
+    // Count only the specified categories
+    data.forEach(item => {
+        const followUp = item.follow_up;
+        if (followUp) {
+            // Check for each possible mapping
+            Object.entries(statusMapping).forEach(([original, mapped]) => {
+                if (followUp.trim() === original) {
+                    counts[mapped]++;
+                }
+            });
+
+            // Special case for "Unwilling to Undergo Treatment" mapping to "Non-compliance"
+            if (followUp.trim() === 'Unwilling to Undergo Treatment') {
+                counts['Non-compliance']++;
+            }
         }
-        return counts;
-    }, {});
+    });
+
+    // Remove categories with 0 counts
+    return Object.fromEntries(
+        Object.entries(counts).filter(([_, value]) => value > 0)
+    );
 }
 
 function createOrUpdateChart() {
@@ -55,6 +89,7 @@ function createOrUpdateChart() {
         const followUpCounts = countFollowUpValues(treatmentData.value);
         const labels = Object.keys(followUpCounts);
         const data = Object.values(followUpCounts);
+        const colors = labels.map(label => categoryColors[label]);
 
         const chartConfig = {
             type: 'doughnut',
@@ -62,7 +97,8 @@ function createOrUpdateChart() {
                 labels,
                 datasets: [{
                     data,
-                    backgroundColor: backgroundColors.slice(0, labels.length),
+                    backgroundColor: colors,
+                    borderColor: colors.map(color => color.replace('1)', '1)')),
                     borderWidth: 1,
                 }]
             },
@@ -75,7 +111,8 @@ function createOrUpdateChart() {
                         labels: {
                             font: {
                                 size: 12
-                            }
+                            },
+                            color: '#2c6975'
                         }
                     },
                     tooltip: {

@@ -148,8 +148,58 @@ const fetchServiceAndTreatmentData = async () => {
         const serviceResponse = await axios.get(endpoints.getServiceAndTreatmentList);
 
         if (serviceResponse.data && roleConfig[userRole]) {
-            const filterFunction = roleConfig[userRole].dataFilter;
-            newServiceAndTreatment.value = filterFunction(serviceResponse.data, userAgencyName);
+            let filteredData = serviceResponse.data;
+
+            // First apply the role-based filter
+            filteredData = roleConfig[userRole].dataFilter(filteredData, userAgencyName);
+
+            // Additional SUD-specific filtering
+            if (userRole === 'sud_admin') {
+                console.log("Total records before SUD filtering:", filteredData.length);
+
+                filteredData = filteredData.filter(item => {
+                    // Case 1: Check assist_data inside screening_data (cluster tests)
+                    const hasAssistData = item.screening_data?.assist_data &&
+                        Array.isArray(item.screening_data.assist_data) &&
+                        item.screening_data.assist_data.some(data =>
+                            data.risk_flag &&
+                            data.risk_flag !== 'none' &&
+                            data.measurement > 0
+                        );
+
+                    // Case 2: Check event_substance_risks
+                    const hasEventRisks = item.event_substance_risks &&
+                        Array.isArray(item.event_substance_risks) &&
+                        item.event_substance_risks.some(risk =>
+                            risk.risk_flag &&
+                            risk.risk_flag !== 'none'
+                        );
+
+                    // Case 3: Check case_substance_risks
+                    const hasCaseRisks = item.case_substance_risks &&
+                        Array.isArray(item.case_substance_risks) &&
+                        item.case_substance_risks.some(risk =>
+                            risk.risk_flag &&
+                            risk.risk_flag !== 'none'
+                        );
+
+                    const shouldInclude = hasAssistData || hasEventRisks || hasCaseRisks;
+
+                    if (shouldInclude) {
+                        console.log(`Including record ${item.id} because:`, {
+                            hasAssistData,
+                            hasEventRisks,
+                            hasCaseRisks
+                        });
+                    }
+
+                    return shouldInclude;
+                });
+
+                console.log("Total records after SUD filtering:", filteredData.length);
+            }
+
+            newServiceAndTreatment.value = filteredData;
         }
     } catch (error) {
         console.error('Error fetching service and treatment data:', error);
