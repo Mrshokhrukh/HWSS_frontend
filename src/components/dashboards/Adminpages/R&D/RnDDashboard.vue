@@ -982,7 +982,7 @@ onMounted(() => {
   // Initialize any required data or state
   isFilterExpanded.value = true;
 });
-</script> Replace with actual
+</script>
 
 <style scoped>
 .dashboard-container {
