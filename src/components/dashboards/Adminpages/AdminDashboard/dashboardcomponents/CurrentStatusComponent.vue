@@ -61,23 +61,35 @@ const formatNumber = (num) => {
     return num.toString();
 };
 
-// Computed properties using props.serviceData
+// Helper function to check if screening data is valid
+const hasValidScreeningData = (item) => {
+    return item?.screening_data &&
+        typeof item.screening_data === 'object' &&
+        item.screening_data !== 'Data not available';
+};
+
+// Filter valid cases first
+const validCases = computed(() =>
+    props.serviceData?.filter(hasValidScreeningData) || []
+);
+
+// Computed properties using filtered valid cases
 const totalOngoingCase = computed(() =>
-    props.serviceData?.filter(item =>
+    validCases.value.filter(item =>
         item?.case_status?.toLowerCase() === "on going"
-    )?.length || 0
+    ).length
 );
 
 const totalClosedCase = computed(() =>
-    props.serviceData?.filter(item =>
+    validCases.value.filter(item =>
         item?.case_status?.toLowerCase() === "case closed"
-    )?.length || 0
+    ).length
 );
 
 const totalDiscontinueCase = computed(() =>
-    props.serviceData?.filter(item =>
+    validCases.value.filter(item =>
         item?.case_status?.toLowerCase() === "case discontinue"
-    )?.length || 0
+    ).length
 );
 
 const statuses = computed(() => [
@@ -116,10 +128,7 @@ onMounted(() => {
     setTimeout(() => {
         isLoading.value = false;
     }, 500);
-
-    console.log(props.serviceData)
 });
-
 </script>
 
 <style scoped>
