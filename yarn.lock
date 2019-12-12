@@ -2381,7 +2381,7 @@ human-signals@^2.1.0:
     chart.js "^4.4.5"
     d3 "^7.9.0"
     file-saver "^2.0.5"
-    hwss-frontend "file:C:/Users/ujwal/AppData/Local/Yarn/Cache/v6/npm-hwss-frontend-1.0.0-61f4d70e-c193-44ee-b071-0f0161707d34-1733425359888/node_modules/hwss-frontend"
+    hwss-frontend "file:C:/Users/ujwal/AppData/Local/Yarn/Cache/v6/npm-hwss-frontend-1.0.0-9af23213-85ea-4833-bf0b-5d5ac2a64200-1733853629905/node_modules/hwss-frontend"
     ionicons "^7.2.2"
     js-cookie "^3.0.5"
     jspdf "^2.5.2"
@@ -2931,6 +2931,14 @@ parse5@^7.1.2:
   integrity sha512-BuBYQYlv1ckiPdQi/ohiivi9Sagc9JG+Ozs0r7b/0iK3sKmrb0b9FdWdBbOdx6hBCM/F9Ir82ofnBhtZOjCRPQ==
   dependencies:
     entities "^4.5.0"
+
+particles.vue3@^2.12.0:
+  version "2.12.0"
+  resolved "https://registry.npmjs.org/particles.vue3/-/particles.vue3-2.12.0.tgz#f384122cef2454cde794f7b0371a8bee1f06d0a0"
+  integrity sha512-t1AFUSuL+zzXO5fvBq6y76DAyy6sXtBOVY3UirNzaRQ0JCqSV3wCQwQ2N51tJRG6V952ARi87NMcQP5VwfTkqA==
+  dependencies:
+    tsparticles-engine "^2.12.0"
+    vue "^3.3.4"
 
 path-exists@^4.0.0:
   version "4.0.0"

@@ -2,36 +2,78 @@
   <div class="assist-severity-container">
     <div v-if="!isLoading && hasData" class="dashboard-container">
       <div class="row g-4">
-        <!-- Lifetime Users -->
+        <!-- Substance Use Statistics Card -->
         <div class="col-lg-4">
-          <div class="card h-100 shadow-sm">
-            <div class="card-header bg-gradient-dark">
-              <h4 class="text-center mb-0 text-white">Substance Use</h4>
+          <div class="card border-0 shadow-sm h-100">
+            <!-- Card Header -->
+            <div class="card-header hwss-bg py-3 border-bottom">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-clipboard2-pulse-fill fs-4 me-2 text-white"></i>
+                <h5 class="mb-0 fw-semibold text-white">Substance Use Statistics</h5>
+              </div>
             </div>
-            <div class="card-body d-flex flex-column">
-              <button :class="buttonClass('risk')" @click="handleSubstanceRiskClick">
-                <h2 class="mb-0">{{ totalRiskUsers }}</h2>
-                <p class="mb-0">Substance Risk Levels</p>
-              </button>
 
-              <button :class="buttonClass('lifetime')" @click="handleLifetimeUsersClick">
-                <h2 class="mb-0">{{ totalLifetimeUsers }}</h2>
-                <p class="mb-0">Lifetime Users</p>
-              </button>
+            <!-- Card Body -->
+            <div class="card-body p-4">
+              <div class="d-flex flex-column gap-4">
+                <!-- Risk Levels -->
+                <div class="d-flex align-items-center p-3 rounded-3 bg-light cursor-pointer"
+                  :class="buttonClass('risk')" @click="handleSubstanceRiskClick">
+                  <div class="d-flex align-items-center justify-content-center bg-white rounded-circle p-2 me-3">
+                    <i class="bi bi-exclamation-diamond hwss-primary"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h3 class="mb-1 fw-bold">{{ totalRiskUsers }}</h3>
+                    <p class="mb-0 text-muted">Substance Risk Levels</p>
+                  </div>
+                </div>
 
-              <button :class="buttonClass('active')" @click="handleActiveUsersClick">
-                <h2 class="mb-0">{{ totalActiveUsers }}</h2>
-                <p class="mb-0">Active Users</p>
-              </button>
+                <!-- Lifetime Users -->
+                <div class="position-relative">
+                  <div class="d-flex align-items-center p-3 rounded-3 bg-light cursor-pointer"
+                    :class="buttonClass('lifetime')" @click="handleLifetimeUsersClick" data-bs-toggle="tooltip"
+                    data-bs-placement="left" data-bs-html="true"
+                    title="Note: This data is currently only available for school-based cluster screening students. For case-based and event-based patients, this feature will be available in the next major update.">
+                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle p-2 me-3">
+                      <i class="bi bi-clock-history hwss-primary"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h3 class="mb-1 fw-bold">{{ totalLifetimeUsers }}</h3>
+                      <p class="mb-0 text-muted">Lifetime Users</p>
+                    </div>
+                    <i class="bi bi-info-circle text-muted ms-2" style="font-size: 1.1rem;"></i>
+                  </div>
+                </div>
+
+                <!-- Active Users -->
+                <div class="position-relative">
+                  <div class="d-flex align-items-center p-3 rounded-3 bg-light cursor-pointer"
+                    :class="buttonClass('active')" @click="handleActiveUsersClick" data-bs-toggle="tooltip"
+                    data-bs-placement="left" data-bs-html="true"
+                    title="Note: This data is currently only available for school-based cluster screening students. For case-based and event-based patients, this feature will be available in the next major update.">
+                    <div class="d-flex align-items-center justify-content-center bg-white rounded-circle p-2 me-3">
+                      <i class="bi bi-person-fill-exclamation hwss-primary"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h3 class="mb-1 fw-bold">{{ totalActiveUsers }}</h3>
+                      <p class="mb-0 text-muted">Active Users</p>
+                    </div>
+                    <i class="bi bi-info-circle text-muted ms-2" style="font-size: 1.1rem;"></i>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Chart Section -->
         <div class="col-lg-8">
-          <div class="card h-100 shadow-sm">
-            <div class="card-header bg-gradient-dark">
-              <h4 class="text-center mb-0 text-white">{{ chartTitle }}</h4>
+          <div class="card border-0 shadow-sm h-100">
+            <!-- Chart Header -->
+            <div class="card-header hwss-bg py-3 border-bottom">
+              <div class="d-flex align-items-center justify-content-center">
+                <h5 class="mb-0 fw-semibold text-white">{{ chartTitle }}</h5>
+              </div>
             </div>
             <div class="card-body d-flex justify-content-center align-items-center chart-container">
               <canvas ref="chartCanvas"></canvas>
@@ -41,15 +83,20 @@
       </div>
     </div>
 
-    <div v-else-if="isLoading" class="loading-container">
-      <div class="spinner-border text-primary" role="status">
+    <!-- Loading State -->
+    <div v-else-if="isLoading" class="d-flex flex-column align-items-center justify-content-center py-5">
+      <div class="spinner-border hwss-primary" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
-      <p class="mt-3">Loading data...</p>
+      <p class="mt-3 text-muted">Loading data...</p>
     </div>
 
-    <div v-else class="no-data-container">
-      <p>No substance use data available.</p>
+    <!-- No Data State -->
+    <div v-else class="d-flex justify-content-center align-items-center py-5">
+      <div class="text-center">
+        <i class="bi bi-clipboard-x fs-1 text-muted mb-3"></i>
+        <p class="text-muted">No substance use data available.</p>
+      </div>
     </div>
   </div>
 </template>
@@ -244,6 +291,12 @@ onMounted(() => {
   if (hasData.value && !props.isLoading) {
     displayChart(activeButton.value);
   }
+});
+
+onMounted(() => {
+  // Initialize all tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
 });
 </script>
 

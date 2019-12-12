@@ -347,7 +347,7 @@ const ageGroups = [
   { code: '10_19', name: '10-19 years' },
   { code: '20_24', name: '20-24 years' },
   { code: '25_60', name: '25-60 years' },
-  { code: 'OVER_60', name: 'Over 60 years' }
+  { code: 'OVER_60', name: 'Over 60 years' },
   { code: 'UNDER_10', name: 'Under 10 years' },
   { code: '10_19', name: '10-19 years' },
   { code: '20_24', name: '20-24 years' },
@@ -489,8 +489,7 @@ const currentStatusValues = computed(() => {
   const statusMap = {
     ASSESSMENT: [
       { code: 'Conducted', name: 'Conducted' },
-      { code: 'Not Conducted', name: 'Not Conducted' }
-    ASSESSMENT: [
+      { code: 'Not Conducted', name: 'Not Conducted' },
       { code: 'Conducted', name: 'Conducted' },
       { code: 'Not Conducted', name: 'Not Conducted' }
     ]
@@ -692,7 +691,6 @@ const filteredData = computed(() => {
 
     // Region and Dzongkhag filtering
     if (filters.region) {
-      // Get dzongkhag from all possible locations
       const itemDzongkhag =
         item.user?.ps_add_dzongkhag ||
         item.user?.perm_add_dzongkhag ||
@@ -700,19 +698,16 @@ const filteredData = computed(() => {
         item.user?.agency_details?.agency?.present_dzongkhag ||
         item.user?.active_agency?.present_dzongkhag;
 
-      // If no dzongkhag found, exclude from results
       if (!itemDzongkhag) {
         console.log('No dzongkhag found for item:', item.id);
         return false;
       }
 
-      // Check region match
       const dzongkhagRegion = getDzongkhagRegion(itemDzongkhag);
       console.log('Item dzongkhag:', itemDzongkhag, 'Region:', dzongkhagRegion);
 
       match = match && dzongkhagRegion === filters.region.code;
 
-      // Check dzongkhag match if dzongkhag filter is applied
       if (filters.dzongkhag) {
         const normalizedItemDzongkhag = itemDzongkhag.toUpperCase().trim();
         const normalizedFilterDzongkhag = filters.dzongkhag.code.trim();
@@ -720,7 +715,7 @@ const filteredData = computed(() => {
         console.log('Comparing dzongkhag:', {
           item: normalizedItemDzongkhag,
           filter: normalizedFilterDzongkhag,
-          match: normalizedItemDzongkhag === normalizedFilterDzongkhag
+          match: normalizedItemDzongkhag === normalizedFilterDzongkhag,
         });
 
         match = match && normalizedItemDzongkhag === normalizedFilterDzongkhag;
@@ -745,20 +740,17 @@ const filteredData = computed(() => {
           break;
 
         case 'CLUSTER':
-          // First check - no event or case for cluster screenings
           match = match && !item.screening_data?.event && !item.screening_data?.case;
 
           if (filters.agency?.code === 'SCHOOL') {
             const agencyName = (item.user?.active_agency?.agency_name || '').toLowerCase();
             const agencyDetailsName = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
 
-            // Check if either active_agency or agency_details contains 'school'
             match = match && (
               agencyName.includes('school') ||
               agencyDetailsName.includes('school')
             );
 
-            // If specific school is selected in Active Agency dropdown
             if (filters.activeAgency) {
               match = match && item.user?.active_agency?.agency_name === filters.activeAgency.code;
             }
@@ -798,38 +790,21 @@ const filteredData = computed(() => {
       console.log('Assessment Status match:', {
         expected: filters.statusValue.code,
         actual: item.assessment_status,
-        matches: item.assessment_status === filters.statusValue.code
-      });
-    }
-
-    if (filters.caseStatus) {
-      match = match && item.case_status === filters.caseStatus.code;
-    if (filters.statusValue) {
-      match = match && item.assessment_status === filters.statusValue.code;
-      console.log('Assessment Status match:', {
-        expected: filters.statusValue.code,
-        actual: item.assessment_status,
-        matches: item.assessment_status === filters.statusValue.code
+        matches: item.assessment_status === filters.statusValue.code,
       });
     }
 
     if (filters.caseStatus) {
       match = match && item.case_status === filters.caseStatus.code;
     }
+
     // Year filtering based on screening_data submission_date
     if (filters.year && item.screening_data?.submission_date) {
       const submissionYear = new Date(item.screening_data.submission_date).getFullYear();
       match = match && submissionYear.toString() === filters.year.code;
     }
 
-    if (filters.counselingStatus) {
-      match = match && item.counseling === filters.counselingStatus.code;
-    }
-
-    if (filters.followUpStatus) {
-      match = match && item.follow_up === filters.followUpStatus.code;
-    }
-
+    // Counseling and Follow-up Status filtering
     if (filters.counselingStatus) {
       match = match && item.counseling === filters.counselingStatus.code;
     }
@@ -841,6 +816,7 @@ const filteredData = computed(() => {
     return match;
   });
 });
+
 
 const summaryMetrics = computed(() => {
   const data = filteredData.value;
