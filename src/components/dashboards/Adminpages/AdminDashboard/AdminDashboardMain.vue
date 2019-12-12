@@ -155,7 +155,6 @@ const fetchServiceAndTreatmentData = async () => {
 
             // Additional SUD-specific filtering
             if (userRole === 'sud_admin') {
-                console.log("Total records before SUD filtering:", filteredData.length);
 
                 filteredData = filteredData.filter(item => {
                     // Case 1: Check assist_data inside screening_data (cluster tests)
@@ -195,8 +194,6 @@ const fetchServiceAndTreatmentData = async () => {
 
                     return shouldInclude;
                 });
-
-                console.log("Total records after SUD filtering:", filteredData.length);
             }
 
             newServiceAndTreatment.value = filteredData;

@@ -1,42 +1,86 @@
 <template>
     <div class="risk-level-container">
-        <h2 class="main-title">Risk Level Analysis</h2>
+        <div class="dashboard-header">
+            <h3 class="dashboard-title">Risk Level Analysis</h3>
+            <p class="dashboard-subtitle">Substance abuse risk distribution by gender</p>
+        </div>
+
         <div class="content-wrapper">
+            <!-- Substance Selection -->
             <div class="buttons-section">
-                <h3 class="section-title">Substances</h3>
+                <h3 class="section-title">
+                    <i class="bi bi-clipboard2-pulse me-2"></i>
+                    Substances
+                </h3>
                 <div class="button-grid">
-                    <button v-for="substance in substances" :key="substance" @click="setActiveButton(substance)"
+                    <button v-for="substance in substances" 
+                        :key="substance" 
+                        @click="setActiveButton(substance)"
                         :class="['substance-btn', { active: activeButton === substance }]">
-                        {{ substance }}
+                        <span class="substance-name">{{ substance }}</span>
                         <span v-if="getTotalCount(substance)" class="count-badge">
-                            {{ getTotalCount(substance) }}
+                            [{{ getTotalCount(substance) }}]
                         </span>
                     </button>
                 </div>
             </div>
+
+            <!-- Enhanced Charts Section -->
             <div class="charts-section">
+                <!-- Risk Distribution Radar Chart -->
                 <div class="chart-card">
-                    <h4 class="chart-title">
-                        High Risk Count by Gender
-                        <span class="total-count">(Total: {{ getHighRiskTotal() }})</span>
-                    </h4>
+                    <div class="chart-header">
+                        <h4 class="chart-title">
+                            <i class="bi bi-radar me-2"></i>
+                            Risk Distribution Pattern
+                        </h4>
+                        <div class="chart-actions">
+                            <span class="total-indicator">Total: {{ getHighRiskTotal() + getModerateRiskTotal() }}</span>
+                        </div>
+                    </div>
                     <div class="chart-container">
-                        <canvas id="donutChartTotal"></canvas>
+                        <canvas id="radarChart"></canvas>
                     </div>
                 </div>
+
+                <!-- Gender Distribution Area Chart -->
                 <div class="chart-card">
-                    <h4 class="chart-title">
-                        Moderate Risk Count by Gender
-                        <span class="total-count">(Total: {{ getModerateRiskTotal() }})</span>
-                    </h4>
+                    <div class="chart-header">
+                        <h4 class="chart-title">
+                            <i class="bi bi-graph-up-arrow me-2"></i>
+                            Risk Level Trends
+                        </h4>
+                        <div class="chart-actions">
+                            <button class="view-toggle" @click="toggleChartView">
+                                <i class="bi" :class="isAreaView ? 'bi-bar-chart' : 'bi-graph-up'"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="chart-container">
-                        <canvas id="donutChartModerate"></canvas>
+                        <canvas id="areaChart"></canvas>
                     </div>
                 </div>
+
+                <!-- Risk Matrix Bubble Chart -->
                 <div class="chart-card full-width">
-                    <h4 class="chart-title">Risk Comparison</h4>
+                    <div class="chart-header">
+                        <h4 class="chart-title">
+                            <i class="bi bi-grid-3x3-gap me-2"></i>
+                            Risk Matrix
+                        </h4>
+                        <div class="legend-container">
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #275C65"></span>
+                                Male
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #8AC2AF"></span>
+                                Female
+                            </span>
+                        </div>
+                    </div>
                     <div class="chart-container">
-                        <canvas id="barChart"></canvas>
+                        <canvas id="bubbleChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -51,17 +95,29 @@ import Chart from 'chart.js/auto';
 const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 const activeButton = ref(null);
 
-let donutChartTotalInstance = null;
-let donutChartModerateInstance = null;
-let barChartInstance = null;
+let radarChartInstance = null;
+let areaChartInstance = null;
+let bubbleChartInstance = null;
+
+const isAreaView = ref(true);
 
 const chartTheme = {
-    male: '#275C65',      // Darker teal for male
-    female: '#8AC2AF',    // Lighter teal for female
+    male: '#275C65',
+    female: '#8AC2AF',
+    maleGradient: ['rgba(39, 92, 101, 0.8)', 'rgba(39, 92, 101, 0.1)'],
+    femaleGradient: ['rgba(138, 194, 175, 0.8)', 'rgba(138, 194, 175, 0.1)'],
     noData: '#E6E6E6',
     background: '#ffffff',
-    text: '#2B656F'
+    text: '#2B656F',
+    grid: 'rgba(43, 101, 111, 0.1)'
 };
+
+function createGradient(ctx, colors) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, colors[0]);
+    gradient.addColorStop(1, colors[1]);
+    return gradient;
+}
 
 const substances = [
     'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
@@ -158,7 +214,6 @@ function extractMeasurementData(data) {
 
         // Only add to results if we found some risks
         if (Object.keys(processedData.risks).length > 0) {
-            console.log(`Found risks for user ${item.id}:`, processedData.risks);
             results.push(processedData);
         }
 
@@ -258,47 +313,109 @@ const chartOptions = {
     }
 };
 
-function renderChart(type, canvasId, data, options) {
-    const existingChart = type === 'donut' ?
-        (canvasId === 'donutChartTotal' ? donutChartTotalInstance : donutChartModerateInstance) :
-        barChartInstance;
-
-    if (existingChart) {
-        existingChart.destroy();
-    }
-
-    const ctx = document.getElementById(canvasId)?.getContext('2d');
-    if (!ctx) return null;
-
-    const enhancedOptions = {
-        ...options,
-        animation: {
-            duration: 750,
-            easing: 'easeInOutQuart'
+function renderEnhancedCharts(radarData, areaData, bubbleData) {
+    // Common options
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#2B656F',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                displayColors: true
+            }
         }
     };
 
-    const chart = new Chart(ctx, {
-        type: type === 'donut' ? 'doughnut' : 'bar',
-        data,
-        options: enhancedOptions
+    // Radar Chart
+    const radarOptions = {
+        ...commonOptions,
+        scales: {
+            r: {
+                ticks: {
+                    color: chartTheme.text,
+                    backdropColor: 'transparent'
+                },
+                grid: {
+                    color: chartTheme.grid
+                },
+                angleLines: {
+                    color: chartTheme.grid
+                }
+            }
+        }
+    };
+
+    // Area/Line Chart
+    const areaOptions = {
+        ...commonOptions,
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: chartTheme.grid
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    };
+
+    // Bubble Chart
+    const bubbleOptions = {
+        ...commonOptions,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Cases'
+                }
+            },
+            x: {
+                ticks: {
+                    callback: function(value) {
+                        return value === 1 ? 'High Risk' : 'Moderate Risk';
+                    }
+                }
+            }
+        }
+    };
+
+    // Render all charts
+    [radarChartInstance, areaChartInstance, bubbleChartInstance].forEach(chart => {
+        if (chart) chart.destroy();
     });
 
-    if ((type === 'donut' && data.datasets[0].data.length === 1 && data.datasets[0].data[0] === 1) ||
-        (type === 'bar' && !data.datasets.some(dataset => dataset.data.some(value => value > 0)))) {
-        const chartArea = chart.chartArea;
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = '14px Arial';
-        ctx.fillStyle = '#666';
-        ctx.fillText('No data available',
-            (chartArea.left + chartArea.right) / 2,
-            (chartArea.top + chartArea.bottom) / 2);
-        ctx.restore();
-    }
+    const ctx1 = document.getElementById('radarChart')?.getContext('2d');
+    const ctx2 = document.getElementById('areaChart')?.getContext('2d');
+    const ctx3 = document.getElementById('bubbleChart')?.getContext('2d');
 
-    return chart;
+    if (ctx1) radarChartInstance = new Chart(ctx1, {
+        type: 'radar',
+        data: radarData,
+        options: radarOptions
+    });
+
+    if (ctx2) areaChartInstance = new Chart(ctx2, {
+        type: isAreaView.value ? 'line' : 'bar',
+        data: areaData,
+        options: areaOptions
+    });
+
+    if (ctx3) bubbleChartInstance = new Chart(ctx3, {
+        type: 'bubble',
+        data: bubbleData,
+        options: bubbleOptions
+    });
 }
 
 function updateCharts() {
@@ -315,94 +432,105 @@ function updateCharts() {
         'Moderate-risk total female': counts[`${substanceKey}_moderate_female`],
     };
 
-    const totalHighRisk = data['High-risk total male'] + data['High-risk total female'];
-    const totalModerateRisk = data['Moderate-risk total male'] + data['Moderate-risk total female'];
-
-    const donutDataTotal = {
-        labels: ['Male', 'Female'],
+    // Radar Chart Data
+    const radarData = {
+        labels: ['High Risk Male', 'High Risk Female', 'Moderate Risk Male', 'Moderate Risk Female'],
         datasets: [{
-            data: totalHighRisk === 0 ? [1] : [data['High-risk total male'], data['High-risk total female']],
-            backgroundColor: totalHighRisk === 0 ? [chartTheme.noData] : [chartTheme.male, chartTheme.female],
-            hoverBackgroundColor: totalHighRisk === 0 ? [chartTheme.noData] : [chartTheme.male, chartTheme.female],
-            borderWidth: 0
+            label: 'Risk Distribution',
+            data: [
+                data['High-risk total male'],
+                data['High-risk total female'],
+                data['Moderate-risk total male'],
+                data['Moderate-risk total female']
+            ],
+            backgroundColor: 'rgba(43, 101, 111, 0.2)',
+            borderColor: '#2B656F',
+            borderWidth: 2,
+            pointBackgroundColor: '#2B656F',
+            pointHoverBackgroundColor: '#fff'
         }]
     };
 
-    const donutDataModerate = {
-        labels: ['Male', 'Female'],
-        datasets: [{
-            data: totalModerateRisk === 0 ? [1] : [data['Moderate-risk total male'], data['Moderate-risk total female']],
-            backgroundColor: totalModerateRisk === 0 ? [chartTheme.noData] : [chartTheme.male, chartTheme.female],
-            hoverBackgroundColor: totalModerateRisk === 0 ? [chartTheme.noData] : [chartTheme.male, chartTheme.female],
-            borderWidth: 0
-        }]
-    };
-
-    const barData = {
+    // Area Chart Data
+    const areaData = {
         labels: ['High Risk', 'Moderate Risk'],
-        datasets: [{
-            label: 'Male',
-            backgroundColor: chartTheme.male,
-            data: [data['High-risk total male'], data['Moderate-risk total male']],
-            borderRadius: 4
-        }, {
-            label: 'Female',
-            backgroundColor: chartTheme.female,
-            data: [data['High-risk total female'], data['Moderate-risk total female']],
-            borderRadius: 4
-        }]
-    };
-
-    const donutOptions = {
-        ...chartOptions,
-        plugins: {
-            ...chartOptions.plugins,
-            tooltip: {
-                callbacks: {
-                    label: (context) => {
-                        if (context.chart.data.datasets[0].data.length === 1 &&
-                            context.chart.data.datasets[0].data[0] === 1) {
-                            return 'No data available';
-                        }
-                        return `${context.label}: ${context.raw} users`;
-                    }
-                }
-            }
-        }
-    };
-
-    const barOptions = {
-        ...chartOptions,
-        scales: {
-            x: {
-                stacked: true,
-                grid: {
-                    display: false
-                }
-            },
-            y: {
-                stacked: true,
-                min: 0,
-                ticks: {
-                    stepSize: 1,
-                    color: chartTheme.text
+        datasets: [
+            {
+                label: 'Male',
+                data: [data['High-risk total male'], data['Moderate-risk total male']],
+                fill: true,
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    return createGradient(ctx, chartTheme.maleGradient);
                 },
-                grid: {
-                    color: 'rgba(43, 101, 111, 0.1)'
-                }
+                borderColor: chartTheme.male,
+                tension: 0.4
+            },
+            {
+                label: 'Female',
+                data: [data['High-risk total female'], data['Moderate-risk total female']],
+                fill: true,
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    return createGradient(ctx, chartTheme.femaleGradient);
+                },
+                borderColor: chartTheme.female,
+                tension: 0.4
             }
-        }
+        ]
     };
 
-    donutChartTotalInstance = renderChart('donut', 'donutChartTotal', donutDataTotal, donutOptions);
-    donutChartModerateInstance = renderChart('donut', 'donutChartModerate', donutDataModerate, donutOptions);
-    barChartInstance = renderChart('bar', 'barChart', barData, barOptions);
+    // Bubble Chart Data
+    const bubbleData = {
+        datasets: [
+            {
+                label: 'Male',
+                data: [
+                    {
+                        x: 1,
+                        y: data['High-risk total male'],
+                        r: Math.max(data['High-risk total male'] * 2, 8)
+                    },
+                    {
+                        x: 2,
+                        y: data['Moderate-risk total male'],
+                        r: Math.max(data['Moderate-risk total male'] * 2, 8)
+                    }
+                ],
+                backgroundColor: `${chartTheme.male}88`
+            },
+            {
+                label: 'Female',
+                data: [
+                    {
+                        x: 1,
+                        y: data['High-risk total female'],
+                        r: Math.max(data['High-risk total female'] * 2, 8)
+                    },
+                    {
+                        x: 2,
+                        y: data['Moderate-risk total female'],
+                        r: Math.max(data['Moderate-risk total female'] * 2, 8)
+                    }
+                ],
+                backgroundColor: `${chartTheme.female}88`
+            }
+        ]
+    };
+
+    // Render enhanced charts
+    renderEnhancedCharts(radarData, areaData, bubbleData);
 }
 
 const setActiveButton = (buttonName) => {
     activeButton.value = buttonName;
     updateCharts();
 };
+
+function toggleChartView() {
+    isAreaView.value = !isAreaView.value;
+    updateCharts();
+}
 
 watch(serviceAndTreatmentData, (newVal) => {
     console.log('Service and Treatment Data changed:', newVal?.length, 'records');
@@ -420,19 +548,54 @@ onMounted(() => {
 
 <style scoped>
 .risk-level-container {
-    font-family: 'Arial', sans-serif;
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    border-radius: 15px;
+    border-radius: 20px;
     padding: 2rem;
     color: #fff;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-.main-title {
-    font-size: 2.5rem;
-    text-align: center;
-    margin-bottom: 2rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+.substance-btn {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    color: #2B656F;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.substance-name {
+    flex: 1;
+    text-align: left;
+}
+
+.count-badge {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.4rem;
+    background-color: rgba(43, 101, 111, 0.1);
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.substance-btn:hover .count-badge,
+.substance-btn.active .count-badge {
+    background-color: rgba(230, 243, 245, 0.2);
+}
+
+.substance-btn:hover,
+.substance-btn.active {
+    background: #2B656F;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e6f3f5;
 }
 
 .content-wrapper {
@@ -453,26 +616,6 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-}
-
-.substance-btn {
-    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
-    border: none;
-    border-radius: 8px;
-    padding: 0.75rem;
-    font-size: 1rem;
-    color: #2B656F;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.substance-btn:hover,
-.substance-btn.active {
-    background: #2B656F;
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e6f3f5;
 }
 
 .charts-section {
@@ -520,5 +663,82 @@ canvas {
     .chart-card {
         flex-basis: 100%;
     }
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.chart-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.view-toggle {
+    background: none;
+    border: none;
+    color: #2B656F;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.view-toggle:hover {
+    background: rgba(43, 101, 111, 0.1);
+}
+
+.total-indicator {
+    background: rgba(43, 101, 111, 0.1);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #2B656F;
+}
+
+.legend-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #2B656F;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
 }
 </style>

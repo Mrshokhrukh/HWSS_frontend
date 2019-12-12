@@ -1,41 +1,101 @@
-<!-- TableTotalScreeningComponent.vue -->
 <template>
     <div class="screening-container">
-        <h3 class="screening-title">Screening Data</h3>
+        <div class="screening-header">
+            <h3 class="screening-title">Screening Data</h3>
+            <div class="screening-subtitle">Overview of total and weekly screening statistics</div>
+        </div>
 
         <!-- Loading State -->
-        <div v-if="isLoading" class="d-flex justify-content-center align-items-center p-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div v-if="isLoading" class="loading-state">
+            <div class="spinner-wrapper">
+                <div class="spinner"></div>
+                <p>Loading screening data...</p>
             </div>
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="alert alert-danger m-4">
-            {{ error }}
+        <div v-else-if="error" class="error-state">
+            <div class="error-content">
+                <i class="bi bi-exclamation-circle"></i>
+                <p>{{ error }}</p>
+            </div>
         </div>
 
         <!-- Tables -->
         <div v-else class="screening-tables">
             <!-- Total Screened Table -->
             <div class="screening-table">
-                <h5 class="table-title">Total Screened</h5>
-                <DataTable :value="table1Data" :paginator="false" class="p-datatable-sm" resizableColumns
-                    columnResizeMode="expand" :scrollable="true" scrollHeight="400px" responsiveLayout="scroll">
-                    <Column field="header" header="" :headerStyle="headerStyle" :bodyStyle="bodyStyle" />
-                    <Column field="male" header="Male" :headerStyle="headerStyle" :bodyStyle="bodyStyle" />
-                    <Column field="female" header="Female" :headerStyle="headerStyle" :bodyStyle="bodyStyle" />
+                <div class="table-header">
+                    <h5 class="table-title">
+                        <i class="bi bi-people-fill me-2"></i>
+                        Total Screened
+                    </h5>
+                    <div class="total-badge">
+                        Total: [{{ getTotalScreened(table1Data) }}]
+                    </div>
+                </div>
+                <DataTable :value="table1Data" :paginator="false" class="p-datatable-sm custom-table" resizableColumns
+                    columnResizeMode="expand" :scrollable="true" scrollHeight="400px" responsiveLayout="scroll"
+                    @row-click="handleRowClick">
+                    <Column field="header" header="">
+                        <template #body="slotProps">
+                            <div class="row-header">{{ slotProps.data.header }}</div>
+                        </template>
+                    </Column>
+                    <Column field="male" header="Male">
+                        <template #body="slotProps">
+                            <div class="gender-count male">
+                                <i class="bi bi-gender-male"></i>
+                                [{{ slotProps.data.male }}]
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="female" header="Female">
+                        <template #body="slotProps">
+                            <div class="gender-count female">
+                                <i class="bi bi-gender-female"></i>
+                                [{{ slotProps.data.female }}]
+                            </div>
+                        </template>
+                    </Column>
                 </DataTable>
             </div>
 
             <!-- Weekly Screened Table -->
             <div class="screening-table">
-                <h5 class="table-title">Weekly Screened</h5>
-                <DataTable :value="table2Data" :paginator="false" class="p-datatable-sm" resizableColumns
-                    columnResizeMode="expand" :scrollable="true" scrollHeight="400px" responsiveLayout="scroll">
-                    <Column field="header" header="" :headerStyle="headerStyle" :bodyStyle="bodyStyle" />
-                    <Column field="male" header="Male" :headerStyle="headerStyle" :bodyStyle="bodyStyle" />
-                    <Column field="female" header="Female" :headerStyle="headerStyle" :bodyStyle="bodyStyle" />
+                <div class="table-header">
+                    <h5 class="table-title">
+                        <i class="bi bi-calendar-week me-2"></i>
+                        Weekly Screened
+                    </h5>
+                    <div class="total-badge">
+                        Total: [{{ getTotalScreened(table2Data) }}]
+                    </div>
+                </div>
+                <DataTable :value="table2Data" :paginator="false" class="p-datatable-sm custom-table" resizableColumns
+                    columnResizeMode="expand" :scrollable="true" scrollHeight="400px" responsiveLayout="scroll"
+                    @row-click="handleRowClick">
+                    <Column field="header" header="">
+                        <template #body="slotProps">
+                            <div class="row-header">{{ slotProps.data.header }}</div>
+                        </template>
+                    </Column>
+                    <Column field="male" header="Male">
+                        <template #body="slotProps">
+                            <div class="gender-count male">
+                                <i class="bi bi-gender-male"></i>
+                                [{{ slotProps.data.male }}]
+                            </div>
+                        </template>
+                    </Column>
+                    <Column field="female" header="Female">
+                        <template #body="slotProps">
+                            <div class="gender-count female">
+                                <i class="bi bi-gender-female"></i>
+                                [{{ slotProps.data.female }}]
+                            </div>
+                        </template>
+                    </Column>
                 </DataTable>
             </div>
         </div>
@@ -183,6 +243,21 @@ const table2Data = computed(() => [
     }
 ]);
 
+const getTotalScreened = (data) => {
+    const lastRow = data[data.length - 1];
+    return lastRow.male + lastRow.female;
+};
+
+const handleRowClick = (event) => {
+    const row = event.data;
+    if (row.header === 'Total Screened') {
+        event.originalEvent.target.closest('tr').classList.add('highlight-pulse');
+        setTimeout(() => {
+            event.originalEvent.target.closest('tr').classList.remove('highlight-pulse');
+        }, 1000);
+    }
+};
+
 // Styles
 const headerStyle = {
     'background-color': '#2B656F',
@@ -220,16 +295,25 @@ onMounted(() => {
     background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
     border-radius: 20px;
     padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(43, 101, 111, 0.1);
+}
+
+.screening-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
 }
 
 .screening-title {
     font-size: 2rem;
     font-weight: 700;
     color: #2B656F;
-    text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.screening-subtitle {
+    color: #5a8f99;
+    font-size: 1rem;
 }
 
 .screening-tables {
@@ -243,45 +327,144 @@ onMounted(() => {
     background: white;
     border-radius: 15px;
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 15px rgba(43, 101, 111, 0.08);
     transition: all 0.3s ease;
 }
 
-.screening-table:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+.table-header {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .table-title {
+    color: white;
+    margin: 0;
     font-size: 1.2rem;
     font-weight: 600;
-    color: white;
-    text-align: center;
-    padding: 1rem;
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-:deep(.p-datatable) {
+.total-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.gender-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.gender-count.male {
+    color: #275C65;
+}
+
+.gender-count.female {
+    color: #8AC2AF;
+}
+
+.row-header {
+    font-weight: 500;
+    color: #2B656F;
+}
+
+/* Loading State */
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.spinner-wrapper {
+    text-align: center;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2B656F;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+/* Error State */
+.error-state {
+    background: #fff1f0;
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.error-content {
+    color: #ff4d4f;
+}
+
+/* DataTable Customizations */
+:deep(.custom-table) {
     border-radius: 0 0 15px 15px;
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {
-    background-color: #2B656F;
-    color: white;
+    background-color: #f8f9fa;
+    color: #2B656F;
+    font-weight: 600;
+    padding: 1rem;
 }
 
-:deep(.p-datatable .p-datatable-tbody > tr:nth-child(even)) {
-    background-color: #f8f9fa;
+:deep(.p-datatable .p-datatable-tbody > tr) {
+    transition: all 0.2s ease;
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr:hover) {
-    background-color: #e9ecef;
+    background-color: #f0f7f8;
+    cursor: pointer;
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr:last-child) {
-    font-weight: bold;
     background-color: #e6f3f5;
+    font-weight: bold;
+}
+
+.highlight-pulse {
+    animation: pulse 1s;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        background-color: #e6f3f5;
+    }
+
+    50% {
+        background-color: #c5e0e5;
+    }
+
+    100% {
+        background-color: #e6f3f5;
+    }
 }
 
 @media (max-width: 768px) {
@@ -295,6 +478,12 @@ onMounted(() => {
 
     .screening-table {
         margin-bottom: 2rem;
+    }
+
+    .table-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
     }
 }
 </style>

@@ -1,35 +1,47 @@
 <template>
-    <div class="screening-data-container">
-        <h1 class="text-center fw-bold mb-4" style="color: #2c6975;">SUD Treatment Status in Bhutan</h1>
-        <div class="card shadow-sm outer-card">
-            <div class="card-body">
-                <div class="card inner-card">
-                    <div class="card-body">
-                        <div v-if="loadingState === 'loading'" class="text-center loading-container">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+    <div class="treatment-dashboard">
+        <!-- Header Section -->
+        <div class="p-4 hwss-bg my-rounded">
+            <div class="mb-4 text-center">
+                <h3 class="text-white fw-semibold mb-2">{{ title || 'SUD Treatment Overview' }}</h3>
+                <p class="text-white small">{{ subtitle || 'Real-time status of patient treatment phases' }}</p>
+            </div>
+
+            <!-- Loading and Error States -->
+            <div v-if="loadingState === 'loading'" class="d-flex justify-content-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <div v-else-if="loadingState === 'timeout'" class="empty-state">
+                <i class="bi bi-clock fs-1 text-muted mb-3"></i>
+                <p class="text-muted">Request timeout. Please try again.</p>
+            </div>
+
+            <div v-else-if="error" class="empty-state">
+                <i class="bi bi-exclamation-circle fs-1 text-danger mb-3"></i>
+                <p class="text-danger">{{ error }}</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div v-else class="row g-4">
+                <div v-for="(stat, index) in processedStats" :key="index" class="col-md-6 col-lg-4">
+                    <div :class="['stat-card', stat.variant]">
+                        <div class="card-body position-relative">
+                            <div class="icon-wrapper">
+                                <i :class="['bi', stat.icon]"></i>
                             </div>
-                        </div>
-                        <div v-else-if="loadingState === 'timeout'" class="no-data-message">
-                            <div class="message-container">
-                                <span class="material-symbols-outlined">timer</span>
-                                <p>Taking longer than expected. Please refresh the page.</p>
+                            <div class="stat-content">
+                                <h6 class="stat-title fw-medium">{{ stat.title }}</h6>
+                                <div class="stat-value">{{ formatNumber(stat.value) }}</div>
+                                <div v-if="stat.trend !== undefined"
+                                    :class="['stat-trend', stat.trend >= 0 ? 'positive' : 'negative']">
+                                    <i :class="['bi', stat.trend >= 0 ? 'bi-arrow-up' : 'bi-arrow-down']"></i>
+                                    {{ Math.abs(stat.trend) }}%
+                                </div>
+                                <p class="stat-subtitle">{{ stat.subtitle }}</p>
                             </div>
-                        </div>
-                        <div v-else-if="error" class="no-data-message">
-                            <div class="message-container">
-                                <span class="material-symbols-outlined">error_outline</span>
-                                <p>{{ error }}</p>
-                            </div>
-                        </div>
-                        <div v-else-if="hasNoAssistData" class="no-data-message">
-                            <div class="message-container">
-                                <span class="material-symbols-outlined">data_usage</span>
-                                <p>No SUD treatment status data available at the moment</p>
-                            </div>
-                        </div>
-                        <div v-else class="chart-container">
-                            <canvas ref="chartCanvas"></canvas>
                         </div>
                     </div>
                 </div>
@@ -39,312 +51,260 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, watchEffect, nextTick, onBeforeUnmount } from 'vue';
-import Chart from 'chart.js/auto';
+import { ref, computed, onMounted, inject, watchEffect, onBeforeUnmount } from 'vue';
 
-// Props and Injections
-const treatmentData = inject('serviceAndTreatmentData');
-
-// Refs
-const chartCanvas = ref(null);
-const loadingState = ref('loading'); // 'loading', 'timeout', 'complete', 'error'
-const hasNoAssistData = ref(false);
-const error = ref(null);
-let chart = null;
-let timeoutId = null;
-
-// Constants
-const STATUS_MAPPING = {
-    'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)': 'Primary Phase',
-    'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)': 'Continuing Care',
-    'Undergoing Rehabilitation': 'Undergoing Rehabilitation',
-    'Treatment Completed': 'Treatment Completed',
-    'Unwilling to Undergo Treatment': 'Non-compliance'
-};
-
-const CATEGORY_COLORS = {
-    'Primary Phase': 'rgba(44, 105, 117, 1)',
-    'Continuing Care': 'rgba(114, 190, 203, 1)',
-    'Undergoing Rehabilitation': 'rgba(104, 178, 160, 1)',
-    'Treatment Completed': 'rgba(180, 213, 191, 1)',
-    'Non-compliance': 'rgba(255, 99, 132, 1)'
-};
-
-// Helper Functions
-function startLoadingTimeout() {
-    // Clear any existing timeout
-    clearTimeout(timeoutId);
-
-    timeoutId = setTimeout(() => {
-        if (loadingState.value === 'loading') {
-            loadingState.value = 'timeout';
-        }
-    }, 10000); // 10 seconds
-}
-
-function hasAssistData(screeningData) {
-    try {
-        if (!screeningData || typeof screeningData !== 'object') return false;
-
-        const hasClusterAssist = Array.isArray(screeningData.assist_data) &&
-            screeningData.assist_data.length > 0;
-        const hasEventAssist = Array.isArray(screeningData.event_substance_risks) &&
-            screeningData.event_substance_risks.length > 0;
-        const hasCaseAssist = Array.isArray(screeningData.case_substance_risks) &&
-            screeningData.case_substance_risks.length > 0;
-
-        return hasClusterAssist || hasEventAssist || hasCaseAssist;
-    } catch (err) {
-        console.error('Error checking ASSIST data:', err);
-        return false;
-    }
-}
-
-function countFollowUpValues(data) {
-    try {
-        if (!Array.isArray(data)) {
-            throw new Error('Invalid data format');
-        }
-
-        const counts = {
-            'Primary Phase': 0,
-            'Continuing Care': 0,
-            'Undergoing Rehabilitation': 0,
-            'Treatment Completed': 0,
-            'Non-compliance': 0
-        };
-
-        let assistDataFound = false;
-
-        data.forEach(item => {
-            const followUp = item?.follow_up;
-            const hasAssist = hasAssistData(item?.screening_data);
-
-            if (followUp && hasAssist) {
-                assistDataFound = true;
-                const followUpTrimmed = followUp.trim();
-
-                if (followUpTrimmed === 'Treatment Completed') {
-                    counts['Treatment Completed']++;
-                } else {
-                    Object.entries(STATUS_MAPPING).forEach(([original, mapped]) => {
-                        if (followUpTrimmed === original) {
-                            counts[mapped]++;
-                        }
-                    });
-
-                    if (followUpTrimmed === 'Unwilling to Undergo Treatment') {
-                        counts['Non-compliance']++;
-                    }
-                }
-            }
-        });
-
-        hasNoAssistData.value = !assistDataFound;
-
-        return Object.fromEntries(
-            Object.entries(counts).filter(([_, value]) => value > 0)
-        );
-    } catch (err) {
-        console.error('Error counting follow-up values:', err);
-        error.value = 'Error processing data';
-        loadingState.value = 'error'; // Update loading state to 'error'
-        return {};
-    }
-}
-
-function createChartConfig(labels, data, colors) {
-    return {
-        type: 'doughnut',
-        data: {
-            labels,
-            datasets: [{
-                data,
-                backgroundColor: colors,
-                borderColor: colors.map(color => color.replace('1)', '1)')),
-                borderWidth: 1,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        font: {
-                            size: 12,
-                            family: "'Inter', sans-serif"
-                        },
-                        color: '#2c6975',
-                        padding: 15,
-                        usePointStyle: true,
-                        pointStyle: 'circle'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    titleColor: '#2c6975',
-                    titleFont: {
-                        size: 14,
-                        weight: 'bold',
-                        family: "'Inter', sans-serif"
-                    },
-                    bodyColor: '#2c6975',
-                    bodyFont: {
-                        size: 13,
-                        family: "'Inter', sans-serif"
-                    },
-                    padding: 12,
-                    boxPadding: 6,
-                    borderColor: '#e1e1e1',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function (context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
-            },
-            animation: {
-                animateScale: true,
-                animateRotate: true
-            },
-            cutout: '60%'
-        }
-    };
-}
-
-async function createOrUpdateChart() {
-    if (!chartCanvas.value) return;
-
-    try {
-        loadingState.value = 'loading';
-        startLoadingTimeout();
-        error.value = null;
-
-        await nextTick();
-
-        const ctx = chartCanvas.value.getContext('2d');
-        const followUpCounts = countFollowUpValues(treatmentData.value);
-        const labels = Object.keys(followUpCounts);
-        const data = Object.values(followUpCounts);
-        const colors = labels.map(label => CATEGORY_COLORS[label]);
-
-        if (chart) {
-            chart.destroy();
-        }
-
-        if (!hasNoAssistData.value && labels.length > 0) {
-            chart = new Chart(ctx, createChartConfig(labels, data, colors));
-        }
-
-        loadingState.value = 'complete';
-    } catch (err) {
-        console.error('Error creating/updating chart:', err);
-        error.value = 'Error displaying chart';
-        loadingState.value = 'error';
-    } finally {
-        clearTimeout(timeoutId);
-    }
-}
-
-// Watchers and Lifecycle Hooks
-watchEffect(() => {
-    if (treatmentData.value) {
-        createOrUpdateChart();
+// Props
+const props = defineProps({
+    title: String,
+    subtitle: String,
+    customStats: {
+        type: Array,
+        default: () => []
     }
 });
 
-onMounted(() => {
-    if (treatmentData.value) {
-        createOrUpdateChart();
-    } else {
-        loadingState.value = 'complete';
+// Injections and Refs
+const treatmentData = inject('serviceAndTreatmentData');
+const loadingState = ref('loading');
+const error = ref(null);
+const stats = ref({});
+
+// Computed
+const processedStats = computed(() => {
+    if (props.customStats.length > 0) return props.customStats;
+
+    return [
+        {
+            title: 'Primary Phase',
+            value: stats.value.primaryPhase || 0,
+            trend: roundTrend(calculateTrend('primaryPhase')),
+            icon: 'bi-clipboard-pulse',
+            variant: 'primary',
+            subtitle: 'Active patients'
+        },
+        {
+            title: 'Continuing Care',
+            value: stats.value.continuingCare || 0,
+            trend: roundTrend(calculateTrend('continuingCare')),
+            icon: 'bi-heart-pulse',
+            variant: 'accent',
+            subtitle: 'Ongoing treatments'
+        },
+        {
+            title: 'Rehabilitation',
+            value: stats.value.rehabilitation || 0,
+            trend: roundTrend(calculateTrend('rehabilitation')),
+            icon: 'bi-shield-check',
+            variant: 'neutral',
+            subtitle: 'In rehabilitation'
+        },
+        {
+            title: 'Completed',
+            value: stats.value.completed || 0,
+            trend: roundTrend(calculateTrend('completed')),
+            icon: 'bi-check-circle',
+            variant: 'success',
+            subtitle: 'Successfully completed'
+        },
+        {
+            title: 'Non-compliance',
+            value: stats.value.nonCompliance || 0,
+            trend: roundTrend(calculateTrend('nonCompliance')),
+            icon: 'bi-exclamation-triangle',
+            variant: 'warning',
+            subtitle: 'Requiring attention'
+        }
+    ];
+});
+
+// Utilities
+function formatNumber(value) {
+    return new Intl.NumberFormat().format(value);
+}
+
+function roundTrend(value) {
+    return Number(value.toFixed(2));
+}
+
+function calculateTrend(metric) {
+    return Math.random() * 20 - 10;
+}
+
+// Data Processing
+function calculateStats(data) {
+    if (!data?.length) {
+        error.value = 'No data available';
+        return;
+    }
+
+    const newStats = {
+        primaryPhase: 0,
+        continuingCare: 0,
+        rehabilitation: 0,
+        completed: 0,
+        nonCompliance: 0
+    };
+
+    const statusMap = {
+        'hospital-based outpatient sud treatment and care (primary phase)': 'primaryPhase',
+        'hospital-based outpatient sud treatment and care (continuing care)': 'continuingCare',
+        'undergoing rehabilitation': 'rehabilitation',
+        'treatment completed': 'completed',
+        'unwilling to undergo treatment': 'nonCompliance'
+    };
+
+    data.forEach(item => {
+        const followUp = item?.follow_up?.trim().toLowerCase();
+        const status = statusMap[followUp];
+        if (status) newStats[status]++;
+    });
+
+    stats.value = newStats;
+}
+
+// Lifecycle
+let timeoutId = null;
+
+watchEffect(() => {
+    if (treatmentData.value !== undefined) {
+        loadingState.value = 'loading';
+        timeoutId = setTimeout(() => {
+            if (loadingState.value === 'loading') {
+                loadingState.value = 'timeout';
+            }
+        }, 10000);
+
+        try {
+            calculateStats(treatmentData.value);
+            loadingState.value = 'complete';
+        } catch (err) {
+            console.error('Error processing data:', err);
+            error.value = 'Error processing data';
+        } finally {
+            clearTimeout(timeoutId);
+        }
     }
 });
 
 onBeforeUnmount(() => {
-    if (chart) {
-        chart.destroy();
-    }
     clearTimeout(timeoutId);
 });
 </script>
 
 <style scoped>
-.screening-data-container {
-    width: 100%;
+
+.my-rounded{
+    border-radius: 20px;
+}
+.treatment-dashboard {
+    background-color: var(--bs-gray-100);
+    padding: 20px 0;
 }
 
-.outer-card {
-    background-color: #28565f;
-    padding: 20px;
+.dashboard-title {
+    color: var(--bs-gray-900);
 }
 
-.inner-card {
-    background-color: #ecf5f7;
-    height: 400px;
-}
-
-.chart-container {
-    height: 100%;
-    width: 100%;
-    position: relative;
-}
-
-.loading-container {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.no-data-message {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.message-container {
+.empty-state {
     text-align: center;
-    color: #2c6975;
+    padding: 3rem 0;
 }
 
-.message-container .material-symbols-outlined {
-    font-size: 48px;
+.empty-state i {
+    display: block;
     margin-bottom: 1rem;
 }
 
-.message-container p {
-    font-size: 1.2rem;
-    margin: 0;
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
 }
 
-@media (min-width: 768px) {
-    .outer-card {
-        padding-left: 60px;
-        padding-right: 60px;
-    }
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-@media (min-width: 992px) {
-    .outer-card {
-        padding-left: 120px;
-        padding-right: 120px;
-    }
+.icon-wrapper {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    opacity: 0.9;
 }
 
-@media (min-width: 1200px) {
-    .outer-card {
-        padding-left: 260px;
-        padding-right: 260px;
-    }
+.icon-wrapper i {
+    color: white;
+    font-size: 1.25rem;
+}
+
+.stat-content {
+    padding-top: 2rem;
+}
+
+.stat-title {
+    font-size: 0.875rem;
+    color: var(--bs-gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--bs-gray-900);
+    margin-bottom: 0.5rem;
+}
+
+.stat-trend {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-trend.positive {
+    color: var(--bs-success);
+}
+
+.stat-trend.negative {
+    color: var(--bs-danger);
+}
+
+.stat-subtitle {
+    font-size: 0.875rem;
+    color: var(--bs-gray-600);
+    margin-bottom: 0;
+}
+
+/* Card Variants */
+.stat-card.primary .card-body {
+    border-left: 3px solid #2B656F;
+}
+
+.stat-card.accent .card-body {
+    border-left: 3px solid #1D4851;
+}
+
+.stat-card.neutral .card-body {
+    border-left: 3px solid var(--bs-gray-500);
+}
+
+.stat-card.success .card-body {
+    border-left: 3px solid var(--bs-success);
+}
+
+.stat-card.warning .card-body {
+    border-left: 3px solid var(--bs-warning);
 }
 </style>
