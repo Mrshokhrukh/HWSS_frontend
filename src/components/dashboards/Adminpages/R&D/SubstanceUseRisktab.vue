@@ -1,172 +1,592 @@
 <template>
-    <div class="substance-use-risk-tab">
-        <section>
-            <h4 class="section-title">Substance Use Risk Summary by Gender</h4>
-            <div class="chart-container">
-                <apexchart type="bar" height="450" :options="substanceRiskChartOptions"
-                    :series="substanceRiskChartSeries"></apexchart>
+    <div class="risk-level-container">
+        <div class="dashboard-header">
+            <h3 class="dashboard-title">Risk Level Analysis</h3>
+            <p class="dashboard-subtitle">Substance abuse risk distribution by gender</p>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Substance Selection -->
+            <div class="buttons-section">
+                <h3 class="section-title">
+                    <i class="bi bi-clipboard2-pulse me-2"></i>
+                    Substances
+                </h3>
+                <div class="button-grid">
+                    <button v-for="substance in substances" :key="substance" @click="setActiveButton(substance)"
+                        :class="['substance-btn', { active: activeButton === substance }]">
+                        <span class="substance-name">{{ substance }}</span>
+                        <span v-if="getTotalCount(substance)" class="count-badge">
+                            [{{ getTotalCount(substance) }}]
+                        </span>
+                    </button>
+                </div>
             </div>
-        </section>
+
+            <!-- Enhanced Charts Section -->
+            <div class="charts-section">
+                <!-- Risk Distribution Radar Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">
+                            <i class="bi bi-radar me-2"></i>
+                            Risk Distribution Pattern
+                        </h4>
+                        <div class="chart-actions">
+                            <span class="total-indicator">Total: {{ getHighRiskTotal() + getModerateRiskTotal()
+                                }}</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gender Distribution Area Chart -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4 class="chart-title">
+                            <i class="bi bi-graph-up-arrow me-2"></i>
+                            Risk Level Trends
+                        </h4>
+                        <div class="chart-actions">
+                            <button class="view-toggle" @click="toggleChartView">
+                                <i class="bi" :class="isAreaView ? 'bi-bar-chart' : 'bi-graph-up'"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="areaChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Risk Matrix Bubble Chart -->
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h4 class="chart-title">
+                            <i class="bi bi-grid-3x3-gap me-2"></i>
+                            Risk Matrix
+                        </h4>
+                        <div class="legend-container">
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #275C65"></span>
+                                Male
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-color" style="background: #8AC2AF"></span>
+                                Female
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="bubbleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import Chart from 'chart.js/auto';
 
+// Props definition
 const props = defineProps({
     filteredData: {
         type: Array,
         required: true,
-    },
+    }
 });
 
-// Color configuration
-const primaryColor = '#275D67';
-const maleColors = {
-    none: '#4A8895',
-    low: '#6CB3A5',
-    moderate: '#8EDDC8',
-    severe: '#B0F7EB'
+const activeButton = ref(null);
+const isAreaView = ref(true);
+
+// Chart instances
+let radarChartInstance = null;
+let areaChartInstance = null;
+let bubbleChartInstance = null;
+
+// Theme configuration
+const chartTheme = {
+    male: '#275C65',
+    female: '#8AC2AF',
+    maleGradient: ['rgba(39, 92, 101, 0.8)', 'rgba(39, 92, 101, 0.1)'],
+    femaleGradient: ['rgba(138, 194, 175, 0.8)', 'rgba(138, 194, 175, 0.1)'],
+    noData: '#E6E6E6',
+    background: '#ffffff',
+    text: '#2B656F',
+    grid: 'rgba(43, 101, 111, 0.1)'
 };
-const femaleColors = {
-    none: '#FF9999',
-    low: '#FFB366',
-    moderate: '#FFCC99',
-    severe: '#FFE5CC'
-};
 
-// Chart configuration
-const substanceRiskChartOptions = ref({
-    chart: {
-        type: 'bar',
-        stacked: true,
-        toolbar: { show: false },
-        fontFamily: 'inherit',
-    },
-    plotOptions: {
-        bar: {
-            horizontal: false,
-            columnWidth: '90%',
-            borderRadius: 0,
-        },
-    },
-    dataLabels: {
-        enabled: true,
-        formatter: function (val) {
-            return val || '';
-        },
-        style: {
-            fontSize: '12px',
-        }
-    },
-    xaxis: {
-        categories: ['Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamines',
-            'Inhalants', 'Sedatives', 'Hallucinogens', 'Opioids', 'Other'],
-        labels: {
-            style: { colors: primaryColor },
-            rotate: -45,
-            trim: true
-        }
-    },
-    yaxis: {
-        title: {
-            text: 'Number of Individuals',
-            style: { color: primaryColor }
-        },
-        labels: {
-            style: { colors: primaryColor },
-        }
-    },
-    legend: {
-        position: 'right',
-        fontSize: '12px',
-        markers: {
-            radius: 12,
-        },
-        itemMargin: {
-            vertical: 5
-        }
-    },
-    grid: {
-        show: true,
-        borderColor: '#e0e0e0',
-    },
-    theme: {
-        mode: 'light'
-    },
-    colors: [...Object.values(maleColors), ...Object.values(femaleColors)]
-});
+// Substance definitions
+const substances = [
+    'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine',
+    'Inhalants', 'Sedatives', 'Hallucinogens', 'Opioids', 'Other'
+];
 
-const substanceRiskChartSeries = computed(() => {
-    // Initialize data structure
-    const substances = substanceRiskChartOptions.value.xaxis.categories;
-    const riskLevels = ['none', 'low', 'moderate', 'severe'];
-    let series = [];
+// Process substance risk data
+function processSubstanceData(data, substance) {
+    if (!data || !Array.isArray(data)) return {
+        male: { none: 0, low: 0, moderate: 0, severe: 0 },
+        female: { none: 0, low: 0, moderate: 0, severe: 0 }
+    };
 
-    // Create series for male risk levels
-    riskLevels.forEach(risk => {
-        series.push({
-            name: `Male - ${risk.charAt(0).toUpperCase() + risk.slice(1)}`,
-            data: new Array(substances.length).fill(0)
-        });
-    });
-
-    // Create series for female risk levels
-    riskLevels.forEach(risk => {
-        series.push({
-            name: `Female - ${risk.charAt(0).toUpperCase() + risk.slice(1)}`,
-            data: new Array(substances.length).fill(0)
-        });
-    });
-
-    // Process the data
-    props.filteredData.forEach(item => {
+    return data.reduce((acc, item) => {
         const gender = item.user?.gender?.toLowerCase();
-        if (!gender || (gender !== 'male' && gender !== 'female')) return;
+        if (!gender || (gender !== 'male' && gender !== 'female')) return acc;
 
         const assistData = item.screening_data?.assist_data;
-        if (!Array.isArray(assistData)) return;
+        if (!Array.isArray(assistData)) return acc;
 
-        assistData.forEach(substance => {
-            const substanceName = substance.substance__name.split(' ')[0];
-            const substanceIndex = substances.findIndex(s =>
-                substanceName.toLowerCase().startsWith(s.toLowerCase())
-            );
+        const substanceData = assistData.find(s =>
+            s.substance__name.toLowerCase().startsWith(substance.toLowerCase())
+        );
 
-            if (substanceIndex === -1) return;
+        if (substanceData) {
+            const riskLevel = substanceData.risk_flag.toLowerCase();
+            if (!acc[gender]) acc[gender] = { none: 0, low: 0, moderate: 0, severe: 0 };
+            acc[gender][riskLevel]++;
+        }
 
-            const riskLevel = substance.risk_flag.toLowerCase();
-            const riskIndex = riskLevels.indexOf(riskLevel);
-            if (riskIndex === -1) return;
+        return acc;
+    }, {
+        male: { none: 0, low: 0, moderate: 0, severe: 0 },
+        female: { none: 0, low: 0, moderate: 0, severe: 0 }
+    });
+}
 
-            const seriesIndex = gender === 'male' ?
-                riskIndex :
-                riskLevels.length + riskIndex;
+// Helper functions
+function createGradient(ctx, colors) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, colors[0]);
+    gradient.addColorStop(1, colors[1]);
+    return gradient;
+}
 
-            series[seriesIndex].data[substanceIndex]++;
-        });
+function getTotalCount(substance) {
+    const { male, female } = processSubstanceData(props.filteredData, substance);
+    return (male.moderate + male.severe + female.moderate + female.severe);
+}
+
+function getHighRiskTotal() {
+    if (!activeButton.value) return 0;
+    const { male, female } = processSubstanceData(props.filteredData, activeButton.value);
+    return male.severe + female.severe;
+}
+
+function getModerateRiskTotal() {
+    if (!activeButton.value) return 0;
+    const { male, female } = processSubstanceData(props.filteredData, activeButton.value);
+    return male.moderate + female.moderate;
+}
+
+// Chart rendering
+function updateCharts() {
+    if (!activeButton.value) return;
+
+    const riskData = processSubstanceData(props.filteredData, activeButton.value);
+
+    // Radar Chart Data
+    const radarData = {
+        labels: ['High Risk Male', 'High Risk Female', 'Moderate Risk Male', 'Moderate Risk Female'],
+        datasets: [{
+            label: 'Risk Distribution',
+            data: [
+                riskData.male.severe,
+                riskData.female.severe,
+                riskData.male.moderate,
+                riskData.female.moderate
+            ],
+            backgroundColor: 'rgba(43, 101, 111, 0.2)',
+            borderColor: '#2B656F',
+            borderWidth: 2,
+            pointBackgroundColor: '#2B656F',
+            pointHoverBackgroundColor: '#fff'
+        }]
+    };
+
+    // Area Chart Data
+    const areaData = {
+        labels: ['High Risk', 'Moderate Risk', 'Low Risk', 'None'],
+        datasets: [
+            {
+                label: 'Male',
+                data: [
+                    riskData.male.severe,
+                    riskData.male.moderate,
+                    riskData.male.low,
+                    riskData.male.none
+                ],
+                fill: true,
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    return createGradient(ctx, chartTheme.maleGradient);
+                },
+                borderColor: chartTheme.male,
+                tension: 0.4
+            },
+            {
+                label: 'Female',
+                data: [
+                    riskData.female.severe,
+                    riskData.female.moderate,
+                    riskData.female.low,
+                    riskData.female.none
+                ],
+                fill: true,
+                backgroundColor: (context) => {
+                    const ctx = context.chart.ctx;
+                    return createGradient(ctx, chartTheme.femaleGradient);
+                },
+                borderColor: chartTheme.female,
+                tension: 0.4
+            }
+        ]
+    };
+
+    // Bubble Chart Data
+    const bubbleData = {
+        datasets: [
+            {
+                label: 'Male',
+                data: [
+                    {
+                        x: 1,
+                        y: riskData.male.severe,
+                        r: Math.max(riskData.male.severe * 2, 8)
+                    },
+                    {
+                        x: 2,
+                        y: riskData.male.moderate,
+                        r: Math.max(riskData.male.moderate * 2, 8)
+                    }
+                ],
+                backgroundColor: `${chartTheme.male}88`
+            },
+            {
+                label: 'Female',
+                data: [
+                    {
+                        x: 1,
+                        y: riskData.female.severe,
+                        r: Math.max(riskData.female.severe * 2, 8)
+                    },
+                    {
+                        x: 2,
+                        y: riskData.female.moderate,
+                        r: Math.max(riskData.female.moderate * 2, 8)
+                    }
+                ],
+                backgroundColor: `${chartTheme.female}88`
+            }
+        ]
+    };
+
+    renderEnhancedCharts(radarData, areaData, bubbleData);
+}
+
+function renderEnhancedCharts(radarData, areaData, bubbleData) {
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#2B656F',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                displayColors: true
+            }
+        }
+    };
+
+    // Destroy existing charts
+    [radarChartInstance, areaChartInstance, bubbleChartInstance].forEach(chart => {
+        if (chart) chart.destroy();
     });
 
-    return series;
+    // Create new charts
+    const ctx1 = document.getElementById('radarChart')?.getContext('2d');
+    const ctx2 = document.getElementById('areaChart')?.getContext('2d');
+    const ctx3 = document.getElementById('bubbleChart')?.getContext('2d');
+
+    if (ctx1) {
+        radarChartInstance = new Chart(ctx1, {
+            type: 'radar',
+            data: radarData,
+            options: {
+                ...commonOptions,
+                scales: {
+                    r: {
+                        ticks: { color: chartTheme.text, backdropColor: 'transparent' },
+                        grid: { color: chartTheme.grid },
+                        angleLines: { color: chartTheme.grid }
+                    }
+                }
+            }
+        });
+    }
+
+    if (ctx2) {
+        areaChartInstance = new Chart(ctx2, {
+            type: isAreaView.value ? 'line' : 'bar',
+            data: areaData,
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: chartTheme.grid }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    if (ctx3) {
+        bubbleChartInstance = new Chart(ctx3, {
+            type: 'bubble',
+            data: bubbleData,
+            options: {
+                ...commonOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Number of Cases' }
+                    },
+                    x: {
+                        ticks: {
+                            callback: value => value === 1 ? 'High Risk' : 'Moderate Risk'
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Event handlers
+const setActiveButton = (buttonName) => {
+    activeButton.value = buttonName;
+    updateCharts();
+};
+
+function toggleChartView() {
+    isAreaView.value = !isAreaView.value;
+    updateCharts();
+}
+
+// Watchers
+watch(() => props.filteredData, () => {
+    if (activeButton.value) {
+        updateCharts();
+    }
+}, { deep: true });
+
+// Lifecycle hooks
+onMounted(() => {
+    setActiveButton(substances[0]);
 });
 </script>
 
 <style scoped>
-.substance-use-risk-tab section {
-    margin-bottom: 2rem;
+.risk-level-container {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: #fff;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
-.chart-container {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.substance-btn {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 1rem;
+    color: #2B656F;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.substance-name {
+    flex: 1;
+    text-align: left;
+}
+
+.count-badge {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.4rem;
+    background-color: rgba(43, 101, 111, 0.1);
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.substance-btn:hover .count-badge,
+.substance-btn.active .count-badge {
+    background-color: rgba(230, 243, 245, 0.2);
+}
+
+.substance-btn:hover,
+.substance-btn.active {
+    background: #2B656F;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e6f3f5;
+}
+
+.content-wrapper {
+    display: flex;
+    gap: 2rem;
+}
+
+.buttons-section {
+    flex: 1;
 }
 
 .section-title {
-    color: #2B656F;
-    font-size: 1.4rem;
-    font-weight: 600;
+    font-size: 1.5rem;
     margin-bottom: 1rem;
+}
+
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.charts-section {
+    flex: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.chart-card {
+    background: linear-gradient(135deg, #fdffff, #f0f7f8);
+    border-radius: 10px;
+    padding: 1rem;
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 250px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card.full-width {
+    flex-basis: 100%;
+}
+
+.chart-title {
+    color: #2B656F;
+    font-size: 1.2rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 200px;
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@media (max-width: 1024px) {
+    .content-wrapper {
+        flex-direction: column;
+    }
+
+    .chart-card {
+        flex-basis: 100%;
+    }
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1rem;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+.chart-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.view-toggle {
+    background: none;
+    border: none;
+    color: #2B656F;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.view-toggle:hover {
+    background: rgba(43, 101, 111, 0.1);
+}
+
+.total-indicator {
+    background: rgba(43, 101, 111, 0.1);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #2B656F;
+}
+
+.legend-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #2B656F;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
 }
 </style>

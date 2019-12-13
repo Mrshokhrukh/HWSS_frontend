@@ -472,7 +472,9 @@ const getRiskLevelClass = (level) => {
 }
 
 /* Add Bootstrap-like transitions */
-.btn, .badge, .p-button {
+.btn,
+.badge,
+.p-button {
   transition: all 0.2s;
 }
 
