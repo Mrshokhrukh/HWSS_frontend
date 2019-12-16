@@ -77,19 +77,19 @@
                 <!-- Status Columns -->
                 <Column field="assessment_status" header="Assessment" sortable>
                     <template #body="slotProps">
-                        <StatusBadge :status="slotProps.data.assessment_status" type="assessment" />
+                        <StatusBadge :status="slotProps.data.assessment_status || 'N/A'" type="assessment" />
                     </template>
                 </Column>
 
                 <Column field="case_status" header="Case Status" sortable>
                     <template #body="slotProps">
-                        <StatusBadge :status="slotProps.data.case_status" type="case" />
+                        <StatusBadge :status="slotProps.data.case_status || 'N/A'" type="case" />
                     </template>
                 </Column>
 
                 <Column field="counseling" header="Counseling" sortable>
                     <template #body="slotProps">
-                        <StatusBadge :status="slotProps.data.counseling" type="counseling" />
+                        <StatusBadge :status="slotProps.data.counseling || 'N/A'" type="counseling" />
                     </template>
                 </Column>
 
@@ -97,7 +97,7 @@
                 <Column field="follow_up" header="Follow Up" sortable>
                     <template #body="slotProps">
                         <div class="follow-up-cell">
-                            <StatusBadge :status="slotProps.data.follow_up" type="follow-up" />
+                            <StatusBadge :status="slotProps.data.follow_up || 'N/A'" type="follow-up" />
                             <span v-if="isRecentUpdate(slotProps.data.updated_at)" class="update-badge">
                                 Updated
                             </span>
@@ -196,7 +196,7 @@
                                                     <small class="text-muted d-block">Age</small>
                                                     <span class="fw-medium">{{
                                                         calculateAge(selectedUser?.user?.date_of_birth)
-                                                        }}</span>
+                                                    }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1294,7 +1294,11 @@ const processedRows = computed(() => {
     return rowData.value.map(row => ({
         ...row,
         full_name: fullNameTemplate(row),
-        age: calculateAge(row.user?.date_of_birth)
+        age: calculateAge(row.user?.date_of_birth),
+        assessment_status: row.assessment_status || 'N/A',
+        case_status: row.case_status || 'N/A',
+        counseling: row.counseling || 'N/A',
+        follow_up: row.follow_up || 'N/A'
     }));
 });
 
@@ -1791,6 +1795,7 @@ watch(() => filteredRows.value, async (newRows) => {
     font-weight: 500;
     text-align: center;
     white-space: nowrap;
+    display: inline-block;
 }
 
 .status-assessment {
@@ -1811,6 +1816,11 @@ watch(() => filteredRows.value, async (newRows) => {
 .status-follow-up {
     background: #f3e5f5;
     color: #7b1fa2;
+}
+
+.status-na {
+    background: #f5f5f5;
+    color: #757575;
 }
 
 /* Row States */
