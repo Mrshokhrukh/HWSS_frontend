@@ -1,95 +1,175 @@
 <template>
     <div class="filter-configurator">
-        <div class="config-card mb-4">
-            <!-- Header -->
-            <div class="config-header">
-                <h2 class="header-title">Data Configuration</h2>
-                <div class="quick-actions">
-                    <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text" @click="resetFilters"
-                        :disabled="!hasFilters" />
-                </div>
-            </div>
-
-            <!-- Filter Content -->
-            <div class="filter-content">
-                <div class="main-filters">
-                    <!-- Report Type -->
-                    <div class="filter-group">
-                        <label>Report Type</label>
-                        <p-dropdown v-model="selectedReport" :options="availableReportTypes" optionLabel="label"
-                            class="w-full" placeholder="Select Report Type" />
+        <Panel :toggleable="true" :collapsed="false" class="card filter-panel">
+            <template #header>
+                <div class="filter-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="pi pi-filter"></i>
+                        <h4 class="m-0">Configure Data Filters</h4>
                     </div>
-
-                    <!-- Agency Type -->
-                    <div class="filter-group">
-                        <label>Agency Type</label>
-                        <p-dropdown v-model="filters.agencyType" :options="agencyTypes" class="w-full"
-                            placeholder="Select Agency Type" @change="handleAgencyTypeChange" />
-                    </div>
-
-                    <template v-if="filters.agencyType === 'SCHOOL'">
-                        <div class="filter-group">
-                            <label>Class Level</label>
-                            <p-dropdown v-model="filters.classLevel" :options="classLevels" class="w-full"
-                                placeholder="Select Class" />
-                        </div>
-                    </template>
-
-                    <!-- Location Section -->
-                    <div class="filter-section">
-                        <h3 class="section-title">Location</h3>
-                        <div class="filter-group-row">
-                            <p-dropdown v-model="filters.region" :options="regions" class="w-full" placeholder="Region"
-                                @change="handleRegionChange" />
-                            <p-dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" class="w-full"
-                                placeholder="Dzongkhag" :disabled="!filters.region" />
-                        </div>
+                    <div class="filter-badges" v-if="hasFilters">
+                        <span class="badge bg-light text-dark">{{ activeFilterCount }} active</span>
                     </div>
                 </div>
+            </template>
 
-                <!-- Additional Filters -->
-                <div class="additional-filters">
-                    <div class="filter-section">
-                        <div class="filter-group">
-                            <label>Age Group</label>
-                            <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
-                                placeholder="Select Age Groups" display="chip" />
+            <div class="filter-content p-4">
+                <form @submit.prevent="applyFilters" class="primary-filters">
+                    <!-- Report Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Report Type</label>
+                        <Dropdown v-model="selectedReport" :options="availableReportTypes" optionLabel="name"
+                            class="w-100" placeholder="Select Report Type" :filter="true" :showClear="true">
+                            <template #value="slotProps">
+                                <div class="d-flex align-items-center">
+                                    <i class="pi pi-file me-2"></i>
+                                    <span>{{ slotProps.value?.name || 'Select Report Type' }}</span>
+                                </div>
+                            </template>
+                        </Dropdown>
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Organization and Agency -->
+                        <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                                <label class="form-label">Organization</label>
+                                <Dropdown v-model="filters.organization" :options="organizations" optionLabel="name"
+                                    class="w-100" placeholder="Select Organization" @change="handleOrganizationChange"
+                                    :filter="true" :showClear="true">
+                                    <template #value="slotProps">
+                                        <div class="d-flex align-items-center">
+                                            <i class="pi pi-briefcase me-2"></i>
+                                            <span>{{ slotProps.value?.name || 'Select Organization' }}</span>
+                                        </div>
+                                    </template>
+                                </Dropdown>
+                            </div>
                         </div>
 
-                        <div class="filter-group">
-                            <label>Gender</label>
-                            <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full"
-                                placeholder="Select Gender" display="chip" />
+                        <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                                <label class="form-label">Agency</label>
+                                <Dropdown v-model="filters.agency" :options="filteredAgencies" optionLabel="name"
+                                    class="w-100" placeholder="Select Agency" :disabled="!filters.organization"
+                                    :filter="true" :showClear="true">
+                                    <template #value="slotProps">
+                                        <div class="d-flex align-items-center">
+                                            <i class="pi pi-sitemap me-2"></i>
+                                            <span>{{ slotProps.value?.name || 'Select Agency' }}</span>
+                                        </div>
+                                    </template>
+                                </Dropdown>
+                            </div>
+                        </div>
+
+                        <!-- Class Level (Conditional) -->
+                        <div class="col-md-6 col-lg-4"
+                            v-if="filters.organization?.code === 'SCHOOL' || filters.organization?.code === 'CLUSTER'">
+                            <div class="mb-3">
+                                <label class="form-label">Class Level</label>
+                                <MultiSelect v-model="filters.classLevel" :options="schoolClasses" optionLabel="name"
+                                    class="w-100" placeholder="Select Classes" :filter="true" display="chip" />
+                            </div>
+                        </div>
+
+                        <!-- Location Section -->
+                        <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                                <label class="form-label">Region</label>
+                                <Dropdown v-model="filters.region" :options="regions" optionLabel="name" class="w-100"
+                                    placeholder="Select Region" @change="handleRegionChange" :filter="true"
+                                    :showClear="true">
+                                    <template #value="slotProps">
+                                        <div class="d-flex align-items-center">
+                                            <i class="pi pi-map-marker me-2"></i>
+                                            <span>{{ slotProps.value?.name || 'Select Region' }}</span>
+                                        </div>
+                                    </template>
+                                </Dropdown>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="mb-3">
+                                <label class="form-label">Dzongkhag</label>
+                                <Dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" optionLabel="name"
+                                    class="w-100" placeholder="Select Dzongkhag" :disabled="!filters.region"
+                                    :filter="true" :showClear="true">
+                                    <template #value="slotProps">
+                                        <div class="d-flex align-items-center">
+                                            <i class="pi pi-building me-2"></i>
+                                            <span>{{ slotProps.value?.name || 'Select Dzongkhag' }}</span>
+                                        </div>
+                                    </template>
+                                </Dropdown>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Date Range Section -->
-                    <div class="filter-section">
-                        <h3 class="section-title">Date Range</h3>
-                        <p-calendar v-model="dateRange" selectionMode="range" class="w-full"
-                            placeholder="Select Date Range" />
+                    <!-- Demographic Filters -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Age Group</label>
+                                <MultiSelect v-model="filters.ageGroups" :options="ageGroups" optionLabel="name"
+                                    placeholder="Select Age Groups" class="w-100" :filter="true" display="chip" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Gender</label>
+                                <MultiSelect v-model="filters.gender" :options="genderOptions" optionLabel="name"
+                                    placeholder="Select Gender" class="w-100" :filter="true" display="chip" />
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Active Filters Display -->
-            <div v-if="hasFilters" class="active-filters">
-                <div class="filter-chips">
-                    <p-chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label" removable
-                        @remove="removeFilter(filter.id)" />
-                </div>
-            </div>
+                    <!-- Year Filter -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Year</label>
+                                <Dropdown v-model="filters.year" :options="availableYears" optionLabel="name"
+                                    class="w-100" placeholder="Select Year" :filter="true" :showClear="true">
+                                    <template #value="slotProps">
+                                        <div class="d-flex align-items-center">
+                                            <i class="pi pi-calendar me-2"></i>
+                                            <span>{{ slotProps.value?.name || 'Select Year' }}</span>
+                                        </div>
+                                    </template>
+                                </Dropdown>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Action Buttons -->
-            <div class="filter-actions">
-                <p-button label="Reset" severity="secondary" @click="resetFilters" :disabled="!hasFilters" />
-                <p-button class="hwss-btn" label="Apply Filters" @click="applyFilters" :disabled="!canApplyFilters" />
+                    <!-- Active Filters Display -->
+                    <div v-if="hasFilters" class="active-filters mt-4 p-3 bg-primary bg-opacity-10 rounded">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="pi pi-check-circle me-2"></i>
+                            <h6 class="mb-0">Active Filters</h6>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <Chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label"
+                                class="filter-chip" removable @remove="removeFilter(filter.id)" />
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <Button label="Reset" icon="pi pi-refresh" class="btn btn-secondary" outlined
+                            @click="resetFilters" :disabled="!hasFilters" />
+                        <Button label="Apply Filters" icon="pi pi-check" class="btn btn-primary" @click="applyFilters"
+                            :disabled="!canApplyFilters" :loading="isLoading" />
+                    </div>
+                </form>
             </div>
-        </div>
+        </Panel>
 
         <!-- Reports Display -->
-        <div v-if="showReport" class="report-container">
-            <MonitorReport v-if="showMonitorReport && processedData.length" :filteredData="processedData"
+        <div v-if="showReport" class="report-container mt-4">
+            <MonitorReport v-if="showMonitorReport" :filteredData="processedData"
                 :activeFiltersList="activeFiltersList" />
             <CaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData"
                 :activeFiltersList="activeFiltersList" />
@@ -102,216 +182,299 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, inject } from 'vue';
+import { ref, computed, watch, inject, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
+
+// Component imports
+import Panel from 'primevue/panel';
+import Dropdown from 'primevue/dropdown';
+import MultiSelect from 'primevue/multiselect';
+import Button from 'primevue/button';
+import Calendar from 'primevue/calendar';
+import Chip from 'primevue/chip';
+
+// Report components
 import MonitorReport from './MonitorReport/MonitorReport.vue';
 import CaseStatusReport from './CaseStatusReport/CaseStatusReport.vue';
 import SeverityReport from './SeverityReport/SeverityReport.vue';
 import SchoolEnvReport from './SchoolEnvReport/SchoolEnvReport.vue';
 
-
 const toast = useToast();
-
-const userRole = computed(() => {
-    const savedUserRole = JSON.parse(localStorage.getItem('userDetailsStore'));
-    return savedUserRole?.user?.role || '';
-});
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
-// Filter Options
-const baseReportTypes = [
-    { label: 'Monitor Report', value: 'monitor' },
-    { label: 'Case Study Report', value: 'case-study' },
-    { label: 'Severity Report', value: 'severity' }
+
+// Constants
+const regions = [
+    { code: 'WESTERN', name: 'Western Region' },
+    { code: 'CENTRAL', name: 'Central Region' },
+    { code: 'EASTERN', name: 'Eastern Region' }
 ];
 
-const availableReportTypes = computed(() => {
-    return userRole.value === 'cecd_admin'
-        ? [...baseReportTypes, { label: 'School Environment Report', value: 'school-environment' }]
-        : baseReportTypes;
-});
+const organizations = [
+    { code: 'EVENT_BASED', name: 'Event Based' },
+    { code: 'CASE_BASED', name: 'Case Based' },
+    { code: 'CLUSTER', name: 'Cluster' },
+    { code: 'SCHOOL', name: 'School' }
+];
 
-const agencyTypes = ['GYALSUNG', 'SCHOOL', 'RCSC'];
-const classLevels = ['PP', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-const ageGroupOptions = ['5-10', '11-15', '16-20', '21-25', '26-30', '31-35', '36+'];
-const genderOptions = ['Male', 'Female'];
-const regions = ['Western', 'Central', 'Eastern'];
-const dzongkhagMapping = {
-    Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chukha', 'Samtse'],
-    Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
-    Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
-};
+const schoolClasses = [
+    { code: 'PP', name: 'Pre-Primary' },
+    { code: '1', name: 'Class 1' },
+    { code: '2', name: 'Class 2' },
+    { code: '3', name: 'Class 3' },
+    { code: '4', name: 'Class 4' },
+    { code: '5', name: 'Class 5' },
+    { code: '6', name: 'Class 6' },
+    { code: '7', name: 'Class 7' },
+    { code: '8', name: 'Class 8' },
+    { code: '9', name: 'Class 9' },
+    { code: '10', name: 'Class 10' },
+    { code: '11', name: 'Class 11' },
+    { code: '12', name: 'Class 12' }
+];
 
-// State
+const ageGroups = [
+    { code: 'UNDER_10', name: 'Under 10 years' },
+    { code: '10_19', name: '10-19 years' },
+    { code: '20_24', name: '20-24 years' },
+    { code: '25_60', name: '25-60 years' },
+    { code: 'OVER_60', name: 'Over 60 years' }
+];
+
+const genderOptions = [
+    { code: 'MALE', name: 'Male' },
+    { code: 'FEMALE', name: 'Female' }
+];
+
+// State Management
 const selectedReport = ref(null);
 const dateRange = ref(null);
+const isLoading = ref(false);
+const showReport = ref(false);
+const processedData = ref([]);
+
 const filters = ref({
-    agencyType: null,
-    classLevel: null,
+    organization: null,
+    agency: null,
+    classLevel: [],
     region: null,
     dzongkhag: null,
     ageGroups: [],
-    gender: []
+    gender: [],
+    year: null,
 });
-const showReport = ref(false);
-const processedData = ref(serviceAndTreatmentData.serviceData);
 
-// Computed properties for reports
-const showMonitorReport = computed(() => selectedReport.value?.value === 'monitor');
-const showCaseStatusReport = computed(() => selectedReport.value?.value === 'case-study');
-const showSeverityReport = computed(() => selectedReport.value?.value === 'severity');
-const showSchoolEnvironmentReport = computed(() => selectedReport.value?.value === 'school-environment');
+// Available Report Types based on user role
+const availableReportTypes = computed(() => {
+    const baseReports = [
+        { code: 'MONITOR', name: 'Monitor Report' },
+        { code: 'CASE_STATUS', name: 'Case Status Report' },
+        { code: 'SEVERITY', name: 'Severity Report' }
+    ];
 
-// Computed properties for filters
-const availableDzongkhags = computed(() =>
-    filters.value.region ? dzongkhagMapping[filters.value.region] : []
-);
+    const userRole = JSON.parse(localStorage.getItem('userDetailsStore'))?.user?.role;
 
-const hasFilters = computed(() =>
-    selectedReport.value ||
-    filters.value.region ||
-    filters.value.dzongkhag ||
-    filters.value.ageGroups.length ||
-    filters.value.gender.length ||
-    dateRange.value
-);
+    if (userRole === 'cecd_admin') {
+        return [...baseReports, { code: 'SCHOOL_ENV', name: 'School Environment Report' }];
+    }
 
-const canApplyFilters = computed(() => selectedReport.value !== null);
+    return baseReports;
+});
 
-// Active filters list
+// Computed Properties
+const hasFilters = computed(() => {
+    return Object.values(filters.value).some(value => {
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        return value !== null;
+    }) || selectedReport.value !== null;
+});
+
+const activeFilterCount = computed(() => {
+    let count = 0;
+
+    if (selectedReport.value) count++;
+
+    Object.values(filters.value).forEach(value => {
+        if (Array.isArray(value) && value.length > 0) count++;
+        else if (value !== null) count++;
+    });
+
+    return count;
+});
+
+const availableDzongkhags = computed(() => {
+    if (!filters.value.region) return [];
+
+    const dzongkhagsByRegion = {
+        WESTERN: [
+            'Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse',
+            'Thimphu Thromde', 'Phuentshogling Thromde'
+        ],
+        CENTRAL: [
+            'Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue', 'Zhemgang'
+        ],
+        EASTERN: [
+            'Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang',
+            'Samdrup Jongkhar Thromde', 'Trashi Yangtse'
+        ]
+    };
+
+    return dzongkhagsByRegion[filters.value.region.code].map(name => ({
+        code: name.toUpperCase(),
+        name
+    }));
+});
+
 const activeFiltersList = computed(() => {
     const list = [];
+
     if (selectedReport.value) {
-        list.push({ id: 'report', label: `Report: ${selectedReport.value.label}` });
-    }
-    if (filters.value.agencyType) {
-        list.push({ id: 'agencyType', label: `Agency Type: ${filters.value.agencyType}` });
-    }
-    if (filters.value.classLevel) {
-        list.push({ id: 'classLevel', label: `Class Level: ${filters.value.classLevel}` });
-    }
-    if (filters.value.region) {
-        list.push({ id: 'region', label: `Region: ${filters.value.region}` });
-    }
-    if (filters.value.dzongkhag) {
-        list.push({ id: 'dzongkhag', label: `Dzongkhag: ${filters.value.dzongkhag}` });
-    }
-    if (filters.value.ageGroups.length) {
-        list.push({ id: 'ageGroups', label: `Age Groups: ${filters.value.ageGroups.join(', ')}` });
-    }
-    if (filters.value.gender.length) {
-        list.push({ id: 'gender', label: `Gender: ${filters.value.gender.join(', ')}` });
-    }
-    if (dateRange.value) {
-        const formatDate = date => date.toLocaleDateString();
         list.push({
-            id: 'dateRange',
-            label: `Date Range: ${formatDate(dateRange.value[0])} - ${formatDate(dateRange.value[1])}`
+            id: 'report',
+            label: `Report: ${selectedReport.value.name}`
         });
     }
+
+    if (filters.value.organization) {
+        list.push({
+            id: 'organization',
+            label: `Organization: ${filters.value.organization.name}`
+        });
+    }
+
+    if (filters.value.agency) {
+        list.push({
+            id: 'agency',
+            label: `Agency: ${filters.value.agency.name}`
+        });
+    }
+
+    if (filters.value.classLevel.length) {
+        list.push({
+            id: 'classLevel',
+            label: `Classes: ${filters.value.classLevel.map(c => c.name).join(', ')}`
+        });
+    }
+
+    if (filters.value.region) {
+        list.push({
+            id: 'region',
+            label: `Region: ${filters.value.region.name}`
+        });
+    }
+
+    if (filters.value.dzongkhag) {
+        list.push({
+            id: 'dzongkhag',
+            label: `Dzongkhag: ${filters.value.dzongkhag.name}`
+        });
+    }
+
+    if (filters.value.ageGroups.length) {
+        list.push({
+            id: 'ageGroups',
+            label: `Age Groups: ${filters.value.ageGroups.map(g => g.name).join(', ')}`
+        });
+    }
+
+    if (filters.value.gender.length) {
+        list.push({
+            id: 'gender',
+            label: `Gender: ${filters.value.gender.map(g => g.name).join(', ')}`
+        });
+    }
+
+    if (filters.value.year) {
+        list.push({
+            id: 'year',
+            label: `Year: ${filters.value.year.name}`
+        });
+    }
+
     return list;
 });
 
-// Methods
-const applyFilters = () => {
-    try {
-        showReport.value = false;
-        processedData.value = filterData(serviceAndTreatmentData.value);
-        showReport.value = true;
-        toast.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: `Filtered data: ${processedData.value.length} records`,
-            life: 3000
-        });
-    } catch (error) {
-        console.error('Filter error:', error);
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error applying filters',
-            life: 3000
-        });
-    }
-};
+const showMonitorReport = computed(() => selectedReport.value?.code === 'MONITOR');
+const showCaseStatusReport = computed(() => selectedReport.value?.code === 'CASE_STATUS');
+const showSeverityReport = computed(() => selectedReport.value?.code === 'SEVERITY');
+const showSchoolEnvironmentReport = computed(() => selectedReport.value?.code === 'SCHOOL_ENV');
 
-const filterData = (data) => {
-    return data.filter(item => {
-        let matches = true;
+const canApplyFilters = computed(() => selectedReport.value !== null);
 
-        // Handle potentially null user data
-        const user = item.user || item.screening_data || {};
-        const agencyDetails = user.agency_details || {};
-        const agency = agencyDetails.agency || {};
+// New computed property for filtering agencies
+const filteredAgencies = computed(() => {
+    if (!serviceAndTreatmentData.value || !filters.value.organization) return [];
 
-        // Apply agency type filter
-        if (filters.value.agencyType) {
-            const itemAgencyType = agencyDetails.user_role_agency;
-            matches = matches && itemAgencyType === filters.value.agencyType.toLowerCase();
-        }
+    switch (filters.value.organization.code) {
+        case 'EVENT_BASED':
+            return Array.from(new Set(
+                serviceAndTreatmentData.value
+                    .filter(item => item.screening_data?.event)
+                    .map(item => ({
+                        code: `Event ${item.screening_data.event}`,
+                        name: `Event ${item.screening_data.event}`
+                    }))
+            ));
 
-        // Apply class level filter for schools
-        if (filters.value.agencyType === 'SCHOOL' && filters.value.classLevel) {
-            matches = matches && agencyDetails.user_class === filters.value.classLevel;
-        }
+        case 'CASE_BASED':
+            const caseAgencies = new Set();
+            serviceAndTreatmentData.value
+                .filter(item => item.screening_data?.case)
+                .forEach(item => {
+                    if (item.user?.active_agency?.agency_name) {
+                        caseAgencies.add(item.user.active_agency.agency_name);
+                    }
+                });
+            return Array.from(caseAgencies).map(name => ({
+                code: name,
+                name
+            }));
 
-        // Apply location filters
-        if (filters.value.region) {
-            // Map dzongkhag to region based on dzongkhagMapping
-            const dzongkhag = agency.present_dzongkhag;
-            const belongsToRegion = Object.entries(dzongkhagMapping).some(([region, dzongkhags]) => {
-                return region === filters.value.region && dzongkhags.includes(dzongkhag);
+        case 'CLUSTER':
+        case 'SCHOOL':
+            const uniqueAgencies = new Set();
+            serviceAndTreatmentData.value.forEach(item => {
+                const agencyName = item.user?.active_agency?.agency_name;
+                if (agencyName) {
+                    uniqueAgencies.add(agencyName);
+                }
             });
-            matches = matches && belongsToRegion;
-        }
+            return Array.from(uniqueAgencies).map(name => ({
+                code: name,
+                name
+            }));
 
-        if (filters.value.dzongkhag) {
-            matches = matches && agency.present_dzongkhag === filters.value.dzongkhag;
-        }
+        default:
+            return [];
+    }
+});
 
-        // Apply demographic filters
-        if (filters.value.gender.length) {
-            const itemGender = user.gender || user.gender;
-            matches = matches && filters.value.gender.includes(itemGender);
-        }
+// New computed property for available years
+const availableYears = computed(() => {
+    if (!serviceAndTreatmentData.value) return [];
 
-        // Apply age group filter
-        if (filters.value.ageGroups.length) {
-            const dob = user.date_of_birth || user.dob;
-            if (dob) {
-                const age = calculateAge(dob);
-                matches = matches && filters.value.ageGroups.some(range => isInAgeRange(age, range));
-            }
+    const years = new Set();
+    serviceAndTreatmentData.value.forEach(item => {
+        const date = new Date(item.date);
+        if (!isNaN(date.getFullYear())) {
+            years.add(date.getFullYear());
         }
-
-        // Apply date range filter
-        if (dateRange.value && dateRange.value.length === 2) {
-            const itemDate = new Date(item.date);
-            matches = matches &&
-                itemDate >= dateRange.value[0] &&
-                itemDate <= dateRange.value[1];
-        }
-
-        return matches;
     });
-};
 
-const resetFilters = () => {
-    selectedReport.value = null;
-    dateRange.value = null;
-    filters.value = {
-        agencyType: null,
-        classLevel: null,
-        region: null,
-        dzongkhag: null,
-        ageGroups: [],
-        gender: []
-    };
-    showReport.value = false;
-};
+    return Array.from(years).sort((a, b) => b - a).map(year => ({
+        code: year.toString(),
+        name: year.toString()
+    }));
+});
 
-const handleAgencyTypeChange = () => {
-    if (filters.value.agencyType !== 'SCHOOL') {
-        filters.value.classLevel = null;
+// Methods
+const handleOrganizationChange = () => {
+    // Reset dependent filters
+    filters.value.agency = null;
+    filters.value.classLevel = [];
+    if (filters.value.organization?.code !== 'SCHOOL') {
+        filters.value.classLevel = [];
     }
 };
 
@@ -319,19 +482,31 @@ const handleRegionChange = () => {
     filters.value.dzongkhag = null;
 };
 
+const handleAgencyTypeChange = () => {
+    filters.value.classLevel = [];
+    filters.value.agency = null;
+    if (filters.value.agencyType !== 'SCHOOL') {
+        filters.value.classLevel = [];
+    }
+};
+
 const removeFilter = (filterId) => {
     switch (filterId) {
         case 'report':
             selectedReport.value = null;
             break;
-        case 'agencyType':
-            filters.value.agencyType = null;
+        case 'organization':
+            filters.value.organization = null;
+            break;
+        case 'agency':
+            filters.value.agency = null;
             break;
         case 'classLevel':
-            filters.value.classLevel = null;
+            filters.value.classLevel = [];
             break;
         case 'region':
             filters.value.region = null;
+            filters.value.dzongkhag = null;
             break;
         case 'dzongkhag':
             filters.value.dzongkhag = null;
@@ -342,160 +517,583 @@ const removeFilter = (filterId) => {
         case 'gender':
             filters.value.gender = [];
             break;
-        case 'dateRange':
-            dateRange.value = null;
+        case 'year':
+            filters.value.year = null;
             break;
     }
 };
 
-// Helper functions
+const resetFilters = () => {
+    selectedReport.value = null;
+    dateRange.value = null;
+    filters.value = {
+        agencyType: null,
+        classLevel: [],
+        region: null,
+        dzongkhag: null,
+        ageGroups: [],
+        gender: [],
+        year: null
+    };
+    showReport.value = false;
+};
+
+const applyFilters = async () => {
+    isLoading.value = true;
+    showReport.value = false;
+
+    // Directly use the computed property for filtering
+    processedData.value = filteredData.value;
+
+    showReport.value = true;
+    toast.add({
+        severity: 'success',
+        summary: 'Filters Applied',
+        detail: `Found ${processedData.value.length} matching records`,
+        life: 3000
+    });
+
+    isLoading.value = false;
+};
+
+// Helper Functions
 const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return null;
-
+    const dob = new Date(dateOfBirth);
     const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-
-    // Check for invalid date
-    if (isNaN(birthDate.getTime())) return null;
-
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
         age--;
     }
-
     return age;
 };
 
-const isInAgeRange = (age, range) => {
-    if (age === null) return false;
-
-    const [min, max] = range.split('-');
-    if (max === '+') {
-        return age >= parseInt(min);
-    }
-    return age >= parseInt(min) && age <= parseInt(max);
+const getAgeGroup = (age) => {
+    if (age === null) return null;
+    if (age < 10) return 'UNDER_10';
+    if (age <= 19) return '10_19';
+    if (age <= 24) return '20_24';
+    if (age <= 60) return '25_60';
+    return 'OVER_60';
 };
 
-// Watch for changes
+const getDzongkhagRegion = (dzongkhag) => {
+    const regionMap = {
+        WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHHUKHA', 'SAMTSE', 'THIMPHU THROMDE', 'PHUENTSHOGLING THROMDE'],
+        CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE', 'ZHEMGANG'],
+        EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG', 'SAMDRUP JONGKHAR THROMDE', 'TRASHI YANGTSE']
+    };
+    const upperDzongkhag = dzongkhag.toUpperCase();
+    for (const [region, dzongkhags] of Object.entries(regionMap)) {
+        if (dzongkhags.includes(upperDzongkhag)) {
+            return region;
+        }
+    }
+    return null;
+};
+
+// Computed property for filtered data
+const filteredData = computed(() => {
+    if (!serviceAndTreatmentData.value) {
+        console.log('No service and treatment data available');
+        return [];
+    }
+
+    return serviceAndTreatmentData.value.filter(item => {
+        let matches = true;
+        const user = item.user || {};
+        const agencyDetails = user.agency_details || {};
+        const agency = agencyDetails.agency || {};
+        const activeAgencyName = user.active_agency?.agency_name?.toUpperCase() || '';
+
+        // Filter by year
+        if (filters.value.year && item.date) {
+            const itemYear = new Date(item.date).getFullYear();
+            matches = matches && itemYear === parseInt(filters.value.year.code);
+        }
+
+        // Filter by organization
+        if (filters.value.organization) {
+            switch (filters.value.organization.code) {
+                case 'EVENT_BASED':
+                    matches = matches && item.screening_data?.event;
+                    break;
+                case 'CASE_BASED':
+                    matches = matches && item.screening_data?.case;
+                    break;
+                case 'CLUSTER':
+                    matches = matches && !item.screening_data?.event && !item.screening_data?.case;
+                    if (filters.value.agency) {
+                        matches = matches && activeAgencyName === filters.value.agency.code;
+                    }
+                    break;
+                case 'SCHOOL':
+                    matches = matches && activeAgencyName.includes('SCHOOL');
+                    if (filters.value.agency) {
+                        matches = matches && activeAgencyName === filters.value.agency.code;
+                    }
+                    break;
+                default:
+                    matches = false;
+                    break;
+            }
+        }
+
+        // Filter by agency
+        if (filters.value.agency) {
+            matches = matches && activeAgencyName === filters.value.agency.code;
+        }
+
+        // Filter by class level for schools
+        if (filters.value.classLevel.length > 0 && activeAgencyName.includes('SCHOOL')) {
+            const userClass = agencyDetails.user_class?.toUpperCase();
+            matches = matches && filters.value.classLevel.some(cls => cls.code.toUpperCase() === userClass);
+        }
+
+        // Filter by region and dzongkhag
+        if (filters.value.region) {
+            const itemDzongkhag = agency.present_dzongkhag;
+            if (itemDzongkhag) {
+                matches = matches && getDzongkhagRegion(itemDzongkhag) === filters.value.region.code;
+
+                if (filters.value.dzongkhag) {
+                    matches = matches && itemDzongkhag.toUpperCase() === filters.value.dzongkhag.code;
+                }
+            } else {
+                matches = false;
+            }
+        }
+
+        // Filter by age groups
+        if (filters.value.ageGroups.length > 0) {
+            const age = calculateAge(user.date_of_birth);
+            matches = matches && filters.value.ageGroups.some(group => {
+                const range = group.code.split('_');
+                const min = range[0] === 'UNDER' ? 0 : parseInt(range[0]);
+                const max = range[1] === 'OVER' ? Infinity : parseInt(range[1]);
+                return age >= min && age <= max;
+            });
+        }
+
+        // Filter by gender
+        if (filters.value.gender.length > 0) {
+            matches = matches && filters.value.gender.some(g => g.code === user.gender?.toUpperCase());
+        }
+
+        return matches;
+    });
+});
+
+// Watchers
 watch([selectedReport, filters, dateRange], () => {
     showReport.value = false;
 }, { deep: true });
 
-// Watch for props changes
-watch(() => serviceAndTreatmentData.serviceData, (newData) => {
+watch(serviceAndTreatmentData, (newData) => {
     processedData.value = newData;
 }, { immediate: true });
+
+onMounted(() => {
+    // Initialize processedData.value with serviceAndTreatmentData.value
+    if (serviceAndTreatmentData.value) {
+        processedData.value = serviceAndTreatmentData.value;
+    }
+});
 </script>
 
 <style scoped>
+/* Main Container */
 .filter-configurator {
+    max-width: 1320px;
+    margin: 0 auto;
     padding: 1.5rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.config-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-}
-
-.config-header {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    padding: 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.header-title {
+/* Header Styling */
+.filter-header {
+    padding: 1rem 1.5rem;
+    background-color: #2F4858 !important;
     color: white;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.filter-header h4 {
     font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.filter-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    padding: 1.5rem;
-}
-
-.filter-group {
-    margin-bottom: 1.25rem;
-}
-
-.filter-group label {
-    display: block;
-    font-size: 0.875rem;
     font-weight: 500;
-    color: #4B5563;
+}
+
+/* Label Styling */
+.form-label {
+    color: #2F4858;
+    font-weight: 500;
     margin-bottom: 0.5rem;
+    font-size: 0.95rem;
 }
 
-.section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 1rem;
-}
-
-.filter-group-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.active-filters {
-    padding: 1rem 1.5rem;
-    background: #F9FAFB;
-    border-top: 1px solid #E5E7EB;
-}
-
-.filter-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.filter-actions {
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    border-top: 1px solid #E5E7EB;
-}
-
-/* PrimeVue Component Overrides */
+/* Dropdown Styling */
 :deep(.p-dropdown),
 :deep(.p-multiselect),
 :deep(.p-calendar) {
     width: 100%;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+}
+
+:deep(.p-dropdown:not(.p-disabled):hover),
+:deep(.p-multiselect:not(.p-disabled):hover) {
+    border-color: #2F4858;
+}
+
+:deep(.p-dropdown.p-focus),
+:deep(.p-multiselect.p-focus) {
+    border-color: #2F4858;
+    box-shadow: 0 0 0 2px rgba(47, 72, 88, 0.1);
+}
+
+:deep(.p-dropdown-panel),
+:deep(.p-multiselect-panel) {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Filters Section */
+.status-filters {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.status-filters-header {
+    color: #2F4858;
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+}
+
+.status-filters-header h6 {
+    font-size: 1rem;
+}
+
+/* Active Filters */
+.active-filters {
+    background: rgba(47, 72, 88, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.filter-chip {
+    background: white;
+    border: 1px solid #2F4858;
+    color: #2F4858;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+}
+
+/* Buttons */
+:deep(.p-button) {
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+:deep(.p-button.btn-secondary) {
+    background: transparent;
+    border: 1px solid #2F4858;
+    color: #2F4858;
+}
+
+:deep(.p-button.btn-secondary:hover) {
+    background: rgba(47, 72, 88, 0.1);
+}
+
+:deep(.p-button.btn-primary) {
+    background: #2F4858;
+    border: 1px solid #2F4858;
+}
+
+:deep(.p-button.btn-primary:hover) {
+    background: #243845;
+}
+
+/* Grid Layout */
+.row {
+    margin: -0.5rem;
+}
+
+.col,
+[class*="col-"] {
+    padding: 0.5rem;
+}
+
+/* Form Groups */
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+/* Custom spacing for sections */
+.form-section {
+    margin-bottom: 2rem;
+}
+
+/* Specific Component Overrides */
+:deep(.p-dropdown-item),
+:deep(.p-multiselect-item) {
+    padding: 0.5rem 1rem;
+    color: #2F4858;
+}
+
+:deep(.p-dropdown-item:hover),
+:deep(.p-multiselect-item:hover) {
+    background: rgba(47, 72, 88, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-configurator {
+        padding: 1rem;
+    }
+
+    .status-filters {
+        padding: 1rem;
+    }
+
+    .d-flex.justify-content-end {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .d-flex.justify-content-end button {
+        width: 100%;
+    }
+}
+
+/* Enhanced scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2B656F;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #1D4851;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Apply animations */
+.filter-chip,
+.visualization-grid>div {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Enhanced dropdown icons */
+:deep(.p-dropdown-trigger),
+:deep(.p-multiselect-trigger) {
+    width: 3rem;
+    background: rgba(43, 101, 111, 0.05);
+    border-radius: 0 6px 6px 0;
+    transition: all 0.2s ease;
+}
+
+:deep(.p-dropdown:hover .p-dropdown-trigger),
+:deep(.p-multiselect:hover .p-multiselect-trigger) {
+    background: rgba(43, 101, 111, 0.1);
+}
+
+/* Responsive enhancements */
+@media (max-width: 1024px) {
+    .visualization-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "map"
+            "chart"
+            "table";
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .filter-actions {
+        flex-direction: column;
+    }
+
+    .filter-actions .p-button {
+        width: 100%;
+    }
+
+    .summary-card {
+        padding: 1rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .dashboard-container {
+        padding: 0;
+    }
+
+    .filter-panel {
+        display: none;
+    }
+
+    .summary-grid,
+    .visualization-grid {
+        gap: 1rem;
+    }
+}
+
+/* Additional styles from the second code example */
+.filter-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    /* Make columns responsive */
+    gap: 1.5rem;
+}
+
+.filter-group-row {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .filter-content {
+        grid-template-columns: 1fr;
+        /* Stack columns on small screens */
+    }
+
+    .filter-group-row {
+        flex-direction: column;
+        /* Stack row items on small screens */
+    }
+}
+
+/* Dropdown, MultiSelect, and Calendar specific overrides */
+:deep(.p-dropdown),
+:deep(.p-multiselect),
+:deep(.p-calendar) {
+    width: 100%;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:deep(.p-dropdown:not(.p-disabled):hover),
+:deep(.p-multiselect:not(.p-disabled):hover),
+:deep(.p-calendar:not(.p-disabled):hover) {
+    border-color: #2F4858;
+}
+
+:deep(.p-dropdown.p-focus),
+:deep(.p-multiselect.p-focus),
+:deep(.p-calendar.p-focus) {
+    border-color: #2F4858;
+    box-shadow: 0 0 0 2px rgba(47, 72, 88, 0.1);
+}
+
+:deep(.p-dropdown-panel),
+:deep(.p-multiselect-panel) {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: white;
 }
 
 :deep(.p-dropdown-item),
 :deep(.p-multiselect-item) {
     padding: 0.75rem 1rem;
+    color: #2F4858;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-:deep(.p-chip) {
-    background: #EEF2FF;
-    color: #4F46E5;
+:deep(.p-dropdown-item:hover),
+:deep(.p-multiselect-item:hover) {
+    background: rgba(47, 72, 88, 0.05);
 }
 
-/* Loading State */
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
+:deep(.p-dropdown-item.p-highlight),
+:deep(.p-multiselect-item.p-highlight) {
+    background: rgba(47, 72, 88, 0.1);
+    color: #2F4858;
+}
+
+/* Calendar specific styles */
+:deep(.p-calendar .p-inputtext) {
+    width: 100%;
+    border: none;
+}
+
+:deep(.p-calendar-w-btn .p-inputtext) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+:deep(.p-calendar .p-datepicker) {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: white;
+}
+
+:deep(.p-calendar .p-monthpicker .p-monthpicker-month),
+:deep(.p-calendar .p-yearpicker .p-yearpicker-year) {
+    color: #2F4858;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+:deep(.p-calendar .p-monthpicker .p-monthpicker-month:hover),
+:deep(.p-calendar .p-yearpicker .p-yearpicker-year:hover) {
+    background: rgba(47, 72, 88, 0.05);
+}
+
+/* Custom styling for p-calendar */
+:deep(.p-calendar) {
+    width: 100%;
+}
+
+:deep(.p-calendar .p-inputtext) {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0.75rem 1rem;
+}
+
+:deep(.p-calendar .p-datepicker) {
+    width: 24rem;
 }
 </style>

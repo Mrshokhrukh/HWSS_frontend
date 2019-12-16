@@ -86,7 +86,7 @@
                 </div>
               </div>
 
-              <div class="filter-item" v-if="filters.organization?.code === 'CLUSTER' && filters.agency">
+              <div class="filter-item mt-4" v-if="filters.organization?.code === 'CLUSTER' && filters.agency">
                 <label class="filter-label">Active Agency</label>
                 <Dropdown v-model="filters.activeAgency" :options="availableActiveAgencies" optionLabel="name"
                   placeholder="Select Active Agency" class="w-full" :filter="true" :showClear="true">
@@ -196,19 +196,7 @@
           </div>
         </Panel>
       </div>
-      <div class="p-d-flex p-jc-center p-mb-2">
-        <Card v-for="metric in summaryMetrics" :key="metric.label">
-          <template #title>
-            <h6>{{ metric.label }}</h6>
-          </template>
-          <template #content>
-            <h3>{{ metric.value }}</h3>
-            <small :class="['trend-value', metric.trend > 0 ? 'text-success' : 'text-danger']">
-              {{ metric.trend > 0 ? '+' : '' }}{{ metric.trend }}% from previous period
-            </small>
-          </template>
-        </Card>
-      </div>
+      <SummaryMetrics :filtered-data="filteredData" />
       <div class="p-mb-2">
         <TabView>
           <TabPanel header="Overview">
@@ -260,13 +248,13 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Panel from 'primevue/panel';
-import ProgressSpinner from 'primevue/progressspinner';
+// import ProgressSpinner from 'primevue/progressspinner'; // Removed as it's not used currently
 import RndDataDisplay from './RndDataDisplay.vue';
 import RnDChartTables from './RnDChartTables.vue';
 import RNDmap from './overview/RNDmap.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-import Card from 'primevue/card';
+// import Card from 'primevue/card'; // Removed as it's used in SummaryMetrics.vue
 import AnalysisTab from './AnalysisTab.vue'
 import DemographicsTab from './DemographicsTab.vue';
 import AssessmentResultsTab from './AssessmentResultsTab.vue';
@@ -274,6 +262,7 @@ import SubstanceUseRisktab from './SubstanceUseRisktab.vue';
 import AdvancedAnalyticsTab from './AdvancedAnalyticsTab.vue';
 import TreatmentTrackingTab from './TreatmentTrackingTab.vue';
 import DataExportReportingtab from './DataExport&Reportingtab.vue';
+import SummaryMetrics from './SummaryMetrics.vue'; // Import the SummaryMetrics component
 
 // Inject the provided data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
@@ -295,10 +284,6 @@ const filters = reactive({
   currentStatus: null,
   statusValue: null,
   year: null,
-  activeAgency: null,
-  caseStatus: null,
-  counselingStatus: null,
-  followUpStatus: null,
   activeAgency: null,
   caseStatus: null,
   counselingStatus: null,
@@ -343,11 +328,6 @@ const clusterTypes = [
 ];
 
 const ageGroups = [
-  { code: 'UNDER_10', name: 'Under 10 years' },
-  { code: '10_19', name: '10-19 years' },
-  { code: '20_24', name: '20-24 years' },
-  { code: '25_60', name: '25-60 years' },
-  { code: 'OVER_60', name: 'Over 60 years' },
   { code: 'UNDER_10', name: 'Under 10 years' },
   { code: '10_19', name: '10-19 years' },
   { code: '20_24', name: '20-24 years' },
@@ -630,12 +610,6 @@ const getAgeGroup = (age) => {
   if (age >= 25 && age <= 60) return '25_60';
   if (age > 60) return 'OVER_60';
   return null;
-  if (age < 10) return 'UNDER_10';
-  if (age >= 10 && age <= 19) return '10_19';
-  if (age >= 20 && age <= 24) return '20_24';
-  if (age >= 25 && age <= 60) return '25_60';
-  if (age > 60) return 'OVER_60';
-  return null;
 };
 
 const resetFilters = () => {
@@ -817,42 +791,6 @@ const filteredData = computed(() => {
   });
 });
 
-
-const summaryMetrics = computed(() => {
-  const data = filteredData.value;
-  const totalReferrals = data.length;
-  const completedAssessments = data.filter(item => item.assessment_status === 'Conducted').length;
-  const highRiskCases = data.filter(item => (item.screening_data?.phq_interpretation === 'Severe' || item.screening_data?.gad_interpretation === 'Severe')).length;
-
-  // Placeholder for previous period data - replace with your actual data retrieval
-  const previousPeriodTotalReferrals = 0; // Replace with actual data
-  const previousPeriodCompletedAssessments = 0; // Replace with actual data
-  const previousPeriodHighRiskCases = 0; // Replace with actual data
-
-  // Calculate new metrics
-  const averageReferralTime = calculateAverageReferralTime(data);
-  const assessmentCompletionRate = totalReferrals > 0 ? (completedAssessments / totalReferrals * 100).toFixed(1) : 0;
-  const interventionCompletionRate = calculateInterventionCompletionRate(data);
-  const averageTreatmentDuration = calculateAverageTreatmentDuration(data);
-  const newReferralsLastPeriod = calculateNewReferralsLastPeriod(data, filters.year); // Assuming year filter is used for period
-  const casesClosedLastPeriod = calculateCasesClosedLastPeriod(data, filters.year); // Assuming year filter is used for period
-  const averageAge = calculateAverageAge(data);
-  const genderDistribution = calculateGenderDistribution(data);
-
-  return [
-    { label: 'Total Referrals', value: totalReferrals, trend: calculatePercentageChange(totalReferrals, previousPeriodTotalReferrals) },
-    { label: 'Assessment Completion Rate', value: `${assessmentCompletionRate}%`, trend: calculatePercentageChange(completedAssessments, previousPeriodCompletedAssessments) },
-    { label: 'High-Risk Cases', value: highRiskCases, trend: calculatePercentageChange(highRiskCases, previousPeriodHighRiskCases) },
-    { label: 'Average Referral Time', value: `${averageReferralTime} days`, trend: 0 }, // Replace 0 with actual trend calculation
-    { label: 'Intervention Completion Rate', value: `${interventionCompletionRate}%`, trend: 0 }, // Replace 0 with actual trend calculation
-    { label: 'New Referrals (Last Period)', value: newReferralsLastPeriod, trend: 0 }, // Replace 0 with actual trend calculation
-    { label: 'Cases Closed (Last Period)', value: casesClosedLastPeriod, trend: 0 }, // Replace 0 with actual trend calculation
-    { label: 'Average Treatment Duration', value: `${averageTreatmentDuration} days`, trend: 0 }, // Replace 0 with actual trend calculation
-    { label: 'Average Age', value: averageAge, trend: 0 }, // Replace 0 with actual trend calculation
-    { label: 'Gender Distribution', value: `M: ${genderDistribution.males}, F: ${genderDistribution.females}`, trend: 0 }, // Replace 0 with actual trend calculation
-  ];
-});
-
 // Helper function to get region from dzongkhag
 const getDzongkhagRegion = (dzongkhag) => {
   const regionMap = {
@@ -870,62 +808,6 @@ const getDzongkhagRegion = (dzongkhag) => {
   }
   return null;
 };
-
-// Helper functions to calculate new metrics (IMPLEMENT THESE)
-function calculateAverageReferralTime(data) {
-  const conducted = data.filter(item => item.assessmentCompleted && item.referralTime !== null);
-  if (conducted.length === 0) return 0;
-  const totalTime = conducted.reduce((sum, item) => sum + item.referralTime, 0);
-  return (totalTime / conducted.length).toFixed(1);
-}
-
-function calculateInterventionCompletionRate(data) {
-  const interventions = data.filter(item => item.follow_up !== null);
-  if (interventions.length === 0) return 0;
-  const completedInterventions = interventions.filter(item => item.follow_up === 'Treatment Completed' || item.follow_up === 'Completed Counselling Sessions').length;
-  return (completedInterventions / interventions.length * 100).toFixed(1);
-}
-
-function calculateAverageTreatmentDuration(data) {
-  const completedInterventions = data.filter(item => item.follow_up === 'Treatment Completed' || item.follow_up === 'Completed Counselling Sessions' || item.follow_up === 'Undergone Rehabilitation' && item.treatmentDuration !== null);
-  if (completedInterventions.length === 0) return 0;
-  const totalDuration = completedInterventions.reduce((sum, item) => sum + item.treatmentDuration, 0);
-  return (totalDuration / completedInterventions.length).toFixed(1);
-
-}
-
-function calculateNewReferralsLastPeriod(data, selectedYear) {
-  if (!selectedYear) return 0; // Return 0 or handle appropriately if year is not selected
-  const year = parseInt(selectedYear.code);
-
-  return data.filter(item => {
-    const referralDate = new Date(item.date);
-    return referralDate.getFullYear() === year;
-  }).length;
-}
-
-function calculateCasesClosedLastPeriod(data, selectedYear) {
-  if (!selectedYear) return 0; // Handle case where no year is selected
-
-  const year = parseInt(selectedYear.code);
-
-  return data.filter(item => {
-    const itemYear = new Date(item.date).getFullYear();
-    return item.case_status === 'Case Closed' && itemYear === year;
-  }).length;
-}
-
-function calculateAverageAge(data) {
-  const ages = data.filter(item => item.age).map(item => item.age);
-  if (ages.length === 0) return 0;
-  return (ages.reduce((sum, age) => sum + age, 0) / ages.length).toFixed(1);
-}
-
-function calculateGenderDistribution(data) {
-  const males = data.filter(item => item.gender === 'Male').length;
-  const females = data.filter(item => item.gender === 'Female').length;
-  return { males, females };
-}
 
 // Function to calculate referral time (in days)
 function calculateReferralTime(item) {
@@ -945,11 +827,6 @@ function calculateTreatmentDuration(item) {
   return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 }
 
-//Existing Helper function to calculate percentage change
-function calculatePercentageChange(current, previous) {
-  if (previous === 0 || previous === null) return 0;
-  return ((current - previous) / previous * 100).toFixed(1);
-}
 const applyFilters = async () => {
   try {
     isLoading.value = true;
@@ -975,14 +852,12 @@ const applyFilters = async () => {
   }
 };
 
-
-
 // Lifecycle hooks
 onMounted(() => {
   // Initialize any required data or state
   isFilterExpanded.value = true;
 });
-</script> Replace with actual
+</script>
 
 <style scoped>
 .dashboard-container {
@@ -1093,11 +968,12 @@ onMounted(() => {
   transition: all 0.2s ease;
 }
 
+/*
 .status-filters-container :deep(.p-dropdown:hover) {
   border-color: #2B656F;
   transform: translateY(-1px);
 }
-
+*/
 .status-filters-container :deep(.p-dropdown.p-focus) {
   box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.15);
 }
@@ -1112,7 +988,7 @@ onMounted(() => {
   margin: 2rem 0;
 }
 
-.filter-item:hover {
+/* .filter-item:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-color: rgba(43, 101, 111, 0.2);
   background: #2B5B65;
@@ -1123,7 +999,7 @@ onMounted(() => {
   border: 1px solid rgba(43, 101, 111, 0.1);
   display: flex;
   align-items: center;
-}
+} */
 
 .filter-label i {
   color: rgb(255, 255, 255);
@@ -1185,10 +1061,10 @@ onMounted(() => {
   margin: 2rem 0;
 }
 
-.filter-item:hover {
+/* .filter-item:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-color: rgba(43, 101, 111, 0.2);
-}
+} */
 
 .dropdown-value {
   display: flex;
