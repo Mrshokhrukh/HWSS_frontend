@@ -1404,6 +1404,8 @@ onMounted(() => {
   border: none;
   border-radius: 12px 12px 0 0;
   padding: 0.5rem 1rem 0 1rem;
+  width: 100%; /* Explicitly set the width */
+
 }
 
 :deep(.p-tabview .p-tabview-nav li) {
@@ -1429,7 +1431,7 @@ onMounted(() => {
 :deep(.p-tabview .p-tabview-nav li.p-highlight .p-tabview-nav-link) {
   background: white;
   border: none;
-  color: #2B656F;
+  color: #2097ac;
 }
 
 :deep(.p-tabview .p-tabview-panels) {

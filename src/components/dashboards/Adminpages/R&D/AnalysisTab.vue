@@ -86,7 +86,6 @@ import Column from 'primevue/column';
 import Button from 'primevue/button';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import VueApexCharts from 'vue3-apexcharts';
 
 const props = defineProps({
     filteredData: {
@@ -107,11 +106,11 @@ const safeJsonParse = (data) => {
 };
 
 const getDateDiff = (start, end) => {
-  if (!start || !end) return null;
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return null;
-  return Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24));
+    if (!start || !end) return null;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return null;
+    return Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24));
 };
 
 
@@ -140,11 +139,11 @@ const referralSourceData = computed(() => {
         }
 
         if (isHighRisk(item)) {
-           data.highRiskCases++;
+            data.highRiskCases++;
         }
 
-        const referralTime = calculateReferralTime(item.date,item.screening_data?.submission_date);
-       if (referralTime !== null) {
+        const referralTime = calculateReferralTime(item.date, item.screening_data?.submission_date);
+        if (referralTime !== null) {
             data.referralTimes.push(referralTime);
         }
     });
@@ -152,9 +151,9 @@ const referralSourceData = computed(() => {
     return Array.from(sourceMap.values()).map(source => ({
         ...source,
         completionRate: ((source.completedAssessments / source.totalReferrals) * 100).toFixed(1),
-          avgReferralTime: source.referralTimes.length ?
+        avgReferralTime: source.referralTimes.length ?
             (source.referralTimes.reduce((a, b) => a + b, 0) / source.referralTimes.length).toFixed(1) : 'N/A',
-         highRiskPercentage: (source.highRiskCases / source.totalReferrals * 100).toFixed(1)
+        highRiskPercentage: (source.highRiskCases / source.totalReferrals * 100).toFixed(1)
     }));
 });
 
@@ -179,7 +178,7 @@ function isHighRisk(item) {
 const calculateReferralTime = (start, end) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
-   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return null;
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return null;
     const diffTime = Math.abs(endDate - startDate);
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
@@ -195,7 +194,13 @@ const colors = {
 const referralComparisonOptions = {
     chart: {
         type: 'bar',
-        toolbar: { show: false }
+        toolbar: { show: false },
+        fontFamily: 'inherit',
+        animations: {
+            enabled: true,
+            easing: 'easeinout',
+            speed: 800
+        }
     },
     plotOptions: {
         bar: {
@@ -206,34 +211,97 @@ const referralComparisonOptions = {
     },
     colors: [colors.primary, colors.secondary, colors.accent[0]],
     xaxis: {
-        categories: computed(() => referralSourceData.value.map(s => s.source)),
+        categories: ['Assessment Status', 'Counseling Status', 'Risk Levels'],
         labels: {
             style: { colors: colors.primary }
         }
     },
     yaxis: {
         title: {
-            text: 'Count',
+            text: 'Number of Cases',
             style: { color: colors.primary }
+        }
+    },
+    dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+            return val.toFixed(0);
+        }
+    },
+    legend: {
+        position: 'bottom',
+        markers: {
+            radius: 12,
         }
     }
 };
 
 
 const referralComparisonSeries = computed(() => {
-  return [
-      {
-          name: 'Total Referrals',
-          data: referralSourceData.value.map(source => source.totalReferrals)
-       },
+    // Count various statuses
+    const assessmentCounts = {
+        conducted: 0,
+        notConducted: 0
+    };
+
+    const counselingCounts = {
+        waiting: 0,
+        availed: 0,
+        notRequired: 0
+    };
+
+    const riskCounts = {
+        severe: 0,
+        moderate: 0,
+        mild: 0
+    };
+
+    props.filteredData.forEach(item => {
+        // Assessment Status
+        if (item.assessment_status === 'Conducted') {
+            assessmentCounts.conducted++;
+        } else {
+            assessmentCounts.notConducted++;
+        }
+
+        // Counseling Status
+        if (item.counseling === 'Waiting List') {
+            counselingCounts.waiting++;
+        } else if (item.counseling === 'Availed') {
+            counselingCounts.availed++;
+        } else if (item.counseling === 'Not Required') {
+            counselingCounts.notRequired++;
+        }
+
+        // Check for severe cases in screening data
+        if (item.screening_data) {
+            const phqSevere = item.screening_data.phq_interpretation === 'Severe';
+            const gadSevere = item.screening_data.gad_interpretation === 'Severe';
+
+            if (phqSevere || gadSevere) {
+                riskCounts.severe++;
+            } else if (item.screening_data.phq_interpretation === 'Moderate' ||
+                item.screening_data.gad_interpretation === 'Moderate') {
+                riskCounts.moderate++;
+            } else {
+                riskCounts.mild++;
+            }
+        }
+    });
+
+    return [
         {
-            name: 'Completed Assessments',
-            data: referralSourceData.value.map(source => source.completedAssessments)
-         },
-           {
-            name: 'High Risk Cases',
-               data: referralSourceData.value.map(source => source.highRiskCases)
-          }
+            name: 'Conducted/Availed/Severe',
+            data: [assessmentCounts.conducted, counselingCounts.availed, riskCounts.severe]
+        },
+        {
+            name: 'Not Conducted/Waiting/Moderate',
+            data: [assessmentCounts.notConducted, counselingCounts.waiting, riskCounts.moderate]
+        },
+        {
+            name: 'Not Required/Mild',
+            data: [0, counselingCounts.notRequired, riskCounts.mild]
+        }
     ];
 });
 
@@ -267,8 +335,8 @@ const completionTrendSeries = computed(() => {
     const monthlyData = {};
 
     props.filteredData.forEach(item => {
-      const date = new Date(item.date);
-         if (isNaN(date.getTime())) return;
+        const date = new Date(item.date);
+        if (isNaN(date.getTime())) return;
 
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         if (!monthlyData[monthKey]) {
@@ -288,7 +356,7 @@ const completionTrendSeries = computed(() => {
                 x: new Date(month).getTime(),
                 y: Number(((data.completed / data.total) * 100).toFixed(1))
             }))
-             .sort((a, b) => a.x - b.x)
+            .sort((a, b) => a.x - b.x)
     }];
 });
 
@@ -352,17 +420,17 @@ const printTable = () => {
 
 /* Custom styles to complement Bootstrap */
 :deep(.btn-custom) {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: white;
 }
 
 :deep(.btn-custom:hover) {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
-.card-header h5{
+.card-header h5 {
     margin: 0;
     color: #ffffff;
 }

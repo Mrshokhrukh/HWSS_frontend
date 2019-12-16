@@ -61,6 +61,51 @@
                         </div>
                     </section>
                 </div>
+
+                <!-- Referral Flow Analysis -->
+                <div class="col-12">
+                    <section class="h-100">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h4 class="section-title">Referral Flow Analysis</h4>
+                                <div class="chart-container">
+                                    <apexchart type="bar" :height="getChartHeight" :options="referralFlowOptions"
+                                        :series="referralFlowSeries"></apexchart>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Referral Status Distribution -->
+                <div class="col-12 col-lg-6">
+                    <section class="h-100">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h4 class="section-title">Referral Status Distribution</h4>
+                                <div class="chart-container">
+                                    <apexchart type="pie" :height="getChartHeight" :options="referralStatusOptions"
+                                        :series="referralStatusSeries"></apexchart>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Agency Referral Matrix -->
+                <div class="col-12 col-lg-6">
+                    <section class="h-100">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h4 class="section-title">Agency-to-Agency Referrals</h4>
+                                <div class="chart-container">
+                                    <apexchart type="heatmap" :height="getChartHeight" :options="referralMatrixOptions"
+                                        :series="referralMatrixSeries"></apexchart>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
     </div>
@@ -69,12 +114,13 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { groupBy } from 'lodash';
+import VueApexCharts from 'vue3-apexcharts';
 
 const props = defineProps({
     filteredData: {
         type: Array,
-        required: true,
-    },
+        required: true
+    }
 });
 
 // Responsive chart height
@@ -105,6 +151,7 @@ const colors = {
     primary: '#275D67',
     secondary: '#A3CDB8',
     accent: ['#4A8895', '#6CB3A5', '#8EDDC8', '#B0F7EB', '#FF9999', '#FFB366'],
+    referral: ['#275D67', '#4A8895', '#6CB3A5', '#8EDDC8', '#A3CDB8', '#B0F7EB'],
 };
 
 // Common chart options
@@ -157,13 +204,15 @@ const commonChartOptions = {
                 fontSize: '12px',
             },
             dataLabels: {
-                fontSize: '10px'
+                style: {
+                    fontSize: '10px'
+                }
             }
         }
     }]
 };
 
-// Treatment Status Chart
+// Treatment Status Chart Options and Series
 const treatmentStatusOptions = ref({
     ...commonChartOptions,
     chart: {
@@ -199,25 +248,22 @@ const treatmentStatusSeries = computed(() => {
     const caseStatusCount = groupBy(props.filteredData, 'case_status');
     const assessmentStatusCount = groupBy(props.filteredData, 'assessment_status');
 
-    return [
-        {
-            name: 'On Going',
-            data: [
-                caseStatusCount['On Going']?.length || 0,
-                assessmentStatusCount['Not Conducted']?.length || 0
-            ]
-        },
-        {
-            name: 'Completed',
-            data: [
-                caseStatusCount['Case Closed']?.length || 0,
-                assessmentStatusCount['Conducted']?.length || 0
-            ]
-        }
-    ];
+    return [{
+        name: 'On Going',
+        data: [
+            caseStatusCount['On Going']?.length || 0,
+            assessmentStatusCount['Not Conducted']?.length || 0
+        ]
+    }, {
+        name: 'Completed',
+        data: [
+            caseStatusCount['Case Closed']?.length || 0,
+            assessmentStatusCount['Conducted']?.length || 0
+        ]
+    }];
 });
 
-// Counseling Status Chart
+// Counseling Status Chart Options and Series
 const counselingStatusOptions = ref({
     ...commonChartOptions,
     chart: {
@@ -231,12 +277,12 @@ const counselingStatusOptions = ref({
         formatter: function (val) {
             return val.toFixed(1) + '%';
         }
-    },
+    }
 });
 
 const counselingStatusSeries = computed(() => {
     const statusCount = groupBy(props.filteredData, 'counseling');
-    const total = props.filteredData.length;
+    const total = props.filteredData.length || 1;
 
     return [
         (statusCount['Waiting List']?.length || 0) / total * 100,
@@ -245,7 +291,7 @@ const counselingStatusSeries = computed(() => {
     ];
 });
 
-// Follow-Up by Agency Chart
+// Follow-Up Status Chart Options and Series
 const followUpByAgencyOptions = ref({
     ...commonChartOptions,
     chart: {
@@ -258,7 +304,7 @@ const followUpByAgencyOptions = ref({
             horizontal: true,
             borderRadius: 4,
             columnWidth: '90%',
-        },
+        }
     },
     xaxis: {
         type: 'category',
@@ -266,14 +312,14 @@ const followUpByAgencyOptions = ref({
             style: { colors: colors.primary },
             trim: false,
             show: true,
-            maxHeight: 150,
-        },
+            maxHeight: 150
+        }
     },
     yaxis: {
         title: {
             text: 'Number of Cases',
-            style: { color: colors.primary },
-        },
+            style: { color: colors.primary }
+        }
     },
     colors: colors.accent,
     dataLabels: {
@@ -281,7 +327,7 @@ const followUpByAgencyOptions = ref({
         formatter: function (val) {
             return val > 0 ? val.toString() : '';
         }
-    },
+    }
 });
 
 const followUpByAgencySeries = computed(() => {
@@ -320,12 +366,12 @@ const followUpByAgencySeries = computed(() => {
     ];
 });
 
-// Assessment Status Chart
+// Assessment Status Chart Options and Series
 const assessmentStatusOptions = ref({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
-        type: 'donut',
+        type: 'donut'
     },
     labels: ['Conducted', 'Not Conducted'],
     colors: [colors.accent[0], colors.accent[1]],
@@ -344,7 +390,7 @@ const assessmentStatusOptions = ref({
                     total: {
                         show: true,
                         label: 'Total Cases',
-                        formatter: function (w) {
+                        formatter: function () {
                             return props.filteredData.length;
                         }
                     }
@@ -356,17 +402,212 @@ const assessmentStatusOptions = ref({
 
 const assessmentStatusSeries = computed(() => {
     const statusCount = groupBy(props.filteredData, 'assessment_status');
-    const total = props.filteredData.length;
-
-    if (total === 0) return [0, 0];
+    const total = props.filteredData.length || 1;
 
     return [
         (statusCount['Conducted']?.length || 0) / total * 100,
         (statusCount['Not Conducted']?.length || 0) / total * 100
     ];
 });
-</script>
 
+// Referral Flow Chart Options and Series
+const referralFlowOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'bar',
+        stacked: false
+    },
+    plotOptions: {
+        bar: {
+            horizontal: true,
+            borderRadius: 4,
+            distributed: true
+        }
+    },
+    xaxis: {
+        type: 'category',
+        labels: {
+            style: { 
+                colors: colors.primary,
+                fontSize: '11px'
+            },
+            formatter: function(value) {
+                // Truncate long labels
+                return value.length > 30 ? value.substr(0, 27) + '...' : value;
+            }
+        }
+    },
+    yaxis: {
+        title: {
+            text: 'Number of Referrals',
+            style: { color: colors.primary }
+        }
+    },
+    colors: colors.referral,
+    legend: {
+        show: false
+    },
+    tooltip: {
+        y: {
+            formatter: function(value) {
+                return `${value} Referral${value !== 1 ? 's' : ''}`;
+            }
+        }
+    }
+});
+
+const referralFlowSeries = computed(() => {
+    const referralData = {};
+    props.filteredData.forEach(item => {
+        if (item.referral_instance) {
+            const fromRole = item.referral_instance.referred_by?.user_role_agency || 'Unknown Role';
+            const fromAgency = item.referral_instance.referred_by?.active_agency?.agency_name || 'Unknown Agency';
+            const toRole = item.referral_instance.referred_to?.user_role_agency || 'Unknown Role';
+            const toAgency = item.referral_instance.referred_to?.active_agency?.agency_name || 'Unknown Agency';
+
+            const key = `${fromAgency} (${fromRole}) → ${toAgency} (${toRole})`;
+            referralData[key] = (referralData[key] || 0) + 1;
+        }
+    });
+
+    const sortedData = Object.entries(referralData)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10); // Top 10 flows
+
+    referralFlowOptions.value.xaxis.categories = sortedData.map(([label]) => label);
+
+    return [{
+        name: 'Referrals',
+        data: sortedData.map(([, value]) => value)
+    }];
+});
+// Referral Status Chart Options and Series
+const referralStatusOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'pie'
+    },
+    labels: ['Awaiting', 'Referred', 'Completed'],
+    colors: colors.accent.slice(0, 3),
+    dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+            return val.toFixed(1) + '%';
+        }
+    }
+});
+
+const referralStatusSeries = computed(() => {
+    const statusCount = groupBy(props.filteredData, 'referred');
+    const total = props.filteredData.length || 1;
+
+    return [
+        (statusCount['Awaiting']?.length || 0) / total * 100,
+        (statusCount['Referred']?.length || 0) / total * 100,
+        (statusCount['Completed']?.length || 0) / total * 100
+    ];
+});
+
+// Agency Referral Matrix Options and Series
+const matrixColorRanges = computed(() => {
+    const matrix = {};
+    const allValues = [];
+    
+    // Collect all values first
+    props.filteredData.forEach(item => {
+        if (item.referral_instance) {
+            const fromAgency = item.referral_instance.referred_by?.active_agency?.agency_name || 'Unknown';
+            const toAgency = item.referral_instance.referred_to?.active_agency?.agency_name || 'Unknown';
+
+            if (!matrix[fromAgency]) {
+                matrix[fromAgency] = {};
+            }
+            if (!matrix[fromAgency][toAgency]) {
+                matrix[fromAgency][toAgency] = 0;
+            }
+            matrix[fromAgency][toAgency]++;
+            allValues.push(matrix[fromAgency][toAgency]);
+        }
+    });
+
+    const maxValue = Math.max(...allValues.filter(v => v > 0));
+    
+    return [
+        { from: 0, to: 0, color: '#F5F5F5', name: 'none' },
+        { from: 1, to: Math.ceil(maxValue/3), color: '#A3CDB8', name: 'low' },
+        { from: Math.ceil(maxValue/3), to: Math.ceil(2*maxValue/3), color: '#6CB3A5', name: 'medium' },
+        { from: Math.ceil(2*maxValue/3), to: maxValue, color: '#275D67', name: 'high' }
+    ];
+});
+
+// Update referralMatrixOptions to use the computed color ranges
+const referralMatrixOptions = ref({
+    ...commonChartOptions,
+    chart: {
+        ...commonChartOptions.chart,
+        type: 'heatmap'
+    },
+    dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+            return val || '';
+        }
+    },
+    colors: [colors.primary],
+    plotOptions: {
+        heatmap: {
+            shadeIntensity: 0.5,
+            radius: 0,
+            colorScale: {
+                ranges: matrixColorRanges.value // Use the computed property here
+            }
+        }
+    },
+    xaxis: {
+        labels: {
+            trim: true,
+            maxHeight: 50,
+            style: { colors: colors.primary }
+        }
+    }
+});
+
+// The referralMatrixSeries computed property remains the same
+const referralMatrixSeries = computed(() => {
+    const matrix = {};
+    const agencies = new Set();
+
+    props.filteredData.forEach(item => {
+        if (item.referral_instance) {
+            const fromAgency = item.referral_instance.referred_by?.active_agency?.agency_name || 'Unknown';
+            const toAgency = item.referral_instance.referred_to?.active_agency?.agency_name || 'Unknown';
+
+            agencies.add(fromAgency);
+            agencies.add(toAgency);
+
+            if (!matrix[fromAgency]) {
+                matrix[fromAgency] = {};
+            }
+            if (!matrix[fromAgency][toAgency]) {
+                matrix[fromAgency][toAgency] = 0;
+            }
+            matrix[fromAgency][toAgency]++;
+        }
+    });
+
+    const agencyList = Array.from(agencies).sort();
+
+    return agencyList.map(fromAgency => ({
+        name: fromAgency,
+        data: agencyList.map(toAgency => ({
+            x: toAgency,
+            y: matrix[fromAgency]?.[toAgency] || 0
+        }))
+    }));
+});
+</script>
 <style scoped>
 .treatment-tracking-tab {
     padding: 1rem;

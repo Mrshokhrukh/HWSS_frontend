@@ -128,7 +128,6 @@ const ageDistributionChartOptions = ref({
     }]
 });
 
-
 const ageDistributionChartSeries = computed(() => {
     const ageGroupCounts = {};
     props.filteredData.forEach(item => {
@@ -162,7 +161,6 @@ const ageDistributionChartSeries = computed(() => {
         },
     ];
 });
-
 
 // Gender Distribution Chart
 const genderDistributionChartOptions = ref({
@@ -225,19 +223,23 @@ const dzongkhagDistributionChartOptions = ref({
 const dzongkhagDistributionChartSeries = computed(() => {
     const dzongkhagCounts = {};
     props.filteredData.forEach(item => {
+        // Use 'ps_add_dzongkhag' if available, otherwise use 'perm_add_dzongkhag'
         const dzongkhag = item.user?.ps_add_dzongkhag || item.user?.perm_add_dzongkhag;
         if (dzongkhag) {
             dzongkhagCounts[dzongkhag] = (dzongkhagCounts[dzongkhag] || 0) + 1;
         }
     });
 
-    // Update categories with the unique dzongkhags
-    dzongkhagDistributionChartOptions.value.xaxis.categories = Object.keys(dzongkhagCounts);
+    // Sort the dzongkhags alphabetically
+    const sortedDzongkhags = Object.keys(dzongkhagCounts).sort();
+
+    // Update categories with the sorted unique dzongkhags
+    dzongkhagDistributionChartOptions.value.xaxis.categories = sortedDzongkhags;
 
     return [
         {
             name: 'Number of Individuals',
-            data: Object.values(dzongkhagCounts),
+            data: sortedDzongkhags.map(dzongkhag => dzongkhagCounts[dzongkhag]),
         },
     ];
 });
