@@ -13,9 +13,7 @@
                     Substances
                 </h3>
                 <div class="button-grid">
-                    <button v-for="substance in substances" 
-                        :key="substance" 
-                        @click="setActiveButton(substance)"
+                    <button v-for="substance in substances" :key="substance" @click="setActiveButton(substance)"
                         :class="['substance-btn', { active: activeButton === substance }]">
                         <span class="substance-name">{{ substance }}</span>
                         <span v-if="getTotalCount(substance)" class="count-badge">
@@ -35,7 +33,8 @@
                             Risk Distribution Pattern
                         </h4>
                         <div class="chart-actions">
-                            <span class="total-indicator">Total: {{ getHighRiskTotal() + getModerateRiskTotal() }}</span>
+                            <span class="total-indicator">Total: {{ getHighRiskTotal() + getModerateRiskTotal()
+                                }}</span>
                         </div>
                     </div>
                     <div class="chart-container">
@@ -382,7 +381,7 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
             },
             x: {
                 ticks: {
-                    callback: function(value) {
+                    callback: function (value) {
                         return value === 1 ? 'High Risk' : 'Moderate Risk';
                     }
                 }
