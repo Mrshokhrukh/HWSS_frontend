@@ -49,7 +49,9 @@
             <DataTable :value="processedRows" :paginator="true" :rows="10" :paginatorTemplate="paginatorTemplate"
                 :sortField="sortField" :sortOrder="sortOrder" @sortChange="onSortChange" resizableColumns
                 columnResizeMode="fit" class="custom-datatable" :scrollable="true" scrollHeight="calc(100vh - 280px)"
-                :rowClass="rowClass">
+                :rowClass="rowClass" :loading="isLoading" v-model:filters="filters"
+                :globalFilterFields="['full_name', 'age', 'user.gender', 'assessment_status', 'case_status', 'counseling', 'follow_up']"
+                ref="dt">
                 <!-- Date Column -->
                 <Column field="date" header="Date" sortable>
                     <template #body="slotProps">
@@ -67,37 +69,33 @@
                             <div class="patient-name">{{ slotProps.data.full_name }}</div>
                             <div class="patient-details">
                                 <span class="age-gender">
-                                    {{ calculateAge(slotProps.data.user) }} yrs • {{ slotProps.data.user.gender }}
+                                    {{ calculateAge(slotProps.data.user?.date_of_birth) }} yrs • {{
+                                        slotProps.data.user?.gender }}
                                 </span>
                             </div>
                         </div>
                     </template>
                 </Column>
-
                 <!-- Status Columns -->
                 <Column field="assessment_status" header="Assessment" sortable>
                     <template #body="slotProps">
-                        <StatusBadge :status="slotProps.data.assessment_status || 'N/A'" type="assessment" />
+                        <StatusBadge :status="slotProps.data.assessment_status" type="assessment" />
                     </template>
                 </Column>
-
                 <Column field="case_status" header="Case Status" sortable>
                     <template #body="slotProps">
-                        <StatusBadge :status="slotProps.data.case_status || 'N/A'" type="case" />
+                        <StatusBadge :status="slotProps.data.case_status" type="case" />
                     </template>
                 </Column>
-
                 <Column field="counseling" header="Counseling" sortable>
                     <template #body="slotProps">
-                        <StatusBadge :status="slotProps.data.counseling || 'N/A'" type="counseling" />
+                        <StatusBadge :status="slotProps.data.counseling" type="counseling" />
                     </template>
                 </Column>
-
-                <!-- Follow Up Column -->
                 <Column field="follow_up" header="Follow Up" sortable>
                     <template #body="slotProps">
                         <div class="follow-up-cell">
-                            <StatusBadge :status="slotProps.data.follow_up || 'N/A'" type="follow-up" />
+                            <StatusBadge :status="slotProps.data.follow_up" type="follow-up" />
                             <span v-if="isRecentUpdate(slotProps.data.updated_at)" class="update-badge">
                                 Updated
                             </span>
@@ -113,8 +111,8 @@
                                 v-tooltip.top="'View Details'">
                                 <i class="bi bi-eye-fill"></i>
                             </Button>
-                            <Button v-if="canEdit" class="action-btn edit-btn"
-                                @click="viewDetails(slotProps.data, 'edit')" v-tooltip.top="'Edit Record'">
+                            <Button v-if="canEdit" class="action-btn edit-btn" @click="viewDetails(slotProps.data, 'edit')"
+                                v-tooltip.top="'Edit Record'">
                                 <i class="bi bi-pencil-fill"></i>
                             </Button>
                         </div>
@@ -164,7 +162,7 @@
                                             <div class="d-flex align-items-center">
                                                 <i class="bi bi-person-badge me-2 hwss-primary"></i>
                                                 <span class="fw-medium">{{ formatRole(selectedUser?.user?.role)
-                                                    }}</span>
+                                                }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -227,7 +225,7 @@
                                                 <div>
                                                     <small class="text-muted d-block">Employee ID</small>
                                                     <span class="fw-medium">{{ selectedUser?.user?.academy_code || 'N/A'
-                                                        }}</span>
+                                                    }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -244,7 +242,7 @@
                                                 <div>
                                                     <small class="text-muted d-block">Citizen ID</small>
                                                     <span class="fw-medium">{{ selectedUser?.user?.identity_number
-                                                        }}</span>
+                                                    }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -272,7 +270,7 @@
                                         <div>
                                             <small class="text-muted d-block">Active Agency</small>
                                             <span class="fw-medium">{{ selectedUser?.user?.active_agency?.agency_name
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -300,7 +298,7 @@
                                             <div>
                                                 <small class="text-muted d-block">Mother's Name</small>
                                                 <span class="fw-medium">{{ selectedUser?.user?.mother_name || 'N/A'
-                                                    }}</span>
+                                                }}</span>
                                             </div>
                                         </div>
 
@@ -313,7 +311,7 @@
                                             <div>
                                                 <small class="text-muted d-block">Father's Name</small>
                                                 <span class="fw-medium">{{ selectedUser?.user?.father_name || 'N/A'
-                                                    }}</span>
+                                                }}</span>
                                             </div>
                                         </div>
 
@@ -379,7 +377,7 @@
                                                         <small class="text-muted d-block">Village</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.perm_add_village
                                                             || 'N/A'
-                                                            }}</span>
+                                                        }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -395,7 +393,7 @@
                                                         <small class="text-muted d-block">Gewog</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.perm_add_gewog ||
                                                             'N/A'
-                                                            }}</span>
+                                                        }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -437,7 +435,7 @@
                                                         <small class="text-muted d-block">Village</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_village ||
                                                             'N/A'
-                                                            }}</span>
+                                                        }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -453,7 +451,7 @@
                                                         <small class="text-muted d-block">Gewog</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_gewog ||
                                                             'N/A'
-                                                            }}</span>
+                                                        }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -469,7 +467,7 @@
                                                         <small class="text-muted d-block">Dzongkhag</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_dzongkhag
                                                             || 'N/A'
-                                                            }}</span>
+                                                        }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -496,8 +494,7 @@
                                 <div class="card-body p-4">
                                     <!-- Records Container -->
                                     <div v-if="selectedUser?.diagnosis?.length">
-                                        <div v-for="(record, index) in selectedUser.diagnosis" :key="index"
-                                            class="mb-3">
+                                        <div v-for="(record, index) in selectedUser.diagnosis" :key="index" class="mb-3">
                                             <div class="d-flex align-items-start p-3 bg-light rounded-3">
                                                 <div
                                                     class="d-flex align-items-center justify-content-center bg-white rounded-circle p-2 me-3">
@@ -614,7 +611,7 @@
                                 <div class="card-body p-4">
                                     <template v-if="selectedUser.substanceRisks">
                                         <div class="row g-4">
-                                            <div v-for="(value, key) in selectedUser.substanceRisks" :key="key"
+                                            <div v-for="(value, key) in filteredSubstanceRisks" :key="key"
                                                 class="col-12 col-md-6">
                                                 <div class="d-flex align-items-center h-100 bg-light rounded-3 p-3">
                                                     <div
@@ -624,8 +621,7 @@
                                                     <div>
                                                         <div class="fw-medium mb-1">{{ formatSubstanceName(key) }}</div>
                                                         <div class="d-flex align-items-center">
-                                                            <span class="badge"
-                                                                :class="getRiskClass(value.measurement)">
+                                                            <span class="badge" :class="getRiskClass(value.measurement)">
                                                                 {{ value.measurement }}
                                                             </span>
                                                         </div>
@@ -839,8 +835,7 @@
                                                     <i class="bi bi-chat-dots hwss-primary"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <label for="comments"
-                                                        class="form-label fw-medium mb-2">Comments</label>
+                                                    <label for="comments" class="form-label fw-medium mb-2">Comments</label>
                                                     <textarea class="form-control" id="comments"
                                                         v-model="selectedUser.comments" rows="4"
                                                         :disabled="!isEditMode || selfRole === 'trained_professional'"
@@ -886,8 +881,7 @@
                                                 <div class="flex-grow-1">
                                                     <label for="referTo" class="form-label fw-medium mb-2">Refer
                                                         To</label>
-                                                    <select class="form-select" id="referTo"
-                                                        v-model="selectedUser.refer_to"
+                                                    <select class="form-select" id="referTo" v-model="selectedUser.refer_to"
                                                         :disabled="!isEditMode || selectedUser.referred === 'Referred'">
                                                         <option value="" selected disabled>Select One</option>
                                                         <option value="clinical_counselor">Clinical Counselor</option>
@@ -907,12 +901,11 @@
                                                     <i class="bi bi-person-badge hwss-primary"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <label for="official"
-                                                        class="form-label fw-medium mb-2">Official</label>
+                                                    <label for="official" class="form-label fw-medium mb-2">Official</label>
                                                     <AutoComplete v-model="selectedUser.official"
                                                         :suggestions="filteredOfficials" @complete="searchOfficials"
-                                                        field="full_name" placeholder="Type Official's Name"
-                                                        class="w-100" :forceSelection="true"
+                                                        field="full_name" placeholder="Type Official's Name" class="w-100"
+                                                        :forceSelection="true"
                                                         :disabled="!isEditMode || selectedUser.referred === 'Referred'">
                                                     </AutoComplete>
                                                 </div>
@@ -960,6 +953,7 @@ import axios from 'axios';
 import endpoints from '@/api';
 import Swal from 'sweetalert2';
 import AutoComplete from 'primevue/autocomplete';
+import StatusBadge from './StatusBadge.vue';
 
 const showModal = ref(false);
 const selectedUser = ref({
@@ -987,7 +981,6 @@ const selectedFields = ref([
     'follow_up',
     'comments',
 ]);
-
 
 const fullNames = ref(new Map());
 
@@ -1061,6 +1054,7 @@ const formatFullName = async (record) => {
 
 // Replace the async fullNameTemplate with this synchronous version
 const fullNameTemplate = (rowData) => {
+    console.log('rowData in fullNameTemplate:', rowData);
     if (!rowData || !rowData.user) return '';
 
     const user = rowData.user;
@@ -1112,21 +1106,24 @@ const filterNonInjectionSubstances = (data) => {
     if (!data) return {};
 
     const substances = {};
-    const excludedSubstances = ['any', 'injection', 'any drug']; // Added 'any drug' to catch variations
+    const excludedSubstances = ['injection'];
 
     if (Array.isArray(data)) {
         data.forEach(substance => {
             const nameKey = substance.substance__name || substance.substance_name;
-            // Skip if substance name doesn't exist or is in excluded list (case-insensitive)
-            if (nameKey && !excludedSubstances.includes(nameKey.toLowerCase().trim()) &&
-                !nameKey.toLowerCase().includes('any')) {
+
+            // Log for debugging
+            console.log("Substance data:", substance);
+            console.log("Name Key", nameKey)
+
+            if (nameKey && !excludedSubstances.some(excluded => nameKey.toLowerCase().trim().includes(excluded))) {
                 const riskLevel = formatRiskFlag(
                     substance.risk_flag,
                     substance.measurement,
                     substance.total_score
                 );
 
-                substances[nameKey.toLowerCase()] = {
+                substances[nameKey.toLowerCase().trim()] = {
                     measurement: riskLevel,
                     substanceName: nameKey
                 };
@@ -1136,16 +1133,18 @@ const filterNonInjectionSubstances = (data) => {
         Object.entries(data).forEach(([key, value]) => {
             if (key.endsWith('_measurement')) {
                 const substanceName = key.replace('_measurement', '');
-                // Skip if substance name is in excluded list (case-insensitive)
-                if (!excludedSubstances.includes(substanceName.toLowerCase().trim()) &&
-                    !substanceName.toLowerCase().includes('any')) {
+
+                // Log for debugging
+                console.log("Substance object data:", substanceName, value)
+
+                if (substanceName && !excludedSubstances.some(excluded => substanceName.toLowerCase().trim().includes(excluded))) {
                     const riskLevel = formatRiskFlag(
                         value.risk_flag || 'none',
                         value.measurement,
                         value.total_score
                     );
 
-                    substances[substanceName.toLowerCase()] = {
+                    substances[substanceName.toLowerCase().trim()] = {
                         measurement: riskLevel,
                         substanceName: formatSubstanceName(substanceName)
                     };
@@ -1153,14 +1152,6 @@ const filterNonInjectionSubstances = (data) => {
             }
         });
     }
-
-    // Final safety check to remove any "any" related keys that might have slipped through
-    Object.keys(substances).forEach(key => {
-        if (key.toLowerCase().includes('any') ||
-            substances[key].substanceName.toLowerCase().includes('any')) {
-            delete substances[key];
-        }
-    });
 
     return substances;
 };
@@ -1175,14 +1166,6 @@ const getSubstanceRisks = (user) => {
     } else if (user.event_substance_risks) {
         risks = filterNonInjectionSubstances(user.event_substance_risks);
     }
-
-    // One final check before returning
-    Object.keys(risks).forEach(key => {
-        if (key.toLowerCase().includes('any') ||
-            (risks[key].substanceName && risks[key].substanceName.toLowerCase().includes('any'))) {
-            delete risks[key];
-        }
-    });
 
     return risks;
 };
@@ -1233,15 +1216,15 @@ const formatSubstanceName = (name) => {
 
     // Create a mapping for simplified names
     const nameMapping = {
-        'tobacco products': 'Tobacco',
-        'alcoholic beverages': 'Alcoholic',
-        'cannabis': 'Cannabis',
+        'tobacco products (cigarettes, chewing tobacco etc)': 'Tobacco',
+        'alcoholic beverages (beer, wine, spirits, ara etc.)': 'Alcoholic',
+        'cannabis (marijuana, pot, grass, hash, black etc.)': 'Cannabis',
         'cocaine': 'Cocaine',
-        'amphetamine-type stimulants': 'Amphetamine',
-        'inhalants': 'Inhalants',
-        'sedatives or sleeping pills': 'Sedatives',
-        'hallucinogens': 'Hallucinogens',
-        'opioids': 'Opioids',
+        'amphetamine-type stimulants (meth, ecstasy, diet pills etc.)': 'Amphetamine',
+        'inhalants (dendrite, glue, petrol, paint thinner, etc.)': 'Inhalants',
+        'sedatives or sleeping pills (n-10, diazepam etc.)': 'Sedatives',
+        'hallucinogens (lsd, trips, ketamine, etc.)': 'Hallucinogens',
+        'opioids (heroin, morphine, fentanyl, codeine, sp+, tramadol, bs etc)': 'Opioids',
         'other - specify': 'Other'
     };
 
@@ -1250,13 +1233,16 @@ const formatSubstanceName = (name) => {
 
     // Find the matching simplified name
     for (const [key, value] of Object.entries(nameMapping)) {
-        if (baseName.includes(key)) {
+        if (baseName === key) {
             return value;
         }
     }
-
     // If no match found, return the capitalized first word
-    return baseName.split(' ')[0].charAt(0).toUpperCase() + baseName.split(' ')[0].slice(1);
+    const words = baseName.split(' ');
+    if (words.length > 0) {
+        return words[0].charAt(0).toUpperCase() + words[0].slice(1);
+    }
+    return '';
 };
 
 const getRiskClass = (risk) => {
@@ -1291,15 +1277,33 @@ const filteredRows = computed(() => {
 
 const processedRows = computed(() => {
     if (!rowData.value) return [];
-    return rowData.value.map(row => ({
-        ...row,
-        full_name: fullNameTemplate(row),
-        age: calculateAge(row.user?.date_of_birth),
-        assessment_status: row.assessment_status || 'N/A',
-        case_status: row.case_status || 'N/A',
-        counseling: row.counseling || 'N/A',
-        follow_up: row.follow_up || 'N/A'
-    }));
+
+    const processed = rowData.value.map(row => {
+        const assessmentStatus = row.assessment_status == null || row.assessment_status === '' ? 'N/A' : row.assessment_status;
+        const caseStatus = row.case_status == null || row.case_status === '' ? 'N/A' : row.case_status;
+
+        //Handle both counseling and counseling status cases
+        let counselingStatus = 'N/A';
+        if (row.counseling != null && row.counseling !== '') {
+            counselingStatus = row.counseling;
+        } else if (row.counseling_status != null && row.counseling_status !== '') {
+            counselingStatus = row.counseling_status;
+        }
+
+        const followUpStatus = row.follow_up == null || row.follow_up === '' ? 'N/A' : row.follow_up;
+
+        const processedRow = {
+            ...row,
+            full_name: fullNameTemplate(row),
+            age: calculateAge(row.user?.date_of_birth),
+            assessment_status: assessmentStatus,
+            case_status: caseStatus,
+            counseling: counselingStatus,
+            follow_up: followUpStatus,
+        };
+        return processedRow;
+    });
+    return processed;
 });
 
 const getServiceList = async () => {
@@ -1307,6 +1311,7 @@ const getServiceList = async () => {
         isLoading.value = true;
         hasError.value = false;
         const response = await axios.get(endpoints.newServiceAndTreatment);
+
         const currentYear = new Date().getFullYear();
 
         rowData.value = response.data.filter(row => {
@@ -1314,9 +1319,13 @@ const getServiceList = async () => {
                 row?.user?.active_agency?.agency_name?.trim().toLowerCase() === myAgency.value.trim().toLowerCase();
             const screeningDate = row?.screening_data?.submission_date;
             const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-
+            console.log('Row data in filter:', row, 'agencyMatch', agencyMatch, 'submissionYear', submissionYear); // Log inside filter
             return agencyMatch && submissionYear === currentYear;
         });
+
+        console.log('rowData:', rowData.value); // Debugging line
+
+
     } catch (error) {
         hasError.value = true;
         console.error('Error fetching data:', error);
@@ -1324,7 +1333,6 @@ const getServiceList = async () => {
         isLoading.value = false;
     }
 };
-
 
 watchEffect(async () => {
     if (selectedUser.value && selectedUser.value.refer_to) {
@@ -1340,6 +1348,18 @@ watchEffect(async () => {
         }
     }
 });
+
+
+const filteredSubstanceRisks = computed(() => {
+    if (!selectedUser.value.substanceRisks) {
+        return {};
+    }
+    return Object.fromEntries(
+        Object.entries(selectedUser.value.substanceRisks)
+            .filter(([key]) => key && typeof key === 'string' && key.toLowerCase().trim() !== 'any drug')
+    );
+});
+
 
 const viewDetails = async (user, mode = 'view') => {
     selectedUser.value = user;
@@ -1416,7 +1436,14 @@ const formatDate = (rowData) => {
 };
 
 const calculateAge = (dob) => {
+    if (!dob) {
+        return 'N/A';
+    }
     const birthDate = new Date(dob);
+    if (isNaN(birthDate.getTime())) {
+        return 'N/A'
+    }
+
     const ageDifMs = Date.now() - birthDate.getTime();
     const ageDate = new Date(ageDifMs);
     return Math.abs(ageDate.getUTCFullYear() - 1970);
@@ -1580,7 +1607,6 @@ watch(() => filteredRows.value, async (newRows) => {
     }
 }, { immediate: true, deep: true });
 </script>
-
 
 <style scoped>
 .dashboard-container {

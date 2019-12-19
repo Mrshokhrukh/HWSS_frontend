@@ -16,7 +16,7 @@
       <div class="col-md-4">
         <div class="card-container">
           <SeverityIndicatorCard v-if="activeItem" :cardTitle="activeItem.title" :filteredData="getRelevantData"
-            :isLoading="isLoading" />
+            :isLoading="isLoading" :severityCounts="severityCounts" />
         </div>
       </div>
       <div class="col-md-8">
@@ -59,9 +59,8 @@ const SEVERITY_ITEMS = ref([
           const suicidalQuestion = value.find(q =>
             q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
           );
-          return suicidalQuestion && suicidalQuestion.score >= 1;
+          return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
         }
-
         // If it's a string, try to parse it
         if (typeof value === 'string') {
           const phqData = JSON.parse(value);
@@ -69,17 +68,17 @@ const SEVERITY_ITEMS = ref([
             const suicidalQuestion = phqData.responses.find(q =>
               q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
             );
-            return suicidalQuestion && suicidalQuestion.score >= 1;
+            return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
           }
         }
-
         // If it's already an object
         if (value && value.responses) {
           const suicidalQuestion = value.responses.find(q =>
             q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
           );
-          return suicidalQuestion && suicidalQuestion.score >= 1;
+          return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
         }
+
 
         return false;
       } catch (e) {
@@ -140,6 +139,7 @@ const assistStructuredData = ref({
 });
 const isLoading = ref(true);
 const error = ref(null);
+const severityCounts = ref({}); // Added severityCounts ref
 
 const getRelevantData = computed(() => {
   if (!activeItem.value || !filteredData.value.length) return [];
@@ -210,7 +210,6 @@ const processAssistData = () => {
   });
 
   assistStructuredData.value = structured;
-  console.log('Processed Assist Data:', assistStructuredData.value);
 };
 
 // Helper function to normalize substance names from Type 1
@@ -287,7 +286,6 @@ const fetchAndFilterData = async () => {
     const dataArray = response.data || [];
     const { agencyName } = getUserDetailsFromStorage();
     const currentYear = new Date().getFullYear();
-
     filteredData.value = dataArray.filter(item => {
       const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
       const screeningData = item.screening_data;
@@ -309,23 +307,22 @@ const fetchAndFilterData = async () => {
 };
 
 const updateSeverityCounts = () => {
-  SEVERITY_ITEMS.value.forEach((item, index) => {
-    let count = 0;
-    // Keep track of counted users to prevent double counting
-    const countedUsers = new Set();
+  const counts = {};
+  // Reset the counts first
+  SEVERITY_ITEMS.value.forEach(item => {
+    counts[item.title] = {};
+  });
 
-    filteredData.value.forEach(entry => {
-      const screeningData = entry.screening_data;
-      if (!screeningData || screeningData === "Data not available") return;
+  filteredData.value.forEach(entry => {
+    const screeningData = entry.screening_data;
+    if (!screeningData || screeningData === "Data not available") return;
 
-      // Only count each user once for each category
-      const userId = entry.user?.id;
-      if (countedUsers.has(userId)) return;
 
-      // Special handling for assist data
+    SEVERITY_ITEMS.value.forEach(item => {
+      let measurement = null;
+
       if (item.field === 'assist_data') {
         try {
-          // Check screening data assist
           let assistValue = screeningData[item.field];
           let hasRisk = false;
 
@@ -338,32 +335,25 @@ const updateSeverityCounts = () => {
             }
           }
 
-          // Check event substance risks if no risk found yet
           if (!hasRisk && entry.event_substance_risks?.length > 0) {
             hasRisk = entry.event_substance_risks.some(risk =>
               risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
             );
           }
 
-          // Check case substance risks if no risk found yet
           if (!hasRisk && entry.case_substance_risks?.length > 0) {
             hasRisk = entry.case_substance_risks.some(risk =>
               risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
             );
           }
-
           if (hasRisk) {
-            count++;
-            countedUsers.add(userId);
+            measurement = 'Has Risk';
           }
-        } catch (error) {
+        }
+        catch (error) {
           console.error(`Error evaluating assist data:`, error);
         }
-        return;
-      }
-
-      // Handle PHQ data (Suicidal Behavior)
-      if (item.field === 'phq_data') {
+      } else if (item.field === 'phq_data') {
         try {
           let value = screeningData[item.field];
           if (typeof value === 'string') {
@@ -376,23 +366,21 @@ const updateSeverityCounts = () => {
             const suicideQuestion = value.find(q =>
               q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
             );
-            hasSuicidalThoughts = suicideQuestion?.score >= 1;
+            hasSuicidalThoughts = suicideQuestion?.score >= 1 && suicideQuestion.selectedOption?.toLowerCase() !== 'not at all';
           } else if (value?.responses) {
             const suicideQuestion = value.responses.find(q =>
               q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
             );
-            hasSuicidalThoughts = suicideQuestion?.score >= 1;
+            hasSuicidalThoughts = suicideQuestion?.score >= 1 && suicideQuestion.selectedOption?.toLowerCase() !== 'not at all';
           }
-
           if (hasSuicidalThoughts) {
-            count++;
-            countedUsers.add(userId);
+            measurement = 'Has Suicidal Thoughts'
           }
         } catch (error) {
           console.error(`Error evaluating PHQ data:`, error);
         }
+
       } else {
-        // Regular handling for other data types
         let value = screeningData[item.field];
         if (value === undefined || value === null) return;
 
@@ -402,17 +390,34 @@ const updateSeverityCounts = () => {
           }
 
           if (item.threshold(value)) {
-            count++;
-            countedUsers.add(userId);
+            if (item.title === 'Depression') {
+              measurement = screeningData.phq_interpretation || null;
+            } else if (item.title === 'Anxiety') {
+              measurement = screeningData.gad_interpretation || null;
+            } else if (item.title === 'ACE') {
+              measurement = screeningData.ace_interpretation || null;
+            } else {
+              measurement = 'Has Risk';
+            }
           }
         } catch (error) {
           console.error(`Error evaluating threshold for ${item.title}:`, error);
         }
       }
-    });
 
-    SEVERITY_ITEMS.value[index] = { ...item, count: count.toString() };
+      if (measurement) {
+        counts[item.title][measurement] = (counts[item.title][measurement] || 0) + 1;
+      }
+    });
   });
+  SEVERITY_ITEMS.value.forEach(item => {
+    let total = 0;
+    for (let key in counts[item.title]) {
+      total += counts[item.title][key];
+    }
+    item.count = total.toString();
+  });
+  severityCounts.value = counts;
 };
 
 

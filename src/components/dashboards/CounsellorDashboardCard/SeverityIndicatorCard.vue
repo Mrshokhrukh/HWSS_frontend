@@ -238,6 +238,8 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import Dialog from 'primevue/dialog';
+import Button from 'primevue/button';
 
 const props = defineProps({
   cardTitle: {
@@ -251,6 +253,10 @@ const props = defineProps({
   isLoading: {
     type: Boolean,
     default: false
+  },
+  severityCounts: {
+    type: Object,
+    default: () => ({}),
   }
 });
 
@@ -324,7 +330,6 @@ const getRiskTextClass = (measurement) => {
   }
 };
 
-
 // Helper function to format date
 const formatDate = (date) => {
   if (!date) return 'N/A';
@@ -349,8 +354,11 @@ const getScoreForCard = (user) => {
   switch (props.cardTitle.toLowerCase()) {
     case 'suicidal behavior': {
       try {
-        const phqData = JSON.parse(screeningData.phq_data);
-        return phqData.responses[6]?.selectedOption || 'N/A';
+         const phqData = JSON.parse(screeningData.phq_data);
+         const suicidalQuestion = phqData.responses.find(q =>
+          q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+        );
+         return suicidalQuestion?.selectedOption || 'N/A';
       } catch (e) {
         return 'N/A';
       }
@@ -378,38 +386,65 @@ const getSeverityClass = (severity) => {
   return severityMap[severity?.toLowerCase()] || 'text-gray-600';
 };
 
+
 // Get filtered users for selected severity
 const getUsersForSeverity = computed(() => {
   if (!selectedData.value) return [];
+  const cardTitleLower = props.cardTitle?.trim().toLowerCase();
 
   return props.filteredData.filter(user => {
     const screeningData = user.screening_data || {};
-    const measurement = getMeasurementForCard(screeningData);
-    return measurement === selectedData.value.text;
+    let measurement = '';
+    let hasSuicidalThoughts = false;
+    switch (cardTitleLower) {
+          case 'suicidal behavior': {
+              try {
+                const phqDataString = screeningData.phq_data;
+                 const phqData = typeof phqDataString === 'string'
+                    ? JSON.parse(phqDataString)
+                    : phqDataString;
+
+
+                if (Array.isArray(phqData)) {
+                    const suicideQuestion = phqData.find(q =>
+                      q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+                    );
+                    hasSuicidalThoughts = suicideQuestion?.score >= 1;
+                  } else if (phqData?.responses) {
+                    const suicideQuestion = phqData.responses.find(q =>
+                      q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+                    );
+                     hasSuicidalThoughts = suicideQuestion?.score >= 1;
+                  }
+
+                    if(hasSuicidalThoughts){
+                        measurement = 'Has Suicidal Thoughts'
+                     }
+
+              } catch (e) {
+                  console.error("error in filtering suicidal data", e);
+              }
+                 break;
+         }
+         case 'depression': {
+              measurement = screeningData.phq_interpretation || null;
+                break;
+            }
+         case 'anxiety': {
+              measurement = screeningData.gad_interpretation || null;
+              break;
+          }
+
+          case 'ace': {
+                measurement = screeningData.ace_interpretation || null;
+                break;
+            }
+           default:
+             return false;
+      }
+      return measurement === selectedData.value.text;
   });
 });
-
-// Get measurement based on card type
-const getMeasurementForCard = (screeningData) => {
-  switch (props.cardTitle.toLowerCase()) {
-    case 'suicidal behavior': {
-      try {
-        const phqData = JSON.parse(screeningData.phq_data);
-        return phqData.responses[6]?.selectedOption || null;
-      } catch (e) {
-        return null;
-      }
-    }
-    case 'depression':
-      return screeningData.phq_interpretation;
-    case 'anxiety':
-      return screeningData.gad_interpretation;
-    case 'ace':
-      return screeningData.ace_interpretation;
-    default:
-      return null;
-  }
-};
 
 const openModal = (data) => {
   selectedData.value = data;
@@ -424,70 +459,18 @@ const closeModal = () => {
 };
 
 const processedIndicators = computed(() => {
-  const counts = new Map();
-
-  props.filteredData.forEach(entry => {
-    let measurement = '';
     const cardTitleLower = props.cardTitle?.trim().toLowerCase();
-    const screeningData = entry.screening_data || {};
+    const counts = props.severityCounts[props.cardTitle] || {};
 
-    switch (cardTitleLower) {
-      case 'suicidal behavior': {
-        try {
-          // Check if phq_data is already an object or needs parsing
-          const phqDataString = screeningData.phq_data;
-          const phqData = typeof phqDataString === 'string'
-            ? JSON.parse(phqDataString)
-            : phqDataString;
-
-          const suicidalQuestion = phqData.responses?.[6];
-          if (suicidalQuestion?.selectedOption) {
-            measurement = suicidalQuestion.selectedOption;
-          } else {
-            console.warn(`No selectedOption for suicidal question in entry ${entry.id}`);
-          }
-        } catch (e) {
-          console.error(`Error parsing phq_data for entry ${entry.id}:`, e);
-        }
-        break;
-      }
-
-      case 'depression': {
-        measurement = screeningData.phq_interpretation || '';
-        break;
-      }
-
-      case 'anxiety': {
-        measurement = screeningData.gad_interpretation || '';
-        break;
-      }
-
-      case 'ace': {
-        measurement = screeningData.ace_interpretation || '';
-        break;
-      }
-
-      default:
-        console.warn(`Unhandled cardTitle: ${props.cardTitle}`);
-    }
-
-    if (measurement) {
-      counts.set(measurement, (counts.get(measurement) || 0) + 1);
-    } else {
-      console.warn(`No measurement extracted for entry ${entry.id}`);
-    }
-  });
-
-  return Array.from(counts.entries())
-    .map(([text, count]) => ({
-      text,
-      count,
-      color: getSeverityColor(text),
-      icon: getSeverityIcon(text)
-    }))
-    .sort((a, b) => getSeverityOrder(a.text) - getSeverityOrder(b.text));
+    return Object.entries(counts)
+        .map(([text, count]) => ({
+          text,
+          count,
+          color: getSeverityColor(text),
+          icon: getSeverityIcon(text)
+        }))
+        .sort((a, b) => getSeverityOrder(a.text) - getSeverityOrder(b.text));
 });
-
 
 const getSeverityColor = (value) => {
   const lowerValue = value.toLowerCase();
@@ -497,10 +480,12 @@ const getSeverityColor = (value) => {
     'moderate': '#ffc107',
     'mild': '#0dcaf0',
     'minimal': '#198754',
-    'nearly everyday': '#dc3545',
+     'nearly everyday': '#dc3545',
     'more than half the days': '#ffc107',
     'several days': '#0dcaf0',
-    'not at all': '#198754'
+    'not at all': '#198754',
+     'has suicidal thoughts': '#dc3545',
+     'has risk': '#ffc107'
   };
 
   return colorMap[lowerValue] || '#6c757d';
@@ -517,26 +502,29 @@ const getSeverityIcon = (value) => {
     'nearly everyday': 'fas fa-exclamation-triangle',
     'more than half the days': 'fas fa-exclamation-circle',
     'several days': 'fas fa-info-circle',
-    'not at all': 'fas fa-check-circle'
+    'not at all': 'fas fa-check-circle',
+    'has suicidal thoughts': 'fas fa-exclamation-triangle',
+    'has risk': 'fas fa-exclamation-circle'
   };
 
   return iconMap[lowerValue] || 'fas fa-question-circle';
 };
 
 const getSeverityOrder = (value) => {
-  const orderMap = {
-    'severe': 1,
-    'moderately severe': 2,
-    'moderate': 3,
-    'mild': 4,
-    'minimal': 5,
-    'nearly everyday': 1,
-    'more than half the days': 2,
-    'several days': 3,
-    'not at all': 4
-  };
-
-  return orderMap[value.toLowerCase()] || 99;
+   const orderMap = {
+        'severe': 1,
+        'moderately severe': 2,
+        'moderate': 3,
+        'mild': 4,
+        'minimal': 5,
+         'nearly everyday': 1,
+        'more than half the days': 2,
+        'several days': 3,
+        'not at all': 4,
+        'has suicidal thoughts': 1,
+        'has risk': 2
+      };
+      return orderMap[value.toLowerCase()] || 99;
 };
 </script>
 

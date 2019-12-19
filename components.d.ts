@@ -198,6 +198,7 @@ declare module 'vue' {
     SeverityModal: typeof import('./src/components/dashboards/CounsellorDashboardCard/modals/SeverityModal.vue')['default']
     SeverityReport: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/ReportComponent/SeverityReport/SeverityReport.vue')['default']
     SideNavbar: typeof import('./src/components/navbar/SideNavbar.vue')['default']
+    StatusBadge: typeof import('./src/components/dashboards/counselorMonitor/counselorMonitorCards/StatusBadge.vue')['default']
     StudentChangePasswordCard: typeof import('./src/components/dashboards/profiles/studentProfileCards/StudentChangePasswordCard.vue')['default']
     StudentDashboard: typeof import('./src/components/dashboards/StudentDashboard.vue')['default']
     StudentDetailsCard: typeof import('./src/components/dashboards/profiles/studentProfileCards/StudentDetailsCard.vue')['default']
