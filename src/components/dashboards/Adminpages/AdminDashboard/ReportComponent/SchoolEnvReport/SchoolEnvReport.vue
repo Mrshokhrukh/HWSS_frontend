@@ -69,9 +69,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import endpoints from '@/api';
-import axios from 'axios';
+import { ref, computed, onMounted, watch } from 'vue';
+
+// Define props to receive data from the parent component
+const props = defineProps({
+    filteredData: {
+        type: Array,
+        default: () => []
+    }
+});
 
 // Color scheme constants
 const colors = {
@@ -86,7 +92,6 @@ const colors = {
 };
 
 // State variables
-const surveyData = ref([]);
 const totalResponses = ref(0);
 const safetyScore = ref(0);
 const supportScore = ref(0);
@@ -100,64 +105,50 @@ const summaryCards = computed(() => [
     { title: 'Engagement Score', value: engagementScore.value, suffix: '%' }
 ]);
 
-// Fetch and process data
-const fetchData = async () => {
-    try {
-        const response = await axios.get(endpoints.getSchoolEnvData);
-        const processedData = processResponseData(response.data);
-        surveyData.value = processedData || []; // Ensure we always have an array
-        calculateMetrics();
-    } catch (error) {
-        console.error('Error fetching survey data:', error);
-        surveyData.value = []; // Set empty array on error
-    }
-};
-
-// Process raw response data
-const processResponseData = (rawData) => {
-    return Object.values(rawData).flatMap(user => user.submissions);
-};
-
-
 // Calculate summary metrics
 const calculateMetrics = () => {
-    if (!Array.isArray(surveyData.value)) return;
-
-    totalResponses.value = surveyData.value.length || 0;
-
-    // Safety Score calculation with null checks
-    const safetyResponses = surveyData.value.filter(r => 
-        r?.question === "I feel safe at school" && r?.answer
-    );
-    if (safetyResponses.length > 0) {
-        const positiveSafetyResponses = safetyResponses.filter(r =>
-            r.answer === "Strongly Agree" || r.answer === "Agree"
-        ).length;
-        safetyScore.value = Math.round((positiveSafetyResponses / safetyResponses.length) * 100);
+    if (!Array.isArray(props.filteredData) || props.filteredData.length === 0) {
+        totalResponses.value = 0;
+        safetyScore.value = 0;
+        supportScore.value = 0;
+        engagementScore.value = 0;
+        return;
     }
 
-    // Support Score calculation with null checks
-    const supportResponses = surveyData.value.filter(r =>
-        r?.question === "My teachers and other staff are helpful and supportive" && r?.answer
-    );
-    if (supportResponses.length > 0) {
-        const positiveSupportResponses = supportResponses.filter(r =>
-            r.answer === "Strongly Agree" || r.answer === "Agree"
-        ).length;
-        supportScore.value = Math.round((positiveSupportResponses / supportResponses.length) * 100);
-    }
+    totalResponses.value = props.filteredData.length;
 
-    // Engagement Score calculation with null checks
-    const engagementResponses = surveyData.value.filter(r =>
-        r?.question === "My school engages all the students in all school activities" && r?.answer
+    // Safety Score calculation
+    const safetyResponses = props.filteredData.filter(r =>
+        r?.screening_data?.school_env_data?.question === "I feel safe at school" && r?.screening_data?.school_env_data?.answer
     );
-    if (engagementResponses.length > 0) {
-        const positiveEngagementResponses = engagementResponses.filter(r =>
-            r.answer === "Strongly Agree" || r.answer === "Agree"
-        ).length;
-        engagementScore.value = Math.round((positiveEngagementResponses / engagementResponses.length) * 100);
-    }
+    const positiveSafetyResponses = safetyResponses.filter(r =>
+        r.screening_data.school_env_data.answer === "Strongly Agree" || r.screening_data.school_env_data.answer === "Agree"
+    ).length;
+    safetyScore.value = safetyResponses.length > 0 ? Math.round((positiveSafetyResponses / safetyResponses.length) * 100) : 0;
+
+    // Support Score calculation
+    const supportResponses = props.filteredData.filter(r =>
+        r?.screening_data?.school_env_data?.question === "My teachers and other staff are helpful and supportive" && r?.screening_data?.school_env_data?.answer
+    );
+    const positiveSupportResponses = supportResponses.filter(r =>
+        r.screening_data.school_env_data.answer === "Strongly Agree" || r.screening_data.school_env_data.answer === "Agree"
+    ).length;
+    supportScore.value = supportResponses.length > 0 ? Math.round((positiveSupportResponses / supportResponses.length) * 100) : 0;
+
+    // Engagement Score calculation
+    const engagementResponses = props.filteredData.filter(r =>
+        r?.screening_data?.school_env_data?.question === "My school engages all the students in all school activities" && r?.screening_data?.school_env_data?.answer
+    );
+    const positiveEngagementResponses = engagementResponses.filter(r =>
+        r.screening_data.school_env_data.answer === "Strongly Agree" || r.screening_data.school_env_data.answer === "Agree"
+    ).length;
+    engagementScore.value = engagementResponses.length > 0 ? Math.round((positiveEngagementResponses / engagementResponses.length) * 100) : 0;
 };
+
+// Watcher for filteredData
+watch(() => props.filteredData, (newData) => {
+    calculateMetrics();
+}, { deep: true });
 
 // Chart Configurations
 const commonChartOptions = {
@@ -262,13 +253,14 @@ const engagementChartOptions = {
 
 // Computed series
 const safetyChartSeries = computed(() => {
-    if (!Array.isArray(surveyData.value) || surveyData.value.length === 0) {
+    if (!Array.isArray(props.filteredData) || props.filteredData.length === 0) {
         return [{ name: 'Responses', data: [0, 0, 0, 0, 0] }];
     }
-    
-    const safetyResponses = surveyData.value.filter(r => 
-        r?.question === "I feel safe at school" && r?.answer
+
+    const safetyResponses = props.filteredData.filter(r =>
+        r?.screening_data?.school_env_data?.question === "I feel safe at school" && r?.screening_data?.school_env_data?.answer
     );
+
     const counts = {
         'Strongly Agree': 0,
         'Agree': 0,
@@ -276,21 +268,21 @@ const safetyChartSeries = computed(() => {
         'Disagree': 0,
         'Strongly Disagree': 0
     };
-    
+
     safetyResponses.forEach(response => {
-        if (response.answer in counts) {
-            counts[response.answer]++;
+        const answer = response.screening_data.school_env_data.answer;
+        if (answer in counts) {
+            counts[answer]++;
         }
     });
-    
+
     return [{ name: 'Responses', data: Object.values(counts) }];
 });
 
 const environmentChartSeries = computed(() => {
-    if (!Array.isArray(surveyData.value) || surveyData.value.length === 0) {
+    if (!Array.isArray(props.filteredData) || props.filteredData.length === 0) {
         return [{ name: 'Environment Score', data: [0, 0, 0, 0, 0] }];
     }
-    
     // Calculate actual environment scores based on your data
     return [{
         name: 'Environment Score',
@@ -299,13 +291,14 @@ const environmentChartSeries = computed(() => {
 });
 
 const supportChartSeries = computed(() => {
-    if (!Array.isArray(surveyData.value) || surveyData.value.length === 0) {
+    if (!Array.isArray(props.filteredData) || props.filteredData.length === 0) {
         return [0, 0, 0, 0, 0];
     }
-    
-    const supportResponses = surveyData.value.filter(r =>
-        r?.question === "My teachers and other staff are helpful and supportive" && r?.answer
+
+    const supportResponses = props.filteredData.filter(r =>
+        r?.screening_data?.school_env_data?.question === "My teachers and other staff are helpful and supportive" && r?.screening_data?.school_env_data?.answer
     );
+
     const counts = {
         'Strongly Agree': 0,
         'Agree': 0,
@@ -313,37 +306,48 @@ const supportChartSeries = computed(() => {
         'Disagree': 0,
         'Strongly Disagree': 0
     };
-    
+
     supportResponses.forEach(response => {
-        if (response.answer in counts) {
-            counts[response.answer]++;
+        const answer = response.screening_data.school_env_data.answer;
+        if (answer in counts) {
+            counts[answer]++;
         }
     });
-    
+
     return Object.values(counts);
 });
 
-
 const engagementChartSeries = computed(() => {
-    if (!surveyData.value.length) return [];
-    const engagementResponses = surveyData.value.filter(r =>
-        r.question === "My school engages all the students in all school activities"
+    if (!Array.isArray(props.filteredData) || props.filteredData.length === 0) {
+        return [0, 0, 0];
+    }
+
+    const engagementResponses = props.filteredData.filter(r =>
+        r?.screening_data?.school_env_data?.question === "My school engages all the students in all school activities" && r?.screening_data?.school_env_data?.answer
     );
-    const high = engagementResponses.filter(r =>
-        r.answer === "Strongly Agree" || r.answer === "Agree"
-    ).length;
-    const moderate = engagementResponses.filter(r =>
-        r.answer === "Neutral/Indifferent"
-    ).length;
-    const low = engagementResponses.filter(r =>
-        r.answer === "Disagree" || r.answer === "Strongly Disagree"
-    ).length;
-    return [high, moderate, low];
+
+    const counts = {
+        'High Engagement': 0,
+        'Moderate Engagement': 0,
+        'Low Engagement': 0
+    };
+
+    engagementResponses.forEach(response => {
+        const answer = response.screening_data.school_env_data.answer;
+        if (answer === "Strongly Agree" || answer === "Agree") {
+            counts['High Engagement']++;
+        } else if (answer === "Neutral/Indifferent") {
+            counts['Moderate Engagement']++;
+        } else {
+            counts['Low Engagement']++;
+        }
+    });
+
+    return Object.values(counts);
 });
 
-// Initialize dashboard
 onMounted(() => {
-    fetchData();
+    calculateMetrics();
 });
 </script>
 

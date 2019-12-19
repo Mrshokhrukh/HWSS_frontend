@@ -444,19 +444,6 @@ const filteredAgencies = computed(() => {
                 name: name
             }));
         }
-        // case 'SCHOOL': {
-        //     const uniqueAgencies = new Set();
-        //     serviceAndTreatmentData.value.forEach(item => {
-        //         const agencyName = item.user?.active_agency?.agency_name;
-        //         if (agencyName) {
-        //             uniqueAgencies.add(agencyName);
-        //         }
-        //     });
-        //     return Array.from(uniqueAgencies).map(name => ({
-        //         code: name,
-        //         name
-        //     }));
-        // }
         default:
             return [];
     }
@@ -526,7 +513,7 @@ const removeFilter = (filterId) => {
             filters.value.year = null;
             break;
         default:
-            console.warn(`Unknown filter ID: ${filterId}`); // Add a warning for unexpected filterId
+            console.warn(`Unknown filter ID: ${filterId}`);
     }
 };
 
