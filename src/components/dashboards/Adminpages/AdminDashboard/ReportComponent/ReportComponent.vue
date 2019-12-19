@@ -158,9 +158,9 @@
 
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-end gap-2 mt-4">
-                        <Button label="Reset" icon="pi pi-refresh" class="btn btn-secondary" outlined
-                            @click="resetFilters" :disabled="!hasFilters" />
-                        <Button label="Apply Filters" icon="pi pi-check" class="btn btn-primary" @click="applyFilters"
+                        <Button label="Reset" icon="pi pi-refresh" class="p-button-outlined" @click="resetFilters"
+                            :disabled="!hasFilters" />
+                        <Button label="Apply Filters" icon="pi pi-check" class="p-button-primary" @click="applyFilters"
                             :disabled="!canApplyFilters" :loading="isLoading" />
                     </div>
                 </form>
@@ -185,24 +185,12 @@
 import { ref, computed, watch, inject, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 
-// Component imports
-import Panel from 'primevue/panel';
-import Dropdown from 'primevue/dropdown';
-import MultiSelect from 'primevue/multiselect';
-import Button from 'primevue/button';
-import Calendar from 'primevue/calendar';
-import Chip from 'primevue/chip';
 
-// Report components
-import MonitorReport from './MonitorReport/MonitorReport.vue';
-import CaseStatusReport from './CaseStatusReport/CaseStatusReport.vue';
-import SeverityReport from './SeverityReport/SeverityReport.vue';
-import SchoolEnvReport from './SchoolEnvReport/SchoolEnvReport.vue';
 
 const toast = useToast();
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 
-// Constants
+// Constants (No changes needed here)
 const regions = [
     { code: 'WESTERN', name: 'Western Region' },
     { code: 'CENTRAL', name: 'Central Region' },
@@ -271,11 +259,17 @@ const availableReportTypes = computed(() => {
         { code: 'SEVERITY', name: 'Severity Report' }
     ];
 
-    const userRole = JSON.parse(localStorage.getItem('userDetailsStore'))?.user?.role;
+    try {
+        const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
+        const userRole = userDetails?.user?.role;
 
-    if (userRole === 'cecd_admin') {
-        return [...baseReports, { code: 'SCHOOL_ENV', name: 'School Environment Report' }];
+        if (userRole === 'cecd_admin') {
+            return [...baseReports, { code: 'SCHOOL_ENV', name: 'School Environment Report' }];
+        }
+    } catch (error) {
+        console.error("Error parsing userDetails from localStorage:", error);
     }
+
 
     return baseReports;
 });
@@ -289,6 +283,7 @@ const hasFilters = computed(() => {
         return value !== null;
     }) || selectedReport.value !== null;
 });
+
 
 const activeFilterCount = computed(() => {
     let count = 0;
@@ -320,10 +315,10 @@ const availableDzongkhags = computed(() => {
         ]
     };
 
-    return dzongkhagsByRegion[filters.value.region.code].map(name => ({
+    return dzongkhagsByRegion[filters.value.region.code]?.map(name => ({
         code: name.toUpperCase(),
         name
-    }));
+    })) || [];
 });
 
 const activeFiltersList = computed(() => {
@@ -350,7 +345,7 @@ const activeFiltersList = computed(() => {
         });
     }
 
-    if (filters.value.classLevel.length) {
+    if (filters.value.classLevel?.length) {
         list.push({
             id: 'classLevel',
             label: `Classes: ${filters.value.classLevel.map(c => c.name).join(', ')}`
@@ -371,14 +366,14 @@ const activeFiltersList = computed(() => {
         });
     }
 
-    if (filters.value.ageGroups.length) {
+    if (filters.value.ageGroups?.length) {
         list.push({
             id: 'ageGroups',
             label: `Age Groups: ${filters.value.ageGroups.map(g => g.name).join(', ')}`
         });
     }
 
-    if (filters.value.gender.length) {
+    if (filters.value.gender?.length) {
         list.push({
             id: 'gender',
             label: `Gender: ${filters.value.gender.map(g => g.name).join(', ')}`
@@ -407,7 +402,7 @@ const filteredAgencies = computed(() => {
     if (!serviceAndTreatmentData.value || !filters.value.organization) return [];
 
     switch (filters.value.organization.code) {
-        case 'EVENT_BASED':
+        case 'EVENT_BASED': {
             return Array.from(new Set(
                 serviceAndTreatmentData.value
                     .filter(item => item.screening_data?.event)
@@ -416,8 +411,8 @@ const filteredAgencies = computed(() => {
                         name: `Event ${item.screening_data.event}`
                     }))
             ));
-
-        case 'CASE_BASED':
+        }
+        case 'CASE_BASED': {
             const caseAgencies = new Set();
             serviceAndTreatmentData.value
                 .filter(item => item.screening_data?.case)
@@ -430,9 +425,9 @@ const filteredAgencies = computed(() => {
                 code: name,
                 name
             }));
-
+        }
         case 'CLUSTER':
-        case 'SCHOOL':
+        case 'SCHOOL': {
             const uniqueAgencies = new Set();
             serviceAndTreatmentData.value.forEach(item => {
                 const agencyName = item.user?.active_agency?.agency_name;
@@ -444,6 +439,8 @@ const filteredAgencies = computed(() => {
                 code: name,
                 name
             }));
+        }
+
 
         default:
             return [];
@@ -468,12 +465,13 @@ const availableYears = computed(() => {
     }));
 });
 
+
 // Methods
 const handleOrganizationChange = () => {
     // Reset dependent filters
     filters.value.agency = null;
     filters.value.classLevel = [];
-    if (filters.value.organization?.code !== 'SCHOOL') {
+    if (filters.value.organization?.code !== 'SCHOOL' && filters.value.organization?.code !== 'CLUSTER') {
         filters.value.classLevel = [];
     }
 };
@@ -482,13 +480,6 @@ const handleRegionChange = () => {
     filters.value.dzongkhag = null;
 };
 
-const handleAgencyTypeChange = () => {
-    filters.value.classLevel = [];
-    filters.value.agency = null;
-    if (filters.value.agencyType !== 'SCHOOL') {
-        filters.value.classLevel = [];
-    }
-};
 
 const removeFilter = (filterId) => {
     switch (filterId) {
@@ -520,6 +511,8 @@ const removeFilter = (filterId) => {
         case 'year':
             filters.value.year = null;
             break;
+        default:
+            console.warn(`Unknown filter ID: ${filterId}`); // Add a warning for unexpected filterId
     }
 };
 
@@ -527,13 +520,14 @@ const resetFilters = () => {
     selectedReport.value = null;
     dateRange.value = null;
     filters.value = {
-        agencyType: null,
+        organization: null,
+        agency: null,
         classLevel: [],
         region: null,
         dzongkhag: null,
         ageGroups: [],
         gender: [],
-        year: null
+        year: null,
     };
     showReport.value = false;
 };
@@ -556,17 +550,25 @@ const applyFilters = async () => {
     isLoading.value = false;
 };
 
+
 // Helper Functions
 const calculateAge = (dateOfBirth) => {
     if (!dateOfBirth) return null;
-    const dob = new Date(dateOfBirth);
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
+    try {
+        const dob = new Date(dateOfBirth);
+        if (isNaN(dob.getTime())) return null;
+
+        const today = new Date();
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+        }
+        return age;
+    } catch (error) {
+        console.error("Error calculating age:", error);
+        return null;
     }
-    return age;
 };
 
 const getAgeGroup = (age) => {
@@ -578,7 +580,10 @@ const getAgeGroup = (age) => {
     return 'OVER_60';
 };
 
+
 const getDzongkhagRegion = (dzongkhag) => {
+    if (!dzongkhag) return null;
+
     const regionMap = {
         WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHHUKHA', 'SAMTSE', 'THIMPHU THROMDE', 'PHUENTSHOGLING THROMDE'],
         CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE', 'ZHEMGANG'],
@@ -592,6 +597,7 @@ const getDzongkhagRegion = (dzongkhag) => {
     }
     return null;
 };
+
 
 // Computed property for filtered data
 const filteredData = computed(() => {
@@ -607,20 +613,22 @@ const filteredData = computed(() => {
         const agency = agencyDetails.agency || {};
         const activeAgencyName = user.active_agency?.agency_name?.toUpperCase() || '';
 
+
         // Filter by year
         if (filters.value.year && item.date) {
             const itemYear = new Date(item.date).getFullYear();
             matches = matches && itemYear === parseInt(filters.value.year.code);
         }
 
+
         // Filter by organization
         if (filters.value.organization) {
             switch (filters.value.organization.code) {
                 case 'EVENT_BASED':
-                    matches = matches && item.screening_data?.event;
+                    matches = matches && !!item.screening_data?.event;
                     break;
                 case 'CASE_BASED':
-                    matches = matches && item.screening_data?.case;
+                    matches = matches && !!item.screening_data?.case;
                     break;
                 case 'CLUSTER':
                     matches = matches && !item.screening_data?.event && !item.screening_data?.case;
@@ -640,16 +648,19 @@ const filteredData = computed(() => {
             }
         }
 
+
+
         // Filter by agency
         if (filters.value.agency) {
             matches = matches && activeAgencyName === filters.value.agency.code;
         }
 
         // Filter by class level for schools
-        if (filters.value.classLevel.length > 0 && activeAgencyName.includes('SCHOOL')) {
+        if (filters.value.classLevel?.length > 0 && (filters.value.organization?.code === 'SCHOOL' || filters.value.organization?.code === 'CLUSTER')) {
             const userClass = agencyDetails.user_class?.toUpperCase();
             matches = matches && filters.value.classLevel.some(cls => cls.code.toUpperCase() === userClass);
         }
+
 
         // Filter by region and dzongkhag
         if (filters.value.region) {
@@ -665,19 +676,21 @@ const filteredData = computed(() => {
             }
         }
 
+
+
         // Filter by age groups
-        if (filters.value.ageGroups.length > 0) {
+        if (filters.value.ageGroups?.length > 0) {
             const age = calculateAge(user.date_of_birth);
+            const ageGroup = getAgeGroup(age)
             matches = matches && filters.value.ageGroups.some(group => {
-                const range = group.code.split('_');
-                const min = range[0] === 'UNDER' ? 0 : parseInt(range[0]);
-                const max = range[1] === 'OVER' ? Infinity : parseInt(range[1]);
-                return age >= min && age <= max;
+                if (ageGroup === null) return false;
+                return group.code === ageGroup;
             });
         }
 
+
         // Filter by gender
-        if (filters.value.gender.length > 0) {
+        if (filters.value.gender?.length > 0) {
             matches = matches && filters.value.gender.some(g => g.code === user.gender?.toUpperCase());
         }
 
@@ -685,14 +698,17 @@ const filteredData = computed(() => {
     });
 });
 
+
 // Watchers
 watch([selectedReport, filters, dateRange], () => {
     showReport.value = false;
 }, { deep: true });
 
+
 watch(serviceAndTreatmentData, (newData) => {
     processedData.value = newData;
 }, { immediate: true });
+
 
 onMounted(() => {
     // Initialize processedData.value with serviceAndTreatmentData.value
@@ -703,397 +719,235 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Main Container */
+/* 1. Foundation */
 .filter-configurator {
-    max-width: 1320px;
-    margin: 0 auto;
-    padding: 1.5rem;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-family: Arial, sans-serif;
+    /* Specify your desired font-family */
 }
 
-/* Header Styling */
+/* 2. Layout System */
+.filter-panel {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Example shadow - adjust as needed */
+}
+
 .filter-header {
-    padding: 1rem 1.5rem;
-    background-color: #2F4858 !important;
-    color: white;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+    background-color: #fff;
+    /* Example - set to your desired color */
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+    /* Bootstrap's default border color */
 }
 
 .filter-header h4 {
-    font-size: 1.25rem;
-    font-weight: 500;
+    font-weight: 600;
+    /* Semi-bold per your design doc */
 }
 
-/* Label Styling */
-.form-label {
-    color: #2F4858;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-}
-
-/* Dropdown Styling */
-:deep(.p-dropdown),
-:deep(.p-multiselect),
-:deep(.p-calendar) {
-    width: 100%;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-}
-
-:deep(.p-dropdown:not(.p-disabled):hover),
-:deep(.p-multiselect:not(.p-disabled):hover) {
-    border-color: #2F4858;
-}
-
-:deep(.p-dropdown.p-focus),
-:deep(.p-multiselect.p-focus) {
-    border-color: #2F4858;
-    box-shadow: 0 0 0 2px rgba(47, 72, 88, 0.1);
-}
-
-:deep(.p-dropdown-panel),
-:deep(.p-multiselect-panel) {
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Status Filters Section */
-.status-filters {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 1.5rem 0;
-}
-
-.status-filters-header {
-    color: #2F4858;
-    font-weight: 500;
-    margin-bottom: 1.25rem;
-}
-
-.status-filters-header h6 {
-    font-size: 1rem;
-}
-
-/* Active Filters */
-.active-filters {
-    background: rgba(47, 72, 88, 0.05);
-    border-radius: 8px;
+.filter-content {
     padding: 1rem;
 }
 
-.filter-chip {
-    background: white;
-    border: 1px solid #2F4858;
-    color: #2F4858;
-    padding: 0.25rem 0.75rem;
-    border-radius: 4px;
-}
-
-/* Buttons */
-:deep(.p-button) {
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-}
-
-:deep(.p-button.btn-secondary) {
-    background: transparent;
-    border: 1px solid #2F4858;
-    color: #2F4858;
-}
-
-:deep(.p-button.btn-secondary:hover) {
-    background: rgba(47, 72, 88, 0.1);
-}
-
-:deep(.p-button.btn-primary) {
-    background: #2F4858;
-    border: 1px solid #2F4858;
-}
-
-:deep(.p-button.btn-primary:hover) {
-    background: #243845;
-}
-
-/* Grid Layout */
 .row {
-    margin: -0.5rem;
+    --bs-gutter-x: 1rem;
+    /* Adjust as needed */
+    --bs-gutter-y: 1rem;
+    /* Adjust as needed */
 }
 
-.col,
-[class*="col-"] {
+/* 3. Component Architecture */
+/* Card Structure is mostly handled by PrimeVue's Panel and Bootstrap classes */
+
+/* 4. Typography */
+.form-label {
+    font-weight: 500;
+    /* Medium weight for labels */
+    margin-bottom: 0.5rem;
+}
+
+/* 5. Colors */
+.hwss-primary {
+    color: #2F4858;
+    /* Replace with your brand's primary color */
+}
+
+.bg-light {
+    background-color: #f8f9fa;
+    /* Bootstrap's light background */
+}
+
+/* 6. Icons */
+/* Assuming you're using PrimeIcons */
+.pi {
+    font-size: 1rem;
+    /* Adjust as needed */
+    margin-right: 0.5rem;
+}
+
+/* 7. Cards */
+/* Already covered by Panel and Bootstrap classes */
+
+/* 8. Forms */
+.p-dropdown,
+.p-multiselect {
+    width: 100%;
+    border: 1px solid #ced4da;
+    /* Bootstrap's default border color */
+    border-radius: 0.25rem;
+    background-color: #fff;
+}
+
+.p-dropdown:hover,
+.p-multiselect:hover {
+    border-color: #2F4858;
+    /* Your primary color on hover */
+}
+
+.p-dropdown:focus,
+.p-multiselect:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(47, 72, 88, 0.25);
+    /* Example focus shadow */
+    border-color: #2F4858;
+}
+
+.p-dropdown .p-dropdown-label,
+.p-multiselect .p-multiselect-label {
+    padding: 0.5rem 0.75rem;
+}
+
+.p-dropdown .p-dropdown-trigger,
+.p-multiselect .p-multiselect-trigger {
+    background-color: transparent;
+    color: #495057;
+    /* Bootstrap's default color */
+}
+
+.p-multiselect .p-multiselect-item {
+    padding: 0.5rem 1rem;
+}
+
+.p-multiselect .p-multiselect-item:hover {
+    background-color: rgba(47, 72, 88, 0.05);
+    /* Light background on hover */
+}
+
+.p-multiselect .p-multiselect-item.p-highlight {
+    background-color: rgba(47, 72, 88, 0.1);
+    /* Slightly darker on highlight */
+    color: #2F4858;
+    /* Primary color */
+}
+
+.p-multiselect-panel .p-multiselect-header {
     padding: 0.5rem;
 }
 
-/* Form Groups */
+.p-multiselect-panel .p-multiselect-filter-container {
+    padding-bottom: 0.5rem;
+}
+
+.p-multiselect-panel .p-multiselect-filter-container .p-inputtext {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* 9. Interactive Elements */
+.p-button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+}
+
+.p-button-primary {
+    background-color: #2F4858;
+    /* Your primary color */
+    border-color: #2F4858;
+}
+
+.p-button-primary:hover {
+    background-color: #1D3540;
+    /* Darker shade on hover */
+    border-color: #1D3540;
+}
+
+.p-button-outlined {
+    background-color: transparent;
+    color: #2F4858;
+    border: 1px solid #2F4858;
+}
+
+.p-button-outlined:hover {
+    background-color: rgba(47, 72, 88, 0.05);
+    /* Light background on hover */
+}
+
+.p-button .pi {
+    margin-right: 0.5rem;
+}
+
+/* 10. States */
+/* Loading State - handled by the :loading prop on p-button */
+/* Active Filters Display */
+.active-filters {
+    border-radius: 0.25rem;
+}
+
+.filter-chip {
+    background-color: #fff;
+    border: 1px solid #2F4858;
+    color: #2F4858;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.2rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-chip .p-chip-remove-icon {
+    margin-left: 0.25rem;
+}
+
+/* 11. Spacing */
 .mb-3 {
     margin-bottom: 1rem;
 }
 
-/* Custom spacing for sections */
-.form-section {
-    margin-bottom: 2rem;
+.mt-2 {
+    margin-top: 0.5rem;
 }
 
-/* Specific Component Overrides */
-:deep(.p-dropdown-item),
-:deep(.p-multiselect-item) {
-    padding: 0.5rem 1rem;
-    color: #2F4858;
+.mt-4 {
+    margin-top: 1.5rem;
 }
 
-:deep(.p-dropdown-item:hover),
-:deep(.p-multiselect-item:hover) {
-    background: rgba(47, 72, 88, 0.05);
+.p-3 {
+    padding: 1rem;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .filter-configurator {
-        padding: 1rem;
-    }
-
-    .status-filters {
-        padding: 1rem;
-    }
-
-    .d-flex.justify-content-end {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .d-flex.justify-content-end button {
-        width: 100%;
-    }
+.gap-2 {
+    gap: 0.5rem;
 }
 
-/* Enhanced scrollbars */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #2B656F;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #1D4851;
-}
-
-/* Animation keyframes */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Apply animations */
-.filter-chip,
-.visualization-grid>div {
-    animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* Enhanced dropdown icons */
-:deep(.p-dropdown-trigger),
-:deep(.p-multiselect-trigger) {
-    width: 3rem;
-    background: rgba(43, 101, 111, 0.05);
-    border-radius: 0 6px 6px 0;
-    transition: all 0.2s ease;
-}
-
-:deep(.p-dropdown:hover .p-dropdown-trigger),
-:deep(.p-multiselect:hover .p-multiselect-trigger) {
-    background: rgba(43, 101, 111, 0.1);
-}
-
-/* Responsive enhancements */
-@media (max-width: 1024px) {
-    .visualization-grid {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "map"
-            "chart"
-            "table";
-    }
-
-    .summary-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    }
-}
-
-@media (max-width: 640px) {
-    .dashboard-container {
-        padding: 1rem;
-    }
-
-    .filter-actions {
-        flex-direction: column;
-    }
-
-    .filter-actions .p-button {
-        width: 100%;
-    }
-
-    .summary-card {
-        padding: 1rem;
-    }
-}
-
-/* Print styles */
-@media print {
-    .dashboard-container {
-        padding: 0;
-    }
-
-    .filter-panel {
-        display: none;
-    }
-
-    .summary-grid,
-    .visualization-grid {
-        gap: 1rem;
-    }
-}
-
-/* Additional styles from the second code example */
-.filter-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    /* Make columns responsive */
-    gap: 1.5rem;
-}
-
-.filter-group-row {
-    display: flex;
+.gap-3 {
     gap: 1rem;
 }
 
-/* Responsive adjustments for smaller screens */
+/* 12. Utilities */
+/* Most utilities are handled by Bootstrap classes directly in the template */
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .filter-content {
-        grid-template-columns: 1fr;
-        /* Stack columns on small screens */
+
+    /* Adjust column sizes for smaller screens */
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
     }
 
-    .filter-group-row {
-        flex-direction: column;
-        /* Stack row items on small screens */
+    /* Adjust form elements for smaller screens */
+    .p-dropdown,
+    .p-multiselect {
+        font-size: 0.9rem;
     }
-}
-
-/* Dropdown, MultiSelect, and Calendar specific overrides */
-:deep(.p-dropdown),
-:deep(.p-multiselect),
-:deep(.p-calendar) {
-    width: 100%;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-:deep(.p-dropdown:not(.p-disabled):hover),
-:deep(.p-multiselect:not(.p-disabled):hover),
-:deep(.p-calendar:not(.p-disabled):hover) {
-    border-color: #2F4858;
-}
-
-:deep(.p-dropdown.p-focus),
-:deep(.p-multiselect.p-focus),
-:deep(.p-calendar.p-focus) {
-    border-color: #2F4858;
-    box-shadow: 0 0 0 2px rgba(47, 72, 88, 0.1);
-}
-
-:deep(.p-dropdown-panel),
-:deep(.p-multiselect-panel) {
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    background: white;
-}
-
-:deep(.p-dropdown-item),
-:deep(.p-multiselect-item) {
-    padding: 0.75rem 1rem;
-    color: #2F4858;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-:deep(.p-dropdown-item:hover),
-:deep(.p-multiselect-item:hover) {
-    background: rgba(47, 72, 88, 0.05);
-}
-
-:deep(.p-dropdown-item.p-highlight),
-:deep(.p-multiselect-item.p-highlight) {
-    background: rgba(47, 72, 88, 0.1);
-    color: #2F4858;
-}
-
-/* Calendar specific styles */
-:deep(.p-calendar .p-inputtext) {
-    width: 100%;
-    border: none;
-}
-
-:deep(.p-calendar-w-btn .p-inputtext) {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-:deep(.p-calendar .p-datepicker) {
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    background: white;
-}
-
-:deep(.p-calendar .p-monthpicker .p-monthpicker-month),
-:deep(.p-calendar .p-yearpicker .p-yearpicker-year) {
-    color: #2F4858;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-:deep(.p-calendar .p-monthpicker .p-monthpicker-month:hover),
-:deep(.p-calendar .p-yearpicker .p-yearpicker-year:hover) {
-    background: rgba(47, 72, 88, 0.05);
-}
-
-/* Custom styling for p-calendar */
-:deep(.p-calendar) {
-    width: 100%;
-}
-
-:deep(.p-calendar .p-inputtext) {
-    width: 100%;
-    border: none;
-    background: transparent;
-    padding: 0.75rem 1rem;
-}
-
-:deep(.p-calendar .p-datepicker) {
-    width: 24rem;
 }
 </style>
