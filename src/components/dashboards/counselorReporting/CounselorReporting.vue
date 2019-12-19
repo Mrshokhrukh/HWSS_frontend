@@ -29,7 +29,12 @@
           <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
             :sortable="true" :style="field.width ? { width: field.width } : {}">
             <template #body="{ data }">
-              <span>{{ data[field.key] || 'None' }}</span>
+              <template v-if="field.key === 'suicidal_score'">
+                <Tag class="w-100" :value="data[field.key]" :severity="getSuicideSeverityClass(data[field.key])" />
+              </template>
+              <template v-else>
+                <span>{{ data[field.key] || 'None' }}</span>
+              </template>
             </template>
           </Column>
 
@@ -220,7 +225,7 @@ const tableFields = [
   { key: 'ps_add_village', header: 'Present Village' },
   { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
   { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
-  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true },
+  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true, style: { maxWidth: '150px' } },
   { key: 'ace_score', header: 'ACE Score', taggable: true }
 ];
 
@@ -248,7 +253,13 @@ const gyalsungTableFields = [
 // Transform the main dataset to match the table structure
 const transformData = (item) => {
   const screeningData = item.screening_data || {};
-  const substances = extractSubstances(screeningData.assist_data || []);
+  const substances = extractSubstances(item);
+
+  // Extract suicidal score
+  let suicidalData = null;
+  if (screeningData.phq_data) {
+    suicidalData = extractSuicidalScore(screeningData.phq_data);
+  }
 
   return {
     username: item.user?.username || 'None',
@@ -261,7 +272,7 @@ const transformData = (item) => {
     academy_code: item.user?.academy_code || 'None',
     phq9_score: screeningData.phq_interpretation || 'None',
     gad7_score: screeningData.gad_interpretation || 'None',
-    suicidal_score: screeningData.suicidal_score || 'None',
+    suicidal_score: suicidalData ? `${suicidalData.severity} (${suicidalData.score})` : 'None',
     ace_score: screeningData.ace_interpretation || 'None',
     assessment_status: item.assessment_status || 'None',
     case_status: item.case_status || 'None',
@@ -289,38 +300,118 @@ const transformGyalsungData = (item) => {
   };
 };
 
-const extractSubstances = (assistData) => {
+const extractSubstances = (item) => {
   const substanceMapping = {
     "Tobacco products (cigarettes, chewing tobacco etc)": "tobacco_flag",
     "Alcoholic beverages (beer, wine, spirits, ara etc.)": "alcohol_flag",
     "Cannabis (marijuana, pot, grass, hash, black etc.)": "cannabis_flag",
     "Cocaine": "cocaine_flag",
-    "Amphetamine-type stimulants (meth, ecstasy, yebe, diet pills etc.)": "amphetamine_flag",
+    "Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)": "amphetamine_flag",
     "Inhalants (dendrite, glue, petrol, paint thinner, etc.)": "inhalants_flag",
     "Sedatives or Sleeping Pills (N-10, diazepam etc.)": "sedatives_flag",
     "Hallucinogens (LSD, trips, Ketamine, etc.)": "hallucinogens_flag",
-    "Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc.)": "opioids_flag"
+    "Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)": "opioids_flag"
   };
 
   const result = {};
 
-  if (Array.isArray(assistData)) {
-    assistData.forEach(substance => {
-      const key = substanceMapping[substance.substance__name];
-      if (key) {
-        result[key] = substance.risk_flag || 'None';
+  // Helper function to process substance array
+  const processSubstanceArray = (substances) => {
+    if (!Array.isArray(substances)) return;
+
+    substances.forEach(substance => {
+      const mappedKey = substanceMapping[substance.substance_name];
+      if (mappedKey) {
+        result[mappedKey] = mapSeverity(substance.risk_flag);
       }
     });
-  } else if (typeof assistData === 'object') {
-    Object.keys(substanceMapping).forEach(substanceName => {
-      const key = substanceMapping[substanceName];
-      result[key] = assistData[key] || 'None';
-    });
+  };
+
+  // Process case_substance_risks if available
+  if (item.case_substance_risks) {
+    processSubstanceArray(item.case_substance_risks);
+  }
+
+  // Process event_substance_risks if available
+  if (item.event_substance_risks) {
+    processSubstanceArray(item.event_substance_risks);
+  }
+
+  // Process assist_data if available through screening_data
+  if (item.screening_data?.assist_data) {
+    processSubstanceArray(item.screening_data.assist_data);
   }
 
   return result;
 };
 
+// Helper function to map severity from risk flag
+const mapSeverity = (riskFlag) => {
+  if (!riskFlag) return 'grey';
+
+  const riskLevel = riskFlag.toLowerCase();
+  if (riskLevel.includes('severe')) return 'red';
+  if (riskLevel.includes('moderate')) return 'yellow';
+  if (riskLevel.includes('mild')) return 'blue';
+  if (riskLevel.includes('none')) return 'green';
+  return 'grey';
+};
+
+//sucidal score
+const extractSuicidalScore = (phqData) => {
+  try {
+    // Handle string PHQ data
+    if (typeof phqData === 'string') {
+      try {
+        phqData = JSON.parse(phqData);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Handle different PHQ data formats
+    let responses = null;
+    if (phqData.responses) {
+      responses = phqData.responses;
+    } else if (Array.isArray(phqData)) {
+      responses = phqData;
+    }
+
+    if (responses) {
+      const suicideQuestion = responses.find(item =>
+        item.question?.toLowerCase().includes('thoughts that you would be better off dead') ||
+        item.question?.toLowerCase().includes('hurting yourself')
+      );
+
+      if (suicideQuestion) {
+        const score = suicideQuestion.score;
+        const severity = getSuicideSeverity(score);
+        return { score, severity };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error extracting suicidal score:', error);
+    return null;
+  }
+};
+
+// Helper function to determine suicide risk severity
+const getSuicideSeverity = (score) => {
+  if (score === 0) return 'None';
+  if (score === 1) return 'Mild';
+  if (score === 2) return 'Moderate';
+  if (score === 3) return 'Severe';
+  return 'None';
+};
+
+const getSuicideSeverityClass = (value) => {
+  if (!value || value === 'None') return 'secondary';
+  if (value.includes('Mild')) return 'info';
+  if (value.includes('Moderate')) return 'warning';
+  if (value.includes('Severe')) return 'danger';
+  return 'success';
+};
 
 // Bulk download function
 const bulkDownload = async () => {
