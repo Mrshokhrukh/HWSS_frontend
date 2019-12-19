@@ -201,7 +201,6 @@ const organizations = [
     { code: 'EVENT_BASED', name: 'Event Based' },
     { code: 'CASE_BASED', name: 'Case Based' },
     { code: 'CLUSTER', name: 'Cluster' },
-    { code: 'SCHOOL', name: 'School' }
 ];
 
 const schoolClasses = [
@@ -403,14 +402,19 @@ const filteredAgencies = computed(() => {
 
     switch (filters.value.organization.code) {
         case 'EVENT_BASED': {
-            return Array.from(new Set(
-                serviceAndTreatmentData.value
-                    .filter(item => item.screening_data?.event)
-                    .map(item => ({
-                        code: `Event ${item.screening_data.event}`,
-                        name: `Event ${item.screening_data.event}`
-                    }))
-            ));
+            // Use a Set to avoid duplicate event names
+            const uniqueEventNames = new Set();
+            serviceAndTreatmentData.value
+                .filter(item => item.screening_data?.event)
+                .forEach(item => {
+                    uniqueEventNames.add(item.screening_data.event.event_name);
+                });
+
+            // Convert the Set back to an array of objects for the dropdown
+            return Array.from(uniqueEventNames).map(name => ({
+                code: name, // Use the event name as the code
+                name: name   // Use the event name for display
+            }));
         }
         case 'CASE_BASED': {
             const caseAgencies = new Set();
@@ -426,27 +430,37 @@ const filteredAgencies = computed(() => {
                 name
             }));
         }
-        case 'CLUSTER':
-        case 'SCHOOL': {
+        case 'CLUSTER': {
             const uniqueAgencies = new Set();
             serviceAndTreatmentData.value.forEach(item => {
                 const agencyName = item.user?.active_agency?.agency_name;
-                if (agencyName) {
+                // Only add agency names that include "SCHOOL"
+                if (agencyName && agencyName.toUpperCase().includes('SCHOOL')) {
                     uniqueAgencies.add(agencyName);
                 }
             });
             return Array.from(uniqueAgencies).map(name => ({
                 code: name,
-                name
+                name: name
             }));
         }
-
-
+        // case 'SCHOOL': {
+        //     const uniqueAgencies = new Set();
+        //     serviceAndTreatmentData.value.forEach(item => {
+        //         const agencyName = item.user?.active_agency?.agency_name;
+        //         if (agencyName) {
+        //             uniqueAgencies.add(agencyName);
+        //         }
+        //     });
+        //     return Array.from(uniqueAgencies).map(name => ({
+        //         code: name,
+        //         name
+        //     }));
+        // }
         default:
             return [];
     }
 });
-
 // New computed property for available years
 const availableYears = computed(() => {
     if (!serviceAndTreatmentData.value) return [];
@@ -599,7 +613,6 @@ const getDzongkhagRegion = (dzongkhag) => {
 };
 
 
-// Computed property for filtered data
 const filteredData = computed(() => {
     if (!serviceAndTreatmentData.value) {
         console.log('No service and treatment data available');
@@ -611,8 +624,8 @@ const filteredData = computed(() => {
         const user = item.user || {};
         const agencyDetails = user.agency_details || {};
         const agency = agencyDetails.agency || {};
-        const activeAgencyName = user.active_agency?.agency_name?.toUpperCase() || '';
-
+        // Get the agency_name directly without converting to uppercase
+        const activeAgencyName = user.active_agency?.agency_name || '';
 
         // Filter by year
         if (filters.value.year && item.date) {
@@ -620,26 +633,27 @@ const filteredData = computed(() => {
             matches = matches && itemYear === parseInt(filters.value.year.code);
         }
 
-
         // Filter by organization
         if (filters.value.organization) {
             switch (filters.value.organization.code) {
                 case 'EVENT_BASED':
                     matches = matches && !!item.screening_data?.event;
+                    // Further filter by selected agency (event_name)
+                    if (filters.value.agency) {
+                        matches = matches && item.screening_data.event.event_name === filters.value.agency.name; // Compare with name
+                    }
                     break;
                 case 'CASE_BASED':
                     matches = matches && !!item.screening_data?.case;
+                    if (filters.value.agency) {
+                        // Compare activeAgencyName with the selected agency's name
+                        matches = matches && activeAgencyName === filters.value.agency.name;
+                    }
                     break;
                 case 'CLUSTER':
                     matches = matches && !item.screening_data?.event && !item.screening_data?.case;
                     if (filters.value.agency) {
-                        matches = matches && activeAgencyName === filters.value.agency.code;
-                    }
-                    break;
-                case 'SCHOOL':
-                    matches = matches && activeAgencyName.includes('SCHOOL');
-                    if (filters.value.agency) {
-                        matches = matches && activeAgencyName === filters.value.agency.code;
+                        matches = matches && activeAgencyName.toUpperCase().includes(filters.value.agency.name.toUpperCase());
                     }
                     break;
                 default:
@@ -648,11 +662,10 @@ const filteredData = computed(() => {
             }
         }
 
-
-
-        // Filter by agency
-        if (filters.value.agency) {
-            matches = matches && activeAgencyName === filters.value.agency.code;
+        // Filter by agency (for non-EVENT_BASED) 
+        // Only apply this filter if organization is NOT 'EVENT_BASED'
+        if (filters.value.agency && filters.value.organization.code !== 'EVENT_BASED') {
+            matches = matches && activeAgencyName.toUpperCase() === filters.value.agency.code.toUpperCase();
         }
 
         // Filter by class level for schools
@@ -660,7 +673,6 @@ const filteredData = computed(() => {
             const userClass = agencyDetails.user_class?.toUpperCase();
             matches = matches && filters.value.classLevel.some(cls => cls.code.toUpperCase() === userClass);
         }
-
 
         // Filter by region and dzongkhag
         if (filters.value.region) {
@@ -676,18 +688,15 @@ const filteredData = computed(() => {
             }
         }
 
-
-
         // Filter by age groups
         if (filters.value.ageGroups?.length > 0) {
             const age = calculateAge(user.date_of_birth);
-            const ageGroup = getAgeGroup(age)
+            const ageGroup = getAgeGroup(age);
             matches = matches && filters.value.ageGroups.some(group => {
                 if (ageGroup === null) return false;
                 return group.code === ageGroup;
             });
         }
-
 
         // Filter by gender
         if (filters.value.gender?.length > 0) {
