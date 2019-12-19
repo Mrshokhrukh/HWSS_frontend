@@ -53,14 +53,34 @@ const SEVERITY_ITEMS = ref([
     field: 'phq_data',
     threshold: value => {
       try {
-        // Handle both string and object inputs
-        const phqData = typeof value === 'string' ? JSON.parse(value) : value;
-
-        // Check if the data has responses array
-        if (phqData && phqData.responses) {
-          const suicidalThoughts = phqData.responses[6];
-          return suicidalThoughts && suicidalThoughts.score >= 2;
+        // If it's an array format
+        if (Array.isArray(value)) {
+          // Find the suicidal thoughts question (usually last question)
+          const suicidalQuestion = value.find(q =>
+            q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+          );
+          return suicidalQuestion && suicidalQuestion.score >= 1;
         }
+
+        // If it's a string, try to parse it
+        if (typeof value === 'string') {
+          const phqData = JSON.parse(value);
+          if (phqData.responses) {
+            const suicidalQuestion = phqData.responses.find(q =>
+              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            );
+            return suicidalQuestion && suicidalQuestion.score >= 1;
+          }
+        }
+
+        // If it's already an object
+        if (value && value.responses) {
+          const suicidalQuestion = value.responses.find(q =>
+            q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+          );
+          return suicidalQuestion && suicidalQuestion.score >= 1;
+        }
+
         return false;
       } catch (e) {
         console.error('Error evaluating suicidal behavior threshold:', e);
@@ -291,65 +311,102 @@ const fetchAndFilterData = async () => {
 const updateSeverityCounts = () => {
   SEVERITY_ITEMS.value.forEach((item, index) => {
     let count = 0;
+    // Keep track of counted users to prevent double counting
+    const countedUsers = new Set();
 
     filteredData.value.forEach(entry => {
       const screeningData = entry.screening_data;
+      if (!screeningData || screeningData === "Data not available") return;
 
-      if (!screeningData) return;
+      // Only count each user once for each category
+      const userId = entry.user?.id;
+      if (countedUsers.has(userId)) return;
 
-      // Normalize the value based on the field type
-      let value = screeningData[item.field];
-      if (value === undefined || value === null) return;
-
-      // Handle different data formats
-      if (typeof value === 'string') {
-        try {
-          value = JSON.parse(value); // Parse JSON strings
-        } catch (error) {
-          console.warn(`Error parsing value for ${item.field}`, error);
-        }
-      }
-
-      // Special handling for assist_data to prevent double counting
+      // Special handling for assist data
       if (item.field === 'assist_data') {
         try {
+          // Check screening data assist
+          let assistValue = screeningData[item.field];
+          let hasRisk = false;
+
+          if (assistValue) {
+            if (typeof assistValue === 'string') {
+              assistValue = JSON.parse(assistValue);
+            }
+            if (item.threshold(assistValue)) {
+              hasRisk = true;
+            }
+          }
+
+          // Check event substance risks if no risk found yet
+          if (!hasRisk && entry.event_substance_risks?.length > 0) {
+            hasRisk = entry.event_substance_risks.some(risk =>
+              risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
+            );
+          }
+
+          // Check case substance risks if no risk found yet
+          if (!hasRisk && entry.case_substance_risks?.length > 0) {
+            hasRisk = entry.case_substance_risks.some(risk =>
+              risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
+            );
+          }
+
+          if (hasRisk) {
+            count++;
+            countedUsers.add(userId);
+          }
+        } catch (error) {
+          console.error(`Error evaluating assist data:`, error);
+        }
+        return;
+      }
+
+      // Handle PHQ data (Suicidal Behavior)
+      if (item.field === 'phq_data') {
+        try {
+          let value = screeningData[item.field];
+          if (typeof value === 'string') {
+            value = JSON.parse(value);
+          }
+
+          let hasSuicidalThoughts = false;
+
+          if (Array.isArray(value)) {
+            const suicideQuestion = value.find(q =>
+              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            );
+            hasSuicidalThoughts = suicideQuestion?.score >= 1;
+          } else if (value?.responses) {
+            const suicideQuestion = value.responses.find(q =>
+              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            );
+            hasSuicidalThoughts = suicideQuestion?.score >= 1;
+          }
+
+          if (hasSuicidalThoughts) {
+            count++;
+            countedUsers.add(userId);
+          }
+        } catch (error) {
+          console.error(`Error evaluating PHQ data:`, error);
+        }
+      } else {
+        // Regular handling for other data types
+        let value = screeningData[item.field];
+        if (value === undefined || value === null) return;
+
+        try {
+          if (typeof value === 'string' && item.field !== 'phq_score' && item.field !== 'gad_score') {
+            value = JSON.parse(value);
+          }
+
           if (item.threshold(value)) {
             count++;
-            // Skip the rest of the iteration since we've counted this case
-            return;
+            countedUsers.add(userId);
           }
         } catch (error) {
           console.error(`Error evaluating threshold for ${item.title}:`, error);
-        }
-      } else {
-        // Regular handling for non-assist data
-        if (Array.isArray(value)) {
-          // If it's an array, check each entry
-          try {
-            if (value.some(subEntry => item.threshold(subEntry))) {
-              count++;
-            }
-          } catch (error) {
-            console.error(`Error evaluating threshold for ${item.title} (array):`, error);
-          }
-        } else if (typeof value === 'object') {
-          // If it's an object, pass it directly to the threshold function
-          try {
-            if (item.threshold(value)) {
-              count++;
-            }
-          } catch (error) {
-            console.error(`Error evaluating threshold for ${item.title} (object):`, error);
-          }
-        } else {
-          // For primitive values
-          try {
-            if (item.threshold(value)) {
-              count++;
-            }
-          } catch (error) {
-            console.error(`Error evaluating threshold for ${item.title} (primitive):`, error);
-          }
         }
       }
     });
