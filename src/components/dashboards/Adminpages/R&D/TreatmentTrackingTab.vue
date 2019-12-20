@@ -471,6 +471,7 @@ const referralFlowSeries = computed(() => {
         }
     });
 
+
     const sortedData = Object.entries(referralData)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 10); // Top 10 flows
