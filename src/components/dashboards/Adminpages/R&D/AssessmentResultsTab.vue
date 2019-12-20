@@ -360,9 +360,9 @@ const aceChartOptions = ref({
     ...commonChartOptions,
     colors: ['#167D7F'],
     xaxis: {
-        categories: [],
+        categories: ['0-3', '4-6', '7-10'], // Group ACE scores into meaningful ranges
         title: {
-            text: 'ACE Score',
+            text: 'ACE Score Range',
             style: { color: theme.colors.accent }
         },
         labels: {
@@ -374,25 +374,68 @@ const aceChartOptions = ref({
             text: 'Number of Cases',
             style: { color: theme.colors.accent }
         }
+    },
+    plotOptions: {
+        bar: {
+            ...commonChartOptions.plotOptions.bar,
+            distributed: true
+        }
+    },
+    tooltip: {
+        y: {
+            formatter: function (value) {
+                return value + ' cases'
+            }
+        },
+        x: {
+            formatter: function (value) {
+                return 'ACE Score ' + value
+            }
+        }
     }
 });
 
 const aceChartSeries = computed(() => {
-    const scoreCounts = {};
+    const scoreCounts = {
+        low: 0,    // 0-3 scores
+        medium: 0, // 4-6 scores
+        high: 0    // 7-10 scores
+    };
 
     props.filteredData.forEach(item => {
-        const aceScore = item.screening_data?.ace_score;
-        if (aceScore !== null && aceScore !== undefined) {
-            scoreCounts[aceScore] = (scoreCounts[aceScore] || 0) + 1;
+        try {
+            // Parse ACE data
+            let aceData;
+            if (typeof item.screening_data?.ace_data === 'string') {
+                aceData = JSON.parse(item.screening_data.ace_data);
+            } else {
+                aceData = item.screening_data?.ace_data;
+            }
+
+            // If we have direct ace_score, use it
+            let aceScore = item.screening_data?.ace_score;
+
+            // If no direct score but we have ace_data array, calculate score
+            if (!aceScore && Array.isArray(aceData)) {
+                aceScore = aceData.filter(response =>
+                    response.answer === 'Yes' || response.selectedOption === 'Yes'
+                ).length;
+            }
+
+            // Categorize scores
+            if (aceScore !== null && aceScore !== undefined) {
+                if (aceScore <= 3) scoreCounts.low++;
+                else if (aceScore <= 6) scoreCounts.medium++;
+                else scoreCounts.high++;
+            }
+        } catch (error) {
+            console.error('Error processing ACE data:', error);
         }
     });
 
-    const sortedScores = Object.keys(scoreCounts).sort((a, b) => Number(a) - Number(b));
-    aceChartOptions.value.xaxis.categories = sortedScores;
-
     return [{
         name: 'Cases',
-        data: sortedScores.map(score => scoreCounts[score])
+        data: Object.values(scoreCounts)
     }];
 });
 
@@ -467,16 +510,29 @@ const gad7Insights = computed(() => {
 });
 
 const aceInsights = computed(() => {
-    const total = props.filteredData.length;
+    const total = props.filteredData.filter(item =>
+        item.screening_data?.ace_score !== null ||
+        (Array.isArray(item.screening_data?.ace_data) && item.screening_data.ace_data.length > 0)
+    ).length;
+
     if (total === 0) return null;
 
-    const highRisk = highAceCases.value;
-    const percentage = ((highRisk / total) * 100).toFixed(1);
+    const data = aceChartSeries.value[0].data;
+    const highRiskCount = data[2]; // High score count (7-10)
+    const mediumRiskCount = data[1]; // Medium score count (4-6)
 
-    if (highRisk > 0) {
-        return `${percentage}% of cases have high ACE scores (≥4), indicating increased risk for health problems.`;
+    const highRiskPercentage = ((highRiskCount / total) * 100).toFixed(1);
+    const mediumRiskPercentage = ((mediumRiskCount / total) * 100).toFixed(1);
+
+    let insight = '';
+    if (highRiskCount > 0) {
+        insight += `${highRiskPercentage}% of cases have high ACE scores (7-10), indicating significant childhood adversity. `;
     }
-    return null;
+    if (mediumRiskCount > 0) {
+        insight += `${mediumRiskPercentage}% show moderate ACE scores (4-6), suggesting moderate exposure to adverse experiences.`;
+    }
+
+    return insight || 'Most cases show low ACE scores (0-3), indicating lower exposure to childhood adversity.';
 });
 
 // Utility Functions

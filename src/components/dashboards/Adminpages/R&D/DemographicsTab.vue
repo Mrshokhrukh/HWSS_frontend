@@ -200,13 +200,42 @@ const dzongkhagDistributionChartOptions = ref({
     chart: {
         ...commonChartOptions.chart,
         type: 'bar',
+        height: 350,
+        toolbar: {
+            show: false
+        }
+    },
+    plotOptions: {
+        bar: {
+            horizontal: false,
+            columnWidth: '55%',
+            borderRadius: 2
+        }
+    },
+    dataLabels: {
+        enabled: true,
+        formatter: function (val) {
+            return val || '0';
+        },
+        style: {
+            fontSize: '12px'
+        }
     },
     xaxis: {
         ...commonChartOptions.xaxis,
         categories: [],
         labels: {
+            rotate: -45,
+            rotateAlways: true,
             style: {
-                fontSize: "10px"
+                fontSize: "12px",
+                colors: primaryColor
+            }
+        },
+        title: {
+            text: 'Location (Dzongkhag)',
+            style: {
+                color: primaryColor
             }
         }
     },
@@ -214,35 +243,68 @@ const dzongkhagDistributionChartOptions = ref({
         ...commonChartOptions.yaxis,
         title: {
             text: 'Number of Individuals',
-            style: { color: primaryColor },
+            style: { color: primaryColor }
         },
+        labels: {
+            formatter: function (val) {
+                return Math.round(val);
+            }
+        }
     },
     colors: [primaryColor],
+    grid: {
+        show: true,
+        borderColor: '#e0e0e0',
+        strokeDashArray: 4
+    },
+    responsive: [{
+        breakpoint: 600,
+        options: {
+            plotOptions: {
+                bar: {
+                    columnWidth: '80%'
+                }
+            },
+            xaxis: {
+                labels: {
+                    rotate: -90,
+                    fontSize: '10px'
+                }
+            }
+        }
+    }]
 });
 
 const dzongkhagDistributionChartSeries = computed(() => {
     const dzongkhagCounts = {};
+
+    // Process the data with validation
     props.filteredData.forEach(item => {
-        // Use 'ps_add_dzongkhag' if available, otherwise use 'perm_add_dzongkhag'
-        const dzongkhag = item.user?.ps_add_dzongkhag || item.user?.perm_add_dzongkhag;
-        if (dzongkhag) {
-            dzongkhagCounts[dzongkhag] = (dzongkhagCounts[dzongkhag] || 0) + 1;
-        }
+        const dzongkhag = validateLocation(item.user?.ps_add_dzongkhag);
+        dzongkhagCounts[dzongkhag] = (dzongkhagCounts[dzongkhag] || 0) + 1;
     });
 
-    // Sort the dzongkhags alphabetically
-    const sortedDzongkhags = Object.keys(dzongkhagCounts).sort();
+    // Sort dzongkhags with 'N/A' at the end
+    const sortedDzongkhags = Object.keys(dzongkhagCounts).sort((a, b) => {
+        if (a === 'N/A') return 1;
+        if (b === 'N/A') return -1;
+        return a.localeCompare(b);
+    });
 
-    // Update categories with the sorted unique dzongkhags
+    // Update chart options
     dzongkhagDistributionChartOptions.value.xaxis.categories = sortedDzongkhags;
 
-    return [
-        {
-            name: 'Number of Individuals',
-            data: sortedDzongkhags.map(dzongkhag => dzongkhagCounts[dzongkhag]),
-        },
-    ];
+    return [{
+        name: 'Number of Individuals',
+        data: sortedDzongkhags.map(dzongkhag => dzongkhagCounts[dzongkhag])
+    }];
 });
+
+function validateLocation(location) {
+    if (!location || typeof location !== 'string') return 'N/A';
+    location = location.trim();
+    return location === '' ? 'N/A' : location;
+}
 
 // Helper functions
 function calculateAge(dateOfBirth) {
