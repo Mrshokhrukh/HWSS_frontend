@@ -114,7 +114,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { groupBy } from 'lodash';
-import VueApexCharts from 'vue3-apexcharts';
 
 const props = defineProps({
     filteredData: {
