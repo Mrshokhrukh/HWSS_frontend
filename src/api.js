@@ -1,51 +1,54 @@
 function getBaseUrl() {
   if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-    const apiHost = import.meta.env.VITE_API_HOST || 'localhost';
-    const apiPort = import.meta.env.VITE_API_PORT || '8123';
-    const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http';
-    return `${apiProtocol}://${apiHost}:${apiPort}`;
+    const apiHost = import.meta.env.VITE_API_HOST || 'localhost'
+    const apiPort = import.meta.env.VITE_API_PORT || '8123'
+    const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http'
+    return `${apiProtocol}://${apiHost}:${apiPort}`
   } else {
-    return import.meta.env.VITE_PRODUCTION_API_URL;
-    // return 'http://localhost:8123';
+    // return import.meta.env.VITE_PRODUCTION_API_URL;
+    return 'http://localhost:8123'
   }
 }
 
 function getScreeningBaseUrl() {
   if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-    const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost';
-    const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686';
-    const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http';
-    return `${screeningProtocol}://${screeningHost}:${screeningPort}`;
+    const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost'
+    const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686'
+    const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http'
+    return `${screeningProtocol}://${screeningHost}:${screeningPort}`
   } else {
-    return import.meta.env.VITE_PRODUCTION_SCREENING_URL;
+    return import.meta.env.VITE_PRODUCTION_SCREENING_URL
   }
 }
 // Function to combine base URL with middle params
 function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
-  return `${baseUrl}/api/v1/${middleParams}`;
+  return `${baseUrl}/api/v1/${middleParams}`
 }
 
 // Define base URLs
-const baseUrl = getBaseUrl();
-const baseScreeningUrl = getScreeningBaseUrl();
+const baseUrl = getBaseUrl()
+const baseScreeningUrl = getScreeningBaseUrl()
 
 // Define middle params
-const accessMiddleParams = 'access';
-const settingsMiddleParams = 'settings';
-const screeningMiddleParams = 'screening';
-const measurementMiddleParams = 'measurement';
-const monitoringMiddleParams = 'monitoring';
-const reportingMiddleParams = 'reporting';
-const counselorScreeningMiddleParams = 'screening';
+const accessMiddleParams = 'access'
+const settingsMiddleParams = 'settings'
+const screeningMiddleParams = 'screening'
+const measurementMiddleParams = 'measurement'
+const monitoringMiddleParams = 'monitoring'
+const reportingMiddleParams = 'reporting'
+const counselorScreeningMiddleParams = 'screening'
 
 // Combine base URLs with middle params
-const accessBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, accessMiddleParams);
-const settingsBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, settingsMiddleParams);
-const screeningBaseUrl = combineBaseUrlWithMiddleParams(baseScreeningUrl, screeningMiddleParams);
-const measurementBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, measurementMiddleParams);
-const monitoringBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, monitoringMiddleParams);
-const reportingBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, reportingMiddleParams);
-const counselorScreeningBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, counselorScreeningMiddleParams);
+const accessBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, accessMiddleParams)
+const settingsBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, settingsMiddleParams)
+const screeningBaseUrl = combineBaseUrlWithMiddleParams(baseScreeningUrl, screeningMiddleParams)
+const measurementBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, measurementMiddleParams)
+const monitoringBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, monitoringMiddleParams)
+const reportingBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, reportingMiddleParams)
+const counselorScreeningBaseUrl = combineBaseUrlWithMiddleParams(
+  baseUrl,
+  counselorScreeningMiddleParams
+)
 
 // Define API endpoints
 const endpoints = {
@@ -87,7 +90,7 @@ const endpoints = {
   getMeasurement: `${measurementBaseUrl}/get-measurement/`,
   getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
-  getSUDData: `${measurementBaseUrl}/get-sud-data/`,//life time use current
+  getSUDData: `${measurementBaseUrl}/get-sud-data/`, //life time use current
   getSchoolEnvData: `${measurementBaseUrl}/get-school-env-data/`,
   getDiagnosis: `${measurementBaseUrl}/diagnosis/`,
 
@@ -112,18 +115,19 @@ const endpoints = {
 
   // Counselor endpoints
   createEventScreening: `${counselorScreeningBaseUrl}/create-event-screening/`,
-  getEventInfo: (counselorName) => `${counselorScreeningBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
+  getEventInfo: (counselorName) =>
+    `${counselorScreeningBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
   caseScreenSubmission: `${counselorScreeningBaseUrl}/submit-case-screening/`,
   eventScreenSubmission: `${counselorScreeningBaseUrl}/submit-event-screening/`,
   getEventScreeningList: `${counselorScreeningBaseUrl}/get-event-screenings/`,
   updateEventScreeningList: `${counselorScreeningBaseUrl}/update-event-screening/`,
-  
+
   // New Endpoints
   getCaseRecords: `${counselorScreeningBaseUrl}/case-records/`,
   getEventRecords: `${counselorScreeningBaseUrl}/event-records/`,
   getClusterRecords: `${monitoringBaseUrl}/final-submissions/`,
   newServiceAndTreatment: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
-  newReferrals: `${monitoringBaseUrl}/referrals/`,
-};
+  newReferrals: `${monitoringBaseUrl}/referrals/`
+}
 
-export default endpoints;
+export default endpoints

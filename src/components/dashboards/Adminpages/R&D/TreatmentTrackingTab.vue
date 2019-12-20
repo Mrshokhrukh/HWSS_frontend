@@ -428,11 +428,11 @@ const referralFlowOptions = ref({
     xaxis: {
         type: 'category',
         labels: {
-            style: { 
+            style: {
                 colors: colors.primary,
                 fontSize: '11px'
             },
-            formatter: function(value) {
+            formatter: function (value) {
                 // Truncate long labels
                 return value.length > 30 ? value.substr(0, 27) + '...' : value;
             }
@@ -450,7 +450,7 @@ const referralFlowOptions = ref({
     },
     tooltip: {
         y: {
-            formatter: function(value) {
+            formatter: function (value) {
                 return `${value} Referral${value !== 1 ? 's' : ''}`;
             }
         }
@@ -514,7 +514,7 @@ const referralStatusSeries = computed(() => {
 const matrixColorRanges = computed(() => {
     const matrix = {};
     const allValues = [];
-    
+
     // Collect all values first
     props.filteredData.forEach(item => {
         if (item.referral_instance) {
@@ -533,12 +533,12 @@ const matrixColorRanges = computed(() => {
     });
 
     const maxValue = Math.max(...allValues.filter(v => v > 0));
-    
+
     return [
         { from: 0, to: 0, color: '#F5F5F5', name: 'none' },
-        { from: 1, to: Math.ceil(maxValue/3), color: '#A3CDB8', name: 'low' },
-        { from: Math.ceil(maxValue/3), to: Math.ceil(2*maxValue/3), color: '#6CB3A5', name: 'medium' },
-        { from: Math.ceil(2*maxValue/3), to: maxValue, color: '#275D67', name: 'high' }
+        { from: 1, to: Math.ceil(maxValue / 3), color: '#A3CDB8', name: 'low' },
+        { from: Math.ceil(maxValue / 3), to: Math.ceil(2 * maxValue / 3), color: '#6CB3A5', name: 'medium' },
+        { from: Math.ceil(2 * maxValue / 3), to: maxValue, color: '#275D67', name: 'high' }
     ];
 });
 
