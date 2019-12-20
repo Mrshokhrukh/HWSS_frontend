@@ -12,25 +12,27 @@
       </div>
     </div>
 
-    <div class="row mt-4" v-if="activeItem.title !== 'Assist'">
+    <div class="row mt-4" v-if="activeItem && activeItem.title !== 'Assist'">
       <div class="col-md-4">
         <div class="card-container">
-          <SeverityIndicatorCard v-if="activeItem" :cardTitle="activeItem.title" :filteredData="getRelevantData"
-            :isLoading="isLoading" :severityCounts="severityCounts" />
+          <SeverityIndicatorCard v-if="activeItem && dataReady" :cardTitle="activeItem.title"
+            :filteredData="getRelevantData" :isLoading="isLoading" :severityCounts="severityCounts"
+            :key="activeItem.title + 'indicator'" />
         </div>
       </div>
       <div class="col-md-8">
         <div class="card-container">
-          <SeverityGraphCard v-if="activeItem" :cardTitle="activeItem.title" :filteredData="getRelevantData"
-            :isLoading="isLoading" />
+          <SeverityGraphCard v-if="activeItem && dataReady" :cardTitle="activeItem.title"
+            :filteredData="getRelevantData" :isLoading="isLoading" :key="activeItem.title + 'graph'" />
         </div>
       </div>
     </div>
 
-    <div class="row mt-4" v-if="activeItem.title === 'Assist'">
+    <div class="row mt-4" v-if="activeItem && activeItem.title === 'Assist'">
       <div class="col-12">
         <div class="card-container">
-          <AssistSeverityAndGraph :data="assistStructuredData" :isLoading="isLoading" />
+          <AssistSeverityAndGraph v-if="activeItem && dataReady" :data="assistStructuredData" :isLoading="isLoading"
+            :key="activeItem.title + 'assist'" />
         </div>
       </div>
     </div>
@@ -38,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect } from 'vue';
+import { ref, computed, onMounted, watchEffect, nextTick } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 
@@ -53,15 +55,12 @@ const SEVERITY_ITEMS = ref([
     field: 'phq_data',
     threshold: value => {
       try {
-        // If it's an array format
         if (Array.isArray(value)) {
-          // Find the suicidal thoughts question (usually last question)
           const suicidalQuestion = value.find(q =>
             q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
           );
           return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
         }
-        // If it's a string, try to parse it
         if (typeof value === 'string') {
           const phqData = JSON.parse(value);
           if (phqData.responses) {
@@ -71,15 +70,12 @@ const SEVERITY_ITEMS = ref([
             return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
           }
         }
-        // If it's already an object
         if (value && value.responses) {
           const suicidalQuestion = value.responses.find(q =>
             q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
           );
           return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
         }
-
-
         return false;
       } catch (e) {
         console.error('Error evaluating suicidal behavior threshold:', e);
@@ -111,14 +107,12 @@ const SEVERITY_ITEMS = ref([
     field: 'assist_data',
     threshold: value => {
       if (!value) return false;
-
       try {
         const assistData = typeof value === 'string' ? JSON.parse(value) : value;
 
         if (Array.isArray(assistData)) {
           return assistData.some(item => item?.risk_flag && item.risk_flag !== 'none');
         }
-
         return Object.keys(assistData).some(key =>
           key.includes('_flag') && assistData[key] !== 'none'
         );
@@ -139,7 +133,9 @@ const assistStructuredData = ref({
 });
 const isLoading = ref(true);
 const error = ref(null);
-const severityCounts = ref({}); // Added severityCounts ref
+const severityCounts = ref({});
+const dataReady = ref(false);
+
 
 const getRelevantData = computed(() => {
   if (!activeItem.value || !filteredData.value.length) return [];
@@ -154,20 +150,13 @@ const processAssistData = () => {
 
   filteredData.value.forEach(item => {
     const assistData = item.screening_data?.assist_data;
-
     if (assistData) {
       structured.total++;
-
-      // Parse and normalize assist data
       const parsedAssistData = typeof assistData === 'string' ? JSON.parse(assistData) : assistData;
-
       if (Array.isArray(parsedAssistData)) {
-        // Handle array format (Type 1)
         parsedAssistData.forEach(substance => {
           const name = substance.substance__name || substance.substance_name || 'Unknown Substance';
           const risk = substance.risk_flag ? substance.risk_flag.toLowerCase() : 'low';
-
-          // Normalize substance names
           const normalizedSubstance = normalizeSubstanceName(name);
 
           if (!structured.substances[normalizedSubstance]) {
@@ -179,7 +168,6 @@ const processAssistData = () => {
           else structured.substances[normalizedSubstance].low++;
         });
       } else if (typeof parsedAssistData === 'object') {
-        // Handle object format (Type 2)
         Object.keys(parsedAssistData).forEach(key => {
           if (key.endsWith('_flag') && parsedAssistData[key]) {
             const substanceKey = key.replace('_flag', '');
@@ -188,8 +176,6 @@ const processAssistData = () => {
             const risk = parsedAssistData[measurementKey]
               ? parsedAssistData[measurementKey].toLowerCase()
               : parsedAssistData[key].toLowerCase();
-
-            // Map substanceKey to substance name
             const normalizedSubstance = mapSubstanceKeyToName(substanceKey);
 
             if (!structured.substances[normalizedSubstance]) {
@@ -211,8 +197,6 @@ const processAssistData = () => {
 
   assistStructuredData.value = structured;
 };
-
-// Helper function to normalize substance names from Type 1
 const normalizeSubstanceName = (name) => {
   const substanceMap = {
     'Tobacco products (cigarettes, chewing tobacco etc)': 'Tobacco',
@@ -226,13 +210,9 @@ const normalizeSubstanceName = (name) => {
     'Hallucinogens (LSD, trips, Ketamine, etc.)': 'Hallucinogens',
     'Other - specify': 'Other',
     'Any Drug': 'Any Drug'
-    // Add more mappings as needed
   };
-
   return substanceMap[name] || name;
 };
-
-// Helper function to map substance keys from Type 2 to names
 const mapSubstanceKeyToName = (key) => {
   const substanceMap = {
     tobacco: 'Tobacco',
@@ -246,19 +226,20 @@ const mapSubstanceKeyToName = (key) => {
     hallucinogens: 'Hallucinogens',
     injection: 'Injection',
     other: 'Other'
-    // Add more mappings as needed
   };
-
   return substanceMap[key] || key;
 };
-
-
 function isActive(index) {
   return index === activeIndex.value;
 }
 
-function setActiveIndex(index) {
-  activeIndex.value = index;
+async function setActiveIndex(index) {
+    if (isLoading.value) return;
+    activeIndex.value = index;
+     dataReady.value = false; // Set dataReady to false when a new selection is made
+     await nextTick(); // Wait for the DOM to update
+
+   dataReady.value = true;
 }
 
 const getUserDetailsFromStorage = () => {
@@ -267,7 +248,6 @@ const getUserDetailsFromStorage = () => {
     console.error('No userDetailsStore found in localStorage');
     return { agencyName: 'Unknown Agency' };
   }
-
   try {
     const userDetails = JSON.parse(userDetailsString);
     return { agencyName: userDetails?.agency?.agencyName || 'Unknown Agency' };
@@ -281,7 +261,6 @@ const fetchAndFilterData = async () => {
   try {
     isLoading.value = true;
     error.value = null;
-
     const response = await axios.get(endpoints.newServiceAndTreatment);
     const dataArray = response.data || [];
     const { agencyName } = getUserDetailsFromStorage();
@@ -295,10 +274,10 @@ const fetchAndFilterData = async () => {
 
       return agencyMatch && screeningData && submissionYear === currentYear;
     });
-
     updateSeverityCounts();
     processAssistData();
-    isLoading.value = false;
+      dataReady.value = true;
+      isLoading.value = false;
   } catch (err) {
     console.error('Error fetching data:', err);
     error.value = 'Failed to load data';
@@ -308,24 +287,18 @@ const fetchAndFilterData = async () => {
 
 const updateSeverityCounts = () => {
   const counts = {};
-  // Reset the counts first
-  SEVERITY_ITEMS.value.forEach(item => {
-    counts[item.title] = {};
-  });
-
+    SEVERITY_ITEMS.value.forEach(item => {
+        counts[item.title] = {};
+    });
   filteredData.value.forEach(entry => {
     const screeningData = entry.screening_data;
     if (!screeningData || screeningData === "Data not available") return;
-
-
     SEVERITY_ITEMS.value.forEach(item => {
       let measurement = null;
-
       if (item.field === 'assist_data') {
         try {
           let assistValue = screeningData[item.field];
           let hasRisk = false;
-
           if (assistValue) {
             if (typeof assistValue === 'string') {
               assistValue = JSON.parse(assistValue);
@@ -334,13 +307,11 @@ const updateSeverityCounts = () => {
               hasRisk = true;
             }
           }
-
           if (!hasRisk && entry.event_substance_risks?.length > 0) {
             hasRisk = entry.event_substance_risks.some(risk =>
               risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
             );
           }
-
           if (!hasRisk && entry.case_substance_risks?.length > 0) {
             hasRisk = entry.case_substance_risks.some(risk =>
               risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
@@ -383,7 +354,6 @@ const updateSeverityCounts = () => {
       } else {
         let value = screeningData[item.field];
         if (value === undefined || value === null) return;
-
         try {
           if (typeof value === 'string' && item.field !== 'phq_score' && item.field !== 'gad_score') {
             value = JSON.parse(value);
@@ -404,7 +374,6 @@ const updateSeverityCounts = () => {
           console.error(`Error evaluating threshold for ${item.title}:`, error);
         }
       }
-
       if (measurement) {
         counts[item.title][measurement] = (counts[item.title][measurement] || 0) + 1;
       }
@@ -419,8 +388,6 @@ const updateSeverityCounts = () => {
   });
   severityCounts.value = counts;
 };
-
-
 onMounted(async () => {
   await fetchAndFilterData();
 });
@@ -432,7 +399,6 @@ watchEffect(() => {
   }
 });
 </script>
-
 
 <style scoped>
 .severity-dashboard {

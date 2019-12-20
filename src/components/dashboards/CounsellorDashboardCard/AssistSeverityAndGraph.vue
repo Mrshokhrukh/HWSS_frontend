@@ -130,131 +130,150 @@ const hasData = computed(() => {
   return props.data.total > 0 && Object.keys(props.data.substances).length > 0;
 });
 
+// Function to shorten substance name
+const shortenSubstanceName = (name) => {
+    const parts = name.split('(')[0].trim();
+  return parts;
+};
+
 // Chart rendering
 const displayChart = (type = 'risk') => {
-  if (!chartCanvas.value) return;
+    if (!chartCanvas.value) return;
+    if (myChart) {
+        myChart.destroy();
+    }
 
-  if (myChart) {
-    myChart.destroy();
-  }
+    // Show "No Data Available" for lifetime and active users
+    if (type === 'lifetime' || type === 'active') {
+        const ctx = chartCanvas.value.getContext('2d');
+        ctx.clearRect(0, 0, chartCanvas.value.width, chartCanvas.value.height);
+        ctx.fillStyle = 'rgba(43, 101, 111, 0.7)';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No Data Available', chartCanvas.value.width / 2, chartCanvas.value.height / 2);
+        return;
+    }
 
-  // Show "No Data Available" for lifetime and active users
-  if (type === 'lifetime' || type === 'active') {
-    const ctx = chartCanvas.value.getContext('2d');
-    ctx.clearRect(0, 0, chartCanvas.value.width, chartCanvas.value.height);
-    ctx.fillStyle = 'rgba(43, 101, 111, 0.7)';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('No Data Available', chartCanvas.value.width / 2, chartCanvas.value.height / 2);
-    return;
-  }
+    if (!hasData.value) return;
 
-  if (!hasData.value) return;
+    // Filter out 'Any Drug', shorten substance names, and sort alphabetically
+  const substances = Object.keys(props.data.substances)
+        .filter(substance => substance !== 'Any Drug')
+      .sort((a, b) => a.localeCompare(b))
+      .map(name => shortenSubstanceName(name));
 
-  // Sort substances alphabetically
-  const substances = Object.keys(props.data.substances).sort((a, b) => a.localeCompare(b));
 
-  const CHART_COLORS = {
-    lowRisk: 'rgba(43,101,111)',     // Cool blue
-    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange
-    highRisk: 'rgba(203, 67, 53, 0.7)'       // Deep red
-  };
+    const CHART_COLORS = {
+        lowRisk: 'rgba(43,101,111)',     // Cool blue
+        moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange
+        highRisk: 'rgba(203, 67, 53, 0.7)'       // Deep red
+    };
 
-  const datasets = [
-    {
-      label: 'Low Risk',
-      data: substances.map(substance => props.data.substances[substance]?.low || 0),
-      backgroundColor: CHART_COLORS.lowRisk,
-      borderColor: 'rgba(43,101,111, 1)',
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-    },
-    {
-      label: 'Moderate Risk',
-      data: substances.map(substance => props.data.substances[substance]?.moderate || 0),
-      backgroundColor: CHART_COLORS.moderateRisk,
-      borderColor: 'rgba(229, 149, 61, 1)',
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-    },
-    {
-      label: 'High Risk',
-      data: substances.map(substance => props.data.substances[substance]?.high || 0),
-      backgroundColor: CHART_COLORS.highRisk,
-      borderColor: 'rgba(203, 67, 53, 1)',
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-    },
-  ];
-
-  myChart = new Chart(chartCanvas.value, {
-    type: 'bar',
-    data: {
-      labels: substances,
-      datasets
-    },
-    options: {
-      scales: {
-        x: {
-          stacked: true,
-          grid: {
-            display: false
-          },
-          border: {
-            display: true,
-            color: 'rgba(43, 101, 111, 0.3)'
-          },
-          ticks: {
-            color: 'rgba(43, 101, 111, 0.8)'
-          }
+    const datasets = [
+        {
+            label: 'Low Risk',
+            data: Object.keys(props.data.substances)
+                .filter(substance => substance !== 'Any Drug')
+                .sort((a, b) => a.localeCompare(b))
+                .map(substance => props.data.substances[substance]?.low || 0),
+            backgroundColor: CHART_COLORS.lowRisk,
+            borderColor: 'rgba(43,101,111, 1)',
+            borderWidth: 1,
+            borderRadius: 8,
+            barPercentage: 0.8,
         },
-        y: {
-          stacked: true,
-          beginAtZero: true,
-          grid: {
-            display: false
-          },
-          border: {
-            display: true,
-            color: 'rgba(43, 101, 111, 0.3)'
-          },
-          ticks: {
-            color: 'rgba(43, 101, 111, 0.8)'
-          }
-        }
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            usePointStyle: true,
-            pointStyle: 'circle',
-            padding: 20,
-            color: 'rgba(43, 101, 111, 0.8)'
-          }
+        {
+            label: 'Moderate Risk',
+            data: Object.keys(props.data.substances)
+                .filter(substance => substance !== 'Any Drug')
+                .sort((a, b) => a.localeCompare(b))
+                .map(substance => props.data.substances[substance]?.moderate || 0),
+            backgroundColor: CHART_COLORS.moderateRisk,
+            borderColor: 'rgba(229, 149, 61, 1)',
+            borderWidth: 1,
+            borderRadius: 8,
+            barPercentage: 0.8,
         },
-        title: {
-          display: true,
-          text: chartTitle.value,
-          color: 'rgba(43, 101, 111, 0.8)',
-          font: {
-            size: 16,
-            weight: 'bold'
-          },
-          padding: {
-            top: 10,
-            bottom: 30
-          }
-        }
-      }
-    },
-  });
+        {
+            label: 'High Risk',
+            data: Object.keys(props.data.substances)
+                .filter(substance => substance !== 'Any Drug')
+                .sort((a, b) => a.localeCompare(b))
+                .map(substance => props.data.substances[substance]?.high || 0),
+            backgroundColor: CHART_COLORS.highRisk,
+            borderColor: 'rgba(203, 67, 53, 1)',
+            borderWidth: 1,
+            borderRadius: 8,
+            barPercentage: 0.8,
+        },
+    ];
+
+
+    myChart = new Chart(chartCanvas.value, {
+        type: 'bar',
+        data: {
+            labels: substances,
+            datasets
+        },
+        options: {
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: {
+                        display: false
+                    },
+                    border: {
+                        display: true,
+                        color: 'rgba(43, 101, 111, 0.3)'
+                    },
+                    ticks: {
+                        color: 'rgba(43, 101, 111, 0.8)'
+                    }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    },
+                    border: {
+                        display: true,
+                        color: 'rgba(43, 101, 111, 0.3)'
+                    },
+                    ticks: {
+                        color: 'rgba(43, 101, 111, 0.8)'
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 20,
+                        color: 'rgba(43, 101, 111, 0.8)'
+                    }
+                },
+                title: {
+                    display: true,
+                    text: chartTitle.value,
+                    color: 'rgba(43, 101, 111, 0.8)',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 30
+                    }
+                }
+            }
+        },
+    });
 };
 
 const handleSubstanceRiskClick = () => {
@@ -288,10 +307,11 @@ watch(() => props.data, () => {
 }, { immediate: true });
 
 onMounted(() => {
-  if (hasData.value && !props.isLoading) {
-    displayChart(activeButton.value);
-  }
+    if (hasData.value && !props.isLoading) {
+        displayChart(activeButton.value);
+    }
 });
+
 
 onMounted(() => {
   // Initialize all tooltips
