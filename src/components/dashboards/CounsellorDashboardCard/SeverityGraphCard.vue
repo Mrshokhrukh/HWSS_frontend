@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, watchEffect, onMounted, onBeforeUnmount } from 'vue';
 import Chart from 'chart.js/auto';
 
 const props = defineProps({
@@ -109,22 +109,26 @@ const chartOptions = {
 const getMeasurementForCardTitle = (screeningData, cardTitle) => {
     try {
         switch (cardTitle.toLowerCase()) {
-            case 'suicidal behavior': {
-                const phqData = typeof screeningData.phq_data === 'string' 
-                    ? JSON.parse(screeningData.phq_data) 
+             case 'suicidal behavior': {
+                const phqData = typeof screeningData.phq_data === 'string'
+                    ? JSON.parse(screeningData.phq_data)
                     : screeningData.phq_data;
-                
-                const suicidalQuestion = phqData?.responses?.[6];
-                const selectedOption = suicidalQuestion?.selectedOption || 'No Response';
-                
-                switch (selectedOption) {
-                    case 'Not at all': return 'None';
-                    case 'Several days': return 'Mild';
-                    case 'More than half the days': return 'Moderate';
-                    case 'Nearly everyday': return 'Severe';
-                    default: return null;
-                }
-            }
+
+                let hasSuicidalThoughts = false;
+                if (Array.isArray(phqData)) {
+                     const suicideQuestion = phqData.find(q =>
+                        q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+                    );
+                    hasSuicidalThoughts = suicideQuestion?.score >= 1;
+                } else if (phqData?.responses) {
+                     const suicideQuestion = phqData.responses.find(q =>
+                      q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+                  );
+                    hasSuicidalThoughts = suicideQuestion?.score >= 1;
+                  }
+
+                   return hasSuicidalThoughts ? 'Has Suicidal Thoughts' : null;
+              }
             case 'depression':
                 return screeningData.phq_interpretation || null;
             case 'anxiety':
@@ -161,8 +165,8 @@ const processChartData = () => {
         if (gender !== 'male' && gender !== 'female') return;
         
         const measurement = getMeasurementForCardTitle(screeningData, props.cardTitle);
-        
-        if (measurement && measurement !== 'No Data' && measurement !== 'No Response') {
+       
+        if (measurement && measurement !== 'No Data' && measurement !== 'No Response' && measurement !== 'Mild') {
             hasAnyValidData = true;
             if (gender === 'male') {
                 maleData[measurement] = (maleData[measurement] || 0) + 1;
@@ -178,32 +182,60 @@ const processChartData = () => {
         return null;
     }
 
+
     const allMeasurements = [...new Set([
         ...Object.keys(maleData),
         ...Object.keys(femaleData)
     ])].sort();
 
-    return {
-        labels: allMeasurements,
-        datasets: [
-            {
-                label: 'Male',
-                data: allMeasurements.map(measurement => maleData[measurement] || 0),
-                backgroundColor: `${maleColor}80`,  // 50% transparent
-                borderColor: maleColor,
-                borderWidth: 2,
-                borderRadius: 8
-            },
-            {
-                label: 'Female',
-                data: allMeasurements.map(measurement => femaleData[measurement] || 0),
-                backgroundColor: `${femaleColor}80`,  // 50% transparent
-                borderColor: femaleColor,
-                borderWidth: 2,
-                borderRadius: 8
-            }
-        ]
-    };
+       if(props.cardTitle === 'Suicidal Behavior'){
+       return {
+                labels: ['Has Suicidal Thoughts'],
+                datasets: [
+                    {
+                        label: 'Male',
+                        data: ['Has Suicidal Thoughts'].map(measurement => maleData[measurement] || 0),
+                        backgroundColor: `${maleColor}80`,
+                        borderColor: maleColor,
+                        borderWidth: 2,
+                        borderRadius: 8
+                    },
+                    {
+                        label: 'Female',
+                         data: ['Has Suicidal Thoughts'].map(measurement => femaleData[measurement] || 0),
+                        backgroundColor: `${femaleColor}80`,
+                        borderColor: femaleColor,
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }
+                ]
+            };
+
+    }else{
+
+        return {
+                labels: allMeasurements,
+                datasets: [
+                    {
+                        label: 'Male',
+                        data: allMeasurements.map(measurement => maleData[measurement] || 0),
+                        backgroundColor: `${maleColor}80`,
+                        borderColor: maleColor,
+                        borderWidth: 2,
+                        borderRadius: 8
+                    },
+                    {
+                        label: 'Female',
+                        data: allMeasurements.map(measurement => femaleData[measurement] || 0),
+                        backgroundColor: `${femaleColor}80`,
+                        borderColor: femaleColor,
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }
+                ]
+            };
+
+    }
 };
 
 const initializeChart = async () => {
@@ -215,16 +247,17 @@ const initializeChart = async () => {
     // Destroy existing chart if it exists
     if (chartInstance.value) {
         chartInstance.value.destroy();
+        chartInstance.value = null;
     }
-
+    
     const chartData = processChartData();
     if (!chartData) {
         chartDataReady.value = false;
         return;
     }
-
+    
     try {
-        const ctx = chartCanvas.value.getContext('2d');
+          const ctx = chartCanvas.value.getContext('2d');
         chartInstance.value = new Chart(ctx, {
             type: 'bar',
             data: chartData,
@@ -232,23 +265,18 @@ const initializeChart = async () => {
         });
         chartDataReady.value = true;
     } catch (error) {
-        console.error('Error initializing chart:', error);
-        chartDataReady.value = false;
+      console.error('Error initializing chart:', error);
+      chartDataReady.value = false;
     }
 };
 
 // Watch for changes in filteredData
-watchEffect(() => {
-    if (props.filteredData) {
-        nextTick(() => {
-            initializeChart();
-        });
-    }
+watchEffect(async () => {
+    initializeChart();
 });
 
 // Initialize on mount
 onMounted(async () => {
-    await nextTick();
     initializeChart();
 });
 
@@ -260,7 +288,6 @@ onBeforeUnmount(() => {
     }
 });
 </script>
-
 <style scoped>
 .card {
     border: none;

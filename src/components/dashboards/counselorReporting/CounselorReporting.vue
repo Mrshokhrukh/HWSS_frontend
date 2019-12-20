@@ -14,20 +14,19 @@
             placeholder="Select Report Type" class="w-100" />
         </div>
         <div class="col-12 col-md-4">
-          <Button label="Bulk Download All" @click="bulkDownload" class="btn hwss-btn w-100" icon="pi pi-download" />
+          <Button label="Download Excel" @click="downloadExcelWithZip" class="btn hwss-btn w-100" icon="pi pi-download" />
         </div>
       </div>
 
       <!-- General Report Table (for school/clinical counselors) -->
-      <div
-        v-if="(selectedOption === 'generalReport' && isSchoolCounselor) || (selectedOption === 'generalReport' && isClinicalCounselor)"
-        class="table-container">
-        <DataTable :value="filteredReportData" :paginator="true" :rows="10" :resizableColumns="true"
-          sortField="username" :sortOrder="1" class="custom-table">
-
+      <div v-if="(selectedOption === 'generalReport' && isSchoolCounselor) ||
+        (selectedOption === 'generalReport' && isClinicalCounselor)
+        " class="table-container">
+        <DataTable :value="filteredReportData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
+          :sortOrder="1" class="custom-table">
           <!-- Display user-related columns -->
-          <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
-            :sortable="true" :style="field.width ? { width: field.width } : {}">
+          <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
+            :style="field.width ? { width: field.width } : {}">
             <template #body="{ data }">
               <template v-if="field.key === 'suicidal_score'">
                 <Tag class="w-100" :value="data[field.key]" :severity="getSuicideSeverityClass(data[field.key])" />
@@ -100,7 +99,6 @@
               <span>{{ data[field.key] || 'None' }}</span>
             </template>
           </Column>
-
         </DataTable>
 
         <!-- Display message if no reports found -->
@@ -114,12 +112,10 @@
         <SchoolEnvironmentTable />
       </div>
 
-
       <!-- Gyalsung Report Table (for gyalsung counselors) -->
       <div v-if="isGyalsungCounselor" class="table-container">
         <DataTable :value="filteredGyalsungData" :paginator="true" :rows="10" :resizableColumns="true"
           sortField="username" :sortOrder="1" class="custom-table">
-
           <!-- Display user-related columns for Gyalsung reports -->
           <Column v-for="field in gyalsungTableFields" :key="field.key" :field="field.key" :header="field.header"
             :sortable="true" :style="field.width ? { width: field.width } : {}">
@@ -157,14 +153,12 @@
           </Column>
           <Column field="inhalants_flag" header="Inhalants" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.inhalants_flag || 'None'"
-                :severity="severityClass(data.inhalants_flag)" />
+              <Tag class="w-100" :value="data.inhalants_flag || 'None'" :severity="severityClass(data.inhalants_flag)" />
             </template>
           </Column>
           <Column field="sedatives_flag" header="Sedatives" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.sedatives_flag || 'None'"
-                :severity="severityClass(data.sedatives_flag)" />
+              <Tag class="w-100" :value="data.sedatives_flag || 'None'" :severity="severityClass(data.sedatives_flag)" />
             </template>
           </Column>
           <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
@@ -178,7 +172,6 @@
               <Tag class="w-100" :value="data.opioids_flag || 'None'" :severity="severityClass(data.opioids_flag)" />
             </template>
           </Column>
-
         </DataTable>
 
         <!-- Display message if no reports found -->
@@ -190,17 +183,14 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
-import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
-import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue';
 import { saveAs } from 'file-saver';
-import { jsPDF } from 'jspdf';
 import * as XLSX from 'xlsx';
-import 'jspdf-autotable';
+import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue';
+import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
 
 // Data refs
 const reportData = ref([]);
@@ -212,11 +202,10 @@ const isSchoolCounselor = ref(false);
 const selectedOption = ref('generalReport');
 const options = [
   { label: 'General Report', value: 'generalReport' },
-  { label: 'School', value: 'school' }
+  { label: 'School', value: 'school' },
 ];
 
 const tableFields = [
-  // { key: 'username', header: 'Username' },
   { key: 'full_name', header: 'Full Name' },
   { key: 'gender', header: 'Gender' },
   { key: 'dob', header: 'Date of Birth' },
@@ -226,7 +215,7 @@ const tableFields = [
   { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
   { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
   { key: 'suicidal_score', header: 'Suicidal Score', taggable: true, style: { maxWidth: '150px' } },
-  { key: 'ace_score', header: 'ACE Score', taggable: true }
+  { key: 'ace_score', header: 'ACE Score', taggable: true },
 ];
 
 const tableServiceFields = [
@@ -247,7 +236,7 @@ const gyalsungTableFields = [
   { key: 'academy_code', header: 'Academy Code' },
   { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
   { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
-  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true }
+  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true },
 ];
 
 // Transform the main dataset to match the table structure
@@ -279,7 +268,7 @@ const transformData = (item) => {
     counseling: item.counseling || 'None',
     follow_up: item.follow_up || 'None',
     referred: item.referred || 'None',
-    ...substances
+    ...substances,
   };
 };
 
@@ -296,21 +285,21 @@ const transformGyalsungData = (item) => {
     academy_code: screeningData.academy_code || 'None',
     phq9_score: screeningData.phq9_score || 'None',
     gad7_score: screeningData.gad7_score || 'None',
-    suicidal_score: screeningData.suicidal_score || 'None'
+    suicidal_score: screeningData.suicidal_score || 'None',
   };
 };
 
 const extractSubstances = (item) => {
   const substanceMapping = {
-    "Tobacco products (cigarettes, chewing tobacco etc)": "tobacco_flag",
-    "Alcoholic beverages (beer, wine, spirits, ara etc.)": "alcohol_flag",
-    "Cannabis (marijuana, pot, grass, hash, black etc.)": "cannabis_flag",
-    "Cocaine": "cocaine_flag",
-    "Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)": "amphetamine_flag",
-    "Inhalants (dendrite, glue, petrol, paint thinner, etc.)": "inhalants_flag",
-    "Sedatives or Sleeping Pills (N-10, diazepam etc.)": "sedatives_flag",
-    "Hallucinogens (LSD, trips, Ketamine, etc.)": "hallucinogens_flag",
-    "Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)": "opioids_flag"
+    'Tobacco products (cigarettes, chewing tobacco etc)': 'tobacco_flag',
+    'Alcoholic beverages (beer, wine, spirits, ara etc.)': 'alcohol_flag',
+    'Cannabis (marijuana, pot, grass, hash, black etc.)': 'cannabis_flag',
+    'Cocaine': 'cocaine_flag',
+    'Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)': 'amphetamine_flag',
+    'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': 'inhalants_flag',
+    'Sedatives or Sleeping Pills (N-10, diazepam etc.)': 'sedatives_flag',
+    'Hallucinogens (LSD, trips, Ketamine, etc.)': 'hallucinogens_flag',
+    'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': 'opioids_flag',
   };
 
   const result = {};
@@ -319,7 +308,7 @@ const extractSubstances = (item) => {
   const processSubstanceArray = (substances) => {
     if (!Array.isArray(substances)) return;
 
-    substances.forEach(substance => {
+    substances.forEach((substance) => {
       const mappedKey = substanceMapping[substance.substance_name];
       if (mappedKey) {
         result[mappedKey] = mapSeverity(substance.risk_flag);
@@ -378,9 +367,9 @@ const extractSuicidalScore = (phqData) => {
     }
 
     if (responses) {
-      const suicideQuestion = responses.find(item =>
+      const suicideQuestion = responses.find((item) =>
         item.question?.toLowerCase().includes('thoughts that you would be better off dead') ||
-        item.question?.toLowerCase().includes('hurting yourself')
+        item.question?.toLowerCase().includes('hurting yourself'),
       );
 
       if (suicideQuestion) {
@@ -413,18 +402,90 @@ const getSuicideSeverityClass = (value) => {
   return 'success';
 };
 
-// Bulk download function
-const bulkDownload = async () => {
+
+// Function to generate Excel
+const generateExcel = async () => {
+  let excelData;
+
+  if (selectedOption.value === 'generalReport' && (isSchoolCounselor.value || isClinicalCounselor.value)) {
+    excelData = filteredReportData.value.map(item => {
+      return {
+        'Full Name': item.full_name,
+        'Gender': item.gender,
+        'Date of Birth': item.dob,
+        'Identity Number': item.identity_number,
+        'Mobile Number': item.mobile_number,
+        'Present Village': item.ps_add_village,
+        'PHQ-9 Score': item.phq9_score,
+        'GAD-7 Score': item.gad7_score,
+        'Suicidal Score': item.suicidal_score,
+        'ACE Score': item.ace_score,
+        'Tobacco': severityText(item.tobacco_flag || 'None'),
+        'Alcohol': severityText(item.alcohol_flag || 'None'),
+        'Cannabis': severityText(item.cannabis_flag || 'None'),
+        'Cocaine': severityText(item.cocaine_flag || 'None'),
+        'Amphetamines': severityText(item.amphetamine_flag || 'None'),
+        'Inhalants': severityText(item.inhalants_flag || 'None'),
+        'Sedatives': severityText(item.sedatives_flag || 'None'),
+        'Hallucinogens': severityText(item.hallucinogens_flag || 'None'),
+        'Opioids': severityText(item.opioids_flag || 'None'),
+        'Assessment Status': item.assessment_status,
+        'Case Status': item.case_status,
+        'Counseling Status': item.counseling,
+        'Follow Up Status': item.follow_up,
+        'Referral Status': item.referred
+      };
+    });
+  } else if (isGyalsungCounselor.value) {
+    excelData = filteredGyalsungData.value.map(item => {
+      return {
+        'Username': item.username,
+        'Full Name': item.full_name,
+        'Gender': item.gender,
+        'Date of Birth': item.dob,
+        'Identity Number': item.identity_number,
+        'Mobile Number': item.mobile_number,
+        'Academy Code': item.academy_code,
+        'PHQ-9 Score': item.phq9_score,
+        'GAD-7 Score': item.gad7_score,
+        'Suicidal Score': item.suicidal_score,
+        'Tobacco': item.tobacco_flag || 'None',
+        'Alcohol': item.alcohol_flag || 'None',
+        'Cannabis': item.cannabis_flag || 'None',
+        'Cocaine': item.cocaine_flag || 'None',
+        'Amphetamines': item.amphetamine_flag || 'None',
+        'Inhalants': item.inhalants_flag || 'None',
+        'Sedatives': item.sedatives_flag || 'None',
+        'Hallucinogens': item.hallucinogens_flag || 'None',
+        'Opioids': item.opioids_flag || 'None',
+      }
+    });
+  } else {
+    excelData = [];
+  }
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Reports');
+  const excelArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  return new Blob([excelArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+// Function to generate password dynamically for zip
+const getPassword = () => {
+  const { username } = JSON.parse(localStorage.getItem('userDetailsStore'))?.user || { username: 'defaultUser' };
+  return `${username}@${new Date().getFullYear()}#`;
+};
+
+// Function to download Excel with zip
+const downloadExcelWithZip = async () => {
   try {
+    const excelBlob = await generateExcel();
     const blobWriter = new BlobWriter("application/zip");
     const zipWriter = new ZipWriter(blobWriter, {
       password: getPassword(),
       encryptionStrength: 3
     });
 
-    const pdfBlob = await generatePDF();
-    const excelBlob = await generateExcel();
-    await zipWriter.add("reports.pdf", new BlobReader(pdfBlob));
     await zipWriter.add("reports.xlsx", new BlobReader(excelBlob));
     await zipWriter.close();
 
@@ -433,43 +494,9 @@ const bulkDownload = async () => {
 
     saveAs(zipBlob, fileName);
   } catch (error) {
-    console.error("Error in bulkDownload:", error);
+    console.error('Error in downloading zipped excel file', error);
   }
-};
-
-// Function to generate PDF
-const generatePDF = async () => {
-  const doc = new jsPDF();
-  doc.text("Report Data", 10, 10);
-
-  const headers = Object.keys(reportData.value[0] || {}).map(key => key.toUpperCase());
-  const rows = reportData.value.map(item => headers.map(header => item[header.toLowerCase()]));
-
-  doc.autoTable({
-    head: [headers],
-    body: rows,
-  });
-
-  return new Promise((resolve) => {
-    resolve(doc.output('blob'));
-  });
-};
-
-// Function to generate Excel
-const generateExcel = async () => {
-  const ws = XLSX.utils.json_to_sheet(reportData.value);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Reports");
-
-  const excelArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  return new Blob([excelArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-};
-
-// Function to generate password dynamically for zip
-const getPassword = () => {
-  const { username } = JSON.parse(localStorage.getItem('userDetailsStore'))?.user || { username: 'defaultUser' };
-  return `${username}@${new Date().getFullYear()}#`;
-};
+}
 
 // Determine user role and fetch data accordingly
 const getUserDetailsFromStorage = () => {
@@ -481,7 +508,6 @@ const getUserDetailsFromStorage = () => {
 
   try {
     const userDetails = JSON.parse(userDetailsString);
-    console.log('UserDetails:', userDetails);
     return {
       agencyName: userDetails?.agency?.agencyName || 'Unknown Agency',
       role: userDetails?.user?.role || 'unknown',
@@ -500,26 +526,26 @@ const filteredReportData = computed(() => {
 
   const searchTerm = globalFilter.value.toLowerCase().trim();
 
-  return reportData.value.filter(item => {
+  return reportData.value.filter((item) => {
     // Search through all relevant fields
     return (
       // Basic info
-      (item.full_name?.toLowerCase().includes(searchTerm)) ||
-      (item.username?.toLowerCase().includes(searchTerm)) ||
-      (item.identity_number?.toLowerCase().includes(searchTerm)) ||
-      (item.mobile_number?.toLowerCase().includes(searchTerm)) ||
-      (item.ps_add_village?.toLowerCase().includes(searchTerm)) ||
+      item.full_name?.toLowerCase().includes(searchTerm) ||
+      item.username?.toLowerCase().includes(searchTerm) ||
+      item.identity_number?.toLowerCase().includes(searchTerm) ||
+      item.mobile_number?.toLowerCase().includes(searchTerm) ||
+      item.ps_add_village?.toLowerCase().includes(searchTerm) ||
       // Scores
-      (item.phq9_score?.toLowerCase().includes(searchTerm)) ||
-      (item.gad7_score?.toLowerCase().includes(searchTerm)) ||
-      (item.suicidal_score?.toLowerCase().includes(searchTerm)) ||
-      (item.ace_score?.toLowerCase().includes(searchTerm)) ||
+      item.phq9_score?.toLowerCase().includes(searchTerm) ||
+      item.gad7_score?.toLowerCase().includes(searchTerm) ||
+      item.suicidal_score?.toLowerCase().includes(searchTerm) ||
+      item.ace_score?.toLowerCase().includes(searchTerm) ||
       // Status fields
-      (item.assessment_status?.toLowerCase().includes(searchTerm)) ||
-      (item.case_status?.toLowerCase().includes(searchTerm)) ||
-      (item.counseling?.toLowerCase().includes(searchTerm)) ||
-      (item.follow_up?.toLowerCase().includes(searchTerm)) ||
-      (item.referred?.toLowerCase().includes(searchTerm))
+      item.assessment_status?.toLowerCase().includes(searchTerm) ||
+      item.case_status?.toLowerCase().includes(searchTerm) ||
+      item.counseling?.toLowerCase().includes(searchTerm) ||
+      item.follow_up?.toLowerCase().includes(searchTerm) ||
+      item.referred?.toLowerCase().includes(searchTerm)
     );
   });
 });
@@ -531,16 +557,16 @@ const filteredGyalsungData = computed(() => {
 
   const searchTerm = globalFilter.value.toLowerCase().trim();
 
-  return gyalsungData.value.filter(item => {
+  return gyalsungData.value.filter((item) => {
     return (
-      (item.username?.toLowerCase().includes(searchTerm)) ||
-      (item.full_name?.toLowerCase().includes(searchTerm)) ||
-      (item.identity_number?.toLowerCase().includes(searchTerm)) ||
-      (item.mobile_number?.toLowerCase().includes(searchTerm)) ||
-      (item.academy_code?.toLowerCase().includes(searchTerm)) ||
-      (item.phq9_score?.toLowerCase().includes(searchTerm)) ||
-      (item.gad7_score?.toLowerCase().includes(searchTerm)) ||
-      (item.suicidal_score?.toLowerCase().includes(searchTerm))
+      item.username?.toLowerCase().includes(searchTerm) ||
+      item.full_name?.toLowerCase().includes(searchTerm) ||
+      item.identity_number?.toLowerCase().includes(searchTerm) ||
+      item.mobile_number?.toLowerCase().includes(searchTerm) ||
+      item.academy_code?.toLowerCase().includes(searchTerm) ||
+      item.phq9_score?.toLowerCase().includes(searchTerm) ||
+      item.gad7_score?.toLowerCase().includes(searchTerm) ||
+      item.suicidal_score?.toLowerCase().includes(searchTerm)
     );
   });
 });
@@ -550,30 +576,25 @@ const fetchReportDataFromAPI = async () => {
   try {
     const response = await axios.get(endpoints.newServiceAndTreatment);
     const dataArray = response.data || [];
-    console.log('API Data:', dataArray);
 
     const { agencyName } = getUserDetailsFromStorage();
     const currentYear = new Date().getFullYear();
-    console.log('Agency Name from LocalStorage:', agencyName, 'Current Year:', currentYear);
 
     // Filter and transform the data
     reportData.value = dataArray
-      .filter(item => {
+      .filter((item) => {
         const agencyMatch =
           item.user?.active_agency?.agency_name?.trim().toLowerCase() === agencyName.trim().toLowerCase();
         const screeningDate = item.screening_data?.submission_date;
         const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-        console.log('Agency Match:', agencyMatch, 'Screening Date:', screeningDate, 'Submission Year:', submissionYear);
 
         return agencyMatch && submissionYear === currentYear;
       })
       .map(transformData);
 
-    console.log('Filtered Results:', reportData.value);
-
     if (isGyalsungCounselor.value) {
       gyalsungData.value = dataArray
-        .filter(item => {
+        .filter((item) => {
           const agencyMatch =
             item.user?.active_agency?.agency_name?.trim().toLowerCase() === agencyName.trim().toLowerCase();
           const screeningDate = item.screening_data?.submission_date;
@@ -593,7 +614,7 @@ const severityText = (value) => {
     blue: 'Mild',
     green: 'None',
     yellow: 'Moderate',
-    grey: 'None'
+    grey: 'None',
   };
   return textMapping[value] || 'None';
 };
@@ -604,7 +625,7 @@ const severityClass = (value) => {
     blue: 'info',
     green: 'success',
     yellow: 'warning',
-    grey: 'secondary'
+    grey: 'secondary',
   };
   return severityMapping[value] || 'secondary';
 };
@@ -622,10 +643,7 @@ onMounted(() => {
 
   fetchReportDataFromAPI();
 });
-
 </script>
-
-
 
 <style scoped>
 .card-container {
