@@ -35,6 +35,7 @@ const chartCanvas = ref(null);
 const chartInstance = ref(null);
 const chartDataReady = ref(false);
 const hasValidData = ref(false);
+const chartType = ref('bar') //Default chart type
 
 const maleColor = '#2B656F';
 const femaleColor = '#64ac99';
@@ -66,7 +67,15 @@ const chartOptions = {
             usePointStyle: true,
             titleFont: {
                 weight: 'bold'
-            }
+            },
+             callbacks: {
+                  label: (context) => {
+                        const value = context.dataset.data[context.dataIndex];
+                        const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                        return `${context.dataset.label}: ${value} (${percentage}%)`;
+                    }
+                }
         }
     },
     scales: {
@@ -182,13 +191,13 @@ const processChartData = () => {
         return null;
     }
 
-
     const allMeasurements = [...new Set([
         ...Object.keys(maleData),
         ...Object.keys(femaleData)
     ])].sort();
 
-       if(props.cardTitle === 'Suicidal Behavior'){
+     if(props.cardTitle === 'Suicidal Behavior'){
+          chartType.value = 'bar'
        return {
                 labels: ['Has Suicidal Thoughts'],
                 datasets: [
@@ -212,7 +221,8 @@ const processChartData = () => {
             };
 
     }else{
-
+          chartType.value = allMeasurements.length > 1 ? 'bar' : 'doughnut'
+         
         return {
                 labels: allMeasurements,
                 datasets: [
@@ -259,10 +269,10 @@ const initializeChart = async () => {
     try {
           const ctx = chartCanvas.value.getContext('2d');
         chartInstance.value = new Chart(ctx, {
-            type: 'bar',
+            type: chartType.value,
             data: chartData,
-            options: chartOptions
-        });
+             options: chartOptions
+         });
         chartDataReady.value = true;
     } catch (error) {
       console.error('Error initializing chart:', error);
@@ -288,6 +298,7 @@ onBeforeUnmount(() => {
     }
 });
 </script>
+
 <style scoped>
 .card {
     border: none;

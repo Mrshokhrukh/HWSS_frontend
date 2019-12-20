@@ -89,8 +89,7 @@
     </div>
 
     <!-- Second Modal - Detailed User Report -->
-    <Dialog v-model:visible="showUserDetailsModal" :modal="true" :header="false" :closable="false"
-      class="detailed-modal">
+    <Dialog v-model:visible="showUserDetailsModal" :modal="true" :header="false" :closable="false" class="detailed-modal">
       <div class="detailed-modal-content">
         <div class="detailed-modal-header">
           <div class="patient-info">
@@ -112,7 +111,7 @@
           <div class="content-grid">
             <!-- Patient Information Card -->
             <div class="info-section">
-              <div class="info-card">
+              <div class="info-card h-100">
                 <h4>Basic Information</h4>
                 <div class="info-list">
                   <div class="info-item">
@@ -149,7 +148,7 @@
 
             <!-- Assessment Results -->
             <div class="assessment-section">
-              <div class="assessment-card mental-health">
+              <div class="assessment-card mental-health h-100">
                 <h4>Mental Health Assessment</h4>
                 <div class="assessment-grid">
                   <div class="assessment-item"
@@ -191,39 +190,6 @@
                     </div>
                     <div class="item-score">
                       Score: {{ selectedUserForDetails?.screening_data?.ace_score || 'N/A' }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Substance Use Assessment -->
-              <div class="assessment-card substance-use">
-                <h4>Substance Use Assessment</h4>
-                <div class="substance-grid">
-                  <template v-if="selectedUserForDetails?.screening_data?.assist_data">
-                    <div
-                      v-for="(value, key) in filterNonInjectionSubstances(selectedUserForDetails.screening_data.assist_data)"
-                      :key="key" class="substance-item" :class="getRiskClass(value.measurement)">
-                      <div class="substance-header">
-                        <i class="fas fa-flask"></i>
-                        <h5>{{ formatSubstanceName(key) }}</h5>
-                      </div>
-                      <div class="substance-risk" :class="getRiskTextClass(value.measurement)">
-                        {{ value.measurement }}
-                      </div>
-                    </div>
-                  </template>
-
-                  <div v-if="selectedUserForDetails?.screening_data?.assist_data?.injection_measurement"
-                    class="substance-item injection-item"
-                    :class="getRiskClass(selectedUserForDetails.screening_data.assist_data.injection_measurement)">
-                    <div class="substance-header">
-                      <i class="fas fa-syringe"></i>
-                      <h5>Injection Usage</h5>
-                    </div>
-                    <div class="substance-risk"
-                      :class="getRiskTextClass(selectedUserForDetails.screening_data.assist_data.injection_measurement)">
-                      {{ selectedUserForDetails.screening_data.assist_data.injection_measurement }}
                     </div>
                   </div>
                 </div>
@@ -354,11 +320,11 @@ const getScoreForCard = (user) => {
   switch (props.cardTitle.toLowerCase()) {
     case 'suicidal behavior': {
       try {
-         const phqData = JSON.parse(screeningData.phq_data);
-         const suicidalQuestion = phqData.responses.find(q =>
+        const phqData = JSON.parse(screeningData.phq_data);
+        const suicidalQuestion = phqData.responses.find(q =>
           q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
         );
-         return suicidalQuestion?.selectedOption || 'N/A';
+        return suicidalQuestion?.selectedOption || 'N/A';
       } catch (e) {
         return 'N/A';
       }
@@ -397,52 +363,52 @@ const getUsersForSeverity = computed(() => {
     let measurement = '';
     let hasSuicidalThoughts = false;
     switch (cardTitleLower) {
-          case 'suicidal behavior': {
-              try {
-                const phqDataString = screeningData.phq_data;
-                 const phqData = typeof phqDataString === 'string'
-                    ? JSON.parse(phqDataString)
-                    : phqDataString;
+      case 'suicidal behavior': {
+        try {
+          const phqDataString = screeningData.phq_data;
+          const phqData = typeof phqDataString === 'string'
+            ? JSON.parse(phqDataString)
+            : phqDataString;
 
 
-                if (Array.isArray(phqData)) {
-                    const suicideQuestion = phqData.find(q =>
-                      q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-                    );
-                    hasSuicidalThoughts = suicideQuestion?.score >= 1;
-                  } else if (phqData?.responses) {
-                    const suicideQuestion = phqData.responses.find(q =>
-                      q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-                    );
-                     hasSuicidalThoughts = suicideQuestion?.score >= 1;
-                  }
-
-                    if(hasSuicidalThoughts){
-                        measurement = 'Has Suicidal Thoughts'
-                     }
-
-              } catch (e) {
-                  console.error("error in filtering suicidal data", e);
-              }
-                 break;
-         }
-         case 'depression': {
-              measurement = screeningData.phq_interpretation || null;
-                break;
-            }
-         case 'anxiety': {
-              measurement = screeningData.gad_interpretation || null;
-              break;
+          if (Array.isArray(phqData)) {
+            const suicideQuestion = phqData.find(q =>
+              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            );
+            hasSuicidalThoughts = suicideQuestion?.score >= 1;
+          } else if (phqData?.responses) {
+            const suicideQuestion = phqData.responses.find(q =>
+              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            );
+            hasSuicidalThoughts = suicideQuestion?.score >= 1;
           }
 
-          case 'ace': {
-                measurement = screeningData.ace_interpretation || null;
-                break;
-            }
-           default:
-             return false;
+          if (hasSuicidalThoughts) {
+            measurement = 'Has Suicidal Thoughts'
+          }
+
+        } catch (e) {
+          console.error("error in filtering suicidal data", e);
+        }
+        break;
       }
-      return measurement === selectedData.value.text;
+      case 'depression': {
+        measurement = screeningData.phq_interpretation || null;
+        break;
+      }
+      case 'anxiety': {
+        measurement = screeningData.gad_interpretation || null;
+        break;
+      }
+
+      case 'ace': {
+        measurement = screeningData.ace_interpretation || null;
+        break;
+      }
+      default:
+        return false;
+    }
+    return measurement === selectedData.value.text;
   });
 });
 
@@ -459,17 +425,17 @@ const closeModal = () => {
 };
 
 const processedIndicators = computed(() => {
-    const cardTitleLower = props.cardTitle?.trim().toLowerCase();
-    const counts = props.severityCounts[props.cardTitle] || {};
+  const cardTitleLower = props.cardTitle?.trim().toLowerCase();
+  const counts = props.severityCounts[props.cardTitle] || {};
 
-    return Object.entries(counts)
-        .map(([text, count]) => ({
-          text,
-          count,
-          color: getSeverityColor(text),
-          icon: getSeverityIcon(text)
-        }))
-        .sort((a, b) => getSeverityOrder(a.text) - getSeverityOrder(b.text));
+  return Object.entries(counts)
+    .map(([text, count]) => ({
+      text,
+      count,
+      color: getSeverityColor(text),
+      icon: getSeverityIcon(text)
+    }))
+    .sort((a, b) => getSeverityOrder(a.text) - getSeverityOrder(b.text));
 });
 
 const getSeverityColor = (value) => {
@@ -480,12 +446,12 @@ const getSeverityColor = (value) => {
     'moderate': '#ffc107',
     'mild': '#0dcaf0',
     'minimal': '#198754',
-     'nearly everyday': '#dc3545',
+    'nearly everyday': '#dc3545',
     'more than half the days': '#ffc107',
     'several days': '#0dcaf0',
     'not at all': '#198754',
-     'has suicidal thoughts': '#dc3545',
-     'has risk': '#ffc107'
+    'has suicidal thoughts': '#dc3545',
+    'has risk': '#ffc107'
   };
 
   return colorMap[lowerValue] || '#6c757d';
@@ -511,20 +477,20 @@ const getSeverityIcon = (value) => {
 };
 
 const getSeverityOrder = (value) => {
-   const orderMap = {
-        'severe': 1,
-        'moderately severe': 2,
-        'moderate': 3,
-        'mild': 4,
-        'minimal': 5,
-         'nearly everyday': 1,
-        'more than half the days': 2,
-        'several days': 3,
-        'not at all': 4,
-        'has suicidal thoughts': 1,
-        'has risk': 2
-      };
-      return orderMap[value.toLowerCase()] || 99;
+  const orderMap = {
+    'severe': 1,
+    'moderately severe': 2,
+    'moderate': 3,
+    'mild': 4,
+    'minimal': 5,
+    'nearly everyday': 1,
+    'more than half the days': 2,
+    'several days': 3,
+    'not at all': 4,
+    'has suicidal thoughts': 1,
+    'has risk': 2
+  };
+  return orderMap[value.toLowerCase()] || 99;
 };
 </script>
 
@@ -994,7 +960,6 @@ button {
 
 .detailed-modal-content {
   background: #f8fafc;
-  height: 90vh;
   display: flex;
   flex-direction: column;
 }
