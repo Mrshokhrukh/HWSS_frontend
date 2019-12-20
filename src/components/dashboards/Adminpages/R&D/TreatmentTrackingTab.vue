@@ -114,6 +114,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { groupBy } from 'lodash';
+import VueApexCharts from 'vue3-apexcharts';
 
 const props = defineProps({
     filteredData: {
@@ -469,7 +470,6 @@ const referralFlowSeries = computed(() => {
             referralData[key] = (referralData[key] || 0) + 1;
         }
     });
-
 
     const sortedData = Object.entries(referralData)
         .sort(([, a], [, b]) => b - a)

@@ -276,6 +276,7 @@ const dzongkhagDistributionChartOptions = ref({
 });
 
 
+
 const dzongkhagDistributionChartSeries = computed(() => {
     const dzongkhagCounts = {};
 
@@ -300,6 +301,7 @@ const dzongkhagDistributionChartSeries = computed(() => {
         data: sortedDzongkhags.map(dzongkhag => dzongkhagCounts[dzongkhag])
     }];
 });
+
 
 
 function validateLocation(location) {
