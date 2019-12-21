@@ -602,7 +602,7 @@ const getDzongkhagRegion = (dzongkhag) => {
 
 const filteredData = computed(() => {
     if (!serviceAndTreatmentData.value) {
-        console.log('No service and treatment data available');
+        // console.log('No service and treatment data available');
         return [];
     }
 

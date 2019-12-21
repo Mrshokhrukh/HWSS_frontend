@@ -20,8 +20,8 @@
               <div class="filter-grid">
                 <div class="filter-item">
                   <label class="filter-label">Year</label>
-                  <Dropdown v-model="filters.year" :options="availableYears" optionLabel="name"
-                    placeholder="Select Year" class="w-full" :filter="true" :showClear="true">
+                  <Dropdown v-model="filters.year" :options="availableYears" optionLabel="name" placeholder="Select Year"
+                    class="w-full" :filter="true" :showClear="true">
                     <template #value="slotProps">
                       <div class="dropdown-value">
                         <i class="pi pi-calendar mr-2"></i>
@@ -187,8 +187,7 @@
               </div>
 
               <div class="filter-actions">
-                <Button label="Reset Filters" icon="pi pi-refresh" severity="secondary" outlined
-                  @click="resetFilters" />
+                <Button label="Reset Filters" icon="pi pi-refresh" severity="secondary" outlined @click="resetFilters" />
                 <Button label="Apply Filters" icon="pi pi-check" severity="primary" @click="applyFilters"
                   :loading="isLoading" />
               </div>
@@ -248,13 +247,11 @@ import MultiSelect from 'primevue/multiselect';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
 import Panel from 'primevue/panel';
-// import ProgressSpinner from 'primevue/progressspinner'; // Removed as it's not used currently
 import RndDataDisplay from './RndDataDisplay.vue';
 import RnDChartTables from './RnDChartTables.vue';
 import RNDmap from './overview/RNDmap.vue';
 import TabView from 'primevue/tabview';
 import TabPanel from 'primevue/tabpanel';
-// import Card from 'primevue/card'; // Removed as it's used in SummaryMetrics.vue
 import AnalysisTab from './AnalysisTab.vue'
 import DemographicsTab from './DemographicsTab.vue';
 import AssessmentResultsTab from './AssessmentResultsTab.vue';
@@ -262,7 +259,7 @@ import SubstanceUseRisktab from './SubstanceUseRisktab.vue';
 import AdvancedAnalyticsTab from './AdvancedAnalyticsTab.vue';
 import TreatmentTrackingTab from './TreatmentTrackingTab.vue';
 import DataExportReportingtab from './DataExport&Reportingtab.vue';
-import SummaryMetrics from './SummaryMetrics.vue'; // Import the SummaryMetrics component
+import SummaryMetrics from './SummaryMetrics.vue';
 
 // Inject the provided data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
@@ -1390,9 +1387,7 @@ onMounted(() => {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Add these styles to your existing <style scoped> section */
-
-/* TabView customization */
+/* TabView Layout Enhancement */
 :deep(.p-tabview) {
   background: white;
   border-radius: 12px;
@@ -1403,24 +1398,86 @@ onMounted(() => {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   border: none;
   border-radius: 12px 12px 0 0;
-  padding: 0.5rem 1rem 0 1rem;
-  width: 100%; /* Explicitly set the width */
+  padding: 0.25rem 0.5rem 0 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  justify-content: space-between;
+  overflow-x: auto;
+}
 
+/* Hide scrollbar for Chrome, Safari and Opera */
+:deep(.p-tabview .p-tabview-nav::-webkit-scrollbar) {
+  display: none;
 }
 
 :deep(.p-tabview .p-tabview-nav li) {
-  margin-right: 4px;
+  margin: 0;
+  flex: 0 0 auto;
 }
 
 :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
   background: transparent;
   border: none;
-  border-radius: 8px 8px 0 0;
-  padding: 1rem 1.5rem;
+  border-radius: 6px 6px 0 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.8);
   transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
 }
+
+/* Add icons to tabs for better visual hierarchy */
+:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link::before) {
+  font-family: 'PrimeIcons';
+  font-size: 1rem;
+}
+
+:deep(.p-tabview .p-tabview-nav li:nth-child(1) .p-tabview-nav-link::before) {
+  content: "\e901";
+}
+
+/* Overview */
+:deep(.p-tabview .p-tabview-nav li:nth-child(2) .p-tabview-nav-link::before) {
+  content: "\e928";
+}
+
+/* Analysis */
+:deep(.p-tabview .p-tabview-nav li:nth-child(3) .p-tabview-nav-link::before) {
+  content: "\e92d";
+}
+
+/* Demographics */
+:deep(.p-tabview .p-tabview-nav li:nth-child(4) .p-tabview-nav-link::before) {
+  content: "\e90b";
+}
+
+/* Assessment Results */
+:deep(.p-tabview .p-tabview-nav li:nth-child(5) .p-tabview-nav-link::before) {
+  content: "\e925";
+}
+
+/* Substance Use Risk */
+:deep(.p-tabview .p-tabview-nav li:nth-child(6) .p-tabview-nav-link::before) {
+  content: "\e92c";
+}
+
+/* Advanced Analytics */
+:deep(.p-tabview .p-tabview-nav li:nth-child(7) .p-tabview-nav-link::before) {
+  content: "\e90c";
+}
+
+/* Treatment Tracking */
+:deep(.p-tabview .p-tabview-nav li:nth-child(8) .p-tabview-nav-link::before) {
+  content: "\e90d";
+}
+
+/* Data Export */
 
 :deep(.p-tabview .p-tabview-nav li:not(.p-highlight):not(.p-disabled):hover .p-tabview-nav-link) {
   background: rgba(255, 255, 255, 0.1);
@@ -1434,26 +1491,61 @@ onMounted(() => {
   color: #2097ac;
 }
 
-:deep(.p-tabview .p-tabview-panels) {
-  padding: 2rem;
-  background: white;
-  border-radius: 0 0 12px 12px;
-}
-
-:deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link:focus) {
-  box-shadow: none;
-  outline: none;
-}
-
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
-    padding: 0.75rem 1rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :deep(.p-tabview) {
+    max-width: 100%;
+    /* Full width on mobile */
   }
 
-  :deep(.p-tabview .p-tabview-panels) {
-    padding: 1rem;
+  :deep(.p-tabview .p-tabview-nav) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    padding: 0.25rem;
   }
+
+  :deep(.p-tabview .p-tabview-nav li .p-tabview-nav-link) {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Add scroll buttons for better UX on desktop */
+.p-tabview-nav-container {
+  position: relative;
+}
+
+.p-tabview-nav-prev,
+.p-tabview-nav-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.p-tabview-nav-prev {
+  left: 0.5rem;
+}
+
+.p-tabview-nav-next {
+  right: 0.5rem;
 }
 
 /* Enhanced scrollbars */
@@ -1586,5 +1678,4 @@ onMounted(() => {
   .visualization-grid {
     gap: 1rem;
   }
-}
-</style>
+}</style>

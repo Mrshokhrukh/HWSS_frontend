@@ -35,7 +35,6 @@ const chartCanvas = ref(null);
 const chartInstance = ref(null);
 const chartDataReady = ref(false);
 const hasValidData = ref(false);
-const chartType = ref('bar') //Default chart type
 
 const maleColor = '#2B656F';
 const femaleColor = '#64ac99';
@@ -43,6 +42,16 @@ const femaleColor = '#64ac99';
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+        duration: 500 // Reduced from default 1000ms to 500ms
+    },
+    transitions: {
+        active: {
+            animation: {
+                duration: 300 // Faster highlight transitions
+            }
+        }
+    },
     plugins: {
         legend: {
             position: 'top',
@@ -68,14 +77,14 @@ const chartOptions = {
             titleFont: {
                 weight: 'bold'
             },
-             callbacks: {
-                  label: (context) => {
-                        const value = context.dataset.data[context.dataIndex];
-                        const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
-                        return `${context.dataset.label}: ${value} (${percentage}%)`;
-                    }
+            callbacks: {
+                label: (context) => {
+                    const value = context.dataset.data[context.dataIndex];
+                    const total = context.dataset.data.reduce((acc, val) => acc + val, 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                    return `${context.dataset.label}: ${value} (${percentage}%)`;
                 }
+            }
         }
     },
     scales: {
@@ -118,26 +127,26 @@ const chartOptions = {
 const getMeasurementForCardTitle = (screeningData, cardTitle) => {
     try {
         switch (cardTitle.toLowerCase()) {
-             case 'suicidal behavior': {
+            case 'suicidal behavior': {
                 const phqData = typeof screeningData.phq_data === 'string'
                     ? JSON.parse(screeningData.phq_data)
                     : screeningData.phq_data;
 
                 let hasSuicidalThoughts = false;
                 if (Array.isArray(phqData)) {
-                     const suicideQuestion = phqData.find(q =>
+                    const suicideQuestion = phqData.find(q =>
                         q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
                     );
                     hasSuicidalThoughts = suicideQuestion?.score >= 1;
                 } else if (phqData?.responses) {
-                     const suicideQuestion = phqData.responses.find(q =>
-                      q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-                  );
+                    const suicideQuestion = phqData.responses.find(q =>
+                        q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
+                    );
                     hasSuicidalThoughts = suicideQuestion?.score >= 1;
-                  }
+                }
 
-                   return hasSuicidalThoughts ? 'Has Suicidal Thoughts' : null;
-              }
+                return hasSuicidalThoughts ? 'Has Suicidal Thoughts' : null;
+            }
             case 'depression':
                 return screeningData.phq_interpretation || null;
             case 'anxiety':
@@ -166,15 +175,15 @@ const processChartData = () => {
     const maleData = {};
     const femaleData = {};
     let hasAnyValidData = false;
-    
+
     props.filteredData.forEach(entry => {
         const screeningData = entry.screening_data || {};
         const gender = entry.user?.gender?.toLowerCase() || 'unknown';
-        
+
         if (gender !== 'male' && gender !== 'female') return;
-        
+
         const measurement = getMeasurementForCardTitle(screeningData, props.cardTitle);
-       
+
         if (measurement && measurement !== 'No Data' && measurement !== 'No Response' && measurement !== 'Mild') {
             hasAnyValidData = true;
             if (gender === 'male') {
@@ -186,7 +195,7 @@ const processChartData = () => {
     });
 
     hasValidData.value = hasAnyValidData;
-    
+
     if (!hasAnyValidData) {
         return null;
     }
@@ -196,56 +205,28 @@ const processChartData = () => {
         ...Object.keys(femaleData)
     ])].sort();
 
-     if(props.cardTitle === 'Suicidal Behavior'){
-          chartType.value = 'bar'
-       return {
-                labels: ['Has Suicidal Thoughts'],
-                datasets: [
-                    {
-                        label: 'Male',
-                        data: ['Has Suicidal Thoughts'].map(measurement => maleData[measurement] || 0),
-                        backgroundColor: `${maleColor}80`,
-                        borderColor: maleColor,
-                        borderWidth: 2,
-                        borderRadius: 8
-                    },
-                    {
-                        label: 'Female',
-                         data: ['Has Suicidal Thoughts'].map(measurement => femaleData[measurement] || 0),
-                        backgroundColor: `${femaleColor}80`,
-                        borderColor: femaleColor,
-                        borderWidth: 2,
-                        borderRadius: 8
-                    }
-                ]
-            };
+    return {
+        labels: allMeasurements,
+        datasets: [
+            {
+                label: 'Male',
+                data: allMeasurements.map(measurement => maleData[measurement] || 0),
+                backgroundColor: `${maleColor}80`,
+                borderColor: maleColor,
+                borderWidth: 2,
+                borderRadius: 8
+            },
+            {
+                label: 'Female',
+                data: allMeasurements.map(measurement => femaleData[measurement] || 0),
+                backgroundColor: `${femaleColor}80`,
+                borderColor: femaleColor,
+                borderWidth: 2,
+                borderRadius: 8
+            }
+        ]
+    };
 
-    }else{
-          chartType.value = allMeasurements.length > 1 ? 'bar' : 'doughnut'
-         
-        return {
-                labels: allMeasurements,
-                datasets: [
-                    {
-                        label: 'Male',
-                        data: allMeasurements.map(measurement => maleData[measurement] || 0),
-                        backgroundColor: `${maleColor}80`,
-                        borderColor: maleColor,
-                        borderWidth: 2,
-                        borderRadius: 8
-                    },
-                    {
-                        label: 'Female',
-                        data: allMeasurements.map(measurement => femaleData[measurement] || 0),
-                        backgroundColor: `${femaleColor}80`,
-                        borderColor: femaleColor,
-                        borderWidth: 2,
-                        borderRadius: 8
-                    }
-                ]
-            };
-
-    }
 };
 
 const initializeChart = async () => {
@@ -259,34 +240,40 @@ const initializeChart = async () => {
         chartInstance.value.destroy();
         chartInstance.value = null;
     }
-    
+
     const chartData = processChartData();
     if (!chartData) {
         chartDataReady.value = false;
         return;
     }
-    
+
     try {
-          const ctx = chartCanvas.value.getContext('2d');
+        const ctx = chartCanvas.value.getContext('2d');
         chartInstance.value = new Chart(ctx, {
-            type: chartType.value,
+            type: 'bar',
             data: chartData,
-             options: chartOptions
-         });
+            options: chartOptions
+        });
         chartDataReady.value = true;
     } catch (error) {
-      console.error('Error initializing chart:', error);
-      chartDataReady.value = false;
+        console.error('Error initializing chart:', error);
+        chartDataReady.value = false;
     }
 };
 
 // Watch for changes in filteredData
 watchEffect(async () => {
-    initializeChart();
+    if (chartDataReady.value) {
+        initializeChart();
+    }
 });
 
 // Initialize on mount
 onMounted(async () => {
+    if (chartInstance.value) {
+        chartInstance.value.destroy();
+        chartInstance.value = null;
+    }
     initializeChart();
 });
 

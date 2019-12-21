@@ -425,7 +425,7 @@ const referralFlowOptions = ref({
             distributed: true
         }
     },
-    xaxis: {
+     xaxis: {
         type: 'category',
         labels: {
             style: {
@@ -448,13 +448,13 @@ const referralFlowOptions = ref({
     legend: {
         show: false
     },
-    tooltip: {
-        y: {
-            formatter: function (value) {
-                return `${value} Referral${value !== 1 ? 's' : ''}`;
+     tooltip: {
+            y: {
+                formatter: function (value) {
+                    return `${value} Referral${value !== 1 ? 's' : ''}`;
+                }
             }
         }
-    }
 });
 
 const referralFlowSeries = computed(() => {

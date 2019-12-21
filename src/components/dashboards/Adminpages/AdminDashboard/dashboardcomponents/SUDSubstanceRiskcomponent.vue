@@ -368,7 +368,7 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
         }
     };
 
-    // Bubble Chart
+       // Bubble Chart
     const bubbleOptions = {
         ...commonOptions,
         scales: {
@@ -376,18 +376,44 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    text: 'Number of Cases'
-                }
+                    text: 'Number of Cases',
+                },
             },
             x: {
                 ticks: {
                     callback: function (value) {
-                        return value === 1 ? 'High Risk' : 'Moderate Risk';
-                    }
-                }
-            }
-        }
+                        // Ensure we check for both 1 (High Risk) and 2 (Moderate Risk)
+                        if(value === 1) {
+                            return 'High Risk';
+                        } else if(value === 2) {
+                            return 'Moderate Risk';
+                        }
+                         return ''; // Add default to prevent errors
+                    },
+                },
+            },
+        },
+       plugins: {
+           ...commonOptions.plugins, // Keep all existing plugins
+           tooltip: {
+               ...commonOptions.plugins.tooltip, // Keep existing tooltip options
+               callbacks: {
+                   title: (tooltipItems) => {
+                       if (!tooltipItems || !tooltipItems[0]) return '';
+                        const label = tooltipItems[0].dataset.label;
+                        return label;
+                       
+                   },
+                   label: (tooltipItem) => {
+                     const dataPoint = tooltipItem.dataset.data[tooltipItem.dataIndex];
+                     const riskLevel = dataPoint.x === 1 ? 'High Risk' : 'Moderate Risk';
+                     return `${riskLevel}: ${dataPoint.y} cases`;
+                   }
+               }
+           }
+       }
     };
+
 
     // Render all charts
     [radarChartInstance, areaChartInstance, bubbleChartInstance].forEach(chart => {
@@ -488,35 +514,36 @@ function updateCharts() {
                     {
                         x: 1,
                         y: data['High-risk total male'],
-                        r: Math.max(data['High-risk total male'] * 2, 8)
+                        r: Math.max(data['High-risk total male'] * 2, 8) + 2, // Adjusted the size here
+                        
                     },
                     {
                         x: 2,
                         y: data['Moderate-risk total male'],
-                        r: Math.max(data['Moderate-risk total male'] * 2, 8)
+                        r: Math.max(data['Moderate-risk total male'] * 2, 8) + 2, // Adjusted the size here
                     }
                 ],
                 backgroundColor: `${chartTheme.male}88`
             },
             {
-                label: 'Female',
+              label: 'Female',
                 data: [
                     {
                         x: 1,
                         y: data['High-risk total female'],
-                        r: Math.max(data['High-risk total female'] * 2, 8)
+                        r: Math.max(data['High-risk total female'] * 2, 8) + 2, // Adjusted the size here
+
                     },
                     {
                         x: 2,
                         y: data['Moderate-risk total female'],
-                        r: Math.max(data['Moderate-risk total female'] * 2, 8)
+                        r: Math.max(data['Moderate-risk total female'] * 2, 8) + 2, // Adjusted the size here
                     }
                 ],
                 backgroundColor: `${chartTheme.female}88`
             }
         ]
     };
-
     // Render enhanced charts
     renderEnhancedCharts(radarData, areaData, bubbleData);
 }
@@ -532,10 +559,10 @@ function toggleChartView() {
 }
 
 watch(serviceAndTreatmentData, (newVal) => {
-    console.log('Service and Treatment Data changed:', newVal?.length, 'records');
+    // console.log('Service and Treatment Data changed:', newVal?.length, 'records');
     if (activeButton.value) {
         const extractedData = extractMeasurementData(newVal);
-        console.log('Extracted Data:', extractedData.length, 'records with risks');
+        // console.log('Extracted Data:', extractedData.length, 'records with risks');
         updateCharts();
     }
 }, { deep: true });

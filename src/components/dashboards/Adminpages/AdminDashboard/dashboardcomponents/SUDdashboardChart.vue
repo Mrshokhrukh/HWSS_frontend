@@ -7,7 +7,7 @@
                 <p class="text-white small">{{ subtitle || 'Real-time status of patient treatment phases' }}</p>
             </div>
 
-            <!-- Loading and Error States -->
+            <!-- Loading State -->
             <div v-if="loadingState === 'loading'" class="d-flex justify-content-center py-5">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -17,11 +17,6 @@
             <div v-else-if="loadingState === 'timeout'" class="empty-state">
                 <i class="bi bi-clock fs-1 text-muted mb-3"></i>
                 <p class="text-muted">Request timeout. Please try again.</p>
-            </div>
-
-            <div v-else-if="error" class="empty-state">
-                <i class="bi bi-exclamation-circle fs-1 text-danger mb-3"></i>
-                <p class="text-danger">{{ error }}</p>
             </div>
 
             <!-- Stats Grid -->
@@ -49,7 +44,7 @@
         </div>
     </div>
 </template>
-
+  
 <script setup>
 import { ref, computed, onMounted, inject, watchEffect, onBeforeUnmount } from 'vue';
 
@@ -66,8 +61,8 @@ const props = defineProps({
 // Injections and Refs
 const treatmentData = inject('serviceAndTreatmentData');
 const loadingState = ref('loading');
-const error = ref(null);
 const stats = ref({});
+const previousStats = ref({}); // Store historical data
 
 // Computed
 const processedStats = computed(() => {
@@ -77,7 +72,7 @@ const processedStats = computed(() => {
         {
             title: 'Primary Phase',
             value: stats.value.primaryPhase || 0,
-            trend: roundTrend(calculateTrend('primaryPhase')),
+            trend: stats.value.primaryPhase === 0 ? undefined : roundTrend(calculateTrend('primaryPhase')),
             icon: 'bi-clipboard-pulse',
             variant: 'primary',
             subtitle: 'Active patients'
@@ -85,7 +80,7 @@ const processedStats = computed(() => {
         {
             title: 'Continuing Care',
             value: stats.value.continuingCare || 0,
-            trend: roundTrend(calculateTrend('continuingCare')),
+            trend: stats.value.continuingCare === 0 ? undefined : roundTrend(calculateTrend('continuingCare')),
             icon: 'bi-heart-pulse',
             variant: 'accent',
             subtitle: 'Ongoing treatments'
@@ -93,7 +88,7 @@ const processedStats = computed(() => {
         {
             title: 'Rehabilitation',
             value: stats.value.rehabilitation || 0,
-            trend: roundTrend(calculateTrend('rehabilitation')),
+            trend: stats.value.rehabilitation === 0 ? undefined : roundTrend(calculateTrend('rehabilitation')),
             icon: 'bi-shield-check',
             variant: 'neutral',
             subtitle: 'In rehabilitation'
@@ -101,7 +96,7 @@ const processedStats = computed(() => {
         {
             title: 'Completed',
             value: stats.value.completed || 0,
-            trend: roundTrend(calculateTrend('completed')),
+            trend: stats.value.completed === 0 ? undefined : roundTrend(calculateTrend('completed')),
             icon: 'bi-check-circle',
             variant: 'success',
             subtitle: 'Successfully completed'
@@ -109,7 +104,7 @@ const processedStats = computed(() => {
         {
             title: 'Non-compliance',
             value: stats.value.nonCompliance || 0,
-            trend: roundTrend(calculateTrend('nonCompliance')),
+            trend: stats.value.nonCompliance === 0 ? undefined : roundTrend(calculateTrend('nonCompliance')),
             icon: 'bi-exclamation-triangle',
             variant: 'warning',
             subtitle: 'Requiring attention'
@@ -127,13 +122,20 @@ function roundTrend(value) {
 }
 
 function calculateTrend(metric) {
-    return Math.random() * 20 - 10;
+    const previousValue = previousStats.value[metric] || 0;
+    const currentValue = stats.value[metric] || 0;
+
+
+    if(previousValue === 0) return 0; // if no previous value, return a default of 0.
+
+    const trend = ((currentValue - previousValue) / previousValue) * 100;
+    return trend;
 }
 
 // Data Processing
 function calculateStats(data) {
-    if (!data?.length) {
-        error.value = 'No data available';
+    if (!data) {
+        stats.value = {};
         return;
     }
 
@@ -146,7 +148,7 @@ function calculateStats(data) {
     };
 
     const statusMap = {
-        'hospital-based outpatient sud treatment and care (primary phase)': 'primaryPhase',
+       'hospital-based outpatient sud treatment and care (primary phase)': 'primaryPhase',
         'hospital-based outpatient sud treatment and care (continuing care)': 'continuingCare',
         'undergoing rehabilitation': 'rehabilitation',
         'treatment completed': 'completed',
@@ -154,35 +156,48 @@ function calculateStats(data) {
     };
 
     data.forEach(item => {
-        const followUp = item?.follow_up?.trim().toLowerCase();
-        const status = statusMap[followUp];
-        if (status) newStats[status]++;
-    });
+        // Safely extract follow-up information
+        let followUp = null;
+        if(item && typeof item === 'object'){
+             followUp = item?.follow_up?.trim()?.toLowerCase();
+        }
 
+        for (const key in statusMap) {
+           if(key.toLowerCase() === followUp){
+                newStats[statusMap[key]]++;
+                break;
+           }
+        }
+
+    });
+    
+    // update prev stats
+    previousStats.value = {...stats.value};
     stats.value = newStats;
 }
 
 // Lifecycle
 let timeoutId = null;
 
-watchEffect(() => {
-    if (treatmentData.value !== undefined) {
-        loadingState.value = 'loading';
-        timeoutId = setTimeout(() => {
-            if (loadingState.value === 'loading') {
-                loadingState.value = 'timeout';
-            }
-        }, 10000);
-
-        try {
-            calculateStats(treatmentData.value);
-            loadingState.value = 'complete';
-        } catch (err) {
-            console.error('Error processing data:', err);
-            error.value = 'Error processing data';
-        } finally {
-            clearTimeout(timeoutId);
+onMounted(() => {
+    loadingState.value = 'loading';
+    timeoutId = setTimeout(() => {
+        if (loadingState.value === 'loading') {
+            loadingState.value = 'timeout';
         }
+    }, 10000);
+
+    try {
+        if (treatmentData.value !== undefined) {
+            calculateStats(treatmentData.value);
+        } else {
+            calculateStats([]); // Initialize stats with empty array if no data available
+        }
+        loadingState.value = 'complete';
+    } catch (err) {
+        console.error('Error processing data:', err);
+    } finally {
+        clearTimeout(timeoutId);
     }
 });
 
@@ -190,12 +205,12 @@ onBeforeUnmount(() => {
     clearTimeout(timeoutId);
 });
 </script>
-
+  
 <style scoped>
-
-.my-rounded{
+.my-rounded {
     border-radius: 20px;
 }
+
 .treatment-dashboard {
     background-color: var(--bs-gray-100);
     padding: 20px 0;

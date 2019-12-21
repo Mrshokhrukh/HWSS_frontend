@@ -286,16 +286,14 @@ const dzongkhagDistributionChartSeries = computed(() => {
         dzongkhagCounts[dzongkhag] = (dzongkhagCounts[dzongkhag] || 0) + 1;
     });
 
-    // Sort dzongkhags with 'N/A' at the end
+     // Sort dzongkhags with 'N/A' at the end
     const sortedDzongkhags = Object.keys(dzongkhagCounts).sort((a, b) => {
         if (a === 'N/A') return 1;
         if (b === 'N/A') return -1;
         return a.localeCompare(b);
     });
-
     // Update chart options
     dzongkhagDistributionChartOptions.value.xaxis.categories = sortedDzongkhags;
-
     return [{
         name: 'Number of Individuals',
         data: sortedDzongkhags.map(dzongkhag => dzongkhagCounts[dzongkhag])

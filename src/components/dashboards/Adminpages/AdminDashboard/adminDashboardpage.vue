@@ -94,15 +94,6 @@ const filteredSUDData = computed(() => {
         const hasCaseRisks = item.case_substance_risks &&
             checkRiskData(item.case_substance_risks);
 
-        // For debugging
-        if (hasAssistData || hasEventRisks || hasCaseRisks) {
-            console.log(`Including record ${item.id}:`, {
-                hasAssistData,
-                hasEventRisks,
-                hasCaseRisks
-            });
-        }
-
         return hasAssistData || hasEventRisks || hasCaseRisks;
     })
 })

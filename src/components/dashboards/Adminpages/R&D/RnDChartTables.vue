@@ -1,46 +1,47 @@
 <template>
   <div class="card border-0 shadow-sm rounded-3 mx-3 my-4">
-    <div class="card-header border-0 p-4 custom-gradient">
-      <h3 class="fs-4 fw-bold text-white mb-2">School/Event Data</h3>
-      <p class="text-white-50 mb-3">Comprehensive screening results and analysis</p>
+    <div class="card-header border-0 p-3 custom-gradient">
+      <h3 class="fs-5 fw-semibold text-white mb-1">School/Event Data</h3>
+      <p class="text-white-50 mb-2 small">Comprehensive screening results and analysis</p>
 
-      <div class="d-flex gap-3 mb-2">
-        <Button icon="pi pi-download" label="Download PDF" @click="downloadPDF" class="btn-custom" />
-        <Button icon="pi pi-print" label="Print" @click="printTable" class="btn-custom" />
+      <div class="d-flex gap-2 mb-1">
+        <Button icon="pi pi-download" label="Download PDF" @click="downloadPDF" class="btn-custom py-1 px-2"
+          size="small" />
+        <Button icon="pi pi-print" label="Print" @click="printTable" class="btn-custom py-1 px-2" size="small" />
       </div>
     </div>
 
-    <div class="card-body p-4">
+    <div class="card-body p-3">
       <DataTable :value="tableData" :rowHover="true" class="table-modern" responsiveLayout="scroll" stripedRows
-        showGridlines tableStyle="min-width: 50rem">
+        showGridlines tableStyle="min-width: 50rem" size="small">
 
         <ColumnGroup type="header">
           <Row>
-            <Column header="School/Event Data" :colspan="1" :rowspan="2" headerClass="header-main" />
-            <Column header="Screening Results" :colspan="2" headerClass="header-main" />
-            <Column header="PHQ Assessment" :colspan="5" headerClass="header-main text-center" />
-            <Column header="GAD Assessment" :colspan="5" headerClass="header-main text-center" />
-            <Column header="SUD" headerClass="header-main text-center" :rowspan="2" />
+            <Column header="School/Event Data" :colspan="1" :rowspan="2" headerClass="header-main py-2" />
+            <Column header="Screening Results" :colspan="2" headerClass="header-main py-2" />
+            <Column header="PHQ Assessment" :colspan="5" headerClass="header-main text-center py-2" />
+            <Column header="GAD Assessment" :colspan="5" headerClass="header-main text-center py-2" />
+            <Column header="SUD" headerClass="header-main text-center py-2" :rowspan="2" />
           </Row>
           <Row>
-            <Column header="Screened" headerClass="header-secondary" />
-            <Column header="Suicidal" headerClass="header-secondary" />
+            <Column header="Screened" headerClass="header-secondary py-2" />
+            <Column header="Suicidal" headerClass="header-secondary py-2" />
             <Column v-for="level in severityLevels" :key="'phq-' + level" :header="level"
-              headerClass="header-secondary" />
+              headerClass="header-secondary py-2" />
             <Column v-for="level in severityLevels" :key="'gad-' + level" :header="level"
-              headerClass="header-secondary" />
+              headerClass="header-secondary py-2" />
           </Row>
         </ColumnGroup>
 
         <Column field="schoolEvent" header="Agency/Event">
           <template #body="slotProps">
-            <div class="fw-semibold text-dark">{{ slotProps.data.schoolEvent }}</div>
+            <div class="fw-medium small text-dark">{{ slotProps.data.schoolEvent }}</div>
           </template>
         </Column>
 
         <Column field="individualsScreened" bodyClass="text-center">
           <template #body="slotProps">
-            <span class="badge bg-primary-subtle text-primary rounded-pill px-3">
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 small">
               {{ slotProps.data.individualsScreened }}
             </span>
           </template>
@@ -48,7 +49,7 @@
 
         <Column field="suicidalBehavior" bodyClass="text-center">
           <template #body="slotProps">
-            <div class="text-danger fw-semibold">
+            <div class="text-danger fw-medium small">
               {{ slotProps.data.suicidalBehavior }}
             </div>
           </template>
@@ -57,7 +58,7 @@
         <template v-for="level in severityLevels" :key="'phq-' + level">
           <Column :field="'phq.' + level">
             <template #body="slotProps">
-              <div class="text-center py-1 px-2" :class="getSeverityClass(level, slotProps.data.phq[level])">
+              <div class="text-center py-1 px-2 small" :class="getSeverityClass(level, slotProps.data.phq[level])">
                 {{ slotProps.data.phq[level] }}
               </div>
             </template>
@@ -67,7 +68,7 @@
         <template v-for="level in severityLevels" :key="'gad-' + level">
           <Column :field="'gad.' + level">
             <template #body="slotProps">
-              <div class="text-center py-1 px-2" :class="getSeverityClass(level, slotProps.data.gad[level])">
+              <div class="text-center py-1 px-2 small" :class="getSeverityClass(level, slotProps.data.gad[level])">
                 {{ slotProps.data.gad[level] }}
               </div>
             </template>
@@ -76,8 +77,8 @@
 
         <Column>
           <template #body="slotProps">
-            <Button label="View Details" @click="showSUDDetails(slotProps.data)"
-              class="btn-secondary-custom p-button-sm" />
+            <Button label="Details" @click="showSUDDetails(slotProps.data)"
+              class="btn-secondary-custom p-button-sm small" />
           </template>
         </Column>
       </DataTable>
@@ -86,17 +87,17 @@
     <Dialog v-model:visible="displaySUDDialog" :header="selectedSchool + ' - SUD Details'" class="dialog-modern">
       <TabView>
         <TabPanel v-for="substance in substances" :key="substance" :header="substance">
-          <DataTable :value="getSUDDetails(substance)" class="table-secondary" stripedRows>
+          <DataTable :value="getSUDDetails(substance)" class="table-secondary" stripedRows size="small">
             <Column field="riskLevel" header="Risk Level">
               <template #body="slotProps">
-                <div :class="getRiskLevelClass(slotProps.data.riskLevel)">
+                <div :class="getRiskLevelClass(slotProps.data.riskLevel)" class="small">
                   {{ slotProps.data.riskLevel }}
                 </div>
               </template>
             </Column>
             <Column field="count" header="Count">
               <template #body="slotProps">
-                <div class="text-center fw-semibold">
+                <div class="text-center fw-medium small">
                   {{ slotProps.data.count }}
                 </div>
               </template>
@@ -377,6 +378,7 @@ const getRiskLevelClass = (level) => {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: white;
+  font-size: 0.875rem;
 }
 
 :deep(.btn-custom:hover) {
@@ -388,61 +390,66 @@ const getRiskLevelClass = (level) => {
   background: #2B656F;
   border: none;
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;
+  font-size: 0.875rem;
 }
 
 :deep(.btn-secondary-custom:hover) {
   background: #1D4851;
 }
 
+.table-modern {
+  font-size: 0.875rem;
+}
+
 .table-modern :deep(.header-main) {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: white;
   border: none;
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .table-modern :deep(.header-secondary) {
   background: #1D4851;
   color: rgba(255, 255, 255, 0.9);
   border: none;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: 0.5rem 0.75rem;
 }
 
 .dialog-modern :deep(.p-dialog-header) {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: white;
+  padding: 1rem;
 }
 
 .dialog-modern :deep(.p-tabview-nav-link) {
-  transition: all 0.2s;
-}
-
-.dialog-modern :deep(.p-tabview-selected .p-tabview-nav-link) {
-  background: #2B656F !important;
-  color: white !important;
-  border-color: #2B656F !important;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
 :deep(.p-datatable) {
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
 }
 
 :deep(.p-datatable .p-datatable-wrapper) {
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   border: 1px solid rgba(43, 101, 111, 0.1);
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr:hover) {
-  background-color: rgba(43, 101, 111, 0.05);
 }
 
 :deep(.badge) {
   font-weight: 500;
-  padding: 0.5em 1em;
+  padding: 0.25em 0.75em;
+  font-size: 0.75rem;
 }
 
 :deep(.badge.bg-primary-subtle) {
@@ -454,46 +461,56 @@ const getRiskLevelClass = (level) => {
 :deep(.severity-minimal) {
   background-color: rgba(43, 101, 111, 0.1);
   color: #2B656F;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem;
 }
 
 :deep(.severity-mild) {
   background-color: rgba(43, 101, 111, 0.2);
   color: #2B656F;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem;
 }
 
 :deep(.severity-moderate) {
   background-color: rgba(43, 101, 111, 0.3);
   color: #2B656F;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem;
 }
 
 :deep(.severity-severe) {
   background-color: rgba(43, 101, 111, 0.4);
   color: white;
-}
-
-/* Add Bootstrap-like transitions */
-.btn,
-.badge,
-.p-button {
-  transition: all 0.2s;
-}
-
-/* Ensure table text contrast */
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-  color: #2B656F;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem;
 }
 
 /* Dialog styling improvements */
 :deep(.p-dialog) {
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   overflow: hidden;
+  font-size: 0.875rem;
 }
 
 :deep(.p-dialog-content) {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 :deep(.p-tabview .p-tabview-panels) {
-  padding: 1.5rem 0;
+  padding: 1rem 0;
+}
+
+/* Add compact styling for the DataTable */
+:deep(.p-datatable.p-datatable-sm .p-datatable-thead > tr > th) {
+  padding: 0.5rem 0.75rem;
+}
+
+:deep(.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td) {
+  padding: 0.5rem 0.75rem;
 }
 </style>

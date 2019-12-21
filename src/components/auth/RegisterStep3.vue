@@ -412,7 +412,7 @@ const proceed = async () => {
     }
 
     const response = await axios.get(apiURL);
-    console.log('Response:', response.data);
+    // console.log('Response:', response.data);
 
     if (
       response.data &&

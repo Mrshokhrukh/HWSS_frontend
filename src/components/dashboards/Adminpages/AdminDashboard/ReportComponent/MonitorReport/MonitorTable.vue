@@ -31,10 +31,6 @@ const props = defineProps({
   }
 });
 
-onMounted(() => {
-  console.log('Table Component Received Data:', props.filteredData);
-});
-
 // Helper function to safely count data
 const countData = (data, field, value) => {
   return data.filter(item => item[field] === value).length;

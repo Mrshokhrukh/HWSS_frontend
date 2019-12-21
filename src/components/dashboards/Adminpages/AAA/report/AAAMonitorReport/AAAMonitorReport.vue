@@ -239,7 +239,7 @@ const handleClickOutside = (event) => {
 // Lifecycle hooks
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
-  console.log('data bata', finalFilteredData)
+  // console.log('data bata', finalFilteredData)
 })
 
 onUnmounted(() => {

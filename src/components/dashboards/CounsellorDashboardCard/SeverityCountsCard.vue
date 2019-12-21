@@ -1,5 +1,5 @@
 <template>
-  <div class="severity-dashboard">
+  <div class="severity-dashboard p-4">
     <div class="row">
       <h4 class="col-12 mb-3 text-start dashboard-title">Severity</h4>
       <div v-for="(item, index) in SEVERITY_ITEMS" :key="index" class="col-md-2 mx-auto mb-4">
@@ -22,8 +22,8 @@
       </div>
       <div class="col-md-8">
         <div class="card-container">
-          <SeverityGraphCard v-if="activeItem && dataReady" :cardTitle="activeItem.title"
-            :filteredData="getRelevantData" :isLoading="isLoading" :key="activeItem.title + 'graph'" />
+          <SeverityGraphCard v-if="activeItem && dataReady" :cardTitle="activeItem.title" :filteredData="getRelevantData"
+            :isLoading="isLoading" :key="activeItem.title + 'graph'" />
         </div>
       </div>
     </div>
@@ -32,9 +32,15 @@
       <div class="col-12">
         <div class="card-container">
           <AssistSeverityAndGraph v-if="activeItem && dataReady" :data="assistStructuredData" :isLoading="isLoading"
-            :key="activeItem.title + 'assist'" />
+            :totalRiskUsers="assistStructuredData.total" :key="activeItem.title + 'assist'" />
         </div>
       </div>
+    </div>
+    <div v-if="isLoading">
+      Loading...
+    </div>
+    <div v-else-if="error">
+      {{ error }}
     </div>
   </div>
 </template>
@@ -109,7 +115,6 @@ const SEVERITY_ITEMS = ref([
       if (!value) return false;
       try {
         const assistData = typeof value === 'string' ? JSON.parse(value) : value;
-
         if (Array.isArray(assistData)) {
           return assistData.some(item => item?.risk_flag && item.risk_flag !== 'none');
         }
@@ -142,61 +147,77 @@ const getRelevantData = computed(() => {
   return filteredData.value;
 });
 
-const processAssistData = () => {
-  const structured = {
-    total: 0,
-    substances: {}
-  };
+const extractRiskLevel = (riskFlag) => {
+  if (!riskFlag) return 'low';
+  const lowerCaseFlag = riskFlag.toLowerCase();
+  if (lowerCaseFlag.includes('severe') || lowerCaseFlag.includes('high')) return 'high';
+  if (lowerCaseFlag.includes('moderate') || lowerCaseFlag.includes('moderately severe')) return 'moderate';
+  return 'low'
 
-  filteredData.value.forEach(item => {
-    const assistData = item.screening_data?.assist_data;
-    if (assistData) {
-      structured.total++;
-      const parsedAssistData = typeof assistData === 'string' ? JSON.parse(assistData) : assistData;
-      if (Array.isArray(parsedAssistData)) {
-        parsedAssistData.forEach(substance => {
-          const name = substance.substance__name || substance.substance_name || 'Unknown Substance';
-          const risk = substance.risk_flag ? substance.risk_flag.toLowerCase() : 'low';
-          const normalizedSubstance = normalizeSubstanceName(name);
-
-          if (!structured.substances[normalizedSubstance]) {
-            structured.substances[normalizedSubstance] = { high: 0, moderate: 0, low: 0 };
-          }
-
-          if (risk === 'severe' || risk === 'high') structured.substances[normalizedSubstance].high++;
-          else if (risk === 'moderate') structured.substances[normalizedSubstance].moderate++;
-          else structured.substances[normalizedSubstance].low++;
-        });
-      } else if (typeof parsedAssistData === 'object') {
-        Object.keys(parsedAssistData).forEach(key => {
-          if (key.endsWith('_flag') && parsedAssistData[key]) {
-            const substanceKey = key.replace('_flag', '');
-            const measurementKey = `${substanceKey}_measurement`;
-
-            const risk = parsedAssistData[measurementKey]
-              ? parsedAssistData[measurementKey].toLowerCase()
-              : parsedAssistData[key].toLowerCase();
-            const normalizedSubstance = mapSubstanceKeyToName(substanceKey);
-
-            if (!structured.substances[normalizedSubstance]) {
-              structured.substances[normalizedSubstance] = { high: 0, moderate: 0, low: 0 };
-            }
-
-            if (risk === 'severe' || risk === 'high risk' || risk === 'red') {
-              structured.substances[normalizedSubstance].high++;
-            } else if (risk === 'moderate' || risk === 'moderate risk' || risk === 'yellow') {
-              structured.substances[normalizedSubstance].moderate++;
-            } else {
-              structured.substances[normalizedSubstance].low++;
-            }
-          }
-        });
-      }
-    }
-  });
-
-  assistStructuredData.value = structured;
 };
+
+const processAssistData = () => {
+    const structured = {
+        total: 0,
+        substances: {}
+    };
+
+    filteredData.value.forEach(item => {
+        let hasNonNoneRisk = false;
+        const allAssistData = [];
+
+        // Collect risk data from all possible locations
+        if (item.case_substance_risks) {
+            allAssistData.push(...item.case_substance_risks);
+        }
+        if (item.event_substance_risks) {
+            allAssistData.push(...item.event_substance_risks);
+        }
+        if (item.screening_data?.assist_data) {
+            let assistData = item.screening_data.assist_data;
+            if (assistData) {
+                if (typeof assistData === 'string') {
+                    assistData = JSON.parse(assistData);
+                }
+                if (Array.isArray(assistData)) {
+                  allAssistData.push(...assistData);
+                }
+              else if (typeof assistData === 'object') {
+                    // If assistData is an object, check its keys
+                     hasNonNoneRisk = Object.values(assistData).some(value =>
+                         typeof value === 'string' && value.toLowerCase() !== 'none'
+                     );
+                }
+
+            }
+        }
+
+
+        if (allAssistData.length > 0) {
+             hasNonNoneRisk = allAssistData.some(data => {
+                return extractRiskLevel(data.risk_flag) !== 'low'
+             })
+        }
+
+        if (hasNonNoneRisk) {
+            structured.total++; // Increment total only if any risk data is found
+            allAssistData.forEach(data => {
+                let name = data.substance__name || data.substance_name || 'Unknown Substance';
+                const risk = extractRiskLevel(data.risk_flag);
+                const normalizedSubstance = normalizeSubstanceName(name);
+                if (!structured.substances[normalizedSubstance]) {
+                    structured.substances[normalizedSubstance] = { high: 0, moderate: 0, low: 0 };
+                }
+                if (risk === 'high') structured.substances[normalizedSubstance].high++;
+                else if (risk === 'moderate') structured.substances[normalizedSubstance].moderate++;
+                else structured.substances[normalizedSubstance].low++;
+            });
+        }
+
+    });
+    assistStructuredData.value = structured;
+};
+
 const normalizeSubstanceName = (name) => {
   const substanceMap = {
     'Tobacco products (cigarettes, chewing tobacco etc)': 'Tobacco',
@@ -234,12 +255,16 @@ function isActive(index) {
 }
 
 async function setActiveIndex(index) {
-    if (isLoading.value) return;
-    activeIndex.value = index;
-     dataReady.value = false; // Set dataReady to false when a new selection is made
-     await nextTick(); // Wait for the DOM to update
+  if (isLoading.value) return;
+  activeIndex.value = index;
 
-   dataReady.value = true;
+  await nextTick();
+
+  // Short timeout to ensure clean transition
+  setTimeout(() => {
+    dataReady.value = true;
+    isLoading.value = false;
+  }, 100);
 }
 
 const getUserDetailsFromStorage = () => {
@@ -265,6 +290,11 @@ const fetchAndFilterData = async () => {
     const dataArray = response.data || [];
     const { agencyName } = getUserDetailsFromStorage();
     const currentYear = new Date().getFullYear();
+
+    // Log the raw data fetched from the API
+    console.log("Raw data fetched from API:", dataArray);
+
+
     filteredData.value = dataArray.filter(item => {
       const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
       const screeningData = item.screening_data;
@@ -272,12 +302,19 @@ const fetchAndFilterData = async () => {
         ? new Date(screeningData.submission_date).getFullYear()
         : null;
 
+
       return agencyMatch && screeningData && submissionYear === currentYear;
     });
+
+
+    // Log filtered data after applying agency and year filters
+    console.log("Filtered data after agency and year filters:", filteredData.value);
+
+
     updateSeverityCounts();
     processAssistData();
-      dataReady.value = true;
-      isLoading.value = false;
+    dataReady.value = true;
+    isLoading.value = false;
   } catch (err) {
     console.error('Error fetching data:', err);
     error.value = 'Failed to load data';
@@ -287,43 +324,54 @@ const fetchAndFilterData = async () => {
 
 const updateSeverityCounts = () => {
   const counts = {};
-    SEVERITY_ITEMS.value.forEach(item => {
-        counts[item.title] = {};
-    });
+  SEVERITY_ITEMS.value.forEach(item => {
+    counts[item.title] = {};
+  });
+
   filteredData.value.forEach(entry => {
     const screeningData = entry.screening_data;
     if (!screeningData || screeningData === "Data not available") return;
     SEVERITY_ITEMS.value.forEach(item => {
       let measurement = null;
+
       if (item.field === 'assist_data') {
-        try {
-          let assistValue = screeningData[item.field];
-          let hasRisk = false;
-          if (assistValue) {
-            if (typeof assistValue === 'string') {
-              assistValue = JSON.parse(assistValue);
+        let hasRisk = false;
+        // Check case_substance_risks
+        if (entry.case_substance_risks && entry.case_substance_risks.length > 0) {
+          hasRisk = entry.case_substance_risks.some(risk =>
+            extractRiskLevel(risk.risk_flag) !== 'low'
+          );
+        }
+        // Check event_substance_risks
+        if (!hasRisk && entry.event_substance_risks && entry.event_substance_risks.length > 0) {
+          hasRisk = entry.event_substance_risks.some(risk =>
+            extractRiskLevel(risk.risk_flag) !== 'low'
+          );
+        }
+        // Check screening_data.assist_data
+        if (!hasRisk && screeningData?.assist_data) {
+          try {
+            let assistValue = screeningData.assist_data;
+            if (assistValue) {
+              if (typeof assistValue === 'string') {
+                assistValue = JSON.parse(assistValue);
+              }
+              if (Array.isArray(assistValue)) {
+                hasRisk = assistValue.some(data => extractRiskLevel(data.risk_flag) !== 'low');
+              } else {
+                hasRisk = item.threshold(assistValue)
+              }
             }
-            if (item.threshold(assistValue)) {
-              hasRisk = true;
-            }
+
           }
-          if (!hasRisk && entry.event_substance_risks?.length > 0) {
-            hasRisk = entry.event_substance_risks.some(risk =>
-              risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
-            );
-          }
-          if (!hasRisk && entry.case_substance_risks?.length > 0) {
-            hasRisk = entry.case_substance_risks.some(risk =>
-              risk.risk_flag && !risk.risk_flag.toLowerCase().includes('none')
-            );
-          }
-          if (hasRisk) {
-            measurement = 'Has Risk';
+          catch (error) {
+            console.error(`Error evaluating assist data:`, error);
           }
         }
-        catch (error) {
-          console.error(`Error evaluating assist data:`, error);
+        if (hasRisk) {
+          measurement = 'Has Risk';
         }
+
       } else if (item.field === 'phq_data') {
         try {
           let value = screeningData[item.field];

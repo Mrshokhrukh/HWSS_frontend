@@ -184,14 +184,6 @@ const fetchServiceAndTreatmentData = async () => {
 
                     const shouldInclude = hasAssistData || hasEventRisks || hasCaseRisks;
 
-                    if (shouldInclude) {
-                        console.log(`Including record ${item.id} because:`, {
-                            hasAssistData,
-                            hasEventRisks,
-                            hasCaseRisks
-                        });
-                    }
-
                     return shouldInclude;
                 });
             }

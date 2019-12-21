@@ -88,26 +88,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, inject, watch } from 'vue';
 import Chart from 'chart.js/auto';
 
-// Props definition
-const props = defineProps({
-    filteredData: {
-        type: Array,
-        required: true,
-    }
-});
-
+const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 const activeButton = ref(null);
-const isAreaView = ref(true);
 
-// Chart instances
 let radarChartInstance = null;
 let areaChartInstance = null;
 let bubbleChartInstance = null;
 
-// Theme configuration
+const isAreaView = ref(true);
+
 const chartTheme = {
     male: '#275C65',
     female: '#8AC2AF',
@@ -119,44 +111,6 @@ const chartTheme = {
     grid: 'rgba(43, 101, 111, 0.1)'
 };
 
-// Substance definitions
-const substances = [
-    'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine',
-    'Inhalants', 'Sedatives', 'Hallucinogens', 'Opioids', 'Other'
-];
-
-// Process substance risk data
-function processSubstanceData(data, substance) {
-    if (!data || !Array.isArray(data)) return {
-        male: { none: 0, low: 0, moderate: 0, severe: 0 },
-        female: { none: 0, low: 0, moderate: 0, severe: 0 }
-    };
-
-    return data.reduce((acc, item) => {
-        const gender = item.user?.gender?.toLowerCase();
-        if (!gender || (gender !== 'male' && gender !== 'female')) return acc;
-
-        const assistData = item.screening_data?.assist_data;
-        if (!Array.isArray(assistData)) return acc;
-
-        const substanceData = assistData.find(s =>
-            s.substance__name.toLowerCase().startsWith(substance.toLowerCase())
-        );
-
-        if (substanceData) {
-            const riskLevel = substanceData.risk_flag.toLowerCase();
-            if (!acc[gender]) acc[gender] = { none: 0, low: 0, moderate: 0, severe: 0 };
-            acc[gender][riskLevel]++;
-        }
-
-        return acc;
-    }, {
-        male: { none: 0, low: 0, moderate: 0, severe: 0 },
-        female: { none: 0, low: 0, moderate: 0, severe: 0 }
-    });
-}
-
-// Helper functions
 function createGradient(ctx, colors) {
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
     gradient.addColorStop(0, colors[0]);
@@ -164,28 +118,344 @@ function createGradient(ctx, colors) {
     return gradient;
 }
 
-function getTotalCount(substance) {
-    const { male, female } = processSubstanceData(props.filteredData, substance);
-    return (male.moderate + male.severe + female.moderate + female.severe);
+const substances = [
+    'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
+    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+];
+
+const substanceKeyMapping = {
+    'Tobacco': { key: 'tobacco', searchTerms: ['tobacco', 'cigarette'] },
+    'Alcohol': { key: 'alcoholic', searchTerms: ['alcohol', 'alcoholic', 'beer', 'wine', 'spirits'] },
+    'Cannabis': { key: 'cannabis', searchTerms: ['cannabis', 'marijuana', 'hash'] },
+    'Cocaine': { key: 'cocaine', searchTerms: ['cocaine'] },
+    'Amphetamine-type': { key: 'amphetamine', searchTerms: ['amphetamine', 'meth', 'ecstasy'] },
+    'Inhalant': { key: 'inhalants', searchTerms: ['inhalant', 'dendrite', 'glue', 'petrol'] },
+    'Sedative': { key: 'sedatives', searchTerms: ['sedative', 'sleeping', 'diazepam'] },
+    'Hallucinate': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd', 'ketamine'] },
+    'Opioids': { key: 'opioids', searchTerms: ['opioid', 'heroin', 'morphine', 'fentanyl', 'codeine'] },
+    'Others': { key: 'other', searchTerms: ['other'] }
+};
+
+function parseRiskLevel(riskFlag) {
+    if (!riskFlag) return { level: 'none', score: 0 };
+
+    const riskLower = riskFlag.toLowerCase();
+
+    // Handle numeric scores if present
+    const score = parseInt(riskFlag.match(/\((\d+)\)/)?.[1] || 0);
+
+    // Check specific flags from your data
+    if (riskLower === 'high' || score >= 27) return { level: 'high', score: score || 27 };
+    if (riskLower === 'moderate' || score >= 4) return { level: 'moderate', score: score || 4 };
+    if (riskLower === 'low') return { level: 'low', score: score || 1 };
+    return { level: 'none', score: 0 };
 }
 
-function getHighRiskTotal() {
-    if (!activeButton.value) return 0;
-    const { male, female } = processSubstanceData(props.filteredData, activeButton.value);
-    return male.severe + female.severe;
+
+function extractMeasurementData(data) {
+    if (!data || !Array.isArray(data)) return [];
+
+    return data.reduce((results, item) => {
+        // Skip if no valid data
+        if (typeof item.screening_data === 'string') {
+            return results;
+        }
+
+        const processedData = {
+            gender: item.user?.gender || "unknown",
+            risks: {}
+        };
+
+        // Helper to process substance risks
+        const processSubstanceRisk = (substance, riskFlag) => {
+            const substanceMatch = Object.entries(substanceKeyMapping).find(([_, value]) =>
+                value.searchTerms.some(term =>
+                    substance.toLowerCase().includes(term.toLowerCase()))
+            );
+
+            if (substanceMatch) {
+                const [_, value] = substanceMatch;
+                const riskInfo = parseRiskLevel(riskFlag);
+
+                if (!processedData.risks[value.key] ||
+                    riskInfo.score > parseRiskLevel(processedData.risks[value.key]).score) {
+                    processedData.risks[value.key] = riskFlag;
+                }
+            }
+        };
+
+        // Case 1: Process assist_data from screening_data (cluster tests)
+        if (item.screening_data?.assist_data) {
+            item.screening_data.assist_data.forEach(risk => {
+                if (risk.substance__name && risk.risk_flag && (!risk.measurement || risk.measurement > 0)) {
+                    processSubstanceRisk(risk.substance__name, risk.risk_flag);
+                }
+            });
+        }
+
+        // Case 2: Process event_substance_risks at root level
+        if (item.event_substance_risks) {
+            item.event_substance_risks.forEach(risk => {
+                if (risk.substance_name && risk.risk_flag) {
+                    processSubstanceRisk(risk.substance_name, risk.risk_flag);
+                }
+            });
+        }
+
+        // Case 3: Process case_substance_risks at root level
+        if (item.case_substance_risks) {
+            item.case_substance_risks.forEach(risk => {
+                if (risk.substance_name && risk.risk_flag) {
+                    processSubstanceRisk(risk.substance_name, risk.risk_flag);
+                }
+            });
+        }
+
+        // Only add to results if we found some risks
+        if (Object.keys(processedData.risks).length > 0) {
+            results.push(processedData);
+        }
+
+        return results;
+    }, []);
 }
 
-function getModerateRiskTotal() {
-    if (!activeButton.value) return 0;
-    const { male, female } = processSubstanceData(props.filteredData, activeButton.value);
-    return male.moderate + female.moderate;
+function countRiskLevels(data) {
+    const initialCounts = {};
+
+    Object.values(substanceKeyMapping).forEach(substance => {
+        initialCounts[`${substance.key}_moderate_male`] = 0;
+        initialCounts[`${substance.key}_moderate_female`] = 0;
+        initialCounts[`${substance.key}_high_male`] = 0;
+        initialCounts[`${substance.key}_high_female`] = 0;
+    });
+
+    return data.reduce((counts, personData) => {
+        const gender = personData.gender.toLowerCase();
+
+        Object.entries(personData.risks).forEach(([substanceKey, riskFlag]) => {
+            const { level } = parseRiskLevel(riskFlag);
+
+            if (level === 'high') {
+                counts[`${substanceKey}_high_${gender}`]++;
+            } else if (level === 'moderate') {
+                counts[`${substanceKey}_moderate_${gender}`]++;
+            }
+        });
+
+        return counts;
+    }, initialCounts);
 }
 
-// Chart rendering
+const getTotalCount = (substance) => {
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[substance].key;
+
+    return counts[`${substanceKey}_high_male`] +
+        counts[`${substanceKey}_high_female`] +
+        counts[`${substanceKey}_moderate_male`] +
+        counts[`${substanceKey}_moderate_female`];
+};
+
+const getHighRiskTotal = () => {
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[activeButton.value]?.key;
+
+    if (!substanceKey) return 0;
+
+    return counts[`${substanceKey}_high_male`] + counts[`${substanceKey}_high_female`];
+};
+
+const getModerateRiskTotal = () => {
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[activeButton.value]?.key;
+
+    if (!substanceKey) return 0;
+
+    return counts[`${substanceKey}_moderate_male`] + counts[`${substanceKey}_moderate_female`];
+};
+
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'bottom',
+            labels: {
+                color: chartTheme.text,
+                font: {
+                    size: 12,
+                    family: "'Arial', sans-serif",
+                    weight: '600'
+                },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+            }
+        },
+        tooltip: {
+            backgroundColor: '#2B656F',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            padding: 12,
+            displayColors: true,
+            callbacks: {
+                label: (context) => {
+                    if (context.raw === 0) return `${context.dataset.label}: No data`;
+                    return `${context.dataset.label}: ${context.raw} users`;
+                }
+            }
+        }
+    }
+};
+
+function renderEnhancedCharts(radarData, areaData, bubbleData) {
+    // Common options
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                backgroundColor: '#2B656F',
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                padding: 12,
+                displayColors: true
+            }
+        }
+    };
+
+    // Radar Chart
+    const radarOptions = {
+        ...commonOptions,
+        scales: {
+            r: {
+                ticks: {
+                    color: chartTheme.text,
+                    backdropColor: 'transparent'
+                },
+                grid: {
+                    color: chartTheme.grid
+                },
+                angleLines: {
+                    color: chartTheme.grid
+                }
+            }
+        }
+    };
+
+    // Area/Line Chart
+    const areaOptions = {
+        ...commonOptions,
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: chartTheme.grid
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    };
+
+       // Bubble Chart
+    const bubbleOptions = {
+        ...commonOptions,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Cases',
+                },
+            },
+            x: {
+                ticks: {
+                    callback: function (value) {
+                        // Ensure we check for both 1 (High Risk) and 2 (Moderate Risk)
+                        if(value === 1) {
+                            return 'High Risk';
+                        } else if(value === 2) {
+                            return 'Moderate Risk';
+                        }
+                         return ''; // Add default to prevent errors
+                    },
+                },
+            },
+        },
+       plugins: {
+           ...commonOptions.plugins, // Keep all existing plugins
+           tooltip: {
+               ...commonOptions.plugins.tooltip, // Keep existing tooltip options
+               callbacks: {
+                   title: (tooltipItems) => {
+                       if (!tooltipItems || !tooltipItems[0]) return '';
+                        const label = tooltipItems[0].dataset.label;
+                        return label;
+                       
+                   },
+                   label: (tooltipItem) => {
+                     const dataPoint = tooltipItem.dataset.data[tooltipItem.dataIndex];
+                     const riskLevel = dataPoint.x === 1 ? 'High Risk' : 'Moderate Risk';
+                     return `${riskLevel}: ${dataPoint.y} cases`;
+                   }
+               }
+           }
+       }
+    };
+
+
+    // Render all charts
+    [radarChartInstance, areaChartInstance, bubbleChartInstance].forEach(chart => {
+        if (chart) chart.destroy();
+    });
+
+    const ctx1 = document.getElementById('radarChart')?.getContext('2d');
+    const ctx2 = document.getElementById('areaChart')?.getContext('2d');
+    const ctx3 = document.getElementById('bubbleChart')?.getContext('2d');
+
+    if (ctx1) radarChartInstance = new Chart(ctx1, {
+        type: 'radar',
+        data: radarData,
+        options: radarOptions
+    });
+
+    if (ctx2) areaChartInstance = new Chart(ctx2, {
+        type: isAreaView.value ? 'line' : 'bar',
+        data: areaData,
+        options: areaOptions
+    });
+
+    if (ctx3) bubbleChartInstance = new Chart(ctx3, {
+        type: 'bubble',
+        data: bubbleData,
+        options: bubbleOptions
+    });
+}
+
 function updateCharts() {
-    if (!activeButton.value) return;
+    const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+    const counts = countRiskLevels(extractedData);
+    const substanceKey = substanceKeyMapping[activeButton.value]?.key;
 
-    const riskData = processSubstanceData(props.filteredData, activeButton.value);
+    if (!substanceKey) return;
+
+    const data = {
+        'High-risk total male': counts[`${substanceKey}_high_male`],
+        'High-risk total female': counts[`${substanceKey}_high_female`],
+        'Moderate-risk total male': counts[`${substanceKey}_moderate_male`],
+        'Moderate-risk total female': counts[`${substanceKey}_moderate_female`],
+    };
 
     // Radar Chart Data
     const radarData = {
@@ -193,10 +463,10 @@ function updateCharts() {
         datasets: [{
             label: 'Risk Distribution',
             data: [
-                riskData.male.severe,
-                riskData.female.severe,
-                riskData.male.moderate,
-                riskData.female.moderate
+                data['High-risk total male'],
+                data['High-risk total female'],
+                data['Moderate-risk total male'],
+                data['Moderate-risk total female']
             ],
             backgroundColor: 'rgba(43, 101, 111, 0.2)',
             borderColor: '#2B656F',
@@ -208,16 +478,11 @@ function updateCharts() {
 
     // Area Chart Data
     const areaData = {
-        labels: ['High Risk', 'Moderate Risk', 'Low Risk', 'None'],
+        labels: ['High Risk', 'Moderate Risk'],
         datasets: [
             {
                 label: 'Male',
-                data: [
-                    riskData.male.severe,
-                    riskData.male.moderate,
-                    riskData.male.low,
-                    riskData.male.none
-                ],
+                data: [data['High-risk total male'], data['Moderate-risk total male']],
                 fill: true,
                 backgroundColor: (context) => {
                     const ctx = context.chart.ctx;
@@ -228,12 +493,7 @@ function updateCharts() {
             },
             {
                 label: 'Female',
-                data: [
-                    riskData.female.severe,
-                    riskData.female.moderate,
-                    riskData.female.low,
-                    riskData.female.none
-                ],
+                data: [data['High-risk total female'], data['Moderate-risk total female']],
                 fill: true,
                 backgroundColor: (context) => {
                     const ctx = context.chart.ctx;
@@ -253,124 +513,41 @@ function updateCharts() {
                 data: [
                     {
                         x: 1,
-                        y: riskData.male.severe,
-                        r: Math.max(riskData.male.severe * 2, 8)
+                        y: data['High-risk total male'],
+                        r: Math.max(data['High-risk total male'] * 2, 8) + 2, // Adjusted the size here
+                        
                     },
                     {
                         x: 2,
-                        y: riskData.male.moderate,
-                        r: Math.max(riskData.male.moderate * 2, 8)
+                        y: data['Moderate-risk total male'],
+                        r: Math.max(data['Moderate-risk total male'] * 2, 8) + 2, // Adjusted the size here
                     }
                 ],
                 backgroundColor: `${chartTheme.male}88`
             },
             {
-                label: 'Female',
+              label: 'Female',
                 data: [
                     {
                         x: 1,
-                        y: riskData.female.severe,
-                        r: Math.max(riskData.female.severe * 2, 8)
+                        y: data['High-risk total female'],
+                        r: Math.max(data['High-risk total female'] * 2, 8) + 2, // Adjusted the size here
+
                     },
                     {
                         x: 2,
-                        y: riskData.female.moderate,
-                        r: Math.max(riskData.female.moderate * 2, 8)
+                        y: data['Moderate-risk total female'],
+                        r: Math.max(data['Moderate-risk total female'] * 2, 8) + 2, // Adjusted the size here
                     }
                 ],
                 backgroundColor: `${chartTheme.female}88`
             }
         ]
     };
-
+    // Render enhanced charts
     renderEnhancedCharts(radarData, areaData, bubbleData);
 }
 
-function renderEnhancedCharts(radarData, areaData, bubbleData) {
-    const commonOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: false
-            },
-            tooltip: {
-                backgroundColor: '#2B656F',
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                padding: 12,
-                displayColors: true
-            }
-        }
-    };
-
-    // Destroy existing charts
-    [radarChartInstance, areaChartInstance, bubbleChartInstance].forEach(chart => {
-        if (chart) chart.destroy();
-    });
-
-    // Create new charts
-    const ctx1 = document.getElementById('radarChart')?.getContext('2d');
-    const ctx2 = document.getElementById('areaChart')?.getContext('2d');
-    const ctx3 = document.getElementById('bubbleChart')?.getContext('2d');
-
-    if (ctx1) {
-        radarChartInstance = new Chart(ctx1, {
-            type: 'radar',
-            data: radarData,
-            options: {
-                ...commonOptions,
-                scales: {
-                    r: {
-                        ticks: { color: chartTheme.text, backdropColor: 'transparent' },
-                        grid: { color: chartTheme.grid },
-                        angleLines: { color: chartTheme.grid }
-                    }
-                }
-            }
-        });
-    }
-
-    if (ctx2) {
-        areaChartInstance = new Chart(ctx2, {
-            type: isAreaView.value ? 'line' : 'bar',
-            data: areaData,
-            options: {
-                ...commonOptions,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: chartTheme.grid }
-                    },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-    }
-
-    if (ctx3) {
-        bubbleChartInstance = new Chart(ctx3, {
-            type: 'bubble',
-            data: bubbleData,
-            options: {
-                ...commonOptions,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Number of Cases' }
-                    },
-                    x: {
-                        ticks: {
-                            callback: value => value === 1 ? 'High Risk' : 'Moderate Risk'
-                        }
-                    }
-                }
-            }
-        });
-    }
-}
-
-// Event handlers
 const setActiveButton = (buttonName) => {
     activeButton.value = buttonName;
     updateCharts();
@@ -381,14 +558,15 @@ function toggleChartView() {
     updateCharts();
 }
 
-// Watchers
-watch(() => props.filteredData, () => {
+watch(serviceAndTreatmentData, (newVal) => {
+    // console.log('Service and Treatment Data changed:', newVal?.length, 'records');
     if (activeButton.value) {
+        const extractedData = extractMeasurementData(newVal);
+        // console.log('Extracted Data:', extractedData.length, 'records with risks');
         updateCharts();
     }
 }, { deep: true });
 
-// Lifecycle hooks
 onMounted(() => {
     setActiveButton(substances[0]);
 });

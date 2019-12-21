@@ -1,17 +1,22 @@
 <template>
-    <div class="p-d-flex p-jc-center p-mb-2" style="flex-wrap: wrap; gap: 1rem;">
-        <Card v-for="metric in metrics" :key="metric.label" style="flex: 1 0 250px; min-width: 250px;">
-            <template #title>
-                <h6 class="metric-label">{{ metric.label }}</h6>
-            </template>
-            <template #content>
-                <h3 class="metric-value">{{ metric.value }}</h3>
-                <small v-if="metric.trend !== undefined"
-                    :class="['trend-value', metric.trend > 0 ? 'text-success' : 'text-danger']">
-                    {{ metric.trend > 0 ? '+' : '' }}{{ metric.trend }}% from previous period
-                </small>
-            </template>
-        </Card>
+    <div class="metrics-grid mb-4">
+        <div v-for="metric in metrics" :key="metric.label" class="metric-card"
+            :class="{ 'has-trend': metric.trend !== undefined }">
+            <div class="metric-content">
+                <div class="metric-header">
+                    <i :class="getIconForMetric(metric.label)"></i>
+                    <span class="metric-label">{{ metric.label }}</span>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value">{{ metric.value }}</span>
+                    <span v-if="metric.trend !== undefined"
+                        :class="['trend-value', metric.trend > 0 ? 'trend-up' : 'trend-down']">
+                        <i :class="metric.trend > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+                        {{ Math.abs(metric.trend) }}%
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -117,7 +122,7 @@ const metrics = computed(() => {
         { label: 'Intervention Completion Rate', value: `${interventionCompletionRate}%`, trend: undefined },
         { label: 'Average Treatment Duration', value: `${averageTreatmentDuration} days`, trend: undefined },
         { label: 'Average Age', value: averageAge, trend: undefined },
-        { label: 'Gender Distribution', value: `M: ${genderDistribution.males}, F: ${genderDistribution.females}`, trend: undefined },
+        { label: 'Gender Distribution', value: `M: ${genderDistribution.males} | F: ${genderDistribution.females}`, trend: undefined },
     ];
 });
 
@@ -219,36 +224,147 @@ function calculatePercentageChange(current, previous) {
     if (previous === 0) return 0; // Avoid division by zero
     return (((current - previous) / previous) * 100).toFixed(1);
 }
+
+function getIconForMetric(label) {
+    const iconMap = {
+        'Total Users Screened': 'pi pi-users',
+        'Assessment Completion Rate': 'pi pi-check-circle',
+        'Average PHQ-9 Score': 'pi pi-chart-bar',
+        'Average GAD-7 Score': 'pi pi-chart-line',
+        'Average ACE Score': 'pi pi-star',
+        'High-Risk Cases': 'pi pi-exclamation-triangle',
+        'Referral Rate': 'pi pi-send',
+        'Average Referral Time': 'pi pi-clock',
+        'Cases Closed': 'pi pi-check-square',
+        'Counseling Availed': 'pi pi-heart',
+        'Intervention Completion Rate': 'pi pi-check',
+        'Average Treatment Duration': 'pi pi-calendar',
+        'Average Age': 'pi pi-user',
+        'Gender Distribution': 'pi pi-users'
+    };
+    return iconMap[label] || 'pi pi-chart-bar';
+}
 </script>
 
 <style scoped>
-/* You might need to adjust card styles if needed */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    padding: 0.5rem;
+    width: 100%;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, rgba(43, 101, 111, 0.95) 0%, rgba(29, 72, 81, 0.95) 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 0.75rem;
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.metric-header i {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+}
+
 .metric-label {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
-    margin: 0;
-    padding: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.metric-body {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .metric-value {
     color: white;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    margin: 0.5rem 0;
+    line-height: 1;
 }
 
 .trend-value {
-    display: block;
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    line-height: 1;
 }
 
-.text-success {
-    color: #4caf50 !important;
+.trend-up {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
 }
 
-.text-danger {
-    color: #f44336 !important;
+.trend-down {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.trend-value i {
+    font-size: 0.7rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    
+    .metric-card {
+        min-height: 100px;
+        padding: 0.75rem;
+    }
+    
+    .metric-value {
+        font-size: 1.25rem;
+    }
+}
+
+/* Add subtle animation for loading state */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.metrics-grid.loading .metric-card {
+    animation: pulse 1.5s infinite;
 }
 </style>

@@ -205,14 +205,6 @@ watch([() => props.filteredData, () => props.chartOptions], () => {
     chart.value.updateSeries(series.value);
   }
 }, { deep: true });
-
-onMounted(() => {
-  if (isDataAvailable.value) {
-    console.log('Chart data is available on mount');
-  } else {
-    console.log('Chart data is not available on mount');
-  }
-});
 </script>
 
 <style scoped>

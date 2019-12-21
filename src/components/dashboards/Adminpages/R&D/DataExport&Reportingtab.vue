@@ -1,41 +1,59 @@
 <template>
     <div class="data-export-reporting-tab">
-        <section>
-            <h4 class="section-title">Data Export</h4>
-            <div class="export-options">
-                <div class="p-d-flex p-flex-column p-ai-start" style="gap: 0.75rem">
-                    <label for="file-format">File Format:</label>
-                    <Dropdown id="file-format" v-model="selectedFormat" :options="exportFormats" optionLabel="label"
-                        optionValue="value" placeholder="Select Format"></Dropdown>
-
-                    <label for="data-scope">Data Scope:</label>
-                    <MultiSelect id="data-scope" v-model="selectedDataScope" :options="dataScopeOptions"
-                        optionLabel="label" optionValue="value" placeholder="Select Data" display="chip"></MultiSelect>
-
-                    <Button label="Export Data" icon="pi pi-download" @click="handleExport" :disabled="isLoading" />
+        <div class="export-container">
+            <!-- Data Export Section -->
+            <section class="export-section">
+                <div class="section-header">
+                    <i class="pi pi-download header-icon"></i>
+                    <h4 class="section-title">Data Export</h4>
                 </div>
-                <div v-if="isLoading" class="loading-overlay">
-                    <ProgressSpinner />
-                </div>
-            </div>
-        </section>
+                <div class="export-options">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="file-format">File Format</label>
+                            <Dropdown id="file-format" v-model="selectedFormat" :options="exportFormats" optionLabel="label"
+                                optionValue="value" placeholder="Select Format" class="w-100" />
+                        </div>
 
-        <section>
-            <h4 class="section-title">Report Generation</h4>
-            <div class="report-options">
-                <div class="p-d-flex p-flex-column p-ai-start" style="gap: 0.75rem">
-                    <label for="report-type">Report Type:</label>
-                    <Dropdown id="report-type" v-model="selectedReportType" :options="reportTypes" optionLabel="label"
-                        optionValue="value" placeholder="Select Report Type"></Dropdown>
+                        <div class="form-group">
+                            <label for="data-scope">Data Scope</label>
+                            <MultiSelect id="data-scope" v-model="selectedDataScope" :options="dataScopeOptions"
+                                optionLabel="label" optionValue="value" placeholder="Select Data" display="chip"
+                                class="w-100" />
+                        </div>
 
-                    <Button label="Generate Report" icon="pi pi-file" @click="handleGenerateReport"
-                        :disabled="isGeneratingReport" />
+                        <Button label="Export Data" icon="pi pi-download" @click="handleExport" :disabled="isLoading"
+                            class="gradient-btn" />
+                    </div>
+                    <div v-if="isLoading" class="loading-overlay">
+                        <ProgressSpinner />
+                    </div>
                 </div>
-                <div v-if="isGeneratingReport" class="loading-overlay">
-                    <ProgressSpinner />
+            </section>
+
+            <!-- Report Generation Section -->
+            <section class="report-section">
+                <div class="section-header">
+                    <i class="pi pi-file header-icon"></i>
+                    <h4 class="section-title">Report Generation</h4>
                 </div>
-            </div>
-        </section>
+                <div class="report-options">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="report-type">Report Type</label>
+                            <Dropdown id="report-type" v-model="selectedReportType" :options="reportTypes"
+                                optionLabel="label" optionValue="value" placeholder="Select Report Type" class="w-100" />
+                        </div>
+
+                        <Button label="Generate Report" icon="pi pi-file" @click="handleGenerateReport"
+                            :disabled="isGeneratingReport" class="gradient-btn" />
+                    </div>
+                    <div v-if="isGeneratingReport" class="loading-overlay">
+                        <ProgressSpinner />
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </template>
 
@@ -229,9 +247,6 @@ function convertToCSV(data) {
 
 // Placeholder function for report generation logic
 function generateReport(type, data) {
-    // This is a placeholder. Implement your report generation logic here.
-    // For example, you could generate a PDF, a Word document, or an HTML report
-    // based on the selected report type and the filtered data.
     console.log(`Generating ${type} report with data:`, data);
     toast.add({
         severity: 'info',
@@ -243,23 +258,99 @@ function generateReport(type, data) {
 </script>
 
 <style scoped>
-.data-export-reporting-tab section {
+.data-export-reporting-tab {
+    padding: 1.5rem;
+}
+
+.export-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.export-section,
+.report-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
     margin-bottom: 2rem;
 }
 
-.export-options,
-.report-options {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 0.75rem;
+}
+
+.header-icon {
+    font-size: 1.5rem;
+    color: #2B656F;
 }
 
 .section-title {
     color: #2B656F;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin: 0;
+}
+
+.form-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    align-items: start;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+/* Custom styling for PrimeVue components */
+:deep(.p-dropdown),
+:deep(.p-multiselect) {
+    width: 100%;
+    border-radius: 8px;
+}
+
+:deep(.p-dropdown:not(.p-disabled):hover),
+:deep(.p-multiselect:not(.p-disabled):hover) {
+    border-color: #2B656F;
+}
+
+:deep(.p-dropdown.p-focus),
+:deep(.p-multiselect.p-focus) {
+    box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
+    border-color: #2B656F;
+}
+
+/* Gradient button styling */
+.gradient-btn {
+    background: linear-gradient(135deg, rgba(43, 101, 111, 0.95) 0%, rgba(29, 72, 81, 0.95) 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.gradient-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(43, 101, 111, 0.2);
+}
+
+.gradient-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }
 
 .loading-overlay {
@@ -271,7 +362,24 @@ function generateReport(type, data) {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
     z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .data-export-reporting-tab {
+        padding: 1rem;
+    }
+
+    .export-section,
+    .report-section {
+        padding: 1.5rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
