@@ -20,8 +20,8 @@
               <div class="filter-grid">
                 <div class="filter-item">
                   <label class="filter-label">Year</label>
-                  <Dropdown v-model="filters.year" :options="availableYears" optionLabel="name" placeholder="Select Year"
-                    class="w-full" :filter="true" :showClear="true">
+                  <Dropdown v-model="filters.year" :options="availableYears" optionLabel="name"
+                    placeholder="Select Year" class="w-full" :filter="true" :showClear="true">
                     <template #value="slotProps">
                       <div class="dropdown-value">
                         <i class="pi pi-calendar mr-2"></i>
@@ -187,7 +187,8 @@
               </div>
 
               <div class="filter-actions">
-                <Button label="Reset Filters" icon="pi pi-refresh" severity="secondary" outlined @click="resetFilters" />
+                <Button label="Reset Filters" icon="pi pi-refresh" severity="secondary" outlined
+                  @click="resetFilters" />
                 <Button label="Apply Filters" icon="pi pi-check" severity="primary" @click="applyFilters"
                   :loading="isLoading" />
               </div>
@@ -652,7 +653,6 @@ function preprocessData(data) {
 
 const filteredData = computed(() => {
   if (!serviceAndTreatmentData.value) {
-    console.log('No service and treatment data available');
     return [];
   }
   const preprocessedData = preprocessData(serviceAndTreatmentData.value);
@@ -670,24 +670,16 @@ const filteredData = computed(() => {
         item.user?.active_agency?.present_dzongkhag;
 
       if (!itemDzongkhag) {
-        console.log('No dzongkhag found for item:', item.id);
         return false;
       }
 
       const dzongkhagRegion = getDzongkhagRegion(itemDzongkhag);
-      console.log('Item dzongkhag:', itemDzongkhag, 'Region:', dzongkhagRegion);
 
       match = match && dzongkhagRegion === filters.region.code;
 
       if (filters.dzongkhag) {
         const normalizedItemDzongkhag = itemDzongkhag.toUpperCase().trim();
         const normalizedFilterDzongkhag = filters.dzongkhag.code.trim();
-
-        console.log('Comparing dzongkhag:', {
-          item: normalizedItemDzongkhag,
-          filter: normalizedFilterDzongkhag,
-          match: normalizedItemDzongkhag === normalizedFilterDzongkhag,
-        });
 
         match = match && normalizedItemDzongkhag === normalizedFilterDzongkhag;
       }
@@ -758,11 +750,6 @@ const filteredData = computed(() => {
     // Status filtering
     if (filters.statusValue) {
       match = match && item.assessment_status === filters.statusValue.code;
-      console.log('Assessment Status match:', {
-        expected: filters.statusValue.code,
-        actual: item.assessment_status,
-        matches: item.assessment_status === filters.statusValue.code,
-      });
     }
 
     if (filters.caseStatus) {
@@ -1678,4 +1665,5 @@ onMounted(() => {
   .visualization-grid {
     gap: 1rem;
   }
-}</style>
+}
+</style>

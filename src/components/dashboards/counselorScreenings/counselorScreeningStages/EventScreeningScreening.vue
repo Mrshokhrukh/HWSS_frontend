@@ -113,8 +113,6 @@ const handleChangeComponent = (nextMenuName) => {
                 // Check if submission is already in progress
                 if (!isSubmitting.value) {
                     submitAssessments();
-                } else {
-                    console.log('Submission already in progress');
                 }
             }
         });

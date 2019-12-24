@@ -99,7 +99,6 @@ const processUserData = (filteredData) => {
     }
   });
 
-  console.log('User Distribution:', distribution); // For debugging
   return distribution;
 };
 

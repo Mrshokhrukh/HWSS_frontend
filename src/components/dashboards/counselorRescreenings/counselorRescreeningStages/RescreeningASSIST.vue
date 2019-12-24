@@ -312,9 +312,7 @@ const jumpToNextQuestion = () => {
         
         if (currentQuestionIndex.value < filteredQuestions.value.length) {
             currentQuestionIndex.value++;
-        } else {
-            console.log('No more questions.');
-        }
+        } 
     } catch (e) {
         console.error('jumpToNextQuestion threw an error', e);
         throw e;
@@ -421,7 +419,6 @@ const filteredQuestions = computed(() => {
         originalIndex: sortedQuestions.indexOf(question) + 1
     }));
 
-    console.log('Filtered and sorted questions:', indexedQuestions);
     return indexedQuestions;
 });
 

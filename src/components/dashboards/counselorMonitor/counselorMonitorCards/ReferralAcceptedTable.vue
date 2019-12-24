@@ -88,7 +88,6 @@ const getUserDetailsFromLocalStorage = () => {
     try {
       const userDetails = JSON.parse(userDetailsString);
       currentUserId.value = userDetails.user.id;
-      console.log('Current user ID:', currentUserId.value);
     } catch (error) {
       console.error('Error parsing user details from local storage:', error);
     }
@@ -99,8 +98,6 @@ const getUserDetailsFromLocalStorage = () => {
 
 
 const acceptedReferrals = computed(() => {
-  console.log('Combined referrals:', combinedReferrals.value);
-  console.log('Current user ID:', currentUserId.value);
   return combinedReferrals.value.filter(referral =>
     referral.referral_status.toLowerCase() === 'accepted' &&
     referral.referred_to_id === currentUserId.value
@@ -162,8 +159,6 @@ const fetchData = async () => {
     console.error('Error fetching data:', error);
   }
 };
-console.log("data referral", referralList)
-console.log("data service data", serviceAndTreatmentList)
 onMounted(async () => {
   initFilters();
   getUserDetailsFromLocalStorage();

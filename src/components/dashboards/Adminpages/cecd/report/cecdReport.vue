@@ -170,13 +170,6 @@ const handleRegionChange = () => {
 const applyFilters = () => {
   showReport.value = true;
 };
-
-// Debug logging to help troubleshoot filtering
-watch([filters, filteredData], ([newFilters, newData]) => {
-  console.log('Current Filters:', newFilters);
-  console.log('Filtered Data Count:', newData.length);
-  console.log('Sample Filtered Item:', newData[0]);
-}, { deep: true });
 </script>
 
 <style scoped>

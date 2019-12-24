@@ -266,17 +266,13 @@ async function handleAnswerSelection(option, substance) {
 			// For standard cases, just toggle the boolean value based on the answer
 			substanceStatus[substance] = option === "Yes";
 		}
-		// console.log(`Handling selection for ${substance}: ${option}`);
 		if (currentQuestionSetName.value === 'ASSIST') {
-			substanceAnswered[substance] = option === 'Yes'; // Adjust based on your actual value for 'Yes'
+			substanceAnswered[substance] = option === 'Yes';
 
-			// console.log(`Updated ${substance} to ${substanceAnswered[substance]}. Current state:`, substanceAnswered);
 
 			// Check if all substances have been answered. This part remains unchanged.
 			const allAnswered = Object.keys(substanceAnswered).length === currentQuestion.value.substances.length &&
-				Object.values(substanceAnswered).every(answer => answer !== undefined); // Check for not undefined to ensure an answer was provided
-
-			// console.log(`All answered? ${allAnswered}`);
+				Object.values(substanceAnswered).every(answer => answer !== undefined); 
 
 			if (allAnswered) {
 				console.table(toRaw(substanceAnswered));

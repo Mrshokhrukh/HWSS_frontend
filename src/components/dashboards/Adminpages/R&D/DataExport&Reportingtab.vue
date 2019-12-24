@@ -247,7 +247,6 @@ function convertToCSV(data) {
 
 // Placeholder function for report generation logic
 function generateReport(type, data) {
-    console.log(`Generating ${type} report with data:`, data);
     toast.add({
         severity: 'info',
         summary: 'Report Generated',

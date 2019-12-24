@@ -56,7 +56,7 @@
 
         <div class="row g-4 mt-4 d-flex align-items-stretch">
             <!-- Substance Use Risk -->
-            <div class="col-md-6 d-flex">
+            <div class="col-md-12 d-flex">
                 <div class="card flex-fill">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Substance Use Risk Summary</h5>

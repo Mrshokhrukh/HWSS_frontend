@@ -63,11 +63,11 @@ const props = defineProps({
   }
 });
 
-// Add watcher to debug incoming data
-watch(() => props.filteredData, (newData) => {
-  console.log('Filtered Data:', newData);
-  console.log('Case Statuses:', newData.map(item => item.case_status));
-}, { immediate: true });
+// // Add watcher to debug incoming data
+// watch(() => props.filteredData, (newData) => {
+//   console.log('Filtered Data:', newData);
+//   console.log('Case Statuses:', newData.map(item => item.case_status));
+// }, { immediate: true });
 
 // Safe array access function
 const safeFilteredData = computed(() => {
@@ -77,25 +77,21 @@ const safeFilteredData = computed(() => {
 // Computed properties for counts
 const ongoingCaseCount = computed(() => {
   const count = safeFilteredData.value.filter(item => item?.case_status === 'On Going').length || 0;
-  console.log('Ongoing Count:', count);
   return count;
 });
 
 const caseDiscontinueCount = computed(() => {
   const count = safeFilteredData.value.filter(item => item?.case_status === 'Case Discontinued').length || 0;
-  console.log('Discontinued Count:', count);
   return count;
 });
 
 const caseClosedCount = computed(() => {
   const count = safeFilteredData.value.filter(item => item?.case_status === 'Case Closed').length || 0;
-  console.log('Closed Count:', count);
   return count;
 });
 
 const totalCases = computed(() => {
   const count = safeFilteredData.value.length || 0;
-  console.log('Total Cases:', count);
   return count;
 });
 
@@ -115,11 +111,6 @@ const aggregateData = computed(() => ({
 
 // Wrap aggregateData in an array for DataTable
 const tableData = computed(() => [aggregateData.value]);
-
-// Log the final table data
-watch(tableData, (newData) => {
-  console.log('Table Data:', newData);
-}, { immediate: true });
 </script>
 
 

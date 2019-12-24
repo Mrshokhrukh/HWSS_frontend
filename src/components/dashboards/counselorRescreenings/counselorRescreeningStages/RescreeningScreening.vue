@@ -122,8 +122,6 @@ const handleChangeComponent = (currentMenuName) => {
         }).then((result) => {
             if (result.isConfirmed) {
                 submitAssessments();
-            } else {
-                console.log('User cancelled submission.');
             }
         });
     }
@@ -132,7 +130,6 @@ const handleChangeComponent = (currentMenuName) => {
 
 const submitAssessments = async () => {
     try {
-        console.log('Function triggered');
 
         // Get the patient user ID from sessionStorage
         const patientUserId = JSON.parse(sessionStorage.getItem('RescreeningUserID'));
@@ -141,9 +138,6 @@ const submitAssessments = async () => {
 
         if (!counselorUserId) throw new Error('Counselor user ID not found in local storage');
         if (!patientUserId) throw new Error('Patient user ID not found in session storage');
-
-        console.log('Patient User ID:', patientUserId);
-        console.log('Counselor (Rescreened By) User ID:', counselorUserId);
 
         // Retrieve assessment data from local storage with fallback to {}
         const getDataFromLocalStorage = (key) => {
@@ -179,7 +173,6 @@ const submitAssessments = async () => {
 
         // Send the form data to the server
         const response = await axios.post(endpoints.rescreenSubmission, formData);
-        console.log(response);
 
         // Handle successful submission
         Swal.fire({

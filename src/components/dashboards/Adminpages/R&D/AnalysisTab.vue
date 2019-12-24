@@ -291,15 +291,15 @@ const referralComparisonSeries = computed(() => {
 
     return [
         {
-            name: 'Conducted/Availed/Severe',
+            name: 'Conducted/Availed',
             data: [assessmentCounts.conducted, counselingCounts.availed, riskCounts.severe]
         },
         {
-            name: 'Not Conducted/Waiting/Moderate',
+            name: 'Not Conducted/Waiting',
             data: [assessmentCounts.notConducted, counselingCounts.waiting, riskCounts.moderate]
         },
         {
-            name: 'Not Required/Mild',
+            name: 'Not Required',
             data: [0, counselingCounts.notRequired, riskCounts.mild]
         }
     ];

@@ -1054,7 +1054,6 @@ const formatFullName = async (record) => {
 
 // Replace the async fullNameTemplate with this synchronous version
 const fullNameTemplate = (rowData) => {
-    console.log('rowData in fullNameTemplate:', rowData);
     if (!rowData || !rowData.user) return '';
 
     const user = rowData.user;
@@ -1112,10 +1111,6 @@ const filterNonInjectionSubstances = (data) => {
         data.forEach(substance => {
             const nameKey = substance.substance__name || substance.substance_name;
 
-            // Log for debugging
-            console.log("Substance data:", substance);
-            console.log("Name Key", nameKey)
-
             if (nameKey && !excludedSubstances.some(excluded => nameKey.toLowerCase().trim().includes(excluded))) {
                 const riskLevel = formatRiskFlag(
                     substance.risk_flag,
@@ -1133,9 +1128,6 @@ const filterNonInjectionSubstances = (data) => {
         Object.entries(data).forEach(([key, value]) => {
             if (key.endsWith('_measurement')) {
                 const substanceName = key.replace('_measurement', '');
-
-                // Log for debugging
-                console.log("Substance object data:", substanceName, value)
 
                 if (substanceName && !excludedSubstances.some(excluded => substanceName.toLowerCase().trim().includes(excluded))) {
                     const riskLevel = formatRiskFlag(
@@ -1319,11 +1311,8 @@ const getServiceList = async () => {
                 row?.user?.active_agency?.agency_name?.trim().toLowerCase() === myAgency.value.trim().toLowerCase();
             const screeningDate = row?.screening_data?.submission_date;
             const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-            console.log('Row data in filter:', row, 'agencyMatch', agencyMatch, 'submissionYear', submissionYear); // Log inside filter
             return agencyMatch && submissionYear === currentYear;
         });
-
-        console.log('rowData:', rowData.value); // Debugging line
 
 
     } catch (error) {

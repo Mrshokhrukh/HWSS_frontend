@@ -7,7 +7,7 @@
             </div>
         </div>
         <div class="card-body p-4">
-            <section>
+            <section class="mb-4">
                 <h4 class="section-title">Correlation Matrix</h4>
                 <div class="chart-container">
                     <apexchart type="heatmap" height="350" :options="correlationMatrixOptions"
@@ -16,7 +16,7 @@
                 </div>
             </section>
 
-            <section>
+            <section class="mb-4">
                 <h4 class="section-title">Scatter Plots</h4>
                 <div class="chart-container">
                     <div class="scatter-plot-controls">

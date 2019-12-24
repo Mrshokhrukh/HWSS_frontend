@@ -312,8 +312,6 @@ const jumpToNextQuestion = () => {
         if (currentQuestionIndex.value < filteredQuestions.value.length) {
             currentQuestionIndex.value++;
             checkAllSubstancesDisabled();
-        } else {
-            console.log('No more questions.');
         }
     } catch (e) {
         console.error('jumpToNextQuestion threw an error', e);
@@ -420,8 +418,6 @@ const filteredQuestions = computed(() => {
         sequentialIndex: index + 1,
         originalIndex: sortedQuestions.indexOf(question) + 1
     }));
-
-    console.log('Filtered and sorted questions:', indexedQuestions);
     return indexedQuestions;
 });
 

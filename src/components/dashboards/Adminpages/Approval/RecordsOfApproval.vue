@@ -131,10 +131,8 @@ const closePopup = () => {
 const fetchReportData = async () => {
   try {
     const response = await axios.get(endpoints.getEventScreeningList);
-    console.log('API Response:', response.data); // Log the response data to check
     if (response.data && Array.isArray(response.data)) {
       monitorData.value = response.data; // Use monitorData instead of reportData
-      console.log('Fetched Data: for request', monitorData.value); // Log the fetched data to check
     } else {
       handleFetchError();
     }

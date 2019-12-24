@@ -231,13 +231,6 @@ watch([() => props.chartData, () => props.chartOptions], () => {
     chart.value.updateSeries(series.value)
   }
 }, { deep: true })
-
-// Debug logging
-watch(() => props.chartData, (newData) => {
-  console.log('Chart Data Updated:', newData);
-  console.log('Series Generated:', series.value);
-}, { deep: true });
-
 </script>
 
 <style scoped>

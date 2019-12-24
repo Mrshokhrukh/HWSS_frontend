@@ -291,10 +291,6 @@ const fetchAndFilterData = async () => {
     const { agencyName } = getUserDetailsFromStorage();
     const currentYear = new Date().getFullYear();
 
-    // Log the raw data fetched from the API
-    console.log("Raw data fetched from API:", dataArray);
-
-
     filteredData.value = dataArray.filter(item => {
       const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
       const screeningData = item.screening_data;
@@ -305,11 +301,6 @@ const fetchAndFilterData = async () => {
 
       return agencyMatch && screeningData && submissionYear === currentYear;
     });
-
-
-    // Log filtered data after applying agency and year filters
-    console.log("Filtered data after agency and year filters:", filteredData.value);
-
 
     updateSeverityCounts();
     processAssistData();

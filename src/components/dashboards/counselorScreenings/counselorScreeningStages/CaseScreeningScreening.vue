@@ -123,8 +123,6 @@ const handleChangeComponent = (currentMenuName) => {
         }).then((result) => {
             if (result.isConfirmed) {
                 submitAssessments();
-            } else {
-                console.log('User cancelled submission.');
             }
         });
     }
@@ -167,7 +165,6 @@ const submitAssessments = async () => {
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
         const response = await axios.post(endpoints.caseScreenSubmission, formData);
-        console.log(response)
         sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
 
         clearLocalStorageData();
