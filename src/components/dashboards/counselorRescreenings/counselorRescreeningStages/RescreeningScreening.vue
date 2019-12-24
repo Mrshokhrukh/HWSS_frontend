@@ -135,9 +135,11 @@ const submitAssessments = async () => {
         const patientUserId = JSON.parse(sessionStorage.getItem('RescreeningUserID'));
         const userDetails = JSON.parse(localStorage.getItem('userDetailsStore'));
         const counselorUserId = userDetails?.user?.id || null;
+        const clientAgeGroup = sessionStorage.getItem('clientAgeGroup')
 
         if (!counselorUserId) throw new Error('Counselor user ID not found in local storage');
         if (!patientUserId) throw new Error('Patient user ID not found in session storage');
+        if (!clientAgeGroup) throw new Error('Client age group not found in session storage')
 
         // Retrieve assessment data from local storage with fallback to {}
         const getDataFromLocalStorage = (key) => {
@@ -146,7 +148,7 @@ const submitAssessments = async () => {
                 return data ? JSON.parse(data) : (key === 'ASSIST' ? [] : {});
             } catch (error) {
                 console.error(`Error parsing ${key} data:`, error);
-                return key === 'ASSIST' ? [] : {}; 
+                return key === 'ASSIST' ? [] : {};
             }
         };
 
@@ -166,7 +168,7 @@ const submitAssessments = async () => {
         formData.append('aceData', JSON.stringify(aceData || {}));
 
         // Calculate risk severity for ASSIST if data exists, else append an empty object
-        const assistRiskSeverity = assistData ? calculateAssistRiskSeverity(assistData) : {};
+        const assistRiskSeverity = assistData ? calculateAssistRiskSeverity(assistData, clientAgeGroup) : {};
         formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
 
         formData.append('schoolEnvData', JSON.stringify(schoolEnvData || {}));
@@ -195,7 +197,8 @@ const submitAssessments = async () => {
     }
 };
 
-const calculateAssistRiskSeverity = (assistData) => {
+
+const calculateAssistRiskSeverity = (assistData, ageGroup) => {
     // Ensure assistData is an array, even if it's empty or undefined
     const validAssistData = Array.isArray(assistData) ? assistData : [];
 
@@ -203,35 +206,73 @@ const calculateAssistRiskSeverity = (assistData) => {
     validAssistData.forEach(entry => {
         const substanceName = entry.substance;
         const point = entry.point;
-        substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+        if (substanceName) {
+            substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+        }
     });
 
-    const thresholds = {
-        mild: 3,
-        moderate: 5,
-        moderatelySevere: 8,
-        severe: 11
-    };
+    // Define thresholds based on age group
+    let thresholds;
+    if (ageGroup === 'Below 14') {
+        thresholds = {
+            'Tobacco products (cigarettes, chewing tobacco etc)': { low: 0, moderate: 3, high: 27 },
+            'Alcoholic beverages (beer, wine, spirits, ara etc.)': { low: 0, moderate: 10, high: 27 },
+            'Cannabis (marijuana, pot, grass, hash, black etc.)': { low: 0, moderate: 3, high: 27 },
+            'Cocaine': { low: 0, moderate: 3, high: 27 },
+            'Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)': { low: 0, moderate: 3, high: 27 },
+            'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': { low: 0, moderate: 3, high: 27 },
+            'Sedatives or Sleeping Pills (N-10, diazepam etc.)': { low: 0, moderate: 3, high: 27 },
+            'Hallucinogens (LSD, trips, Ketamine, etc.)': { low: 0, moderate: 3, high: 27 },
+            'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': { low: 0, moderate: 3, high: 27 },
+            'Other - specify': { low: 0, moderate: 3, high: 27 }
+        };
+    } else if (ageGroup === '15 to 17') {
+        thresholds = {
+            'Tobacco products (cigarettes, chewing tobacco etc)': { low: 2, moderate: 11, high: 12 },
+            'Alcoholic beverages (beer, wine, spirits, ara etc.)': { low: 5, moderate: 17, high: 18 },
+            'Cannabis (marijuana, pot, grass, hash, black etc.)': { low: 2, moderate: 11, high: 12 },
+            'Cocaine': { low: 2, moderate: 6, high: 7 },
+            'Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)': { low: 2, moderate: 8, high: 9 },
+            'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': { low: 2, moderate: 8, high: 9 },
+            'Sedatives or Sleeping Pills (N-10, diazepam etc.)': { low: 2, moderate: 6, high: 7 },
+            'Hallucinogens (LSD, trips, Ketamine, etc.)': { low: 2, moderate: 8, high: 9 },
+            'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': { low: 2, moderate: 6, high: 7 },
+            'Other - specify': { low: 2, moderate: 6, high: 7 }
+        };
+    } else { // Above 18
+        thresholds = {
+            'Tobacco products (cigarettes, chewing tobacco etc)': { low: 0, moderate: 3, high: 27 },
+            'Alcoholic beverages (beer, wine, spirits, ara etc.)': { low: 0, moderate: 10, high: 27 },
+            'Cannabis (marijuana, pot, grass, hash, black etc.)': { low: 0, moderate: 3, high: 27 },
+            'Cocaine': { low: 0, moderate: 3, high: 27 },
+            'Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)': { low: 0, moderate: 3, high: 27 },
+            'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': { low: 0, moderate: 3, high: 27 },
+            'Sedatives or Sleeping Pills (N-10, diazepam etc.)': { low: 0, moderate: 3, high: 27 },
+            'Hallucinogens (LSD, trips, Ketamine, etc.)': { low: 0, moderate: 3, high: 27 },
+            'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': { low: 0, moderate: 3, high: 27 },
+            'Other - specify': { low: 0, moderate: 3, high: 27 }
+        };
+    }
 
     const assistRiskSeverity = {};
     for (const substanceName in substanceScores) {
         const score = substanceScores[substanceName];
-        if (score >= thresholds.severe) {
-            assistRiskSeverity[substanceName] = 'severe';
-        } else if (score >= thresholds.moderatelySevere) {
-            assistRiskSeverity[substanceName] = 'moderately severe';
-        } else if (score >= thresholds.moderate) {
-            assistRiskSeverity[substanceName] = 'moderate';
-        } else if (score >= thresholds.mild) {
-            assistRiskSeverity[substanceName] = 'mild';
-        } else {
-            assistRiskSeverity[substanceName] = 'none';
+        let riskLevel;
+        if (score >= thresholds[substanceName]?.high) {
+            riskLevel = 'high risk';
+        } else if (score >= thresholds[substanceName]?.moderate) {
+            riskLevel = 'moderate risk';
+        } else if (score > thresholds[substanceName]?.low) {
+            riskLevel = 'low risk';
         }
-        assistRiskSeverity[substanceName] += ` (${score})`;
+        else {
+            riskLevel = 'no risk'
+        }
+        assistRiskSeverity[substanceName] = `${riskLevel} (${score})`;
     }
-
     return assistRiskSeverity;
 };
+
 
 // Function to clear localStorage data for assessments
 const clearLocalStorageData = () => {
@@ -243,6 +284,7 @@ const clearLocalStorageData = () => {
     localStorage.removeItem('selectedTools');
 };
 </script>
+
 
 <style scoped>
 .screening-container {
