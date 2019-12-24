@@ -21,7 +21,10 @@
 
             <!-- Stats Grid -->
             <div v-else class="row g-4">
-                <div v-for="(stat, index) in processedStats" :key="index" class="col-md-6 col-lg-4">
+                <div v-for="(stat, index) in processedStats" :key="index" :class="[
+                    'col-md-6',
+                    index >= 3 ? 'col-lg-6' : 'col-lg-4'
+                ]">
                     <div :class="['stat-card', stat.variant]">
                         <div class="card-body position-relative">
                             <div class="icon-wrapper">
@@ -44,9 +47,9 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
-import { ref, computed, onMounted, inject, watchEffect, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, inject, onBeforeUnmount } from 'vue';
 
 // Props
 const props = defineProps({
@@ -125,8 +128,7 @@ function calculateTrend(metric) {
     const previousValue = previousStats.value[metric] || 0;
     const currentValue = stats.value[metric] || 0;
 
-
-    if(previousValue === 0) return 0; // if no previous value, return a default of 0.
+    if (previousValue === 0) return 0;
 
     const trend = ((currentValue - previousValue) / previousValue) * 100;
     return trend;
@@ -148,7 +150,7 @@ function calculateStats(data) {
     };
 
     const statusMap = {
-       'hospital-based outpatient sud treatment and care (primary phase)': 'primaryPhase',
+        'hospital-based outpatient sud treatment and care (primary phase)': 'primaryPhase',
         'hospital-based outpatient sud treatment and care (continuing care)': 'continuingCare',
         'undergoing rehabilitation': 'rehabilitation',
         'treatment completed': 'completed',
@@ -158,21 +160,20 @@ function calculateStats(data) {
     data.forEach(item => {
         // Safely extract follow-up information
         let followUp = null;
-        if(item && typeof item === 'object'){
-             followUp = item?.follow_up?.trim()?.toLowerCase();
+        if (item && typeof item === 'object') {
+            followUp = item?.follow_up?.trim()?.toLowerCase();
         }
 
         for (const key in statusMap) {
-           if(key.toLowerCase() === followUp){
+            if (key.toLowerCase() === followUp) {
                 newStats[statusMap[key]]++;
                 break;
-           }
+            }
         }
-
     });
-    
+
     // update prev stats
-    previousStats.value = {...stats.value};
+    previousStats.value = { ...stats.value };
     stats.value = newStats;
 }
 
@@ -205,7 +206,7 @@ onBeforeUnmount(() => {
     clearTimeout(timeoutId);
 });
 </script>
-  
+
 <style scoped>
 .my-rounded {
     border-radius: 20px;
