@@ -57,11 +57,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import Button from 'primevue/button';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import VueApexCharts from 'vue3-apexcharts';
 
 const props = defineProps({
     filteredData: {
@@ -91,7 +90,7 @@ const commonChartOptions = {
 };
 
 // Age Distribution Chart
-const ageDistributionChartOptions = ref({
+const createAgeDistributionOptions = (categories) => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -99,7 +98,7 @@ const ageDistributionChartOptions = ref({
     },
     xaxis: {
         ...commonChartOptions.xaxis,
-        categories: [],
+        categories,
     },
     yaxis: {
         ...commonChartOptions.yaxis,
@@ -113,9 +112,7 @@ const ageDistributionChartOptions = ref({
         breakpoint: 500,
         options: {
             plotOptions: {
-                bar: {
-                    horizontal: true
-                }
+                bar: { horizontal: true }
             },
             yaxis: {
                 title: {
@@ -126,6 +123,28 @@ const ageDistributionChartOptions = ref({
             },
         }
     }]
+});
+
+const ageDistributionChartOptions = computed(() => {
+    const ageGroupCounts = {};
+    props.filteredData.forEach(item => {
+        const age = calculateAge(item.user?.date_of_birth);
+        const ageGroup = getAgeGroup(age);
+        if (ageGroup) {
+            ageGroupCounts[ageGroup] = (ageGroupCounts[ageGroup] || 0) + 1;
+        }
+    });
+
+    const allAgeGroups = ['Under 10', '10-19', '20-24', '25-60', 'Over 60'];
+    const sortedAgeGroups = allAgeGroups.sort((a, b) => {
+        const ageA = a === 'Under 10' ? 0 : parseInt(a.split('-')[0]);
+        const ageB = b === 'Under 10' ? 0 : parseInt(b.split('-')[0]);
+        if (a === 'Over 60') return 1;
+        if (b === 'Over 60') return -1;
+        return ageA - ageB;
+    });
+
+    return createAgeDistributionOptions(sortedAgeGroups);
 });
 
 const ageDistributionChartSeries = computed(() => {
@@ -145,25 +164,14 @@ const ageDistributionChartSeries = computed(() => {
         }
     });
 
-    const sortedAgeGroups = Object.keys(ageGroupCounts).sort((a, b) => {
-        const ageA = a === 'Under 10' ? 0 : parseInt(a.split('-')[0]);
-        const ageB = b === 'Under 10' ? 0 : parseInt(b.split('-')[0]);
-        if (a === 'Over 60') return 1;
-        if (b === 'Over 60') return -1;
-        return ageA - ageB;
-    });
-    ageDistributionChartOptions.value.xaxis.categories = sortedAgeGroups;
-
-    return [
-        {
-            name: 'Number of Individuals',
-            data: sortedAgeGroups.map(group => ageGroupCounts[group]),
-        },
-    ];
+    return [{
+        name: 'Number of Individuals',
+        data: allAgeGroups.map(group => ageGroupCounts[group]),
+    }];
 });
 
 // Gender Distribution Chart
-const genderDistributionChartOptions = ref({
+const genderDistributionChartOptions = computed(() => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -178,15 +186,11 @@ const genderDistributionChartOptions = ref({
     responsive: [{
         breakpoint: 480,
         options: {
-            chart: {
-                width: 200,
-            },
-            legend: {
-                position: 'bottom'
-            }
+            chart: { width: 200 },
+            legend: { position: 'bottom' }
         }
     }]
-});
+}));
 
 const genderDistributionChartSeries = computed(() => {
     const maleCount = props.filteredData.filter(item => item.user?.gender?.toLowerCase() === 'male').length;
@@ -195,15 +199,13 @@ const genderDistributionChartSeries = computed(() => {
 });
 
 // Dzongkhag Distribution Chart
-const dzongkhagDistributionChartOptions = ref({
+const createDzongkhagDistributionOptions = (categories) => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
         type: 'bar',
         height: 350,
-        toolbar: {
-            show: false
-        }
+        toolbar: { show: false }
     },
     plotOptions: {
         bar: {
@@ -217,13 +219,11 @@ const dzongkhagDistributionChartOptions = ref({
         formatter: function (val) {
             return val || '0';
         },
-        style: {
-            fontSize: '12px'
-        }
+        style: { fontSize: '12px' }
     },
     xaxis: {
         ...commonChartOptions.xaxis,
-        categories: [],
+        categories,
         labels: {
             rotate: -45,
             rotateAlways: true,
@@ -234,9 +234,7 @@ const dzongkhagDistributionChartOptions = ref({
         },
         title: {
             text: 'Location (Dzongkhag)',
-            style: {
-                color: primaryColor
-            }
+            style: { color: primaryColor }
         }
     },
     yaxis: {
@@ -261,9 +259,7 @@ const dzongkhagDistributionChartOptions = ref({
         breakpoint: 600,
         options: {
             plotOptions: {
-                bar: {
-                    columnWidth: '80%'
-                }
+                bar: { columnWidth: '80%' }
             },
             xaxis: {
                 labels: {
@@ -275,32 +271,40 @@ const dzongkhagDistributionChartOptions = ref({
     }]
 });
 
-
-
-const dzongkhagDistributionChartSeries = computed(() => {
+const dzongkhagDistributionChartOptions = computed(() => {
     const dzongkhagCounts = {};
-
-    // Process the data with validation
     props.filteredData.forEach(item => {
         const dzongkhag = validateLocation(item.user?.ps_add_dzongkhag);
         dzongkhagCounts[dzongkhag] = (dzongkhagCounts[dzongkhag] || 0) + 1;
     });
 
-     // Sort dzongkhags with 'N/A' at the end
     const sortedDzongkhags = Object.keys(dzongkhagCounts).sort((a, b) => {
         if (a === 'N/A') return 1;
         if (b === 'N/A') return -1;
         return a.localeCompare(b);
     });
-    // Update chart options
-    dzongkhagDistributionChartOptions.value.xaxis.categories = sortedDzongkhags;
+
+    return createDzongkhagDistributionOptions(sortedDzongkhags);
+});
+
+const dzongkhagDistributionChartSeries = computed(() => {
+    const dzongkhagCounts = {};
+    props.filteredData.forEach(item => {
+        const dzongkhag = validateLocation(item.user?.ps_add_dzongkhag);
+        dzongkhagCounts[dzongkhag] = (dzongkhagCounts[dzongkhag] || 0) + 1;
+    });
+
+    const sortedDzongkhags = Object.keys(dzongkhagCounts).sort((a, b) => {
+        if (a === 'N/A') return 1;
+        if (b === 'N/A') return -1;
+        return a.localeCompare(b);
+    });
+
     return [{
         name: 'Number of Individuals',
         data: sortedDzongkhags.map(dzongkhag => dzongkhagCounts[dzongkhag])
     }];
 });
-
-
 
 function validateLocation(location) {
     if (!location || typeof location !== 'string') return 'N/A';
@@ -308,7 +312,6 @@ function validateLocation(location) {
     return location === '' ? 'N/A' : location;
 }
 
-// Helper functions
 function calculateAge(dateOfBirth) {
     if (!dateOfBirth) return 0;
     const dob = new Date(dateOfBirth);
@@ -320,6 +323,7 @@ function calculateAge(dateOfBirth) {
     }
     return age;
 }
+
 function getAgeGroup(age) {
     if (age < 10) return 'Under 10';
     if (age >= 10 && age <= 19) return '10-19';
@@ -328,7 +332,6 @@ function getAgeGroup(age) {
     return 'Over 60';
 }
 
-// Export Functions
 const downloadPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -337,8 +340,9 @@ const downloadPDF = () => {
     const tableData = [
         ['Metric', 'Value'],
         ['Total Users', props.filteredData.length],
-        ['Gender Distribution', `Male : ${props.filteredData.filter(item => item.user?.gender === 'Male').length}, Female : ${props.filteredData.filter(item => item.user?.gender === 'Female').length}`],
-    ]
+        ['Gender Distribution', `Male: ${props.filteredData.filter(item => item.user?.gender === 'Male').length}, Female: ${props.filteredData.filter(item => item.user?.gender === 'Female').length}`],
+    ];
+
     doc.autoTable({
         head: [['Metric', 'Value']],
         body: tableData,

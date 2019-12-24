@@ -212,8 +212,8 @@ const commonChartOptions = {
     }]
 };
 
-// Treatment Status Chart Options and Series
-const treatmentStatusOptions = ref({
+// Treatment Status Chart
+const treatmentStatusOptions = computed(() => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -242,7 +242,7 @@ const treatmentStatusOptions = ref({
         labels: { style: { colors: colors.primary } },
     },
     colors: colors.accent,
-});
+}));
 
 const treatmentStatusSeries = computed(() => {
     const caseStatusCount = groupBy(props.filteredData, 'case_status');
@@ -263,8 +263,8 @@ const treatmentStatusSeries = computed(() => {
     }];
 });
 
-// Counseling Status Chart Options and Series
-const counselingStatusOptions = ref({
+// Counseling Status Chart
+const counselingStatusOptions = computed(() => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -278,7 +278,7 @@ const counselingStatusOptions = ref({
             return val.toFixed(1) + '%';
         }
     }
-});
+}));
 
 const counselingStatusSeries = computed(() => {
     const statusCount = groupBy(props.filteredData, 'counseling');
@@ -291,46 +291,9 @@ const counselingStatusSeries = computed(() => {
     ];
 });
 
-// Follow-Up Status Chart Options and Series
-const followUpByAgencyOptions = ref({
-    ...commonChartOptions,
-    chart: {
-        ...commonChartOptions.chart,
-        type: 'bar',
-        stacked: true,
-    },
-    plotOptions: {
-        bar: {
-            horizontal: true,
-            borderRadius: 4,
-            columnWidth: '90%',
-        }
-    },
-    xaxis: {
-        type: 'category',
-        labels: {
-            style: { colors: colors.primary },
-            trim: false,
-            show: true,
-            maxHeight: 150
-        }
-    },
-    yaxis: {
-        title: {
-            text: 'Number of Cases',
-            style: { color: colors.primary }
-        }
-    },
-    colors: colors.accent,
-    dataLabels: {
-        enabled: true,
-        formatter: function (val) {
-            return val > 0 ? val.toString() : '';
-        }
-    }
-});
-
-const followUpByAgencySeries = computed(() => {
+// Follow-Up Status Chart
+// First compute the agency data
+const followUpAgencyData = computed(() => {
     const agencyData = {};
 
     props.filteredData.forEach(item => {
@@ -342,13 +305,59 @@ const followUpByAgencySeries = computed(() => {
                 'Undergoing Treatment': 0
             };
         }
-
         const followUpStatus = item.follow_up || 'No Follow-up';
         agencyData[agencyName][followUpStatus]++;
     });
 
+    return agencyData;
+});
+
+const followUpByAgencyOptions = computed(() => {
+    const agencies = Object.keys(followUpAgencyData.value);
+
+    return {
+        ...commonChartOptions,
+        chart: {
+            ...commonChartOptions.chart,
+            type: 'bar',
+            stacked: true,
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4,
+                columnWidth: '90%',
+            }
+        },
+        xaxis: {
+            categories: agencies,
+            type: 'category',
+            labels: {
+                style: { colors: colors.primary },
+                trim: false,
+                show: true,
+                maxHeight: 150
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Number of Cases',
+                style: { color: colors.primary }
+            }
+        },
+        colors: colors.accent,
+        dataLabels: {
+            enabled: true,
+            formatter: function (val) {
+                return val > 0 ? val.toString() : '';
+            }
+        }
+    };
+});
+
+const followUpByAgencySeries = computed(() => {
+    const agencyData = followUpAgencyData.value;
     const agencies = Object.keys(agencyData);
-    followUpByAgencyOptions.value.xaxis.categories = agencies;
 
     return [
         {
@@ -366,8 +375,8 @@ const followUpByAgencySeries = computed(() => {
     ];
 });
 
-// Assessment Status Chart Options and Series
-const assessmentStatusOptions = ref({
+// Assessment Status Chart
+const assessmentStatusOptions = computed(() => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -390,15 +399,15 @@ const assessmentStatusOptions = ref({
                     total: {
                         show: true,
                         label: 'Total Cases',
-                        formatter: function () {
-                            return props.filteredData.length;
+                        formatter: function (w) {
+                            return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
                         }
                     }
                 }
             }
         }
     }
-});
+}));
 
 const assessmentStatusSeries = computed(() => {
     const statusCount = groupBy(props.filteredData, 'assessment_status');
@@ -410,54 +419,8 @@ const assessmentStatusSeries = computed(() => {
     ];
 });
 
-// Referral Flow Chart Options and Series
-const referralFlowOptions = ref({
-    ...commonChartOptions,
-    chart: {
-        ...commonChartOptions.chart,
-        type: 'bar',
-        stacked: false
-    },
-    plotOptions: {
-        bar: {
-            horizontal: true,
-            borderRadius: 4,
-            distributed: true
-        }
-    },
-     xaxis: {
-        type: 'category',
-        labels: {
-            style: {
-                colors: colors.primary,
-                fontSize: '11px'
-            },
-            formatter: function (value) {
-                // Truncate long labels
-                return value.length > 30 ? value.substr(0, 27) + '...' : value;
-            }
-        }
-    },
-    yaxis: {
-        title: {
-            text: 'Number of Referrals',
-            style: { color: colors.primary }
-        }
-    },
-    colors: colors.referral,
-    legend: {
-        show: false
-    },
-     tooltip: {
-            y: {
-                formatter: function (value) {
-                    return `${value} Referral${value !== 1 ? 's' : ''}`;
-                }
-            }
-        }
-});
-
-const referralFlowSeries = computed(() => {
+// Referral Flow Chart
+const referralFlowData = computed(() => {
     const referralData = {};
     props.filteredData.forEach(item => {
         if (item.referral_instance) {
@@ -471,19 +434,69 @@ const referralFlowSeries = computed(() => {
         }
     });
 
-    const sortedData = Object.entries(referralData)
+    return Object.entries(referralData)
         .sort(([, a], [, b]) => b - a)
-        .slice(0, 10); // Top 10 flows
+        .slice(0, 10);
+});
 
-    referralFlowOptions.value.xaxis.categories = sortedData.map(([label]) => label);
+const referralFlowOptions = computed(() => {
+    const sortedData = referralFlowData.value;
 
+    return {
+        ...commonChartOptions,
+        chart: {
+            ...commonChartOptions.chart,
+            type: 'bar',
+            stacked: false
+        },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4,
+                distributed: true
+            }
+        },
+        xaxis: {
+            categories: sortedData.map(([label]) => label),
+            type: 'category',
+            labels: {
+                style: {
+                    colors: colors.primary,
+                    fontSize: '11px'
+                },
+                formatter: function (value) {
+                    return value.length > 30 ? value.substr(0, 27) + '...' : value;
+                }
+            }
+        },
+        yaxis: {
+            title: {
+                text: 'Number of Referrals',
+                style: { color: colors.primary }
+            }
+        },
+        colors: colors.referral,
+        legend: { show: false },
+        tooltip: {
+            y: {
+                formatter: function (value) {
+                    return `${value} Referral${value !== 1 ? 's' : ''}`;
+                }
+            }
+        }
+    };
+});
+
+const referralFlowSeries = computed(() => {
+    const sortedData = referralFlowData.value;
     return [{
         name: 'Referrals',
         data: sortedData.map(([, value]) => value)
     }];
 });
-// Referral Status Chart Options and Series
-const referralStatusOptions = ref({
+
+// Referral Status Chart
+const referralStatusOptions = computed(() => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -497,7 +510,7 @@ const referralStatusOptions = ref({
             return val.toFixed(1) + '%';
         }
     }
-});
+}));
 
 const referralStatusSeries = computed(() => {
     const statusCount = groupBy(props.filteredData, 'referred');
@@ -510,16 +523,19 @@ const referralStatusSeries = computed(() => {
     ];
 });
 
-// Agency Referral Matrix Options and Series
-const matrixColorRanges = computed(() => {
+// Agency Referral Matrix
+const matrixData = computed(() => {
     const matrix = {};
+    const agencies = new Set();
     const allValues = [];
 
-    // Collect all values first
     props.filteredData.forEach(item => {
         if (item.referral_instance) {
             const fromAgency = item.referral_instance.referred_by?.active_agency?.agency_name || 'Unknown';
             const toAgency = item.referral_instance.referred_to?.active_agency?.agency_name || 'Unknown';
+
+            agencies.add(fromAgency);
+            agencies.add(toAgency);
 
             if (!matrix[fromAgency]) {
                 matrix[fromAgency] = {};
@@ -533,17 +549,21 @@ const matrixColorRanges = computed(() => {
     });
 
     const maxValue = Math.max(...allValues.filter(v => v > 0));
-
-    return [
+    const colorRanges = [
         { from: 0, to: 0, color: '#F5F5F5', name: 'none' },
         { from: 1, to: Math.ceil(maxValue / 3), color: '#A3CDB8', name: 'low' },
         { from: Math.ceil(maxValue / 3), to: Math.ceil(2 * maxValue / 3), color: '#6CB3A5', name: 'medium' },
         { from: Math.ceil(2 * maxValue / 3), to: maxValue, color: '#275D67', name: 'high' }
     ];
+
+    return {
+        matrix,
+        agencies: Array.from(agencies).sort(),
+        colorRanges
+    };
 });
 
-// Update referralMatrixOptions to use the computed color ranges
-const referralMatrixOptions = ref({
+const referralMatrixOptions = computed(() => ({
     ...commonChartOptions,
     chart: {
         ...commonChartOptions.chart,
@@ -561,47 +581,26 @@ const referralMatrixOptions = ref({
             shadeIntensity: 0.5,
             radius: 0,
             colorScale: {
-                ranges: matrixColorRanges.value // Use the computed property here
+                ranges: matrixData.value.colorRanges
             }
         }
     },
     xaxis: {
+        categories: matrixData.value.agencies,
         labels: {
             trim: true,
             maxHeight: 50,
             style: { colors: colors.primary }
         }
     }
-});
+}));
 
-// The referralMatrixSeries computed property remains the same
 const referralMatrixSeries = computed(() => {
-    const matrix = {};
-    const agencies = new Set();
+    const { matrix, agencies } = matrixData.value;
 
-    props.filteredData.forEach(item => {
-        if (item.referral_instance) {
-            const fromAgency = item.referral_instance.referred_by?.active_agency?.agency_name || 'Unknown';
-            const toAgency = item.referral_instance.referred_to?.active_agency?.agency_name || 'Unknown';
-
-            agencies.add(fromAgency);
-            agencies.add(toAgency);
-
-            if (!matrix[fromAgency]) {
-                matrix[fromAgency] = {};
-            }
-            if (!matrix[fromAgency][toAgency]) {
-                matrix[fromAgency][toAgency] = 0;
-            }
-            matrix[fromAgency][toAgency]++;
-        }
-    });
-
-    const agencyList = Array.from(agencies).sort();
-
-    return agencyList.map(fromAgency => ({
+    return agencies.map(fromAgency => ({
         name: fromAgency,
-        data: agencyList.map(toAgency => ({
+        data: agencies.map(toAgency => ({
             x: toAgency,
             y: matrix[fromAgency]?.[toAgency] || 0
         }))
