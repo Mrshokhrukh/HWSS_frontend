@@ -12,7 +12,7 @@
         <div class="container-fluid">
           <div class="row">
             <div class="col-12 mb-4 mt-3 card bg-light"
-              v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard">
+              v-if="currentComponent === CounsellorDashboard || currentComponent === AdminDashboard || currentComponent === AdminDashboard2">
               <TopNavbarCard :key="topNavbarKey" />
             </div>
             <div class="col-12 mb-4"

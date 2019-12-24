@@ -199,11 +199,6 @@ const fetchServiceAndTreatmentData = async () => {
                 });
             }
 
-            // console.log('Filtered data:', {
-            //     role: userRole,
-            //     total: serviceItems.length
-            // });
-
             newServiceAndTreatment.value = serviceItems;
         }
     } catch (error) {
@@ -215,8 +210,6 @@ const fetchServiceAndTreatmentData = async () => {
 provide('serviceAndTreatmentData', newServiceAndTreatment);
 
 watch(currentRoute, (newRoute) => {
-    // console.log(`Current route is: ${newRoute}`);
-    // console.log(`User role is: ${userRole.value}`);
     
     let dashboard;
     switch (newRoute) {
@@ -235,11 +228,9 @@ watch(currentRoute, (newRoute) => {
         default:
             dashboard = 'Default Dashboard';
     }
-    // console.log(`Loading: ${dashboard}`);
 });
 
 onMounted(() => {
-    // console.log(`Component mounted. Current route: ${currentRoute.value}, User role: ${userRole.value}`);
     fetchServiceAndTreatmentData();
 });
 
