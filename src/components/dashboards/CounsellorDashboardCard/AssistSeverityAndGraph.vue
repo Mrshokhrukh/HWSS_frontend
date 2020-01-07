@@ -209,48 +209,59 @@ const displayChart = (type = 'risk') => {
 };
 
 const prepareSubstanceChartData = () => {
-  // Filter out 'Any Drug', shorten substance names, and sort alphabetically
   const substances = Object.keys(props.data.substances)
     .filter(substance => substance !== 'Any Drug')
     .sort((a, b) => a.localeCompare(b))
     .map(name => shortenSubstanceName(name));
 
   const CHART_COLORS = {
-    lowRisk: 'rgba(43, 101, 111, 0.7)', // Cool blue (lighter)
-    lowRiskShade: 'rgba(43, 101, 111, 0.5)', // Cool blue (darker)
-    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange (lighter)
-    moderateRiskShade: 'rgba(229, 149, 61, 0.5)', // Warm orange (darker)
-    highRisk: 'rgba(203, 67, 53, 0.7)', // Deep red (lighter)
-    highRiskShade: 'rgba(203, 67, 53, 0.5)' // Deep red (darker)
+    moderateRisk: 'rgba(229, 149, 61, 0.7)',
+    moderateRiskShade: 'rgba(229, 149, 61, 0.5)',
+    highRisk: 'rgba(203, 67, 53, 0.7)',
+    highRiskShade: 'rgba(203, 67, 53, 0.5)'
   };
 
   const datasets = [];
-  ['high', 'moderate', 'low'].forEach(riskLevel => {
-    datasets.push({
-      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Male)`,
-      data: substances.map(substance => props.data.substances[substance]?.male[riskLevel] || 0),
-      backgroundColor: CHART_COLORS[`${riskLevel}Risk`],
-      borderColor: CHART_COLORS[`${riskLevel}Risk`],
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-      stack: 'male'
-    });
-    datasets.push({
-      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Female)`,
-      data: substances.map(substance => props.data.substances[substance]?.female[riskLevel] || 0),
-      backgroundColor: CHART_COLORS[`${riskLevel}RiskShade`],
-      borderColor: CHART_COLORS[`${riskLevel}RiskShade`],
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-      stack: 'female'
-    });
+  // Only include 'high' and 'moderate' risk levels
+  ['high', 'moderate'].forEach(riskLevel => {
+    // Filter out substances with 0 values for the current risk level and gender
+    const maleData = substances
+      .map(substance => props.data.substances[substance]?.male[riskLevel] || 0)
+      .filter(value => value > 0);
+    const femaleData = substances
+      .map(substance => props.data.substances[substance]?.female[riskLevel] || 0)
+      .filter(value => value > 0);
+
+    // Only add datasets if there is data for the current risk level
+    if (maleData.length > 0) {
+      datasets.push({
+        label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Male)`,
+        data: maleData,
+        backgroundColor: CHART_COLORS[`${riskLevel}Risk`],
+        borderColor: CHART_COLORS[`${riskLevel}Risk`],
+        borderWidth: 1,
+        borderRadius: 8,
+        barPercentage: 0.8,
+        stack: 'male'
+      });
+    }
+    if (femaleData.length > 0) {
+      datasets.push({
+        label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Female)`,
+        data: femaleData,
+        backgroundColor: CHART_COLORS[`${riskLevel}RiskShade`],
+        borderColor: CHART_COLORS[`${riskLevel}RiskShade`],
+        borderWidth: 1,
+        borderRadius: 8,
+        barPercentage: 0.8,
+        stack: 'female'
+      });
+    }
   });
 
   return {
     data: {
-      labels: substances,
+      labels: substances, // Keep all substance labels for consistency on the x-axis
       datasets
     },
     options: {
@@ -314,47 +325,59 @@ const prepareSubstanceChartData = () => {
 };
 
 const prepareInjectionChartData = () => {
-  // Assuming 'injections' data structure is similar to 'substances'
   const substances = Object.keys(props.data.injections)
     .sort((a, b) => a.localeCompare(b))
     .map(name => shortenSubstanceName(name));
 
   const CHART_COLORS = {
-    lowRisk: 'rgba(43, 101, 111, 0.7)', // Cool blue (lighter)
-    lowRiskShade: 'rgba(43, 101, 111, 0.5)', // Cool blue (darker)
-    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange (lighter)
-    moderateRiskShade: 'rgba(229, 149, 61, 0.5)', // Warm orange (darker)
-    highRisk: 'rgba(203, 67, 53, 0.7)', // Deep red (lighter)
-    highRiskShade: 'rgba(203, 67, 53, 0.5)' // Deep red (darker)
+    moderateRisk: 'rgba(229, 149, 61, 0.7)',
+    moderateRiskShade: 'rgba(229, 149, 61, 0.5)',
+    highRisk: 'rgba(203, 67, 53, 0.7)',
+    highRiskShade: 'rgba(203, 67, 53, 0.5)'
   };
 
   const datasets = [];
-  ['high', 'moderate', 'low'].forEach(riskLevel => {
-    datasets.push({
-      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Male)`,
-      data: substances.map(substance => props.data.injections[substance]?.male[riskLevel] || 0),
-      backgroundColor: CHART_COLORS[`${riskLevel}Risk`],
-      borderColor: CHART_COLORS[`${riskLevel}Risk`],
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-      stack: 'male'
-    });
-    datasets.push({
-      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Female)`,
-      data: substances.map(substance => props.data.injections[substance]?.female[riskLevel] || 0),
-      backgroundColor: CHART_COLORS[`${riskLevel}RiskShade`],
-      borderColor: CHART_COLORS[`${riskLevel}RiskShade`],
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-      stack: 'female'
-    });
+  // Only include 'high' and 'moderate' risk levels
+  ['high', 'moderate'].forEach(riskLevel => {
+    // Filter out substances with 0 values for the current risk level and gender
+    const maleData = substances
+      .map(substance => props.data.injections[substance]?.male[riskLevel] || 0)
+      .filter(value => value > 0);
+    const femaleData = substances
+      .map(substance => props.data.injections[substance]?.female[riskLevel] || 0)
+      .filter(value => value > 0);
+
+    // Only add datasets if there is data for the current risk level
+    if (maleData.length > 0) {
+      datasets.push({
+        label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Male)`,
+        data: maleData,
+        backgroundColor: CHART_COLORS[`${riskLevel}Risk`],
+        borderColor: CHART_COLORS[`${riskLevel}Risk`],
+        borderWidth: 1,
+        borderRadius: 8,
+        barPercentage: 0.8,
+        stack: 'male'
+      });
+    }
+
+    if (femaleData.length > 0) {
+      datasets.push({
+        label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Female)`,
+        data: femaleData,
+        backgroundColor: CHART_COLORS[`${riskLevel}RiskShade`],
+        borderColor: CHART_COLORS[`${riskLevel}RiskShade`],
+        borderWidth: 1,
+        borderRadius: 8,
+        barPercentage: 0.8,
+        stack: 'female'
+      });
+    }
   });
 
   return {
     data: {
-      labels: substances,
+      labels: substances, // Keep all substance labels for consistency on the x-axis
       datasets
     },
     options: {
