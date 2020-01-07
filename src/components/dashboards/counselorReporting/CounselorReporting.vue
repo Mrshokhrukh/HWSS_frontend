@@ -3,30 +3,36 @@
     <div class="card p-4">
       <!-- Search and Report Type Selection -->
       <div class="p-field p-grid row mb-4">
-        <div class="col-12 col-md-4 mb-2 mb-md-0">
+        <div class="col-12 col-md-3 mb-2 mb-md-0">
+          <!-- Year Filter -->
+          <Dropdown v-model="selectedYear" :options="years" optionLabel="label" optionValue="value"
+            placeholder="Select Year" class="w-100" />
+        </div>
+        <div class="col-12 col-md-3 mb-2 mb-md-0">
           <span class="p-input-icon-left w-100">
             <InputText v-model="globalFilter" placeholder="Search Reports..." class="w-100" />
           </span>
         </div>
         <!-- Dropdown for school counselors to select report type -->
-        <div v-if="isSchoolCounselor" class="col-12 col-md-4 mb-2 mb-md-0">
+        <div v-if="isSchoolCounselor" class="col-12 col-md-3 mb-2 mb-md-0">
           <Dropdown v-model="selectedOption" :options="options" optionLabel="label" optionValue="value"
             placeholder="Select Report Type" class="w-100" />
         </div>
-        <div class="col-12 col-md-4">
-          <Button label="Download Excel" @click="downloadExcelWithZip" class="btn hwss-btn w-100" icon="pi pi-download" />
+        <div class="col-12 col-md-3">
+          <Button label="Download Excel" @click="downloadExcelWithZip" class="btn hwss-btn w-100"
+            icon="pi pi-download" />
         </div>
       </div>
 
       <!-- General Report Table (for school/clinical counselors) -->
       <div v-if="(selectedOption === 'generalReport' && isSchoolCounselor) ||
         (selectedOption === 'generalReport' && isClinicalCounselor)
-        " class="table-container">
-        <DataTable :value="filteredReportData" :paginator="true" :rows="10" :resizableColumns="true" sortField="username"
-          :sortOrder="1" class="custom-table">
+      " class="table-container">
+        <DataTable :value="filteredReportData" :paginator="true" :rows="10" :resizableColumns="true"
+          sortField="username" :sortOrder="1" class="custom-table">
           <!-- Display user-related columns -->
-          <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header" :sortable="true"
-            :style="field.width ? { width: field.width } : {}">
+          <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
+            :sortable="true" :style="field.width ? { width: field.width } : {}">
             <template #body="{ data }">
               <template v-if="field.key === 'suicidal_score'">
                 <Tag class="w-100" :value="data[field.key]" :severity="getSuicideSeverityClass(data[field.key])" />
@@ -153,12 +159,14 @@
           </Column>
           <Column field="inhalants_flag" header="Inhalants" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.inhalants_flag || 'None'" :severity="severityClass(data.inhalants_flag)" />
+              <Tag class="w-100" :value="data.inhalants_flag || 'None'"
+                :severity="severityClass(data.inhalants_flag)" />
             </template>
           </Column>
           <Column field="sedatives_flag" header="Sedatives" :sortable="true">
             <template #body="{ data }">
-              <Tag class="w-100" :value="data.sedatives_flag || 'None'" :severity="severityClass(data.sedatives_flag)" />
+              <Tag class="w-100" :value="data.sedatives_flag || 'None'"
+                :severity="severityClass(data.sedatives_flag)" />
             </template>
           </Column>
           <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
@@ -204,6 +212,16 @@ const options = [
   { label: 'General Report', value: 'generalReport' },
   { label: 'School', value: 'school' },
 ];
+
+// Year Filter
+const selectedYear = ref(new Date().getFullYear()); // Default to current year
+const years = computed(() => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 10 }, (_, index) => ({
+    label: currentYear - index,
+    value: currentYear - index,
+  }));
+});
 
 const tableFields = [
   { key: 'full_name', header: 'Full Name' },
@@ -527,8 +545,7 @@ const filteredReportData = computed(() => {
   const searchTerm = globalFilter.value.toLowerCase().trim();
 
   return reportData.value.filter((item) => {
-    // Search through all relevant fields
-    return (
+    const matchesSearch = (
       // Basic info
       item.full_name?.toLowerCase().includes(searchTerm) ||
       item.username?.toLowerCase().includes(searchTerm) ||
@@ -547,6 +564,11 @@ const filteredReportData = computed(() => {
       item.follow_up?.toLowerCase().includes(searchTerm) ||
       item.referred?.toLowerCase().includes(searchTerm)
     );
+
+    const submissionDate = item.date ? new Date(item.date).getFullYear() : null;
+    const matchesYear = submissionDate === selectedYear.value;
+
+    return matchesSearch && matchesYear;
   });
 });
 
@@ -558,7 +580,7 @@ const filteredGyalsungData = computed(() => {
   const searchTerm = globalFilter.value.toLowerCase().trim();
 
   return gyalsungData.value.filter((item) => {
-    return (
+    const matchesSearch = (
       item.username?.toLowerCase().includes(searchTerm) ||
       item.full_name?.toLowerCase().includes(searchTerm) ||
       item.identity_number?.toLowerCase().includes(searchTerm) ||
@@ -568,6 +590,11 @@ const filteredGyalsungData = computed(() => {
       item.gad7_score?.toLowerCase().includes(searchTerm) ||
       item.suicidal_score?.toLowerCase().includes(searchTerm)
     );
+
+    const submissionDate = item.date ? new Date(item.date).getFullYear() : null;
+    const matchesYear = submissionDate === selectedYear.value;
+
+    return matchesSearch && matchesYear;
   });
 });
 

@@ -5,11 +5,17 @@
 
     <!-- Filters -->
     <div class="row d-flex align-items-center mb-4">
-      <div class="col-6">
+      <div class="col-4">
+        <!-- Year Filter -->
+        <select v-model="selectedYear" @change="filterByYear" class="form-select">
+          <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+        </select>
+      </div>
+      <div class="col-4">
         <!-- Search Input -->
         <InputText v-model="tableSearch" placeholder="Search in table" class="w-100"></InputText>
       </div>
-      <div class="col-6">
+      <div class="col-4">
         <!-- Multiselect -->
         <MultiSelect v-model="selectedColumns" :options="columns" optionLabel="header" @update:modelValue="onToggle"
           display="chip" placeholder="Select Columns" class="w-100" />
@@ -51,6 +57,26 @@ const router = useRouter();
 const users = ref([]);
 const tableSearch = ref('');
 const loadingPatients = ref(false);
+
+// Year Filter
+const selectedYear = ref(new Date().getFullYear()); // Default to current year
+const years = computed(() => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: 10 }, (_, index) => currentYear - index); // Past 10 years
+});
+
+const filterByYear = () => {
+  // Trigger filtering when the year changes
+  filteredPatients.value = filterDataByYear(users.value, selectedYear.value);
+};
+
+const filterDataByYear = (data, year) => {
+  return data.filter(user => {
+    const submissionDate = user.date; // Assuming `date` is in 'YYYY-MM-DD' format
+    const submissionYear = submissionDate ? new Date(submissionDate).getFullYear() : null;
+    return submissionYear === year;
+  });
+};
 
 const columns = ref([
   { header: 'Date', field: 'date', frozen: true },
@@ -118,12 +144,18 @@ const handleRescreen = (user) => {
 
 const filteredPatients = computed(() => {
   let filtered = users.value.filter(user => {
-    return Object.values(user).some(val => {
+    const matchesSearch = Object.values(user).some(val => {
       if (typeof val === 'string') {
         return val.toLowerCase().includes(tableSearch.value.toLowerCase());
       }
       return false;
     });
+
+    const submissionDate = user.date; // Assuming `date` is in 'YYYY-MM-DD' format
+    const submissionYear = submissionDate ? new Date(submissionDate).getFullYear() : null;
+    const matchesYear = submissionYear === selectedYear.value;
+
+    return matchesSearch && matchesYear;
   });
 
   const riskColumns = [
@@ -193,7 +225,6 @@ onMounted(async () => {
           filteredSubmissions = response.data['Rescreening List'];
         }
 
-
         const mappedUsers = filteredSubmissions.map(submissionData => {
           const user_details = submissionData.user_details;
           const measurementData = submissionData.measurement_data;
@@ -230,7 +261,6 @@ onMounted(async () => {
           };
         });
         users.value = mappedUsers;
-        // console.log('Final mapped users:', users.value);
       } else {
         console.error("Invalid response data format");
       }

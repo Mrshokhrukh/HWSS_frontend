@@ -178,26 +178,12 @@ const displayChart = (type = 'risk') => {
     .sort((a, b) => a.localeCompare(b))
     .map(name => shortenSubstanceName(name));
 
-
   const CHART_COLORS = {
-    lowRisk: 'rgba(43,101,111)',     // Cool blue
     moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange
     highRisk: 'rgba(203, 67, 53, 0.7)'       // Deep red
   };
 
   const datasets = [
-    {
-      label: 'Low Risk',
-      data: Object.keys(props.data.substances)
-        .filter(substance => substance !== 'Any Drug')
-        .sort((a, b) => a.localeCompare(b))
-        .map(substance => props.data.substances[substance]?.low || 0),
-      backgroundColor: CHART_COLORS.lowRisk,
-      borderColor: 'rgba(43,101,111, 1)',
-      borderWidth: 1,
-      borderRadius: 8,
-      barPercentage: 0.8,
-    },
     {
       label: 'Moderate Risk',
       data: Object.keys(props.data.substances)

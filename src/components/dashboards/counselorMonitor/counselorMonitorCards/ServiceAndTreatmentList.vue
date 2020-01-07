@@ -20,6 +20,9 @@
                         <span>Active: {{ getActiveCount() }}</span>
                     </div>
                 </div>
+                <select v-model="selectedYear" @change="getServiceList" class="year-filter">
+                    <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+                </select>
                 <Button class="refresh-btn" @click="getServiceList">
                     <i class="bi bi-arrow-clockwise me-2"></i>
                     Refresh List
@@ -289,6 +292,19 @@
                                 <!-- Card Body -->
                                 <div class="card-body p-4">
                                     <div class="d-flex flex-column gap-4">
+                                        <!-- Contact Number -->
+                                        <div class="d-flex align-items-center">
+                                            <div
+                                                class="d-flex align-items-center justify-content-center bg-light rounded-circle p-2 me-3">
+                                                <i class="bi bi-telephone hwss-primary"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Contact Number</small>
+                                                <span class="fw-medium">{{ selectedUser?.user?.mob_number || 'N/A'
+                                                    }}</span>
+                                            </div>
+                                        </div>
+
                                         <!-- Mother's Name -->
                                         <div class="d-flex align-items-center">
                                             <div
@@ -1303,22 +1319,25 @@ const processedRows = computed(() => {
     return processed;
 });
 
+const selectedYear = ref(new Date().getFullYear()); // Default to the current year
+const years = computed(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 10 }, (_, index) => currentYear - index); // Generate the past 10 years
+});
+
 const getServiceList = async () => {
     try {
         isLoading.value = true;
         hasError.value = false;
         const response = await axios.get(endpoints.newServiceAndTreatment);
 
-        const currentYear = new Date().getFullYear();
-
         rowData.value = response.data.filter(row => {
             const agencyMatch =
                 row?.user?.active_agency?.agency_name?.trim().toLowerCase() === myAgency.value.trim().toLowerCase();
             const screeningDate = row?.screening_data?.submission_date;
             const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-            return agencyMatch && submissionYear === currentYear;
+            return agencyMatch && submissionYear === selectedYear.value;
         });
-
 
     } catch (error) {
         hasError.value = true;
@@ -1590,6 +1609,22 @@ watch(() => filteredRows.value, async (newRows) => {
 </script>
 
 <style scoped>
+
+.year-filter {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    background-color: white;
+    color: #2B656F;
+    font-size: 0.9rem;
+    margin-right: 1rem;
+}
+
+.year-filter:focus {
+    border-color: #2B656F;
+    box-shadow: 0 0 0 0.2rem rgba(43, 101, 111, 0.25);
+    outline: none;
+}
 .dashboard-container {
     background: #f8f9fa;
     border-radius: 20px;
