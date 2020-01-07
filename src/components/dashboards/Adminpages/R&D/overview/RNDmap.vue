@@ -111,6 +111,7 @@ const getColorByUserCount = (count) => {
   return legendColors[5];
 };
 
+// Define showHoverInfo function
 const showHoverInfo = (event) => {
   const dzongkhagName = event.target.getAttribute('title');
   const userCount = userDistribution.value[dzongkhagName] || 0;
@@ -137,6 +138,7 @@ const showHoverInfo = (event) => {
   event.target.style.filter = 'drop-shadow(0 8px 12px rgba(43, 101, 111, 0.3))';
 };
 
+// Define hideHoverInfo function
 const hideHoverInfo = (event) => {
   hoveredArea.value = null;
   tooltipStyle.value.display = 'none';
@@ -151,7 +153,6 @@ const updateMapColors = () => {
   if (!mapWrapper.value) return;
 
   const paths = mapWrapper.value.querySelectorAll('path');
-
   paths.forEach(path => {
     const dzongkhagName = path.getAttribute('title');
     const userCount = userDistribution.value[dzongkhagName] || 0;

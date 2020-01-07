@@ -31,7 +31,7 @@ const substanceMapping = {
   'Amphetamine-type': 'Amphetamine-type stimulants',
   'Inhalant': 'Inhalants',
   'Sedative': 'Sedatives or Sleeping Pills',
-  'Hallucinate': 'Hallucinogens',
+  'Hallucinogens': 'Hallucinogens',
   'Opioids': 'Opioids',
   'Others': 'Other - specify'
 };
@@ -85,7 +85,7 @@ const tableData = computed(() => {
 
   const substances = [
     'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+    'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others'
   ];
 
   return substances.map(substance => {

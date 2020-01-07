@@ -80,10 +80,13 @@ const menus = ref([
         name: 'All Tools', tools: allTools
     },
     {
-        name: 'Mental Health Tools', tools: allTools.filter(tool => tool.name !== 'ASSIST')
+        name: 'Mental Health Tools', tools: allTools.filter(tool => ['GAD7', 'PHQ9', 'ACE'].includes(tool.name))
     },
     {
         name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
+    },
+    {
+        name: 'School Environment', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
     }
 ]);
 
@@ -155,7 +158,6 @@ const saveSelectedTools = () => {
 onMounted(() => {
     selectMenu(selectedMenuIndex.value);
 });
-
 </script>
 
 <style scoped>

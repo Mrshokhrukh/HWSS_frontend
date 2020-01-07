@@ -77,16 +77,16 @@ const allTools = [
 
 const menus = ref([
     {
-        name: 'All Tools', tools: allTools
+        name: 'All Tools', tools: allTools // Show all tools
     },
     {
-        name: 'Mental Health Tools', tools: allTools.filter(tool => tool.name !== 'ASSIST')
+        name: 'Mental Health Tools', tools: allTools.filter(tool => ['GAD7', 'PHQ9', 'ACE'].includes(tool.name)) // Show only GAD7, PHQ9, ACE
     },
     {
-        name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
+        name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST') // Show only ASSIST
     },
     {
-        name: 'School Environment Tools', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
+        name: 'School Environment Tools', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV') // Show only SCHOOL ENV
     },
 ]);
 
@@ -158,7 +158,6 @@ const saveSelectedTools = () => {
 onMounted(() => {
     selectMenu(selectedMenuIndex.value);
 });
-
 </script>
 
 <style scoped>

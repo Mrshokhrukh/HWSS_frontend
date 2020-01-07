@@ -54,14 +54,14 @@ const activeButton = ref(null);
 
 const substances = [
   'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-  'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others', 'Table'
+  'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others', 'Table'
 ];
 
 const substanceGroups = [
   ['Tobacco', 'Alcohol'],
   ['Cannabis', 'Cocaine'],
   ['Amphetamine-type', 'Inhalant'],
-  ['Sedative', 'Hallucinate'],
+  ['Sedative', 'Hallucinogens'],
   ['Opioids', 'Others', 'Table']
 ];
 

@@ -1,5 +1,6 @@
 <template>
     <div v-if="currentQuestion" class="questionnaire-container">
+        <!-- Sticky header with question -->
         <div class="question-header">
             <h2 class="question-text">{{ currentQuestion.text }}</h2>
             <div class="options-legend">
@@ -9,28 +10,40 @@
             </div>
         </div>
 
+        <!-- Scrollable substance cards -->
         <div class="substances-grid">
-            <div v-for="(substance, index) in currentQuestion.substances" :key="index" class="substance-card"
-                :class="{ 'disabled': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
+            <div v-for="(substance, index) in currentQuestion.substances" 
+                 :key="index" 
+                 class="substance-card"
+                 :class="{ 'disabled': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
+                
+                <!-- Radio options group first -->
+                <div class="options-group">
+                    <label v-for="option in currentQuestion.answers" 
+                           :key="option.id" 
+                           class="radio-label">
+                        <input type="radio" 
+                               :value="option" 
+                               @change="handleAnswerSelection(option, substance)"
+                               :name="'question_' + index"
+                               :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
+                        <span class="radio-custom"></span>
+                    </label>
+                </div>
 
+                <!-- Substance name below -->
                 <div class="substance-name">
                     <template v-if="substance !== 'Other - specify'">
                         {{ substance }}
                     </template>
                     <template v-else>
-                        <input type="text" class="other-input" placeholder="Other - specify" v-model="otherSubstance"
-                            :readonly="isOtherSubstanceLocked"
-                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
+                        <input type="text" 
+                               class="other-input" 
+                               placeholder="Other - specify" 
+                               v-model="otherSubstance"
+                               :readonly="isOtherSubstanceLocked"
+                               :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
                     </template>
-                </div>
-
-                <div class="options-group">
-                    <label v-for="option in currentQuestion.answers" :key="option.id" class="radio-label">
-                        <input type="radio" :value="option" @change="handleAnswerSelection(option, substance)"
-                            :name="'question_' + index"
-                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
-                        <span class="radio-custom"></span>
-                    </label>
                 </div>
             </div>
         </div>
@@ -38,8 +51,12 @@
         <div class="footer">
             <button class="nav-btn back-btn d-none" @click="goBack">Back</button>
             <div class="flex-grow-1"></div>
-            <button v-if="isLastQuestion" class="nav-btn next-btn" @click="proceed">Next</button>
-            <button v-else class="nav-btn next-btn" @click="jumpToNextQuestion">Next</button>
+            <button v-if="isLastQuestion" 
+                    class="nav-btn next-btn" 
+                    @click="proceed">Next</button>
+            <button v-else 
+                    class="nav-btn next-btn" 
+                    @click="jumpToNextQuestion">Next</button>
         </div>
     </div>
     <div v-else class="no-questions">
@@ -500,6 +517,9 @@ watch(
 }
 
 .question-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     margin-bottom: 2rem;
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     padding: 1.5rem;
@@ -514,23 +534,24 @@ watch(
 }
 
 .options-legend {
-    display: flex;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 1rem;
     margin-top: 0.5rem;
 }
 
 .option-label {
     font-size: 0.9rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 0.5rem;
+    text-align: center;
 }
 
 .substances-grid {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
-    grid-template-columns: 1fr;
 }
 
 .substance-card {
@@ -539,14 +560,13 @@ watch(
     padding: 1.25rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
     transition: all 0.3s ease;
 }
 
 .substance-card:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
 }
 
 .substance-card.disabled {
@@ -557,18 +577,22 @@ watch(
 .substance-name {
     font-weight: 500;
     color: #2B656F;
-    flex: 1;
+    text-align: center;
 }
 
 .options-group {
-    display: flex;
-    gap: 2rem;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
 }
 
 .radio-label {
     position: relative;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 0.5rem;
 }
 
@@ -601,7 +625,7 @@ watch(
     transition: all 0.2s ease;
 }
 
-.radio-label input[type="radio"]:checked+.radio-custom::after {
+.radio-label input[type="radio"]:checked + .radio-custom::after {
     transform: translate(-50%, -50%) scale(1);
 }
 
@@ -617,6 +641,7 @@ watch(
     border: 1px solid #ccc;
     border-radius: 0.5rem;
     font-size: 0.9rem;
+    margin: 0 auto;
 }
 
 .other-input:focus {

@@ -111,8 +111,8 @@
                                 v-tooltip.top="'View Details'">
                                 <i class="bi bi-eye-fill"></i>
                             </Button>
-                            <Button v-if="canEdit" class="action-btn edit-btn" @click="viewDetails(slotProps.data, 'edit')"
-                                v-tooltip.top="'Edit Record'">
+                            <Button v-if="canEdit" class="action-btn edit-btn"
+                                @click="viewDetails(slotProps.data, 'edit')" v-tooltip.top="'Edit Record'">
                                 <i class="bi bi-pencil-fill"></i>
                             </Button>
                         </div>
@@ -162,7 +162,7 @@
                                             <div class="d-flex align-items-center">
                                                 <i class="bi bi-person-badge me-2 hwss-primary"></i>
                                                 <span class="fw-medium">{{ formatRole(selectedUser?.user?.role)
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -194,7 +194,7 @@
                                                     <small class="text-muted d-block">Age</small>
                                                     <span class="fw-medium">{{
                                                         calculateAge(selectedUser?.user?.date_of_birth)
-                                                    }}</span>
+                                                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -225,7 +225,7 @@
                                                 <div>
                                                     <small class="text-muted d-block">Employee ID</small>
                                                     <span class="fw-medium">{{ selectedUser?.user?.academy_code || 'N/A'
-                                                    }}</span>
+                                                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -242,7 +242,7 @@
                                                 <div>
                                                     <small class="text-muted d-block">Citizen ID</small>
                                                     <span class="fw-medium">{{ selectedUser?.user?.identity_number
-                                                    }}</span>
+                                                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -270,7 +270,7 @@
                                         <div>
                                             <small class="text-muted d-block">Active Agency</small>
                                             <span class="fw-medium">{{ selectedUser?.user?.active_agency?.agency_name
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -298,7 +298,7 @@
                                             <div>
                                                 <small class="text-muted d-block">Mother's Name</small>
                                                 <span class="fw-medium">{{ selectedUser?.user?.mother_name || 'N/A'
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                         </div>
 
@@ -311,7 +311,7 @@
                                             <div>
                                                 <small class="text-muted d-block">Father's Name</small>
                                                 <span class="fw-medium">{{ selectedUser?.user?.father_name || 'N/A'
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                         </div>
 
@@ -377,7 +377,7 @@
                                                         <small class="text-muted d-block">Village</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.perm_add_village
                                                             || 'N/A'
-                                                        }}</span>
+                                                            }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -393,7 +393,7 @@
                                                         <small class="text-muted d-block">Gewog</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.perm_add_gewog ||
                                                             'N/A'
-                                                        }}</span>
+                                                            }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -435,7 +435,7 @@
                                                         <small class="text-muted d-block">Village</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_village ||
                                                             'N/A'
-                                                        }}</span>
+                                                            }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -451,7 +451,7 @@
                                                         <small class="text-muted d-block">Gewog</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_gewog ||
                                                             'N/A'
-                                                        }}</span>
+                                                            }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -467,7 +467,7 @@
                                                         <small class="text-muted d-block">Dzongkhag</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_dzongkhag
                                                             || 'N/A'
-                                                        }}</span>
+                                                            }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -494,7 +494,8 @@
                                 <div class="card-body p-4">
                                     <!-- Records Container -->
                                     <div v-if="selectedUser?.diagnosis?.length">
-                                        <div v-for="(record, index) in selectedUser.diagnosis" :key="index" class="mb-3">
+                                        <div v-for="(record, index) in selectedUser.diagnosis" :key="index"
+                                            class="mb-3">
                                             <div class="d-flex align-items-start p-3 bg-light rounded-3">
                                                 <div
                                                     class="d-flex align-items-center justify-content-center bg-white rounded-circle p-2 me-3">
@@ -621,7 +622,8 @@
                                                     <div>
                                                         <div class="fw-medium mb-1">{{ formatSubstanceName(key) }}</div>
                                                         <div class="d-flex align-items-center">
-                                                            <span class="badge" :class="getRiskClass(value.measurement)">
+                                                            <span class="badge"
+                                                                :class="getRiskClass(value.measurement)">
                                                                 {{ value.measurement }}
                                                             </span>
                                                         </div>
@@ -683,7 +685,7 @@
                                             <div>
                                                 <div class="fw-medium mb-1">Injection Risk Level</div>
                                                 <div class="d-flex align-items-center">
-                                                    <span class="badge bg-success">None</span>
+                                                    <span class="badge bg-success">No Risk</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -835,7 +837,8 @@
                                                     <i class="bi bi-chat-dots hwss-primary"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <label for="comments" class="form-label fw-medium mb-2">Comments</label>
+                                                    <label for="comments"
+                                                        class="form-label fw-medium mb-2">Comments</label>
                                                     <textarea class="form-control" id="comments"
                                                         v-model="selectedUser.comments" rows="4"
                                                         :disabled="!isEditMode || selfRole === 'trained_professional'"
@@ -881,7 +884,8 @@
                                                 <div class="flex-grow-1">
                                                     <label for="referTo" class="form-label fw-medium mb-2">Refer
                                                         To</label>
-                                                    <select class="form-select" id="referTo" v-model="selectedUser.refer_to"
+                                                    <select class="form-select" id="referTo"
+                                                        v-model="selectedUser.refer_to"
                                                         :disabled="!isEditMode || selectedUser.referred === 'Referred'">
                                                         <option value="" selected disabled>Select One</option>
                                                         <option value="clinical_counselor">Clinical Counselor</option>
@@ -901,11 +905,12 @@
                                                     <i class="bi bi-person-badge hwss-primary"></i>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <label for="official" class="form-label fw-medium mb-2">Official</label>
+                                                    <label for="official"
+                                                        class="form-label fw-medium mb-2">Official</label>
                                                     <AutoComplete v-model="selectedUser.official"
                                                         :suggestions="filteredOfficials" @complete="searchOfficials"
-                                                        field="full_name" placeholder="Type Official's Name" class="w-100"
-                                                        :forceSelection="true"
+                                                        field="full_name" placeholder="Type Official's Name"
+                                                        class="w-100" :forceSelection="true"
                                                         :disabled="!isEditMode || selectedUser.referred === 'Referred'">
                                                     </AutoComplete>
                                                 </div>
@@ -1366,52 +1371,39 @@ const switchToEditMode = () => {
 const getInjectionRisk = (user) => {
     let hasInjectionUse = false;
 
-    // Check screening data
-    if (user.screening_data?.assist_data) {
-        const assistData = user.screening_data.assist_data;
-        if (assistData.injection_measurement) {
-            hasInjectionUse = !!assistData.injection_measurement &&
-                assistData.injection_measurement.toLowerCase() !== 'none' &&
-                assistData.injection_measurement.toLowerCase() !== 'no risk';
-        }
-        if (Array.isArray(assistData)) {
-            const injectionData = assistData.find(substance =>
-                substance.substance__name?.toLowerCase().includes('injection')
-            );
-            if (injectionData) {
-                hasInjectionUse = !!injectionData.measurement || !!injectionData.risk_flag;
-            }
-        }
-    }
-
-    // Check case substance risks
+    // Check for "any drug" in case_substance_risks
     if (user.case_substance_risks) {
-        const injectionRisk = user.case_substance_risks.find(substance =>
-            substance.substance_name?.toLowerCase().includes('injection')
+        const anyDrugRisk = user.case_substance_risks.find(substance =>
+            substance.substance_name?.toLowerCase().trim() === 'any drug'
         );
-        if (injectionRisk) {
-            hasInjectionUse = !!injectionRisk.risk_flag &&
-                injectionRisk.risk_flag.toLowerCase() !== 'none' &&
-                injectionRisk.risk_flag.toLowerCase() !== 'no risk';
+        if (anyDrugRisk) {
+            hasInjectionUse = anyDrugRisk.total_score > 0;
         }
     }
 
-    // Check event substance risks
+    // Check for "any drug" in event_substance_risks
     if (user.event_substance_risks) {
-        const injectionRisk = user.event_substance_risks.find(substance =>
-            substance.substance_name?.toLowerCase().includes('injection')
+        const anyDrugRisk = user.event_substance_risks.find(substance =>
+            substance.substance_name?.toLowerCase().trim() === 'any drug'
         );
-        if (injectionRisk) {
-            hasInjectionUse = !!injectionRisk.risk_flag &&
-                injectionRisk.risk_flag.toLowerCase() !== 'none' &&
-                injectionRisk.risk_flag.toLowerCase() !== 'no risk';
+        if (anyDrugRisk) {
+            hasInjectionUse = anyDrugRisk.total_score > 0;
         }
     }
 
-    // Return appropriate risk level
+    // Check for "any drug" in screening_data.assist_data
+    if (user.screening_data?.assist_data) {
+        const anyDrugRisk = user.screening_data.assist_data.find(substance =>
+            substance.substance__name?.toLowerCase().trim() === 'any drug'
+        );
+        if (anyDrugRisk) {
+            hasInjectionUse = anyDrugRisk.total_score > 0;
+        }
+    }
+
     return {
-        measurement: hasInjectionUse ? 'High Risk' : 'None',
-        flag: hasInjectionUse ? 'High Risk' : 'None'
+        measurement: hasInjectionUse ? 'High Risk' : 'No Risk',
+        flag: hasInjectionUse ? 'High Risk' : 'No Risk'
     };
 };
 

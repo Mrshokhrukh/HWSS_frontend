@@ -65,7 +65,7 @@ const substanceGroups = [
   ['Tobacco', 'Alcohol'],
   ['Cannabis', 'Cocaine'],
   ['Amphetamine-type', 'Inhalant'],
-  ['Sedative', 'Hallucinate'],
+  ['Sedative', 'Hallucinogens'],
   ['Opioids', 'Others', 'Table']
 ];
 
@@ -83,7 +83,7 @@ const substanceFieldMapping = {
   'Amphetamine-type': 'amphetamine',
   'Inhalant': 'inhalants',
   'Sedative': 'sedatives',
-  'Hallucinate': 'hallucinogens',
+  'Hallucinogens': 'hallucinogens',
   'Opioids': 'opioids',
   'Others': 'other'
 };

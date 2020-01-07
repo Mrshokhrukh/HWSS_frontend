@@ -120,7 +120,7 @@ function createGradient(ctx, colors) {
 
 const substances = [
     'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+    'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others'
 ];
 
 const substanceKeyMapping = {
@@ -131,7 +131,7 @@ const substanceKeyMapping = {
     'Amphetamine-type': { key: 'amphetamine', searchTerms: ['amphetamine', 'meth', 'ecstasy'] },
     'Inhalant': { key: 'inhalants', searchTerms: ['inhalant', 'dendrite', 'glue', 'petrol'] },
     'Sedative': { key: 'sedatives', searchTerms: ['sedative', 'sleeping', 'diazepam'] },
-    'Hallucinate': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd', 'ketamine'] },
+    'Hallucinogens': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd', 'ketamine'] },
     'Opioids': { key: 'opioids', searchTerms: ['opioid', 'heroin', 'morphine', 'fentanyl', 'codeine'] },
     'Others': { key: 'other', searchTerms: ['other'] }
 };
@@ -157,7 +157,7 @@ function extractMeasurementData(data) {
 
     return data.reduce((results, item) => {
         // Skip if no valid data
-        if (typeof item.screening_data === 'string') {
+        if (typeof item.screening_data !== 'object' || item.screening_data === null) {
             return results;
         }
 
@@ -185,7 +185,7 @@ function extractMeasurementData(data) {
         };
 
         // Case 1: Process assist_data from screening_data (cluster tests)
-        if (item.screening_data?.assist_data) {
+        if (item.screening_data?.assist_data && Array.isArray(item.screening_data.assist_data)) {
             item.screening_data.assist_data.forEach(risk => {
                 if (risk.substance__name && risk.risk_flag && (!risk.measurement || risk.measurement > 0)) {
                     processSubstanceRisk(risk.substance__name, risk.risk_flag);
@@ -194,7 +194,7 @@ function extractMeasurementData(data) {
         }
 
         // Case 2: Process event_substance_risks at root level
-        if (item.event_substance_risks) {
+        if (item.event_substance_risks && Array.isArray(item.event_substance_risks)) {
             item.event_substance_risks.forEach(risk => {
                 if (risk.substance_name && risk.risk_flag) {
                     processSubstanceRisk(risk.substance_name, risk.risk_flag);
@@ -203,7 +203,7 @@ function extractMeasurementData(data) {
         }
 
         // Case 3: Process case_substance_risks at root level
-        if (item.case_substance_risks) {
+        if (item.case_substance_risks && Array.isArray(item.case_substance_risks)) {
             item.case_substance_risks.forEach(risk => {
                 if (risk.substance_name && risk.risk_flag) {
                     processSubstanceRisk(risk.substance_name, risk.risk_flag);
@@ -368,7 +368,7 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
         }
     };
 
-       // Bubble Chart
+    // Bubble Chart
     const bubbleOptions = {
         ...commonOptions,
         scales: {
@@ -383,35 +383,35 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
                 ticks: {
                     callback: function (value) {
                         // Ensure we check for both 1 (High Risk) and 2 (Moderate Risk)
-                        if(value === 1) {
+                        if (value === 1) {
                             return 'High Risk';
-                        } else if(value === 2) {
+                        } else if (value === 2) {
                             return 'Moderate Risk';
                         }
-                         return ''; // Add default to prevent errors
+                        return ''; // Add default to prevent errors
                     },
                 },
             },
         },
-       plugins: {
-           ...commonOptions.plugins, // Keep all existing plugins
-           tooltip: {
-               ...commonOptions.plugins.tooltip, // Keep existing tooltip options
-               callbacks: {
-                   title: (tooltipItems) => {
-                       if (!tooltipItems || !tooltipItems[0]) return '';
+        plugins: {
+            ...commonOptions.plugins, // Keep all existing plugins
+            tooltip: {
+                ...commonOptions.plugins.tooltip, // Keep existing tooltip options
+                callbacks: {
+                    title: (tooltipItems) => {
+                        if (!tooltipItems || !tooltipItems[0]) return '';
                         const label = tooltipItems[0].dataset.label;
                         return label;
-                       
-                   },
-                   label: (tooltipItem) => {
-                     const dataPoint = tooltipItem.dataset.data[tooltipItem.dataIndex];
-                     const riskLevel = dataPoint.x === 1 ? 'High Risk' : 'Moderate Risk';
-                     return `${riskLevel}: ${dataPoint.y} cases`;
-                   }
-               }
-           }
-       }
+
+                    },
+                    label: (tooltipItem) => {
+                        const dataPoint = tooltipItem.dataset.data[tooltipItem.dataIndex];
+                        const riskLevel = dataPoint.x === 1 ? 'High Risk' : 'Moderate Risk';
+                        return `${riskLevel}: ${dataPoint.y} cases`;
+                    }
+                }
+            }
+        }
     };
 
 
@@ -515,7 +515,7 @@ function updateCharts() {
                         x: 1,
                         y: data['High-risk total male'],
                         r: Math.max(data['High-risk total male'] * 2, 8) + 2, // Adjusted the size here
-                        
+
                     },
                     {
                         x: 2,
@@ -526,7 +526,7 @@ function updateCharts() {
                 backgroundColor: `${chartTheme.male}88`
             },
             {
-              label: 'Female',
+                label: 'Female',
                 data: [
                     {
                         x: 1,

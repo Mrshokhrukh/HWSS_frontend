@@ -90,7 +90,7 @@ const counts = computed(() => countRiskLevels(extractedData.value));
 const tableData = computed(() => {
   const substances = [
     'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+    'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others'
   ];
 
   return substances.map(substance => {

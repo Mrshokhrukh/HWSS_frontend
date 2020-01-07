@@ -38,7 +38,7 @@ const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
 const activeButton = ref(null);
 const substances = [
   'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-  'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+  'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others'
 ];
 
 // Mapping of substance names to their data keys
@@ -50,7 +50,7 @@ const substanceKeyMapping = {
   'Amphetamine-type': 'amphetamine',
   'Inhalant': 'inhalants',
   'Sedative': 'sedatives',
-  'Hallucinate': 'hallucinogens',
+  'Hallucinogens': 'hallucinogens',
   'Opioids': 'opioids',
   'Others': 'other'
 };

@@ -120,7 +120,7 @@ function createGradient(ctx, colors) {
 
 const substances = [
     'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
-    'Inhalant', 'Sedative', 'Hallucinate', 'Opioids', 'Others'
+    'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others'
 ];
 
 const substanceKeyMapping = {
@@ -131,7 +131,7 @@ const substanceKeyMapping = {
     'Amphetamine-type': { key: 'amphetamine', searchTerms: ['amphetamine', 'meth', 'ecstasy'] },
     'Inhalant': { key: 'inhalants', searchTerms: ['inhalant', 'dendrite', 'glue', 'petrol'] },
     'Sedative': { key: 'sedatives', searchTerms: ['sedative', 'sleeping', 'diazepam'] },
-    'Hallucinate': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd', 'ketamine'] },
+    'Hallucinogens': { key: 'hallucinogens', searchTerms: ['hallucinate', 'lsd', 'ketamine'] },
     'Opioids': { key: 'opioids', searchTerms: ['opioid', 'heroin', 'morphine', 'fentanyl', 'codeine'] },
     'Others': { key: 'other', searchTerms: ['other'] }
 };
@@ -368,7 +368,7 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
         }
     };
 
-       // Bubble Chart
+    // Bubble Chart
     const bubbleOptions = {
         ...commonOptions,
         scales: {
@@ -383,35 +383,35 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
                 ticks: {
                     callback: function (value) {
                         // Ensure we check for both 1 (High Risk) and 2 (Moderate Risk)
-                        if(value === 1) {
+                        if (value === 1) {
                             return 'High Risk';
-                        } else if(value === 2) {
+                        } else if (value === 2) {
                             return 'Moderate Risk';
                         }
-                         return ''; // Add default to prevent errors
+                        return ''; // Add default to prevent errors
                     },
                 },
             },
         },
-       plugins: {
-           ...commonOptions.plugins, // Keep all existing plugins
-           tooltip: {
-               ...commonOptions.plugins.tooltip, // Keep existing tooltip options
-               callbacks: {
-                   title: (tooltipItems) => {
-                       if (!tooltipItems || !tooltipItems[0]) return '';
+        plugins: {
+            ...commonOptions.plugins, // Keep all existing plugins
+            tooltip: {
+                ...commonOptions.plugins.tooltip, // Keep existing tooltip options
+                callbacks: {
+                    title: (tooltipItems) => {
+                        if (!tooltipItems || !tooltipItems[0]) return '';
                         const label = tooltipItems[0].dataset.label;
                         return label;
-                       
-                   },
-                   label: (tooltipItem) => {
-                     const dataPoint = tooltipItem.dataset.data[tooltipItem.dataIndex];
-                     const riskLevel = dataPoint.x === 1 ? 'High Risk' : 'Moderate Risk';
-                     return `${riskLevel}: ${dataPoint.y} cases`;
-                   }
-               }
-           }
-       }
+
+                    },
+                    label: (tooltipItem) => {
+                        const dataPoint = tooltipItem.dataset.data[tooltipItem.dataIndex];
+                        const riskLevel = dataPoint.x === 1 ? 'High Risk' : 'Moderate Risk';
+                        return `${riskLevel}: ${dataPoint.y} cases`;
+                    }
+                }
+            }
+        }
     };
 
 
@@ -515,7 +515,7 @@ function updateCharts() {
                         x: 1,
                         y: data['High-risk total male'],
                         r: Math.max(data['High-risk total male'] * 2, 8) + 2, // Adjusted the size here
-                        
+
                     },
                     {
                         x: 2,
@@ -526,7 +526,7 @@ function updateCharts() {
                 backgroundColor: `${chartTheme.male}88`
             },
             {
-              label: 'Female',
+                label: 'Female',
                 data: [
                     {
                         x: 1,

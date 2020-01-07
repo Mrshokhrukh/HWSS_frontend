@@ -35,8 +35,8 @@
               <div class="col">
                 <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Sedative' }"
                   @click="setActiveButton('Sedative')">Sedative</button>
-                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Hallucinate' }"
-                  @click="setActiveButton('Hallucinate')">Hallucinate</button>
+                <button type="button" class="btn mb-2" :class="{ 'btn-primary': activeButton === 'Hallucinogens' }"
+                  @click="setActiveButton('Hallucinogens')">Hallucinogens</button>
               </div>
             </div>
 
@@ -93,7 +93,7 @@ const substances = [
   'Amphetamine-type',
   'Inhalant',
   'Sedative',
-  'Hallucinate',
+  'Hallucinogens',
   'Opioids',
   'Others'
 ];
@@ -233,7 +233,7 @@ const mapCountsToDummyData = (counts) => {
       'Moderate-risk total male': counts.sedative_moderate_male || 0,
       'Moderate-risk total female': counts.sedative_moderate_female || 0,
     },
-    Hallucinate: {
+    Hallucinogens: {
       'High-risk total male': counts.hallucinate_high_male || 0,
       'High-risk total female': counts.hallucinate_high_female || 0,
       'Moderate-risk total male': counts.hallucinate_moderate_male || 0,
