@@ -28,6 +28,18 @@
                   </div>
                 </div>
 
+                <!-- Injection Cases -->
+                <div class="d-flex align-items-center p-3 rounded-3 bg-light cursor-pointer" :class="buttonClass('injection')"
+                  @click="handleInjectionCasesClick">
+                  <div class="d-flex align-items-center justify-content-center bg-white rounded-circle p-2 me-3">
+                    <i class="bi bi-droplet-half hwss-primary"></i>
+                  </div>
+                  <div class="flex-grow-1">
+                    <h3 class="mb-1 fw-bold">{{ totalInjectionUsers }}</h3>
+                    <p class="mb-0 text-muted">Injection Cases</p>
+                  </div>
+                </div>
+
                 <!-- Lifetime Users -->
                 <div class="position-relative">
                   <div class="d-flex align-items-center p-3 rounded-3 bg-light cursor-pointer"
@@ -111,7 +123,10 @@ const props = defineProps({
     required: true,
     default: () => ({
       total: 0,
-      substances: {}
+      substances: {},
+      injections: {},
+      lifetime: 0,
+      active: 0
     })
   },
   isLoading: {
@@ -127,11 +142,13 @@ const props = defineProps({
 const chartCanvas = ref(null);
 let myChart = null;
 const chartTitle = ref('Substance Risk Levels');
-const activeButton = ref('risk'); // 'risk', 'lifetime', or 'active'
+const activeButton = ref('risk'); // 'risk', 'injection', 'lifetime', or 'active'
 
-// Check if we have valid data
+// Check if we have valid data for any of the views
 const hasData = computed(() => {
-  return props.data.total > 0 && Object.keys(props.data.substances).length > 0;
+  return (props.data.total > 0 && Object.keys(props.data.substances).length > 0) ||
+         (props.data.injections && Object.keys(props.data.injections).length > 0) ||
+         props.data.lifetime > 0 || props.data.active > 0;
 });
 
 // Function to shorten substance name
@@ -140,15 +157,20 @@ const shortenSubstanceName = (name) => {
   return parts;
 };
 
-//const totalRiskUsers = computed(() => {
-//  return props.data.total;
-//});
+const totalInjectionUsers = computed(() => {
+  if (!props.data.injections) return 0;
+  return Object.values(props.data.injections).reduce((sum, substance) => {
+    return sum + (substance.male.high + substance.male.moderate + substance.male.low +
+                  substance.female.high + substance.female.moderate + substance.female.low);
+  }, 0);
+});
 
 const totalLifetimeUsers = computed(() => {
-  return 0
+  return props.data.lifetime; // Assuming you calculate this on the parent
 });
+
 const totalActiveUsers = computed(() => {
-  return 0
+  return props.data.active; // Assuming you calculate this on the parent
 });
 
 // Chart rendering
@@ -172,6 +194,21 @@ const displayChart = (type = 'risk') => {
 
   if (!hasData.value) return;
 
+  let chartData;
+  if (type === 'risk') {
+    chartData = prepareSubstanceChartData();
+  } else if (type === 'injection') {
+    chartData = prepareInjectionChartData();
+  }
+
+  myChart = new Chart(chartCanvas.value, {
+    type: 'bar',
+    data: chartData.data,
+    options: chartData.options,
+  });
+};
+
+const prepareSubstanceChartData = () => {
   // Filter out 'Any Drug', shorten substance names, and sort alphabetically
   const substances = Object.keys(props.data.substances)
     .filter(substance => substance !== 'Any Drug')
@@ -179,39 +216,39 @@ const displayChart = (type = 'risk') => {
     .map(name => shortenSubstanceName(name));
 
   const CHART_COLORS = {
-    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange
-    highRisk: 'rgba(203, 67, 53, 0.7)'       // Deep red
+    lowRisk: 'rgba(43, 101, 111, 0.7)', // Cool blue (lighter)
+    lowRiskShade: 'rgba(43, 101, 111, 0.5)', // Cool blue (darker)
+    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange (lighter)
+    moderateRiskShade: 'rgba(229, 149, 61, 0.5)', // Warm orange (darker)
+    highRisk: 'rgba(203, 67, 53, 0.7)', // Deep red (lighter)
+    highRiskShade: 'rgba(203, 67, 53, 0.5)' // Deep red (darker)
   };
 
-  const datasets = [
-    {
-      label: 'Moderate Risk',
-      data: Object.keys(props.data.substances)
-        .filter(substance => substance !== 'Any Drug')
-        .sort((a, b) => a.localeCompare(b))
-        .map(substance => props.data.substances[substance]?.moderate || 0),
-      backgroundColor: CHART_COLORS.moderateRisk,
-      borderColor: 'rgba(229, 149, 61, 1)',
+  const datasets = [];
+  ['high', 'moderate', 'low'].forEach(riskLevel => {
+    datasets.push({
+      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Male)`,
+      data: substances.map(substance => props.data.substances[substance]?.male[riskLevel] || 0),
+      backgroundColor: CHART_COLORS[`${riskLevel}Risk`],
+      borderColor: CHART_COLORS[`${riskLevel}Risk`],
       borderWidth: 1,
       borderRadius: 8,
       barPercentage: 0.8,
-    },
-    {
-      label: 'High Risk',
-      data: Object.keys(props.data.substances)
-        .filter(substance => substance !== 'Any Drug')
-        .sort((a, b) => a.localeCompare(b))
-        .map(substance => props.data.substances[substance]?.high || 0),
-      backgroundColor: CHART_COLORS.highRisk,
-      borderColor: 'rgba(203, 67, 53, 1)',
+      stack: 'male'
+    });
+    datasets.push({
+      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Female)`,
+      data: substances.map(substance => props.data.substances[substance]?.female[riskLevel] || 0),
+      backgroundColor: CHART_COLORS[`${riskLevel}RiskShade`],
+      borderColor: CHART_COLORS[`${riskLevel}RiskShade`],
       borderWidth: 1,
       borderRadius: 8,
       barPercentage: 0.8,
-    },
-  ];
+      stack: 'female'
+    });
+  });
 
-  myChart = new Chart(chartCanvas.value, {
-    type: 'bar',
+  return {
     data: {
       labels: substances,
       datasets
@@ -272,14 +309,124 @@ const displayChart = (type = 'risk') => {
           }
         }
       }
-    },
+    }
+  };
+};
+
+const prepareInjectionChartData = () => {
+  // Assuming 'injections' data structure is similar to 'substances'
+  const substances = Object.keys(props.data.injections)
+    .sort((a, b) => a.localeCompare(b))
+    .map(name => shortenSubstanceName(name));
+
+  const CHART_COLORS = {
+    lowRisk: 'rgba(43, 101, 111, 0.7)', // Cool blue (lighter)
+    lowRiskShade: 'rgba(43, 101, 111, 0.5)', // Cool blue (darker)
+    moderateRisk: 'rgba(229, 149, 61, 0.7)', // Warm orange (lighter)
+    moderateRiskShade: 'rgba(229, 149, 61, 0.5)', // Warm orange (darker)
+    highRisk: 'rgba(203, 67, 53, 0.7)', // Deep red (lighter)
+    highRiskShade: 'rgba(203, 67, 53, 0.5)' // Deep red (darker)
+  };
+
+  const datasets = [];
+  ['high', 'moderate', 'low'].forEach(riskLevel => {
+    datasets.push({
+      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Male)`,
+      data: substances.map(substance => props.data.injections[substance]?.male[riskLevel] || 0),
+      backgroundColor: CHART_COLORS[`${riskLevel}Risk`],
+      borderColor: CHART_COLORS[`${riskLevel}Risk`],
+      borderWidth: 1,
+      borderRadius: 8,
+      barPercentage: 0.8,
+      stack: 'male'
+    });
+    datasets.push({
+      label: `${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)} Risk (Female)`,
+      data: substances.map(substance => props.data.injections[substance]?.female[riskLevel] || 0),
+      backgroundColor: CHART_COLORS[`${riskLevel}RiskShade`],
+      borderColor: CHART_COLORS[`${riskLevel}RiskShade`],
+      borderWidth: 1,
+      borderRadius: 8,
+      barPercentage: 0.8,
+      stack: 'female'
+    });
   });
+
+  return {
+    data: {
+      labels: substances,
+      datasets
+    },
+    options: {
+      scales: {
+        x: {
+          stacked: true,
+          grid: {
+            display: false
+          },
+          border: {
+            display: true,
+            color: 'rgba(43, 101, 111, 0.3)'
+          },
+          ticks: {
+            color: 'rgba(43, 101, 111, 0.8)'
+          }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          grid: {
+            display: false
+          },
+          border: {
+            display: true,
+            color: 'rgba(43, 101, 111, 0.3)'
+          },
+          ticks: {
+            color: 'rgba(43, 101, 111, 0.8)'
+          }
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 20,
+            color: 'rgba(43, 101, 111, 0.8)'
+          }
+        },
+        title: {
+          display: true,
+          text: chartTitle.value,
+          color: 'rgba(43, 101, 111, 0.8)',
+          font: {
+            size: 16,
+            weight: 'bold'
+          },
+          padding: {
+            top: 10,
+            bottom: 30
+          }
+        }
+      }
+    }
+  };
 };
 
 const handleSubstanceRiskClick = () => {
   activeButton.value = 'risk';
   chartTitle.value = 'Substance Risk Levels';
   displayChart('risk');
+};
+
+const handleInjectionCasesClick = () => {
+  activeButton.value = 'injection';
+  chartTitle.value = 'Injection Cases';
+  displayChart('injection');
 };
 
 const handleLifetimeUsersClick = () => {

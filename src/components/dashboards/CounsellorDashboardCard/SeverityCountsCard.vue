@@ -130,11 +130,26 @@ const SEVERITY_ITEMS = ref([
       try {
         const assistData = typeof value === 'string' ? JSON.parse(value) : value;
         if (Array.isArray(assistData)) {
-          return assistData.some(item => item?.risk_flag && item.risk_flag !== 'none');
+          return assistData.some(item =>
+            item?.risk_flag &&
+            item.risk_flag !== 'none' &&
+            item.risk_flag !== 'low' &&
+            item.risk_flag !== 'no risk' &&
+            item.risk_flag !== '' &&
+            item.risk_flag !== null
+          );
+        } else if (typeof assistData === 'object') {
+          // Check all flags in the object
+          return Object.values(assistData).some(flag =>
+            flag &&
+            flag !== 'none' &&
+            flag !== 'low' &&
+            flag !== 'no risk' &&
+            flag !== '' &&
+            flag !== null
+          );
         }
-        return Object.keys(assistData).some(key =>
-          key.includes('_flag') && assistData[key] !== 'none'
-        );
+        return false;
       } catch (error) {
         console.error('Error parsing assist_data:', error);
         return false;
@@ -159,7 +174,10 @@ const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
 const filteredData = ref([]);
 const assistStructuredData = ref({
   total: 0,
-  substances: {}
+  substances: {},
+  injections: {}, // New: Separate data for injection cases
+  lifetime: 0, // Add these if you want to calculate them on the parent level
+  active: 0   // or you can calculate them inside the child as it was before
 });
 const isLoading = ref(true);
 const error = ref(null);
@@ -175,21 +193,25 @@ const getRelevantData = computed(() => {
 const extractRiskLevel = (riskFlag) => {
   if (!riskFlag) return 'low';
   const lowerCaseFlag = riskFlag.toLowerCase();
-  if (lowerCaseFlag.includes('severe') || lowerCaseFlag.includes('high')) return 'high';
+  if (lowerCaseFlag.includes('severe') || lowerCaseFlag.includes('high') || lowerCaseFlag === 'green') return 'high';
   if (lowerCaseFlag.includes('moderate') || lowerCaseFlag.includes('moderately severe')) return 'moderate';
-  return 'low'
-
+  return 'low';
 };
 
 const processAssistData = () => {
   const structured = {
     total: 0,
-    substances: {}
+    substances: {},
+    injections: {},
+    lifetime: 0,
+    active: 0
   };
 
   filteredData.value.forEach(item => {
     let hasNonNoneRisk = false;
+    let hasInjection = false;
     const allAssistData = [];
+    const injectionAssistData = [];
 
     // Collect risk data from all possible locations
     if (item.case_substance_risks) {
@@ -198,48 +220,85 @@ const processAssistData = () => {
     if (item.event_substance_risks) {
       allAssistData.push(...item.event_substance_risks);
     }
+
+    // Handle assist_data (both array and object format)
     if (item.screening_data?.assist_data) {
       let assistData = item.screening_data.assist_data;
-      if (assistData) {
-        if (typeof assistData === 'string') {
-          assistData = JSON.parse(assistData);
+      if (typeof assistData === 'string') {
+        assistData = JSON.parse(assistData);
+      }
+      if (Array.isArray(assistData)) {
+        allAssistData.push(...assistData);
+      } else if (typeof assistData === 'object') {
+        // Check for injection_flag within assist_data object
+        if (assistData.injection_flag && assistData.injection_flag !== 'none' && assistData.injection_flag !== 'no risk' && assistData.injection_flag !== '' && assistData.injection_flag !== null) {
+          hasInjection = true;
+          injectionAssistData.push({
+            substance_name: 'Injection', // Add Injection as substance_name
+            risk_flag: assistData.injection_flag
+          });
         }
-        if (Array.isArray(assistData)) {
-          allAssistData.push(...assistData);
-        }
-        else if (typeof assistData === 'object') {
-          // If assistData is an object, check its keys
-          hasNonNoneRisk = Object.values(assistData).some(value =>
-            typeof value === 'string' && value.toLowerCase() !== 'none'
-          );
-        }
-
+        // Convert object to array format for easier processing of other substance risks
+        Object.entries(assistData).forEach(([key, value]) => {
+          if (key.endsWith('_flag') && key !== 'injection_flag' && value && value !== 'none' && value !== 'no risk' && value !== '' && value !== null) {
+            allAssistData.push({
+              substance_name: key.replace('_flag', ''),
+              risk_flag: value
+            });
+          }
+        });
       }
     }
 
-
+    // Check if any substance (excluding injection) has a valid risk
     if (allAssistData.length > 0) {
       hasNonNoneRisk = allAssistData.some(data => {
-        return extractRiskLevel(data.risk_flag) !== 'low'
-      })
-    }
-
-    if (hasNonNoneRisk) {
-      structured.total++; // Increment total only if any risk data is found
-      allAssistData.forEach(data => {
-        let name = data.substance__name || data.substance_name || 'Unknown Substance';
-        const risk = extractRiskLevel(data.risk_flag);
-        const normalizedSubstance = normalizeSubstanceName(name);
-        if (!structured.substances[normalizedSubstance]) {
-          structured.substances[normalizedSubstance] = { high: 0, moderate: 0, low: 0 };
-        }
-        if (risk === 'high') structured.substances[normalizedSubstance].high++;
-        else if (risk === 'moderate') structured.substances[normalizedSubstance].moderate++;
-        else structured.substances[normalizedSubstance].low++;
+        return extractRiskLevel(data.risk_flag) !== 'low' && data.substance_name !== 'Injection';
       });
     }
 
+    const userGender = item.user?.gender || 'Unknown';
+
+    if (hasNonNoneRisk) {
+      structured.total++; // Increment total ONLY for non-injection substance risks
+      allAssistData.forEach(data => {
+        if (data.substance_name !== 'Injection') {
+          let name = data.substance__name || data.substance_name || 'Unknown Substance';
+          const risk = extractRiskLevel(data.risk_flag);
+          const normalizedSubstance = normalizeSubstanceName(name);
+
+          if (!structured.substances[normalizedSubstance]) {
+            structured.substances[normalizedSubstance] = {
+              male: { high: 0, moderate: 0, low: 0 },
+              female: { high: 0, moderate: 0, low: 0 },
+              other: { high: 0, moderate: 0, low: 0 }
+            };
+          }
+
+          structured.substances[normalizedSubstance][userGender.toLowerCase()][risk]++;
+        }
+      });
+    }
+
+    if (hasInjection) {
+      // DO NOT increment structured.total here
+      injectionAssistData.forEach(data => {
+        let name = data.substance_name || 'Injection'; // Default to 'Injection' if not found
+        const risk = extractRiskLevel(data.risk_flag);
+
+        if (!structured.injections[name]) {
+          structured.injections[name] = {
+            male: { high: 0, moderate: 0, low: 0 },
+            female: { high: 0, moderate: 0, low: 0 },
+            other: { high: 0, moderate: 0, low: 0 }
+          };
+        }
+
+        structured.injections[name][userGender.toLowerCase()][risk]++;
+      });
+    }
   });
+
   assistStructuredData.value = structured;
 };
 
