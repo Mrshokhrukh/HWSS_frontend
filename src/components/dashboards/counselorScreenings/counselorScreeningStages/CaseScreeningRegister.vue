@@ -92,10 +92,10 @@
                         <label for="parentalStatus">Parental Status</label>
                         <select id="parentalStatus" v-model="parentalStatus" required>
                             <option value="" disabled selected>Select Parental Status</option>
-                            <option value="Married">Married</option>
-                            <option value="Divorce">Divorce</option>
-                            <option value="Single Parent">Single Parent</option>
-                            <option value="One Deceased">One Deceased</option>
+                            <option value="both_parents">Both parents together</option>
+                            <option value="divorced">Divorced</option>
+                            <option value="single_deceased">Single (one deceased)</option>
+                            <option value="orphan">Orphan</option>
                         </select>
                     </div>
 
@@ -203,7 +203,7 @@ const getFirstAndLastName = () => {
     return { firstName, lastName };
 };
 
-let retryCounter = 0; 
+let retryCounter = 0;
 
 const generateBaseEmail = (dob) => {
     const { firstName, lastName } = getFirstAndLastName();
