@@ -59,10 +59,10 @@
                 <label for="parentStatus">Parent's Status</label>
                 <select id="parentStatus" class="detail-input" :disabled="!isEditing" :class="{ 'editable': isEditing }"
                   v-model="userDetails.userAgency.parentStatus">
-                  <option value="single">Single Parent</option>
-                  <option value="married">Married/Together</option>
+                  <option value="both_parents">Both parents together</option>
                   <option value="divorced">Divorced</option>
-                  <option value="dead">One of the Parent Dead</option>
+                  <option value="single_deceased">Single (one deceased)</option>
+                  <option value="orphan">Orphan</option>
                 </select>
               </div>
             </div>
@@ -110,12 +110,13 @@
             <div class="detail-grid">
               <div class="detail-row">
                 <label for="currentLivingWith">Currently Living With</label>
-                <select id="currentLivingWith" class="detail-input" :disabled="!isEditing" :class="{ 'editable': isEditing }"
-                  v-model="userDetails.userAgency.currentLivingWith">
+                <select id="currentLivingWith" class="detail-input" :disabled="!isEditing"
+                  :class="{ 'editable': isEditing }" v-model="userDetails.userAgency.currentLivingWith">
                   <option value="parents">Parents</option>
                   <option value="guardian">Guardian</option>
-                  <option value="sibling">Elder Sibling(s)</option>
-                  <option value="others">Others(s)</option>
+                  <option value="friend">Friend</option>
+                  <option value="self">All by myself</option>
+                  <option value="hostel">Hostel</option>
                 </select>
               </div>
               <div v-if="userDetails.userAgency.currentLivingWith === 'others'" class="detail-row">
@@ -238,7 +239,7 @@ watch(() => userDetailsStore.$state, (newState) => {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: all 0.3s ease;
-  
+
   height: 100%;
 }
 
