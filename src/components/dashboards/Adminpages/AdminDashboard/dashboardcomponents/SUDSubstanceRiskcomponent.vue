@@ -338,13 +338,30 @@ function renderEnhancedCharts(radarData, areaData, bubbleData) {
             r: {
                 ticks: {
                     color: chartTheme.text,
-                    backdropColor: 'transparent'
+                    backdropColor: 'transparent',
+                    display: true
                 },
                 grid: {
                     color: chartTheme.grid
                 },
                 angleLines: {
                     color: chartTheme.grid
+                },
+                pointLabels: {
+                    color: chartTheme.text,
+                    font: {
+                        size: 11,  // Slightly smaller font size
+                        family: "'Arial', sans-serif"
+                    },
+                    padding: 5,  // Add a small padding
+                    callback: function (value) {
+                        // Split label into multiple lines if needed
+                        const words = value.split(' ');
+                        if (words.length > 1) {
+                            return [words[0], words.slice(1).join(' ')];
+                        }
+                        return value;
+                    }
                 }
             }
         }
@@ -673,7 +690,11 @@ onMounted(() => {
 
 .chart-container {
     position: relative;
-    height: 200px;
+    height: 250px;
+}
+
+#radarChart {
+    height: 240px !important;
 }
 
 canvas {
