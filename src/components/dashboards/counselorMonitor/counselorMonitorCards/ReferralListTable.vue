@@ -24,9 +24,17 @@
 
     <!-- Data Table -->
     <div class="table-card">
-      <DataTable v-model:filters="filters" :value="filteredData" :paginator="true" :rows="10" :dataKey="'id'"
-        filterMode="menu" :filters="{ 'global': { matchMode: 'contains' } }" :emptyMessage="'No referrals found.'"
-        :loading="rowData.length === 0" class="custom-table">
+      <DataTable
+        v-model:filters="filters"
+        :value="filteredData"
+        :paginator="true"
+        :rows="10"
+        :dataKey="'id'"
+        filterMode="menu"
+        :filters="{ 'global': { matchMode: 'contains' } }"
+        :emptyMessage="'No referrals found.'"
+        :loading="isLoading" 
+        class="custom-table">
 
         <!-- Table Header -->
         <template #header>
@@ -38,6 +46,7 @@
 
         <!-- Empty State -->
         <template #empty>
+         <!-- This will now show correctly when isLoading is false AND filteredData is empty -->
           <div class="empty-state">
             <i class="pi pi-folder-open empty-icon"></i>
             <p>No referrals found</p>
@@ -46,6 +55,7 @@
 
         <!-- Loading State -->
         <template #loading>
+          <!-- This will now show ONLY when isLoading is true -->
           <div class="loading-state">
             <i class="pi pi-spin pi-spinner loading-icon"></i>
             <p>Loading referrals data...</p>
@@ -298,6 +308,7 @@ import Dropdown from 'primevue/dropdown';
 import Tag from 'primevue/tag';
 
 const rowData = ref([]);
+const isLoading = ref(true);
 const filters = ref({});
 const selectedUser = ref(null);
 const showModal = ref(false);
@@ -333,11 +344,17 @@ const formatDate = (timestamp) => {
 };
 
 const loadData = async () => {
+  isLoading.value = true; // <-- Set loading to true before fetching
   try {
     const response = await axios.get(endpoints.getReferralList);
-    rowData.value = response.data.referral_list;
+    // Ensure rowData is always an array, even if API returns null/undefined
+    rowData.value = response.data.referral_list || [];
   } catch (error) {
     console.error('Error loading data:', error);
+    rowData.value = []; // Clear data on error
+    // Optionally, you could set an error state here to display a message
+  } finally {
+    isLoading.value = false; // <-- Set loading to false after fetching completes
   }
 };
 
