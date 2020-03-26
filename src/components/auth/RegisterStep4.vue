@@ -105,8 +105,6 @@
                 <button class="close-btn" @click="errorMessage = ''">Close</button>
             </div>
         </div>
-
-
     </div>
 
     <!-- Modal for Terms and Policies -->
@@ -399,9 +397,7 @@ const showNDILoginAlert = () => {
         confirmButtonColor: '#2B656F'
     });
 };
-
 </script>
-
 
 <style scoped>
 .error-modal {

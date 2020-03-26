@@ -109,21 +109,18 @@ const fullName = computed(() => {
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
-	const role = userDetailsStore.user.role?.toLowerCase() || "public_user";
+    const role = userDetailsStore.user.role || 'User'; // Get raw role
 
-	if (role.includes("admin")) {
-		return "Administrator";
-	}
+    // Optional: Keep the Administrator override if you like it
+    if (role.toLowerCase().includes("admin")) {
+        return "Administrator";
+    }
 
-	switch (role) {
-		case "student":
-			return "Student";
-		default:
-			if (role.includes("counselor") || role.includes("professional")) {
-				return "Counselor";
-			}
-			return "Public User";
-	}
+    // Apply the same formatting logic as the Topbar
+    return role
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 });
 
 const filteredMenus = computed(() => {

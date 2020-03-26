@@ -936,6 +936,11 @@
   resolved "https://registry.npmjs.org/@types/raf/-/raf-3.4.3.tgz#85f1d1d17569b28b8db45e16e996407a56b0ab04"
   integrity sha512-c4YAvMedbPZ5tEyxzQdMoOhhJ4RD3rngZIdwC2/qDN3d7JpEhB6fiBRKVY1lg5B7Wk+uPBjn5f39j1/2MY1oOw==
 
+"@types/web-bluetooth@^0.0.21":
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/@types/web-bluetooth/-/web-bluetooth-0.0.21.tgz#525433c784aed9b457aaa0ee3d92aeb71f346b63"
+  integrity sha512-oIQLCGWtcFZy2JW77j9k8nHzAOpqMHLQejDA48XXMWH6tjCQHz5RCFz1bzsmROyL6PUm+LLnUiI4BCn221inxA==
+
 "@videojs/http-streaming@^3.16.0":
   version "3.16.2"
   resolved "https://registry.npmjs.org/@videojs/http-streaming/-/http-streaming-3.16.2.tgz#764f3c18140331ac23478faa6b81acc54fc3d3a5"
@@ -1151,6 +1156,25 @@
   dependencies:
     js-beautify "^1.14.9"
     vue-component-type-helpers "^2.0.0"
+
+"@vueuse/core@^13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@vueuse/core/-/core-13.0.0.tgz#60bf419e3f9fb003b51f1dfed550afffdb1691ff"
+  integrity sha512-rkgb4a8/0b234lMGCT29WkCjPfsX0oxrIRR7FDndRoW3FsaC9NBzefXg/9TLhAgwM11f49XnutshM4LzJBrQ5g==
+  dependencies:
+    "@types/web-bluetooth" "^0.0.21"
+    "@vueuse/metadata" "13.0.0"
+    "@vueuse/shared" "13.0.0"
+
+"@vueuse/metadata@13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@vueuse/metadata/-/metadata-13.0.0.tgz#f9c70e1d4958869693e6dcf385d3294cdd304b58"
+  integrity sha512-TRNksqmvtvqsuHf7bbgH9OSXEV2b6+M3BSN4LR5oxWKykOFT9gV78+C2/0++Pq9KCp9KQ1OQDPvGlWNQpOb2Mw==
+
+"@vueuse/shared@13.0.0":
+  version "13.0.0"
+  resolved "https://registry.yarnpkg.com/@vueuse/shared/-/shared-13.0.0.tgz#4bc454ac359303904d4cf9b23e0dd265be90bf2d"
+  integrity sha512-9MiHhAPw+sqCF/RLo8V6HsjRqEdNEWVpDLm2WBRW2G/kSQjb8X901sozXpSCaeLG0f7TEfMrT4XNaA5m1ez7Dg==
 
 "@xmldom/xmldom@^0.8.3":
   version "0.8.10"
@@ -2381,7 +2405,7 @@ human-signals@^2.1.0:
     chart.js "^4.4.5"
     d3 "^7.9.0"
     file-saver "^2.0.5"
-    hwss-frontend "file:C:/Users/ujwal/AppData/Local/Yarn/Cache/v6/npm-hwss-frontend-1.0.0-9af23213-85ea-4833-bf0b-5d5ac2a64200-1733853629905/node_modules/hwss-frontend"
+    hwss-frontend "file:../../../../Library/Caches/Yarn/v6/npm-hwss-frontend-1.0.0-51f8b98c-f13b-4c47-bee4-88a5a931417c-1742985384241/node_modules/hwss-frontend"
     ionicons "^7.2.2"
     js-cookie "^3.0.5"
     jspdf "^2.5.2"
@@ -2389,6 +2413,7 @@ human-signals@^2.1.0:
     jszip "^3.10.1"
     jszip-utils "^0.1.0"
     mdb-vue-ui-kit "^4.1.1"
+    particles.vue3 "^2.12.0"
     pinia "^2.1.7"
     primeicons "^7.0.0"
     primevue "^3.51.0"

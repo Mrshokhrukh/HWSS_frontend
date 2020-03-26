@@ -1,190 +1,170 @@
 <template>
   <div class="card-container">
     <div class="card p-4">
-      <!-- Search and Report Type Selection -->
+      <!-- Filters -->
       <div class="p-field p-grid row mb-4">
         <div class="col-12 col-md-3 mb-2 mb-md-0">
-          <!-- Year Filter -->
           <Dropdown v-model="selectedYear" :options="years" optionLabel="label" optionValue="value"
-            placeholder="Select Year" class="w-100" />
+            placeholder="Select Year" class="w-100" :disabled="isLoading" />
         </div>
         <div class="col-12 col-md-3 mb-2 mb-md-0">
           <span class="p-input-icon-left w-100">
-            <InputText v-model="globalFilter" placeholder="Search Reports..." class="w-100" />
+            <InputText v-model="globalFilterInput" placeholder="Search Reports..." class="w-100"
+              :disabled="isLoading || (!reportData.length && !gyalsungData.length)" />
           </span>
         </div>
-        <!-- Dropdown for school counselors to select report type -->
         <div v-if="isSchoolCounselor" class="col-12 col-md-3 mb-2 mb-md-0">
           <Dropdown v-model="selectedOption" :options="options" optionLabel="label" optionValue="value"
-            placeholder="Select Report Type" class="w-100" />
+            placeholder="Select Report Type" class="w-100" :disabled="isLoading" />
         </div>
         <div class="col-12 col-md-3">
-          <Button label="Download Excel" @click="downloadExcelWithZip" class="btn hwss-btn w-100"
-            icon="pi pi-download" />
+          <Button label="Download Excel" @click="downloadExcelWithZip" class="btn hwss-btn w-100" icon="pi pi-download"
+            :disabled="isLoading || isDownloading || (!filteredReportData.length && !filteredGyalsungData.length)"
+            :loading="isDownloading" />
         </div>
       </div>
 
-      <!-- General Report Table (for school/clinical counselors) -->
-      <div v-if="(selectedOption === 'generalReport' && isSchoolCounselor) ||
-        (selectedOption === 'generalReport' && isClinicalCounselor)
-      " class="table-container">
-        <DataTable :value="filteredReportData" :paginator="true" :rows="10" :resizableColumns="true"
-          sortField="username" :sortOrder="1" class="custom-table">
-          <!-- Display user-related columns -->
-          <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
-            :sortable="true" :style="field.width ? { width: field.width } : {}">
-            <template #body="{ data }">
-              <template v-if="field.key === 'suicidal_score'">
-                <Tag class="w-100" :value="data[field.key]" :severity="getSuicideSeverityClass(data[field.key])" />
+      <!-- Loading Indicator -->
+      <div v-if="isLoading" class="text-center my-5">
+        <ProgressSpinner strokeWidth="4" style="width: 50px; height: 50px" />
+        <p>Loading reports for {{ selectedYear }}...</p>
+      </div>
+
+      <!-- Fetch Error Message -->
+      <div v-if="fetchError && !isLoading" class="text-center my-5">
+        <Message severity="error" :closable="false">
+          Failed to load reports: {{ fetchError }}. Please try again later or select a different year.
+        </Message>
+      </div>
+
+      <!-- Report Tables (conditionally rendered) -->
+      <div v-if="!isLoading && !fetchError">
+        <!-- General Report Table -->
+        <div v-if="(selectedOption === 'generalReport' && (isSchoolCounselor || isClinicalCounselor))"
+          class="table-container">
+          <div v-if="!filteredReportData.length && !globalFilterInput" class="text-center my-3">
+            <p>No general reports found for the year {{ selectedYear }}.</p>
+          </div>
+          <div v-else-if="!filteredReportData.length && globalFilterInput" class="text-center my-3">
+            <p>No general reports match your search criteria for the year {{ selectedYear }}.</p>
+          </div>
+          <DataTable v-else :value="filteredReportData" :paginator="true" :rows="10" :rowsPerPageOptions="[10, 25, 50]"
+            paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords}" :resizableColumns="true"
+            sortField="full_name" :sortOrder="1" class="custom-table p-datatable-sm p-datatable-striped"
+            :globalFilterFields="searchableFields" v-model:filters="filters" filterDisplay="menu"
+            dataKey="identity_number" removableSort stateStorage="session" stateKey="dt-general-report-state">
+            <!-- Static Columns -->
+            <Column v-for="field in tableFields" :key="field.key" :field="field.key" :header="field.header"
+              :sortable="true" :style="field.width ? { width: field.width } : {}" :filterField="field.key"
+              :showFilterMatchModes="field.key !== 'suicidal_score'" :dataType="getDataType(field.key)">
+              <template #body="{ data }">
+                <template v-if="field.key === 'suicidal_score'">
+                  <Tag class="w-100" :value="data[field.key]" :severity="getSuicideSeverityClass(data[field.key])" />
+                </template>
+                <template v-else>
+                  <span>{{ data[field.key] || 'N/A' }}</span>
+                </template>
               </template>
-              <template v-else>
-                <span>{{ data[field.key] || 'None' }}</span>
+              <template v-if="field.key !== 'suicidal_score'" #filter="{ filterModel, filterCallback }">
+                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                  class="p-column-filter" :placeholder="`Search by ${field.header}`" />
               </template>
-            </template>
-          </Column>
+            </Column>
 
-          <!-- Display substances with separate columns and severityClass for tags -->
-          <Column field="tobacco_flag" header="Tobacco" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.tobacco_flag || 'None')"
-                :severity="severityClass(data.tobacco_flag)" />
-            </template>
-          </Column>
-          <Column field="alcohol_flag" header="Alcohol" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.alcohol_flag || 'None')"
-                :severity="severityClass(data.alcohol_flag)" />
-            </template>
-          </Column>
-          <Column field="cannabis_flag" header="Cannabis" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.cannabis_flag || 'None')"
-                :severity="severityClass(data.cannabis_flag)" />
-            </template>
-          </Column>
-          <Column field="cocaine_flag" header="Cocaine" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.cocaine_flag || 'None')"
-                :severity="severityClass(data.cocaine_flag)" />
-            </template>
-          </Column>
-          <Column field="amphetamine_flag" header="Amphetamines" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.amphetamine_flag || 'None')"
-                :severity="severityClass(data.amphetamine_flag)" />
-            </template>
-          </Column>
-          <Column field="inhalants_flag" header="Inhalants" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.inhalants_flag || 'None')"
-                :severity="severityClass(data.inhalants_flag)" />
-            </template>
-          </Column>
-          <Column field="sedatives_flag" header="Sedatives" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.sedatives_flag || 'None')"
-                :severity="severityClass(data.sedatives_flag)" />
-            </template>
-          </Column>
-          <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.hallucinogens_flag || 'None')"
-                :severity="severityClass(data.hallucinogens_flag)" />
-            </template>
-          </Column>
-          <Column field="opioids_flag" header="Opioids" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="severityText(data.opioids_flag || 'None')"
-                :severity="severityClass(data.opioids_flag)" />
-            </template>
-          </Column>
+            <!-- Dynamic Substance Columns -->
+            <Column v-for="substance in substanceColumns" :key="substance.field" :field="substance.field"
+              :header="substance.header" :sortable="true" :filterField="substance.field" :showFilterMatchModes="false">
+              <template #body="{ data }">
+                <Tag class="w-100" :value="severityText(data[substance.field] || 'grey')"
+                  :severity="severityClass(data[substance.field])" />
+              </template>
+              <template #filter="{ filterModel, filterCallback }">
+                <Dropdown v-model="filterModel.value" :options="severityFilterOptions" optionLabel="label"
+                  optionValue="value" placeholder="Any" class="p-column-filter" :showClear="true"
+                  @change="filterCallback()">
+                  <template #option="slotProps">
+                    <Tag :value="slotProps.option.label" :severity="slotProps.option.severity" />
+                  </template>
+                </Dropdown>
+              </template>
+            </Column>
 
-          <Column v-for="field in tableServiceFields" :key="field.key" :field="field.key" :header="field.header"
-            :sortable="true" :style="field.width ? { width: field.width } : {}">
-            <template #body="{ data }">
-              <span>{{ data[field.key] || 'None' }}</span>
-            </template>
-          </Column>
-        </DataTable>
+            <!-- Service Fields Columns -->
+            <Column v-for="field in tableServiceFields" :key="field.key" :field="field.key" :header="field.header"
+              :sortable="true" :style="field.width ? { width: field.width } : {}" :filterField="field.key"
+              :showFilterMatchModes="true">
+              <template #body="{ data }">
+                <span>{{ data[field.key] || 'N/A' }}</span>
+              </template>
+              <template #filter="{ filterModel, filterCallback }">
+                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                  class="p-column-filter" :placeholder="`Search by ${field.header}`" />
+              </template>
+            </Column>
 
-        <!-- Display message if no reports found -->
-        <div v-if="isSchoolCounselor && reportData.length === 0">
-          <p>No reports found for your agency.</p>
+            <template #empty>
+              No reports match your current filter settings.
+            </template>
+          </DataTable>
         </div>
-      </div>
 
-      <!-- School Environment Report Table -->
-      <div v-if="selectedOption === 'school' && isSchoolCounselor" class="table-container">
-        <SchoolEnvironmentTable />
-      </div>
+        <!-- School Environment Report Table -->
+        <div v-if="selectedOption === 'school' && isSchoolCounselor" class="table-container">
+          <!-- Assuming SchoolEnvironmentTable handles its own loading/data -->
+          <SchoolEnvironmentTable :selectedYear="selectedYear" />
+        </div>
 
-      <!-- Gyalsung Report Table (for gyalsung counselors) -->
-      <div v-if="isGyalsungCounselor" class="table-container">
-        <DataTable :value="filteredGyalsungData" :paginator="true" :rows="10" :resizableColumns="true"
-          sortField="username" :sortOrder="1" class="custom-table">
-          <!-- Display user-related columns for Gyalsung reports -->
-          <Column v-for="field in gyalsungTableFields" :key="field.key" :field="field.key" :header="field.header"
-            :sortable="true" :style="field.width ? { width: field.width } : {}">
-            <template #body="{ data }">
-              <span>{{ data[field.key] || 'None' }}</span>
-            </template>
-          </Column>
+        <!-- Gyalsung Report Table -->
+        <div v-if="isGyalsungCounselor" class="table-container">
+          <div v-if="!filteredGyalsungData.length && !globalFilterInput" class="text-center my-3">
+            <p>No Gyalsung reports found for the year {{ selectedYear }}.</p>
+          </div>
+          <div v-else-if="!filteredGyalsungData.length && globalFilterInput" class="text-center my-3">
+            <p>No Gyalsung reports match your search criteria for the year {{ selectedYear }}.</p>
+          </div>
+          <DataTable v-else :value="filteredGyalsungData" :paginator="true" :rows="10"
+            :rowsPerPageOptions="[10, 25, 50]"
+            paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords}" :resizableColumns="true"
+            sortField="full_name" :sortOrder="1" class="custom-table p-datatable-sm p-datatable-striped"
+            :globalFilterFields="gyalsungSearchableFields" v-model:filters="gyalsungFilters" filterDisplay="menu"
+            dataKey="identity_number" removableSort stateStorage="session" stateKey="dt-gyalsung-report-state">
+            <!-- Gyalsung User Columns -->
+            <Column v-for="field in gyalsungTableFields" :key="field.key" :field="field.key" :header="field.header"
+              :sortable="true" :style="field.width ? { width: field.width } : {}" :filterField="field.key"
+              :showFilterMatchModes="true" :dataType="getDataType(field.key)">
+              <template #body="{ data }">
+                <span>{{ data[field.key] || 'N/A' }}</span>
+              </template>
+              <template #filter="{ filterModel, filterCallback }">
+                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()"
+                  class="p-column-filter" :placeholder="`Search by ${field.header}`" />
+              </template>
+            </Column>
 
-          <!-- Substances Columns for Gyalsung reports with severityClass for tags -->
-          <Column field="tobacco_flag" header="Tobacco" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.tobacco_flag || 'None'" :severity="severityClass(data.tobacco_flag)" />
+            <!-- Gyalsung Substance Columns -->
+            <Column v-for="substance in substanceColumns" :key="substance.field" :field="substance.field"
+              :header="substance.header" :sortable="true" :filterField="substance.field" :showFilterMatchModes="false">
+              <template #body="{ data }">
+                <!-- Assuming Gyalsung data also uses the same severity flags -->
+                <Tag class="w-100" :value="severityText(data[substance.field] || 'grey')"
+                  :severity="severityClass(data[substance.field])" />
+              </template>
+              <template #filter="{ filterModel, filterCallback }">
+                <Dropdown v-model="filterModel.value" :options="severityFilterOptions" optionLabel="label"
+                  optionValue="value" placeholder="Any" class="p-column-filter" :showClear="true"
+                  @change="filterCallback()">
+                  <template #option="slotProps">
+                    <Tag :value="slotProps.option.label" :severity="slotProps.option.severity" />
+                  </template>
+                </Dropdown>
+              </template>
+            </Column>
+            <template #empty>
+              No reports match your current filter settings.
             </template>
-          </Column>
-          <Column field="alcohol_flag" header="Alcohol" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.alcohol_flag || 'None'" :severity="severityClass(data.alcohol_flag)" />
-            </template>
-          </Column>
-          <Column field="cannabis_flag" header="Cannabis" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.cannabis_flag || 'None'" :severity="severityClass(data.cannabis_flag)" />
-            </template>
-          </Column>
-          <Column field="cocaine_flag" header="Cocaine" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.cocaine_flag || 'None'" :severity="severityClass(data.cocaine_flag)" />
-            </template>
-          </Column>
-          <Column field="amphetamine_flag" header="Amphetamines" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.amphetamine_flag || 'None'"
-                :severity="severityClass(data.amphetamine_flag)" />
-            </template>
-          </Column>
-          <Column field="inhalants_flag" header="Inhalants" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.inhalants_flag || 'None'"
-                :severity="severityClass(data.inhalants_flag)" />
-            </template>
-          </Column>
-          <Column field="sedatives_flag" header="Sedatives" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.sedatives_flag || 'None'"
-                :severity="severityClass(data.sedatives_flag)" />
-            </template>
-          </Column>
-          <Column field="hallucinogens_flag" header="Hallucinogens" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.hallucinogens_flag || 'None'"
-                :severity="severityClass(data.hallucinogens_flag)" />
-            </template>
-          </Column>
-          <Column field="opioids_flag" header="Opioids" :sortable="true">
-            <template #body="{ data }">
-              <Tag class="w-100" :value="data.opioids_flag || 'None'" :severity="severityClass(data.opioids_flag)" />
-            </template>
-          </Column>
-        </DataTable>
-
-        <!-- Display message if no reports found -->
-        <div v-if="gyalsungData.length === 0">
-          <p>No reports found for gyalsung counselors.</p>
+          </DataTable>
         </div>
       </div>
     </div>
@@ -192,121 +172,289 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
-import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue';
 import { BlobWriter, BlobReader, ZipWriter } from "@zip.js/zip.js";
+import { FilterMatchMode } from 'primevue/api';
+import { useDebounce } from '@vueuse/core'; // Using vueuse for debounce
 
-// Data refs
-const reportData = ref([]);
-const gyalsungData = ref([]);
-const globalFilter = ref('');
+// PrimeVue Components (ensure they are registered globally or imported locally)
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import Dropdown from 'primevue/dropdown';
+import Tag from 'primevue/tag';
+import ProgressSpinner from 'primevue/progressspinner';
+import Message from 'primevue/message';
+
+// Child Component
+import SchoolEnvironmentTable from './SchoolEnvironmentTable.vue'; // Assuming this handles its own data/loading
+
+// --- State ---
+const reportData = ref([]); // Raw data for the selected year (General/Clinical)
+const gyalsungData = ref([]); // Raw data for the selected year (Gyalsung)
+const isLoading = ref(false);
+const isDownloading = ref(false);
+const fetchError = ref(null); // To store API fetch errors
+
+const globalFilterInput = ref(''); // User input for global search
+const globalFilter = useDebounce(globalFilterInput, 300); // Debounced value for filtering
+
 const isClinicalCounselor = ref(false);
 const isGyalsungCounselor = ref(false);
 const isSchoolCounselor = ref(false);
-const selectedOption = ref('generalReport');
+const selectedOption = ref('generalReport'); // Default for School Counselor
+
+const selectedYear = ref(new Date().getFullYear()); // Default to current year
+const userDetails = ref(null); // Store user details once
+
+// --- Constants & Configuration ---
 const options = [
   { label: 'General Report', value: 'generalReport' },
-  { label: 'School', value: 'school' },
+  { label: 'School Environment', value: 'school' }, // Updated value
 ];
 
-// Year Filter
-const selectedYear = ref(new Date().getFullYear()); // Default to current year
 const years = computed(() => {
   const currentYear = new Date().getFullYear();
-  return Array.from({ length: 10 }, (_, index) => ({
-    label: currentYear - index,
-    value: currentYear - index,
-  }));
+  // Generate years from current year down to 10 years ago
+  return Array.from({ length: 10 }, (_, index) => {
+    const year = currentYear - index;
+    return { label: String(year), value: year };
+  });
 });
 
-const tableFields = [
+const baseTableFields = [
   { key: 'full_name', header: 'Full Name' },
   { key: 'gender', header: 'Gender' },
   { key: 'dob', header: 'Date of Birth' },
   { key: 'identity_number', header: 'Identity Number' },
   { key: 'mobile_number', header: 'Mobile Number' },
+];
+
+const tableFields = [
+  ...baseTableFields,
   { key: 'ps_add_village', header: 'Present Village' },
-  { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
-  { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
-  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true, style: { maxWidth: '150px' } },
-  { key: 'ace_score', header: 'ACE Score', taggable: true },
+  { key: 'phq9_score', header: 'PHQ-9' }, // Simplified Header
+  { key: 'gad7_score', header: 'GAD-7' }, // Simplified Header
+  { key: 'suicidal_score', header: 'Suicidal Risk', style: { maxWidth: '150px' } }, // Use Risk
+  { key: 'ace_score', header: 'ACE' }, // Simplified Header
 ];
 
 const tableServiceFields = [
-  { key: 'assessment_status', header: 'Assessment Status' },
+  { key: 'assessment_status', header: 'Assessment' }, // Simplified Header
   { key: 'case_status', header: 'Case Status' },
-  { key: 'counseling', header: 'Counseling Status' },
-  { key: 'follow_up', header: 'Follow Up Status' },
-  { key: 'referred', header: 'Referral Status' },
+  { key: 'counseling', header: 'Counseling' }, // Simplified Header
+  { key: 'follow_up', header: 'Follow Up' }, // Simplified Header
+  { key: 'referred', header: 'Referral' }, // Simplified Header
 ];
 
 const gyalsungTableFields = [
-  { key: 'username', header: 'Username' },
-  { key: 'full_name', header: 'Full Name' },
-  { key: 'gender', header: 'Gender' },
-  { key: 'dob', header: 'Date of Birth' },
-  { key: 'identity_number', header: 'Identity Number' },
-  { key: 'mobile_number', header: 'Mobile Number' },
+  ...baseTableFields,
+  { key: 'username', header: 'Username' }, // Keep username if needed
   { key: 'academy_code', header: 'Academy Code' },
-  { key: 'phq9_score', header: 'PHQ-9 Score', taggable: true },
-  { key: 'gad7_score', header: 'GAD-7 Score', taggable: true },
-  { key: 'suicidal_score', header: 'Suicidal Score', taggable: true },
+  { key: 'phq9_score', header: 'PHQ-9 Score' }, // Keep Score for Gyalsung if interpretation not available
+  { key: 'gad7_score', header: 'GAD-7 Score' },
+  { key: 'suicidal_score', header: 'Suicidal Score' }, // Keep Score for Gyalsung
 ];
 
-// Transform the main dataset to match the table structure
+const substanceColumns = [
+  { field: 'tobacco_flag', header: 'Tobacco' },
+  { field: 'alcohol_flag', header: 'Alcohol' },
+  { field: 'cannabis_flag', header: 'Cannabis' },
+  { field: 'cocaine_flag', header: 'Cocaine' },
+  { field: 'amphetamine_flag', header: 'Amphetamines' },
+  { field: 'inhalants_flag', header: 'Inhalants' },
+  { field: 'sedatives_flag', header: 'Sedatives' },
+  { field: 'hallucinogens_flag', header: 'Hallucinogens' },
+  { field: 'opioids_flag', header: 'Opioids' },
+];
+
+// Fields to include in DataTable's global search
+const searchableFields = computed(() => [
+  ...tableFields.map(f => f.key),
+  ...tableServiceFields.map(f => f.key),
+  // Add substance flags if needed for global search, though filtering by severity is better
+]);
+
+const gyalsungSearchableFields = computed(() => [
+  ...gyalsungTableFields.map(f => f.key),
+  // Add substance flags if needed
+]);
+
+// DataTable Column Filters (using PrimeVue's built-in filtering)
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  // Initialize filters for each column to enable menu display
+  ...Object.fromEntries(tableFields.map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])),
+  ...Object.fromEntries(substanceColumns.map(f => [f.field, { value: null, matchMode: FilterMatchMode.EQUALS }])), // Use EQUALS for severity dropdown
+  ...Object.fromEntries(tableServiceFields.map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])),
+});
+
+const gyalsungFilters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+  ...Object.fromEntries(gyalsungTableFields.map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])),
+  ...Object.fromEntries(substanceColumns.map(f => [f.field, { value: null, matchMode: FilterMatchMode.EQUALS }])),
+});
+
+// Options for severity filter dropdown
+const severityFilterOptions = ref([
+  { label: 'Severe', value: 'red', severity: 'danger' },
+  { label: 'Moderate', value: 'yellow', severity: 'warning' },
+  { label: 'Mild', value: 'blue', severity: 'info' },
+  { label: 'None', value: 'green', severity: 'success' },
+  { label: 'Unknown', value: 'grey', severity: 'secondary' } // Or 'None'/'N/A'
+]);
+
+// --- Computed Properties for Filtered Data ---
+// Now filtering is primarily handled by DataTable itself using `filters` ref.
+// These computed properties simply pass the data for the *selected year*.
+const filteredReportData = computed(() => reportData.value);
+const filteredGyalsungData = computed(() => gyalsungData.value);
+
+// Apply global filter manually if needed outside DataTable's built-in global filter
+// watch(globalFilter, (newSearchTerm) => {
+//   filters.value['global'].value = newSearchTerm;
+//   gyalsungFilters.value['global'].value = newSearchTerm;
+// });
+
+// --- Methods ---
+
+// Get User Details (called once on mount)
+const getUserDetailsFromStorage = () => {
+  const userDetailsString = localStorage.getItem('userDetailsStore');
+  if (!userDetailsString) {
+    console.error('No userDetailsStore found in localStorage');
+    // Potentially redirect or show a blocking error
+    return null;
+  }
+  try {
+    const parsedDetails = JSON.parse(userDetailsString);
+    userDetails.value = parsedDetails; // Store details
+    isSchoolCounselor.value = parsedDetails?.user?.role === 'school_counselor';
+    isClinicalCounselor.value = parsedDetails?.user?.role === 'clinical_counselor';
+    isGyalsungCounselor.value = parsedDetails?.user?.role === 'gyalsung_counselor';
+    return parsedDetails;
+  } catch (error) {
+    console.error('Error parsing user details:', error);
+    fetchError.value = 'Could not load user details.'; // Show error
+    return null;
+  }
+};
+
+// Fetch Data (now accepts year)
+const fetchReportDataForYear = async (year) => {
+  if (!userDetails.value?.agency?.agencyName) {
+    fetchError.value = "User agency information is missing.";
+    return;
+  }
+
+  isLoading.value = true;
+  fetchError.value = null;
+  reportData.value = []; // Clear previous data
+  gyalsungData.value = []; // Clear previous data
+
+  try {
+    // OPTIMIZATION: Add year parameter to API call if backend supports it
+    // const response = await axios.get(endpoints.newServiceAndTreatment, { params: { year: year } });
+    // If backend doesn't support year filter, fetch all and filter client-side (less efficient)
+    const response = await axios.get(endpoints.newServiceAndTreatment);
+
+    const dataArray = response.data || [];
+    const agencyNameLower = userDetails.value.agency.agencyName.trim().toLowerCase();
+
+    const processedData = dataArray
+      .map(item => {
+        // Calculate submission year (handle potential missing dates)
+        const screeningDate = item.screening_data?.submission_date || item.date; // Fallback if needed
+        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+
+        // Basic validation and year check
+        if (!submissionYear || submissionYear !== year) {
+          return null; // Skip items not matching the selected year
+        }
+        // Agency Check
+        const itemAgencyName = item.user?.active_agency?.agency_name?.trim().toLowerCase();
+        if (itemAgencyName !== agencyNameLower) {
+          return null; // Skip items not matching the user's agency
+        }
+
+        // Return transformed data along with the original item for potential further use
+        return {
+          transformed: transformData(item), // General/Clinical transform
+          gyalsungTransformed: isGyalsungCounselor.value ? transformGyalsungData(item) : null, // Gyalsung transform (only if needed)
+          // originalItem: item // Keep original if needed elsewhere, but avoid if large
+        };
+      })
+      .filter(item => item !== null); // Remove null entries from filtering
+
+    // Separate into respective data arrays
+    reportData.value = processedData.map(p => p.transformed);
+    if (isGyalsungCounselor.value) {
+      gyalsungData.value = processedData.map(p => p.gyalsungTransformed).filter(Boolean); // Filter out nulls if transform failed
+    }
+
+  } catch (error) {
+    console.error('Error fetching report data:', error);
+    fetchError.value = error.response?.data?.message || error.message || 'An unknown error occurred';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Data Transformation (Keep these functions, ensure they are efficient)
 const transformData = (item) => {
   const screeningData = item.screening_data || {};
   const substances = extractSubstances(item);
-
-  // Extract suicidal score
-  let suicidalData = null;
-  if (screeningData.phq_data) {
-    suicidalData = extractSuicidalScore(screeningData.phq_data);
-  }
+  const suicidalData = screeningData.phq_data ? extractSuicidalScore(screeningData.phq_data) : null;
 
   return {
-    username: item.user?.username || 'None',
-    full_name: `${item.user?.first_name || ''} ${item.user?.middle_name || ''} ${item.user?.last_name || ''}`.trim() || 'None',
-    gender: item.user?.gender || 'None',
-    dob: item.user?.date_of_birth || 'None',
-    identity_number: item.user?.identity_number || 'None',
-    mobile_number: item.user?.mob_number || 'None',
-    ps_add_village: item.user?.ps_add_village || 'None',
-    academy_code: item.user?.academy_code || 'None',
-    phq9_score: screeningData.phq_interpretation || 'None',
-    gad7_score: screeningData.gad_interpretation || 'None',
-    suicidal_score: suicidalData ? `${suicidalData.severity} (${suicidalData.score})` : 'None',
-    ace_score: screeningData.ace_interpretation || 'None',
-    assessment_status: item.assessment_status || 'None',
-    case_status: item.case_status || 'None',
-    counseling: item.counseling || 'None',
-    follow_up: item.follow_up || 'None',
-    referred: item.referred || 'None',
+    // Use 'N/A' or similar for missing data for clarity in the table
+    username: item.user?.username || 'N/A',
+    full_name: `${item.user?.first_name || ''} ${item.user?.middle_name || ''} ${item.user?.last_name || ''}`.trim() || 'N/A',
+    gender: item.user?.gender || 'N/A',
+    dob: item.user?.date_of_birth || 'N/A',
+    identity_number: item.user?.identity_number || 'N/A', // Use as dataKey if unique
+    mobile_number: item.user?.mob_number || 'N/A',
+    ps_add_village: item.user?.ps_add_village || 'N/A',
+    academy_code: item.user?.academy_code || 'N/A',
+    phq9_score: screeningData.phq_interpretation || 'N/A',
+    gad7_score: screeningData.gad_interpretation || 'N/A',
+    suicidal_score: suicidalData ? `${suicidalData.severity} (${suicidalData.score})` : 'N/A',
+    ace_score: screeningData.ace_interpretation || 'N/A',
+    assessment_status: item.assessment_status || 'N/A',
+    case_status: item.case_status || 'N/A',
+    counseling: item.counseling || 'N/A',
+    follow_up: item.follow_up || 'N/A',
+    referred: item.referred || 'N/A',
+    ...substances, // Add substance flags (e.g., tobacco_flag: 'red')
+  };
+};
+
+const transformGyalsungData = (item) => {
+  const screeningData = item.screening_data || {};
+  const substances = extractSubstances(item); // Extract substances for Gyalsung too
+  const suicidalData = screeningData.phq_data ? extractSuicidalScore(screeningData.phq_data) : null; // Also for Gyalsung if needed
+
+  return {
+    username: screeningData.username || 'N/A',
+    full_name: screeningData.full_name || 'N/A',
+    gender: screeningData.gender || 'N/A',
+    dob: screeningData.dob || 'N/A',
+    identity_number: screeningData.identity_number || 'N/A',
+    mobile_number: screeningData.mobile_number || 'N/A',
+    academy_code: screeningData.academy_code || 'N/A',
+    phq9_score: screeningData.phq9_score || 'N/A', // Raw score if interpretation not available
+    gad7_score: screeningData.gad7_score || 'N/A', // Raw score
+    suicidal_score: suicidalData ? `${suicidalData.severity} (${suicidalData.score})` : 'N/A', // Use interpretation if available
     ...substances,
   };
 };
 
-// Transform the Gyalsung dataset
-const transformGyalsungData = (item) => {
-  const screeningData = item.screening_data || {};
-  return {
-    username: screeningData.username || 'None',
-    full_name: screeningData.full_name || 'None',
-    gender: screeningData.gender || 'None',
-    dob: screeningData.dob || 'None',
-    identity_number: screeningData.identity_number || 'None',
-    mobile_number: screeningData.mobile_number || 'None',
-    academy_code: screeningData.academy_code || 'None',
-    phq9_score: screeningData.phq9_score || 'None',
-    gad7_score: screeningData.gad7_score || 'None',
-    suicidal_score: screeningData.suicidal_score || 'None',
-  };
-};
-
+// Substance Extraction (Seems okay, ensure mapping is correct)
 const extractSubstances = (item) => {
   const substanceMapping = {
     'Tobacco products (cigarettes, chewing tobacco etc)': 'tobacco_flag',
@@ -319,168 +467,219 @@ const extractSubstances = (item) => {
     'Hallucinogens (LSD, trips, Ketamine, etc.)': 'hallucinogens_flag',
     'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': 'opioids_flag',
   };
-
   const result = {};
+  // Initialize all flags to grey (or a default 'unknown' state)
+  Object.values(substanceMapping).forEach(key => { result[key] = 'grey'; });
 
-  // Helper function to process substance array
   const processSubstanceArray = (substances) => {
     if (!Array.isArray(substances)) return;
-
     substances.forEach((substance) => {
       const mappedKey = substanceMapping[substance.substance_name];
       if (mappedKey) {
-        result[mappedKey] = mapSeverity(substance.risk_flag);
+        result[mappedKey] = mapSeverity(substance.risk_flag); // mapSeverity returns 'red', 'yellow' etc.
       }
     });
   };
 
-  // Process case_substance_risks if available
-  if (item.case_substance_risks) {
-    processSubstanceArray(item.case_substance_risks);
-  }
+  // Consolidate sources
+  const allSubstances = [
+    ...(item.case_substance_risks || []),
+    ...(item.event_substance_risks || []),
+    ...(item.screening_data?.assist_data || [])
+  ];
 
-  // Process event_substance_risks if available
-  if (item.event_substance_risks) {
-    processSubstanceArray(item.event_substance_risks);
-  }
-
-  // Process assist_data if available through screening_data
-  if (item.screening_data?.assist_data) {
-    processSubstanceArray(item.screening_data.assist_data);
-  }
+  // Process unique substances (in case of overlap, prioritize?) - Simple overwrite for now
+  processSubstanceArray(allSubstances);
 
   return result;
 };
 
-// Helper function to map severity from risk flag
+// Severity Mapping (Returns color code)
 const mapSeverity = (riskFlag) => {
-  if (!riskFlag) return 'grey';
-
-  const riskLevel = riskFlag.toLowerCase();
+  if (!riskFlag) return 'grey'; // Unknown/Not assessed
+  const riskLevel = String(riskFlag).toLowerCase(); // Ensure it's a string
   if (riskLevel.includes('severe')) return 'red';
   if (riskLevel.includes('moderate')) return 'yellow';
-  if (riskLevel.includes('mild')) return 'blue';
-  if (riskLevel.includes('none')) return 'green';
-  return 'grey';
+  if (riskLevel.includes('mild') || riskLevel.includes('low')) return 'blue'; // Include 'low'
+  if (riskLevel.includes('none') || riskLevel.includes('no risk')) return 'green';
+  return 'grey'; // Default for unexpected values
 };
 
-//sucidal score
+// Suicidal Score Extraction (Keep robust parsing)
 const extractSuicidalScore = (phqData) => {
   try {
-    // Handle string PHQ data
-    if (typeof phqData === 'string') {
+    let dataToParse = phqData;
+    // Handle stringified JSON
+    if (typeof dataToParse === 'string') {
       try {
-        phqData = JSON.parse(phqData);
+        dataToParse = JSON.parse(dataToParse);
       } catch (e) {
-        return null;
+        console.warn('Failed to parse PHQ data string:', phqData);
+        return null; // Cannot parse
       }
     }
 
-    // Handle different PHQ data formats
-    let responses = null;
-    if (phqData.responses) {
-      responses = phqData.responses;
-    } else if (Array.isArray(phqData)) {
-      responses = phqData;
+    // Find the suicidal ideation question (handle variations)
+    let responses = dataToParse?.responses || (Array.isArray(dataToParse) ? dataToParse : null);
+
+    if (!responses) {
+      // Maybe it's directly the score object? (Less common based on structure)
+      if (typeof dataToParse === 'object' && dataToParse !== null && dataToParse.hasOwnProperty('score') && dataToParse.hasOwnProperty('severity')) {
+        return dataToParse; // Assume it's already { score, severity }
+      }
+      console.warn('Could not find responses array in PHQ data:', phqData);
+      return null;
     }
 
-    if (responses) {
-      const suicideQuestion = responses.find((item) =>
-        item.question?.toLowerCase().includes('thoughts that you would be better off dead') ||
-        item.question?.toLowerCase().includes('hurting yourself'),
-      );
 
-      if (suicideQuestion) {
-        const score = suicideQuestion.score;
-        const severity = getSuicideSeverity(score);
-        return { score, severity };
+    const suicideQuestion = responses.find(item =>
+      item && item.question && (
+        item.question.toLowerCase().includes('thoughts that you would be better off dead') ||
+        item.question.toLowerCase().includes('hurting yourself')
+      )
+    );
+
+    if (suicideQuestion && typeof suicideQuestion.score === 'number') {
+      const score = suicideQuestion.score;
+      const severity = getSuicideSeverity(score);
+      return { score, severity };
+    } else {
+      // Fallback: Check if the root object has interpretation directly
+      if (dataToParse.interpretation && typeof dataToParse.total_score === 'number' && dataToParse.interpretation.toLowerCase().includes('suicidal')) {
+        // This is less precise as it might be the overall PHQ score interpretation
+        // console.warn("Using overall PHQ interpretation for suicidal risk - less precise.");
+        // Might need a better mapping based on overall score if specific question unavailable
       }
     }
-    return null;
+
+    return null; // Not found or invalid format
   } catch (error) {
-    console.error('Error extracting suicidal score:', error);
+    console.error('Error extracting suicidal score:', error, 'Data:', phqData);
     return null;
   }
 };
 
-// Helper function to determine suicide risk severity
+// Suicide Severity Text
 const getSuicideSeverity = (score) => {
   if (score === 0) return 'None';
   if (score === 1) return 'Mild';
   if (score === 2) return 'Moderate';
   if (score === 3) return 'Severe';
-  return 'None';
+  return 'Unknown'; // Should not happen if score is 0-3
 };
 
+// Suicide Severity CSS Class for Tag
 const getSuicideSeverityClass = (value) => {
-  if (!value || value === 'None') return 'secondary';
-  if (value.includes('Mild')) return 'info';
-  if (value.includes('Moderate')) return 'warning';
-  if (value.includes('Severe')) return 'danger';
-  return 'success';
+  if (!value || typeof value !== 'string') return 'secondary';
+  const lowerValue = value.toLowerCase();
+  if (lowerValue.includes('severe')) return 'danger';
+  if (lowerValue.includes('moderate')) return 'warning';
+  if (lowerValue.includes('mild')) return 'info';
+  if (lowerValue.includes('none')) return 'success'; // Or 'secondary' if 'None' isn't a success state
+  return 'secondary'; // Default
 };
 
+// Substance Severity Text (from color code)
+const severityText = (value) => {
+  const textMapping = {
+    red: 'Severe',
+    yellow: 'Moderate',
+    blue: 'Mild',
+    green: 'None',
+    grey: 'N/A', // Or 'Unknown'
+  };
+  return textMapping[value] || 'N/A';
+};
 
-// Function to generate Excel
-const generateExcel = async () => {
-  let excelData;
+// Substance Severity CSS Class (from color code)
+const severityClass = (value) => {
+  const severityMapping = {
+    red: 'danger',
+    yellow: 'warning',
+    blue: 'info',
+    green: 'success',
+    grey: 'secondary',
+  };
+  return severityMapping[value] || 'secondary';
+};
+
+// Determine data type for DataTable filtering
+const getDataType = (key) => {
+  if (key === 'dob') return 'date';
+  return 'text';
+}
+
+
+// --- Excel Export ---
+const generateExcelBlob = async () => {
+
+  const searchTerm = globalFilter.value.toLowerCase().trim();
+
+  let sourceData = [];
+  let columnsToExport = [];
 
   if (selectedOption.value === 'generalReport' && (isSchoolCounselor.value || isClinicalCounselor.value)) {
-    excelData = filteredReportData.value.map(item => {
-      return {
-        'Full Name': item.full_name,
-        'Gender': item.gender,
-        'Date of Birth': item.dob,
-        'Identity Number': item.identity_number,
-        'Mobile Number': item.mobile_number,
-        'Present Village': item.ps_add_village,
-        'PHQ-9 Score': item.phq9_score,
-        'GAD-7 Score': item.gad7_score,
-        'Suicidal Score': item.suicidal_score,
-        'ACE Score': item.ace_score,
-        'Tobacco': severityText(item.tobacco_flag || 'None'),
-        'Alcohol': severityText(item.alcohol_flag || 'None'),
-        'Cannabis': severityText(item.cannabis_flag || 'None'),
-        'Cocaine': severityText(item.cocaine_flag || 'None'),
-        'Amphetamines': severityText(item.amphetamine_flag || 'None'),
-        'Inhalants': severityText(item.inhalants_flag || 'None'),
-        'Sedatives': severityText(item.sedatives_flag || 'None'),
-        'Hallucinogens': severityText(item.hallucinogens_flag || 'None'),
-        'Opioids': severityText(item.opioids_flag || 'None'),
-        'Assessment Status': item.assessment_status,
-        'Case Status': item.case_status,
-        'Counseling Status': item.counseling,
-        'Follow Up Status': item.follow_up,
-        'Referral Status': item.referred
-      };
-    });
+    sourceData = reportData.value;
+    columnsToExport = [
+      { field: 'full_name', header: 'Full Name' },
+      { field: 'gender', header: 'Gender' },
+      { field: 'dob', header: 'Date of Birth' },
+      { field: 'identity_number', header: 'Identity Number' },
+      { field: 'mobile_number', header: 'Mobile Number' },
+      { field: 'ps_add_village', header: 'Present Village' },
+      { field: 'phq9_score', header: 'PHQ-9 Interpretation' },
+      { field: 'gad7_score', header: 'GAD-7 Interpretation' },
+      { field: 'suicidal_score', header: 'Suicidal Risk' },
+      { field: 'ace_score', header: 'ACE Interpretation' },
+      ...substanceColumns.map(sc => ({ field: sc.field, header: sc.header, isSeverity: true })),
+      ...tableServiceFields.map(sf => ({ field: sf.key, header: sf.header })),
+    ];
+
   } else if (isGyalsungCounselor.value) {
-    excelData = filteredGyalsungData.value.map(item => {
-      return {
-        'Username': item.username,
-        'Full Name': item.full_name,
-        'Gender': item.gender,
-        'Date of Birth': item.dob,
-        'Identity Number': item.identity_number,
-        'Mobile Number': item.mobile_number,
-        'Academy Code': item.academy_code,
-        'PHQ-9 Score': item.phq9_score,
-        'GAD-7 Score': item.gad7_score,
-        'Suicidal Score': item.suicidal_score,
-        'Tobacco': item.tobacco_flag || 'None',
-        'Alcohol': item.alcohol_flag || 'None',
-        'Cannabis': item.cannabis_flag || 'None',
-        'Cocaine': item.cocaine_flag || 'None',
-        'Amphetamines': item.amphetamine_flag || 'None',
-        'Inhalants': item.inhalants_flag || 'None',
-        'Sedatives': item.sedatives_flag || 'None',
-        'Hallucinogens': item.hallucinogens_flag || 'None',
-        'Opioids': item.opioids_flag || 'None',
-      }
-    });
-  } else {
-    excelData = [];
+    sourceData = gyalsungData.value;
+    columnsToExport = [
+      { field: 'username', header: 'Username' },
+      { field: 'full_name', header: 'Full Name' },
+      { field: 'gender', header: 'Gender' },
+      { field: 'dob', header: 'Date of Birth' },
+      { field: 'identity_number', header: 'Identity Number' },
+      { field: 'mobile_number', header: 'Mobile Number' },
+      { field: 'academy_code', header: 'Academy Code' },
+      { field: 'phq9_score', header: 'PHQ-9 Score' },
+      { field: 'gad7_score', header: 'GAD-7 Score' },
+      { field: 'suicidal_score', header: 'Suicidal Risk' }, // Assuming interpretation applied
+      ...substanceColumns.map(sc => ({ field: sc.field, header: sc.header, isSeverity: true })),
+    ];
+  } else if (selectedOption.value === 'school' && isSchoolCounselor.value) {
+    // TODO: Add export logic for SchoolEnvironmentTable if needed
+    // This might require the child component to expose its data or an export function
+    console.warn("Excel export for School Environment table not implemented yet.");
+    return null;
   }
+
+  if (!sourceData || sourceData.length === 0) return null;
+
+  // Apply global search filter for export
+  const dataToExportFiltered = searchTerm
+    ? sourceData.filter(item => {
+      return Object.values(item).some(value =>
+        String(value).toLowerCase().includes(searchTerm)
+      );
+    })
+    : sourceData;
+
+  // Map data to the desired Excel structure
+  const excelData = dataToExportFiltered.map(item => {
+    const row = {};
+    columnsToExport.forEach(col => {
+      const value = item[col.field] || 'N/A';
+      row[col.header] = col.isSeverity ? severityText(value) : value;
+    });
+    return row;
+  });
+
+  if (!excelData.length) return null; // Nothing to export after filtering
+
   const ws = XLSX.utils.json_to_sheet(excelData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Reports');
@@ -488,268 +687,112 @@ const generateExcel = async () => {
   return new Blob([excelArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };
 
-// Function to generate password dynamically for zip
 const getPassword = () => {
-  const { username } = JSON.parse(localStorage.getItem('userDetailsStore'))?.user || { username: 'defaultUser' };
-  return `${username}@${new Date().getFullYear()}#`;
+  const username = userDetails.value?.user?.username || 'defaultUser';
+  return `${username}@${selectedYear.value}#`; // Use selected year in password
 };
 
-// Function to download Excel with zip
 const downloadExcelWithZip = async () => {
+  isDownloading.value = true;
   try {
-    const excelBlob = await generateExcel();
+    const excelBlob = await generateExcelBlob();
+    if (!excelBlob) {
+      alert("No data available to export for the current selection and filters.");
+      return;
+    }
+
     const blobWriter = new BlobWriter("application/zip");
     const zipWriter = new ZipWriter(blobWriter, {
       password: getPassword(),
-      encryptionStrength: 3
+      encryptionStrength: 3, // AES-256
     });
 
-    await zipWriter.add("reports.xlsx", new BlobReader(excelBlob));
+    await zipWriter.add(`reports_${selectedYear.value}.xlsx`, new BlobReader(excelBlob));
     await zipWriter.close();
 
     const zipBlob = await blobWriter.getData();
-    const fileName = `hwss_report_${new Date().toISOString().slice(0, 10)}.zip`;
-
+    const fileName = `hwss_report_${selectedYear.value}_${new Date().toISOString().slice(0, 10)}.zip`;
     saveAs(zipBlob, fileName);
+
   } catch (error) {
-    console.error('Error in downloading zipped excel file', error);
-  }
-}
-
-// Determine user role and fetch data accordingly
-const getUserDetailsFromStorage = () => {
-  const userDetailsString = localStorage.getItem('userDetailsStore');
-  if (!userDetailsString) {
-    console.error('No userDetailsStore found in localStorage');
-    return { agencyName: 'Unknown Agency', role: 'unknown' };
-  }
-
-  try {
-    const userDetails = JSON.parse(userDetailsString);
-    return {
-      agencyName: userDetails?.agency?.agencyName || 'Unknown Agency',
-      role: userDetails?.user?.role || 'unknown',
-    };
-  } catch (error) {
-    console.error('Error parsing user details:', error);
-    return { agencyName: 'Unknown Agency', role: 'unknown' };
+    console.error('Error generating or downloading zipped Excel file:', error);
+    alert(`Error creating report: ${error.message}`); // User feedback
+  } finally {
+    isDownloading.value = false;
   }
 };
 
-// Add this computed property to filter data by current year and agency
-const filteredReportData = computed(() => {
-  if (!globalFilter.value || !reportData.value) {
-    return reportData.value || [];
-  }
-
-  const searchTerm = globalFilter.value.toLowerCase().trim();
-
-  return reportData.value.filter((item) => {
-    const matchesSearch = (
-      // Basic info
-      item.full_name?.toLowerCase().includes(searchTerm) ||
-      item.username?.toLowerCase().includes(searchTerm) ||
-      item.identity_number?.toLowerCase().includes(searchTerm) ||
-      item.mobile_number?.toLowerCase().includes(searchTerm) ||
-      item.ps_add_village?.toLowerCase().includes(searchTerm) ||
-      // Scores
-      item.phq9_score?.toLowerCase().includes(searchTerm) ||
-      item.gad7_score?.toLowerCase().includes(searchTerm) ||
-      item.suicidal_score?.toLowerCase().includes(searchTerm) ||
-      item.ace_score?.toLowerCase().includes(searchTerm) ||
-      // Status fields
-      item.assessment_status?.toLowerCase().includes(searchTerm) ||
-      item.case_status?.toLowerCase().includes(searchTerm) ||
-      item.counseling?.toLowerCase().includes(searchTerm) ||
-      item.follow_up?.toLowerCase().includes(searchTerm) ||
-      item.referred?.toLowerCase().includes(searchTerm)
-    );
-
-    const submissionDate = item.date ? new Date(item.date).getFullYear() : null;
-    const matchesYear = submissionDate === selectedYear.value;
-
-    return matchesSearch && matchesYear;
-  });
-});
-
-const filteredGyalsungData = computed(() => {
-  if (!globalFilter.value || !gyalsungData.value) {
-    return gyalsungData.value || [];
-  }
-
-  const searchTerm = globalFilter.value.toLowerCase().trim();
-
-  return gyalsungData.value.filter((item) => {
-    const matchesSearch = (
-      item.username?.toLowerCase().includes(searchTerm) ||
-      item.full_name?.toLowerCase().includes(searchTerm) ||
-      item.identity_number?.toLowerCase().includes(searchTerm) ||
-      item.mobile_number?.toLowerCase().includes(searchTerm) ||
-      item.academy_code?.toLowerCase().includes(searchTerm) ||
-      item.phq9_score?.toLowerCase().includes(searchTerm) ||
-      item.gad7_score?.toLowerCase().includes(searchTerm) ||
-      item.suicidal_score?.toLowerCase().includes(searchTerm)
-    );
-
-    const submissionDate = item.date ? new Date(item.date).getFullYear() : null;
-    const matchesYear = submissionDate === selectedYear.value;
-
-    return matchesSearch && matchesYear;
-  });
-});
-
-// Update your fetchReportDataFromAPI function
-const fetchReportDataFromAPI = async () => {
-  try {
-    const response = await axios.get(endpoints.newServiceAndTreatment);
-    const dataArray = response.data || [];
-
-    const { agencyName } = getUserDetailsFromStorage();
-    const currentYear = new Date().getFullYear();
-
-    // Filter and transform the data
-    reportData.value = dataArray
-      .filter((item) => {
-        const agencyMatch =
-          item.user?.active_agency?.agency_name?.trim().toLowerCase() === agencyName.trim().toLowerCase();
-        const screeningDate = item.screening_data?.submission_date;
-        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-
-        return agencyMatch && submissionYear === currentYear;
-      })
-      .map(transformData);
-
-    if (isGyalsungCounselor.value) {
-      gyalsungData.value = dataArray
-        .filter((item) => {
-          const agencyMatch =
-            item.user?.active_agency?.agency_name?.trim().toLowerCase() === agencyName.trim().toLowerCase();
-          const screeningDate = item.screening_data?.submission_date;
-          const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-          return agencyMatch && submissionYear === currentYear;
-        })
-        .map(transformGyalsungData);
-    }
-  } catch (error) {
-    console.error('Error fetching report data:', error);
-  }
-};
-
-const severityText = (value) => {
-  const textMapping = {
-    red: 'Severe',
-    blue: 'Mild',
-    green: 'None',
-    yellow: 'Moderate',
-    grey: 'None',
-  };
-  return textMapping[value] || 'None';
-};
-
-const severityClass = (value) => {
-  const severityMapping = {
-    red: 'danger',
-    blue: 'info',
-    green: 'success',
-    yellow: 'warning',
-    grey: 'secondary',
-  };
-  return severityMapping[value] || 'secondary';
-};
-
+// --- Lifecycle Hooks ---
 onMounted(() => {
-  const { role } = getUserDetailsFromStorage();
-
-  if (role === 'school_counselor') {
-    isSchoolCounselor.value = true;
-  } else if (role === 'clinical_counselor') {
-    isClinicalCounselor.value = true;
-  } else if (role === 'gyalsung_counselor') {
-    isGyalsungCounselor.value = true;
+  if (getUserDetailsFromStorage()) {
+    // Fetch data for the initially selected year
+    fetchReportDataForYear(selectedYear.value);
+  } else {
+    // Handle case where user details couldn't be loaded
+    isLoading.value = false;
+    fetchError.value = fetchError.value || "User details not found. Cannot load reports.";
   }
-
-  fetchReportDataFromAPI();
 });
+
+// --- Watchers ---
+// Re-fetch data when the selected year changes
+watch(selectedYear, (newYear, oldYear) => {
+  if (newYear !== oldYear && userDetails.value) { // Avoid fetching if user details failed
+    fetchReportDataForYear(newYear);
+  }
+});
+
+// Watch for changes in the debounced global filter and apply it to DataTable filters
+// This links the external InputText to DataTable's internal filtering
+watch(globalFilter, (newSearchTerm) => {
+  filters.value.global.value = newSearchTerm;
+  gyalsungFilters.value.global.value = newSearchTerm;
+});
+
+
 </script>
 
 <style scoped>
+/* Add or refine styles as needed */
 .card-container {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-  padding: 2rem;
-  border-radius: 10px;
-}
-
-.card {
-  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 1rem;
 }
 
 .table-container {
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  overflow: hidden;
+  margin-top: 1rem;
 }
 
-.custom-table {
-  font-family: 'Arial', sans-serif;
+/* Smaller text and padding for dense tables */
+.custom-table :deep(.p-datatable-tbody > tr > td),
+.custom-table :deep(.p-datatable-thead > tr > th) {
+  padding: 0.5rem 0.5rem;
+  font-size: 0.875rem;
 }
 
-.custom-table th {
-  background-color: #2B656F;
-  color: white;
-  font-weight: bold;
+/* Ensure tags fit well */
+.custom-table :deep(.p-tag) {
+  max-width: 100%;
+  /* Prevent overflow */
+  white-space: normal;
+  /* Allow wrapping */
+  text-align: center;
+  display: block;
+  /* Make tag take full cell width if needed */
 }
 
-.custom-table tr:nth-child(even) {
-  background-color: rgba(43, 101, 111, 0.05);
+/* Adjust filter input sizes */
+.p-column-filter {
+  width: 100%;
 }
 
-.custom-table tr:hover {
-  background-color: rgba(43, 101, 111, 0.1);
+/* Style for loading spinner container */
+.text-center.my-5 {
+  padding: 2rem;
 }
 
+/* Consistent button width */
 .hwss-btn {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-  border: none;
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.hwss-btn:hover {
-  background: linear-gradient(135deg, #1D4851 0%, #2B656F 100%);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.p-inputtext,
-.p-dropdown {
-  border: 1px solid #2B656F;
-  border-radius: 4px;
-}
-
-.p-inputtext:focus,
-.p-dropdown:focus {
-  border-color: #1D4851;
-  box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
-}
-
-.danger {
-  background-color: rgba(230, 20, 45, 0.2);
-  color: #e6142d;
-}
-
-.warning {
-  background-color: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.success {
-  background-color: rgba(40, 167, 69, 0.2);
-  color: #28a745;
-}
-
-.info {
-  background-color: rgba(23, 162, 184, 0.2);
-  color: #17a2b8;
+  min-width: 150px;
+  /* Adjust as needed */
 }
 </style>

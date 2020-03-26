@@ -73,7 +73,7 @@
                             <div class="patient-details">
                                 <span class="age-gender">
                                     {{ calculateAge(slotProps.data.user?.date_of_birth) }} yrs • {{
-                                        slotProps.data.user?.gender }}
+                            slotProps.data.user?.gender }}
                                 </span>
                             </div>
                         </div>
@@ -196,8 +196,8 @@
                                                 <div>
                                                     <small class="text-muted d-block">Age</small>
                                                     <span class="fw-medium">{{
-                                                        calculateAge(selectedUser?.user?.date_of_birth)
-                                                        }}</span>
+                            calculateAge(selectedUser?.user?.date_of_birth)
+                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -340,8 +340,8 @@
                                             <div>
                                                 <small class="text-muted d-block">Parents' Occupation</small>
                                                 <span class="fw-medium">{{
-                                                    selectedUser?.user?.agency_details?.parent_occupation
-                                                    || 'N/A' }}</span>
+                            selectedUser?.user?.agency_details?.parent_occupation
+                            || 'N/A' }}</span>
                                             </div>
                                         </div>
 
@@ -354,8 +354,8 @@
                                             <div>
                                                 <small class="text-muted d-block">Parental Status</small>
                                                 <span class="fw-medium">{{
-                                                    selectedUser?.user?.agency_details?.parent_status ||
-                                                    'N/A' }}</span>
+                            selectedUser?.user?.agency_details?.parent_status ||
+                            'N/A' }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -392,7 +392,7 @@
                                                     <div>
                                                         <small class="text-muted d-block">Village</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.perm_add_village
-                                                            || 'N/A'
+                            || 'N/A'
                                                             }}</span>
                                                     </div>
                                                 </div>
@@ -408,7 +408,7 @@
                                                     <div>
                                                         <small class="text-muted d-block">Gewog</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.perm_add_gewog ||
-                                                            'N/A'
+                            'N/A'
                                                             }}</span>
                                                     </div>
                                                 </div>
@@ -424,8 +424,8 @@
                                                     <div>
                                                         <small class="text-muted d-block">Dzongkhag</small>
                                                         <span class="fw-medium">{{
-                                                            selectedUser?.user?.perm_add_dzongkhag ||
-                                                            'N/A' }}</span>
+                            selectedUser?.user?.perm_add_dzongkhag ||
+                            'N/A' }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -450,7 +450,7 @@
                                                     <div>
                                                         <small class="text-muted d-block">Village</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_village ||
-                                                            'N/A'
+                            'N/A'
                                                             }}</span>
                                                     </div>
                                                 </div>
@@ -466,7 +466,7 @@
                                                     <div>
                                                         <small class="text-muted d-block">Gewog</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_gewog ||
-                                                            'N/A'
+                            'N/A'
                                                             }}</span>
                                                     </div>
                                                 </div>
@@ -482,7 +482,7 @@
                                                     <div>
                                                         <small class="text-muted d-block">Dzongkhag</small>
                                                         <span class="fw-medium">{{ selectedUser?.user?.ps_add_dzongkhag
-                                                            || 'N/A'
+                            || 'N/A'
                                                             }}</span>
                                                     </div>
                                                 </div>
@@ -711,7 +711,7 @@
 
                             <!-- Services and Treatment Form -->
                             <div class="card border-0 shadow-sm mb-4"
-                                :class="{ 'opacity-75': selfRole === 'trained_professional' || !isEditMode }">
+                                :class="{ 'opacity-75': !isEditMode }">
                                 <!-- Card Header -->
                                 <div class="card-header bg-white py-3 border-bottom">
                                     <div class="d-flex align-items-center justify-content-between">
@@ -758,8 +758,7 @@
                                                     <label for="caseStatus" class="form-label fw-medium mb-2">Case
                                                         Status</label>
                                                     <select class="form-select" id="caseStatus"
-                                                        v-model="selectedUser.case_status"
-                                                        :disabled="!isEditMode || selfRole === 'trained_professional'">
+                                                        v-model="selectedUser.case_status" :disabled="!isEditMode">
                                                         <option value="On Going">On Going</option>
                                                         <option value="Case Closed">Case Closed</option>
                                                         <option value="Case Discontinued">Case Discontinued</option>
@@ -802,8 +801,7 @@
                                                         Up
                                                         Status</label>
                                                     <select class="form-select" id="followUpStatus"
-                                                        v-model="selectedUser.follow_up"
-                                                        :disabled="!isEditMode || selfRole === 'trained_professional'">
+                                                        v-model="selectedUser.follow_up" :disabled="!isEditMode">
                                                         <option value="Treatment Completed">Treatment Completed</option>
                                                         <option value="Undergoing Treatment">Undergoing Treatment
                                                         </option>
@@ -856,8 +854,7 @@
                                                     <label for="comments"
                                                         class="form-label fw-medium mb-2">Comments</label>
                                                     <textarea class="form-control" id="comments"
-                                                        v-model="selectedUser.comments" rows="4"
-                                                        :disabled="!isEditMode || selfRole === 'trained_professional'"
+                                                        v-model="selectedUser.comments" rows="4" :disabled="!isEditMode"
                                                         placeholder="Enter any additional comments or notes..."></textarea>
                                                 </div>
                                             </div>
@@ -866,8 +863,7 @@
 
                                     <!-- Save Button -->
                                     <div class="d-flex justify-content-end mt-4">
-                                        <button class="btn btn-primary px-4" @click="saveChanges" v-if="isEditMode"
-                                            :disabled="selfRole === 'trained_professional'">
+                                        <button class="btn btn-primary px-4" @click="saveChanges" v-if="isEditMode">
                                             <i class="bi bi-check-lg me-2"></i>
                                             Save Changes
                                         </button>
@@ -960,7 +956,7 @@
                     <div class="footer-buttons">
                         <Button label="Close" icon="pi pi-times" class="p-button-secondary" @click="handleModalClose" />
                         <Button v-if="isEditMode" label="Save Changes" icon="pi pi-check" class="refresh-btn"
-                            @click="saveChanges" :disabled="selfRole === 'trained_professional'" />
+                            @click="saveChanges" />
                     </div>
                 </div>
             </div>
@@ -1006,7 +1002,7 @@ const selectedFields = ref([
 const fullNames = ref(new Map());
 
 const isEditMode = ref(false);
-const canEdit = computed(() => selfRole.value !== 'trained_professional');
+const canEdit = computed(() => !!selfRole.value);
 
 const getActiveCount = () => {
     return processedRows.value?.filter(row =>
@@ -1609,7 +1605,6 @@ watch(() => filteredRows.value, async (newRows) => {
 </script>
 
 <style scoped>
-
 .year-filter {
     padding: 0.5rem 1rem;
     border-radius: 8px;
@@ -1625,6 +1620,7 @@ watch(() => filteredRows.value, async (newRows) => {
     box-shadow: 0 0 0 0.2rem rgba(43, 101, 111, 0.25);
     outline: none;
 }
+
 .dashboard-container {
     background: #f8f9fa;
     border-radius: 20px;
