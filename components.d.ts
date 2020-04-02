@@ -32,7 +32,6 @@ declare module 'vue' {
     ApprovalView: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/approval/ApprovalView.vue')['default']
     AssessmentResultsTab: typeof import('./src/components/dashboards/Adminpages/R&D/AssessmentResultsTab.vue')['default']
     AssistSeverityAndGraph: typeof import('./src/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue')['default']
-    AutoComplete: typeof import('primevue/autocomplete')['default']
     Button: typeof import('primevue/button')['default']
     Calendar: typeof import('primevue/calendar')['default']
     CaseScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningRegister.vue')['default']

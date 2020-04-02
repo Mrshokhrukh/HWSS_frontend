@@ -140,12 +140,39 @@ const displaySUDDialog = ref(false);
 const selectedSchool = ref('');
 const selectedSUDData = ref({});
 
-const safeJsonParse = (jsonString, defaultValue = null) => {
-  try {
-    return typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
-  } catch (e) {
-    console.error('JSON Parse Error:', e);
-    return defaultValue;
+// New function to process substance data from multiple sources
+const processSubstanceData = (item, data) => {
+  // Try case_substance_risks first (from the first paste)
+  const caseSubstanceRisks = item.case_substance_risks;
+  if (Array.isArray(caseSubstanceRisks)) {
+    caseSubstanceRisks.forEach(substance => {
+      if (substance.substance_name && substance.risk_flag) {
+        const substanceType = mapSubstanceType(substance.substance_name.toLowerCase());
+        // Extract just the risk level from the flag (e.g., "severe (24)" -> "severe")
+        const riskLevelText = substance.risk_flag.split(' ')[0];
+        const riskLevel = mapRiskLevel(riskLevelText);
+        
+        if (riskLevel && data.sud[substanceType]) {
+          data.sud[substanceType][riskLevel]++;
+        }
+      }
+    });
+    return; // If we processed this data, no need to check assist_data
+  }
+  
+  // Fallback to assist_data (original code path)
+  const assistData = item.screening_data?.assist_data;
+  if (Array.isArray(assistData)) {
+    assistData.forEach(substance => {
+      if (substance.substance__name && substance.risk_flag) {
+        let substanceType = mapSubstanceType(substance.substance__name.toLowerCase());
+        const riskLevel = mapRiskLevel(substance.risk_flag);
+        
+        if (riskLevel && data.sud[substanceType]) {
+          data.sud[substanceType][riskLevel]++;
+        }
+      }
+    });
   }
 };
 
@@ -153,7 +180,8 @@ const tableData = computed(() => {
   const schoolEvents = new Map();
 
   props.filteredData.forEach(item => {
-    const schoolEvent = item.user?.agency_details?.agency?.agency_name || 'Unknown';
+    const schoolEvent = item.user?.agency_details?.agency?.agency_name || 
+                        item.user?.active_agency?.agency_name || 'Unknown';
 
     if (!schoolEvents.has(schoolEvent)) {
       schoolEvents.set(schoolEvent, {
@@ -175,80 +203,81 @@ const tableData = computed(() => {
     const data = schoolEvents.get(schoolEvent);
     data.individualsScreened++;
 
-    // Process PHQ data
-    const phqData = safeJsonParse(item.screening_data?.phq_data, {});
-    if (typeof phqData === 'object' && phqData.interpretation) {
-      const level = capitalizeFirstLetter(phqData.interpretation);
-      if (Object.prototype.hasOwnProperty.call(data.phq, level)) {
-        data.phq[level]++;
+    // Process PHQ and GAD data directly from screening_data
+    if (item.screening_data) {
+      // For PHQ data
+      const phqInterpretation = item.screening_data.phq_interpretation;
+      if (phqInterpretation) {
+        // Handle "None or Minimal" special case
+        let level = phqInterpretation === "None or Minimal" ? "Minimal" : phqInterpretation;
+        // Capitalize first letter
+        level = level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
+        
+        if (Object.prototype.hasOwnProperty.call(data.phq, level)) {
+          data.phq[level]++;
+        }
       }
 
-      // Check for suicidal behavior
-      if (Array.isArray(phqData.responses)) {
-        const suicidalQuestion = phqData.responses.find(r =>
-          r.question.toLowerCase().includes('thoughts that you would be better off dead')
+      // For GAD data
+      const gadInterpretation = item.screening_data.gad_interpretation;
+      if (gadInterpretation) {
+        let level = gadInterpretation;
+        // Capitalize first letter
+        level = level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
+        
+        if (Object.prototype.hasOwnProperty.call(data.gad, level)) {
+          data.gad[level]++;
+        }
+      }
+
+      // Check for suicidal behavior in PHQ data
+      if (Array.isArray(item.screening_data.phq_data)) {
+        const suicidalQuestion = item.screening_data.phq_data.find(q => 
+          q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
         );
-        if (suicidalQuestion?.selectedOption === 'Nearly everyday') {
+        
+        if (suicidalQuestion && 
+            (suicidalQuestion.selectedOption === 'Nearly every day' || 
+             suicidalQuestion.score >= 3)) {
           data.suicidalBehavior++;
         }
       }
     }
 
-    // Process GAD data
-    const gadData = safeJsonParse(item.screening_data?.gad_data, {});
-    if (typeof gadData === 'object' && gadData.interpretation) {
-      const level = capitalizeFirstLetter(gadData.interpretation);
-      if (Object.prototype.hasOwnProperty.call(data.gad, level)) {
-        data.gad[level]++;
-      }
-    }
-
-    // Process ASSIST/SUD data
-    const assistData = item.screening_data?.assist_data;
-    if (Array.isArray(assistData)) {
-      assistData.forEach(substance => {
-        if (substance.substance__name && substance.risk_flag) {
-          let substanceType = mapSubstanceType(substance.substance__name.toLowerCase());
-          const riskLevel = mapRiskLevel(substance.risk_flag);
-
-          if (riskLevel && data.sud[substanceType]) {
-            data.sud[substanceType][riskLevel]++;
-          }
-        }
-      });
-    }
+    // Process substance data with our new function
+    processSubstanceData(item, data);
   });
 
   return Array.from(schoolEvents.values());
 });
 
+// Updated to handle more substance name variations
 const mapSubstanceType = (substanceName) => {
-  if (substanceName.includes('alcohol')) return 'alcoholic';
-  if (substanceName.includes('tobacco')) return 'tobacco';
-  if (substanceName.includes('cannabis')) return 'cannabis';
+  if (substanceName.includes('alcoholic') || substanceName.includes('alcohol') || substanceName.includes('beer') || substanceName.includes('wine')) return 'alcoholic';
+  if (substanceName.includes('tobacco') || substanceName.includes('cigarette')) return 'tobacco';
+  if (substanceName.includes('cannabis') || substanceName.includes('marijuana') || substanceName.includes('hash')) return 'cannabis';
   if (substanceName.includes('cocaine')) return 'cocaine';
-  if (substanceName.includes('amphetamine')) return 'amphetamine';
-  if (substanceName.includes('inhalant')) return 'inhalants';
-  if (substanceName.includes('sedative')) return 'sedatives';
-  if (substanceName.includes('hallucinogen')) return 'hallucinogens';
-  if (substanceName.includes('opioid')) return 'opioids';
+  if (substanceName.includes('amphetamine') || substanceName.includes('meth')) return 'amphetamine';
+  if (substanceName.includes('inhalant') || substanceName.includes('glue') || substanceName.includes('petrol')) return 'inhalants';
+  if (substanceName.includes('sedative') || substanceName.includes('sleeping')) return 'sedatives';
+  if (substanceName.includes('hallucinogen') || substanceName.includes('lsd')) return 'hallucinogens';
+  if (substanceName.includes('opioid') || substanceName.includes('heroin') || substanceName.includes('morphine')) return 'opioids';
   if (substanceName.includes('other')) return 'other';
   return 'other';
 };
 
+// Updated to handle the format from case_substance_risks
 const mapRiskLevel = (flag) => {
-  switch (flag) {
-    case 'none': return 'No Risk';
-    case 'low': return 'Low Risk';
-    case 'moderate': return 'Moderate Risk';
-    case 'severe': return 'High Risk';
-    default: return null;
-  }
-};
-
-const capitalizeFirstLetter = (string) => {
-  if (!string) return '';
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  if (!flag) return null;
+  
+  // Convert to lowercase for case-insensitive comparison
+  const flagLower = flag.toLowerCase();
+  
+  if (flagLower.includes('none')) return 'No Risk';
+  if (flagLower.includes('low')) return 'Low Risk';
+  if (flagLower.includes('moderate')) return 'Moderate Risk';
+  if (flagLower.includes('severe')) return 'High Risk';
+  return null;
 };
 
 const showSUDDetails = (data) => {
@@ -343,7 +372,7 @@ const printTable = () => {
   WinPrint.close();
 };
 
-// Updated helper functions for Bootstrap classes
+// Helper functions for Bootstrap classes
 const getSeverityClass = (level, value) => {
   if (value === 0) return 'text-secondary bg-secondary-subtle';
   switch (level) {
@@ -366,7 +395,6 @@ const getRiskLevelClass = (level) => {
   }
 };
 </script>
-
 <style scoped>
 /* Custom gradient */
 .custom-gradient {

@@ -85,7 +85,7 @@ const props = defineProps({
 const COLORS = {
     primary: '#275D67',
     secondary: '#A3CDB8',
-    accent: ['#4A8895', '#6CB3A5', '#8EDDC8', '#B0F7EB'],
+    accent: ['#4A8895', '#6CB3A5', '#8EDDC8', '#ff9999'],
 };
 
 const SEVERITY_LEVELS = {
@@ -405,16 +405,34 @@ const substanceRiskChartSeries = computed(() => {
         riskCounts[substance] = Object.fromEntries(riskLevels.map(level => [level, 0]));
     });
 
+    // Map substance names from the data to chart categories
+    const substanceNameMap = {
+        'Tobacco': 'Tobacco',
+        'Alcoholic': 'Alcohol',
+        'Cannabis': 'Cannabis',
+        'Cocaine': 'Cocaine',
+        'Amphetamine-type': 'Amphetamines',
+        'Inhalants': 'Inhalants',
+        'Sedatives': 'Sedatives',
+        'Hallucinogens': 'Hallucinogens',
+        'Opioids': 'Opioids',
+        'Other': 'Other',
+        // 'Any': 'Other'
+    };
+
     props.filteredData.forEach(item => {
         const substanceData = getSubstanceData(item);
         if (!substanceData) return;
 
         substanceData.forEach(substance => {
-            const substanceName = substance.substance_name.split(' ')[0];
+            // Extract first word of substance name
+            const firstWord = substance.substance_name.split(' ')[0];
+            // Map to correct category name
+            const categoryName = substanceNameMap[firstWord] || firstWord;
             const riskFlag = substance.risk_flag.toLowerCase().split(' ')[0];
 
-            if (riskCounts[substanceName] && riskLevels.includes(riskFlag)) {
-                riskCounts[substanceName][riskFlag]++;
+            if (riskCounts[categoryName] && riskLevels.includes(riskFlag)) {
+                riskCounts[categoryName][riskFlag]++;
             }
         });
     });
