@@ -1,228 +1,370 @@
 <template>
-  <div>
-    <!-- Filter container -->
-    <div class="container mt-5">
-      <!-- Options to select -->
-      <div class="row justify-content-center mb-3">
-        <div class="col-md-4 text-center">
-          <div class="card option" :class="{ active: selectedOption === 'monitor' }" @click="selectOption('monitor')">
-            <div class="card-body">
-              <i class="fas fa-desktop fa-3x mb-3"></i> <!-- Icon for Monitor Report (changed to monitor icon) -->
-              <p class="card-text">Monitor Report</p>
+  <div class="filter-configurator">
+    <div class="config-card">
+      <!-- Header with your gradient -->
+      <div class="config-header">
+        <h2 class="header-title">Data Configuration</h2>
+        <div class="quick-actions">
+          <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text p-button-white" @click="resetFilters"
+            :disabled="!hasFilters" />
+        </div>
+      </div>
+
+      <div class="filter-content">
+        <!-- Primary Filters -->
+        <div class="filters-section">
+          <div class="filter-group">
+            <label>Report Type</label>
+            <p-dropdown v-model="selectedReport" :options="reportTypes" optionLabel="label" class="w-full"
+              placeholder="Select Report Type" />
+          </div>
+
+          <div class="filter-group">
+            <label>Agency Type</label>
+            <p-dropdown v-model="filters.agencyType" :options="agencyTypes" class="w-full"
+              placeholder="Select Agency Type" @change="handleAgencyTypeChange" />
+          </div>
+
+          <template v-if="filters.agencyType === 'SCHOOL'">
+            <div class="filter-group">
+              <label>Class Level</label>
+              <p-dropdown v-model="filters.classLevel" :options="classLevels" class="w-full"
+                placeholder="Select Class" />
+            </div>
+          </template>
+
+          <div class="location-section">
+            <h3 class="section-title">Location</h3>
+            <div class="location-inputs">
+              <p-dropdown v-model="filters.region" :options="regions" class="w-full" placeholder="Region"
+                @change="handleRegionChange" />
+              <p-dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" class="w-full"
+                placeholder="Dzongkhag" :disabled="!filters.region" />
             </div>
           </div>
         </div>
-        <div class="col-md-4 text-center">
-          <div class="card option" :class="{ active: selectedOption === 'severity' }" @click="selectOption('severity')">
-            <div class="card-body">
-              <i class="fas fa-exclamation-triangle fa-3x mb-3"></i> <!-- Icon for Severity Report -->
-              <p class="card-text">Severity Report</p>
-            </div>
+
+        <!-- Secondary Filters -->
+        <div class="filters-section">
+          <div class="filter-group">
+            <label>Age Group</label>
+            <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
+              placeholder="Select Age Groups" display="chip" />
+          </div>
+
+          <div class="filter-group">
+            <label>Gender</label>
+            <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full" placeholder="Select Gender"
+              display="chip" />
+          </div>
+
+          <div class="date-range-section">
+            <h3 class="section-title">Date Range</h3>
+            <p-calendar v-model="dateRange" selectionMode="range" class="w-full" placeholder="Select Date Range" />
           </div>
         </div>
-        <div class="col-md-4 text-center">
-          <div class="card option" :class="{ active: selectedOption === 'case' }" @click="selectOption('case')">
-            <div class="card-body">
-              <i class="fas fa-briefcase fa-3x mb-3"></i> <!-- Icon for Case Report -->
-              <p class="card-text">Case Report</p>
-            </div>
-          </div>
+      </div>
+
+      <!-- Active Filters -->
+      <div v-if="hasFilters" class="active-filters">
+        <div class="filter-chips">
+          <p-chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label" removable
+            @remove="removeFilter(filter.id)" />
         </div>
       </div>
 
-      <!-- Select fields for Monitor Report -->
-      <div v-if="selectedOption === 'monitor'" class="row justify-content-center">
-        <div class="col-md-4">
-          <el-select v-model="selectedFields" multiple placeholder="Select Fields" class="fs-4 custom-select">
-            <el-option v-for="option in monitorFieldOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-          </el-select>
-        </div>
-        <div class="col-md-4">
-          <el-select v-model="selectedFilters" multiple placeholder="Select Filters" class="fs-4 custom-select">
-            <el-option v-for="option in monitorFilterOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-          </el-select>
-        </div>
+      <!-- Actions -->
+      <div class="filter-actions">
+        <p-button label="Reset" severity="secondary" @click="resetFilters" :disabled="!hasFilters" />
+        <p-button label="Apply Filters" @click="applyFilters" :disabled="!canApplyFilters" />
       </div>
+    </div>
 
-      <!-- Select fields for Severity Report -->
-      <div v-if="selectedOption === 'severity'" class="row justify-content-center">
-        <div class="col-md-4">
-          <el-select v-model="selectedFields" multiple placeholder="Select Fields" class="fs-4 custom-select">
-            <el-option v-for="option in severityFieldOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-          </el-select>
-        </div>
-        <div class="col-md-4">
-          <el-select v-model="selectedFilters" multiple placeholder="Select Filters" class="fs-4 custom-select">
-            <el-option v-for="option in severityFilterOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-          </el-select>
-        </div>
-      </div>
-
-      <!-- Select fields for Case Report -->
-      <div v-if="selectedOption === 'case'" class="row justify-content-center">
-        <div class="col-md-4">
-          <el-select v-model="selectedFields" multiple placeholder="Select Fields" class="fs-4 custom-select">
-            <el-option v-for="option in caseFieldOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-          </el-select>
-        </div>
-        <div class="col-md-4">
-          <el-select v-model="selectedFilters" multiple placeholder="Select Filters" class="fs-4 custom-select">
-            <el-option v-for="option in caseFilterOptions" :key="option.value" :label="option.label" :value="option.value"></el-option>
-          </el-select>
-        </div>
-      </div>
-
-      <!-- Apply button -->
-      <div class="row justify-content-center mt-5">
-        <div class="col-md-12 text-center">
-          <el-button type="primary" @click="applyFilters" :disabled="buttonDisabled">
-            Apply
-            <i class="el-icon-arrow-right"></i>
-          </el-button>
-        </div>
-      </div>
-
-      <!-- Result text -->
-      <div class="row">
-        <div class="col-md-12">
-          <span class="result-text" :class="resultTextClass">
-            results
-          </span>
-        </div>
-      </div>
+    <!-- Reports Section -->
+    <div v-if="showReport" class="report-container">
+      <MHMonitorReport v-if="showMonitorReport" :filteredData="processedData" :activeFiltersList="activeFiltersList" />
+      <MHCaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData"
+        :activeFiltersList="activeFiltersList" />
+      <MHSeverityReport v-if="showSeverityReport" :filteredData="processedData"
+        :activeFiltersList="activeFiltersList" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ElSelect, ElOption, ElButton } from 'element-plus'
+import { ref, computed, watch } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import MHMonitorReport from './MHMonitorReport/MHMonitorReport.vue';
+import MHCaseStatusReport from './MHCaseStatusReport/MHCaseStatusReport.vue';
+import MHSeverityReport from './MHSeverityReport/MHSeverityReport.vue';
+import axios from 'axios';
+import endpoints from '@/api';
 
-const selectedOption = ref(null)
-const selectedFields = ref([])
-const selectedFilters = ref([])
-const buttonDisabled = computed(() => !selectedFields.value.length || !selectedFilters.value.length)
+const toast = useToast();
 
-const applyFilters = () => {
-  // Place your logic here to apply filters and change the letter 'a'
-  buttonDisabled.value = true
-}
+// Filter Options
+const reportTypes = [
+  { label: 'Monitor Report', value: 'monitor' },
+  { label: 'Case Study Report', value: 'case-study' },
+  { label: 'Severity Report', value: 'severity' }
+];
+const agencyTypes = ['GYALSUNG', 'SCHOOL', 'RCSC'];
+const classLevels = ['PP', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+const ageGroupOptions = ['5-10', '11-15', '16-20', '21-25', '26-30', '31-35', '36+'];
+const genderOptions = ['Male', 'Female', 'Other'];
+const regions = ['Western', 'Central', 'Eastern'];
+const dzongkhagMapping = {
+  Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse'],
+  Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
+  Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
+};
 
-const resultTextClass = ref('')
+// State
+const loading = ref(false);
+const selectedReport = ref(null);
+const dateRange = ref(null);
+const filters = ref({
+  agencyType: null,
+  classLevel: null,
+  region: null,
+  dzongkhag: null,
+  ageGroups: [],
+  gender: []
+});
+const showReport = ref(false);
+const processedData = ref([]);
 
-// Mock applyFilter function
-const mockApplyFilter = () => {
-  // Place your filtering logic here
-  resultTextClass.value = 'success-result'
-}
+// Computed properties for conditional rendering
+const showMonitorReport = computed(() => selectedReport.value === 'monitor');
+const showCaseStatusReport = computed(() => selectedReport.value === 'case-study');
+const showSeverityReport = computed(() => selectedReport.value === 'severity');
 
-// Mock the filtering function
-const debounceInterval = 1000 // in milliseconds
-let debounceTimeout = null
-if (selectedFields.value.length && selectedFilters.value.length) {
-  clearTimeout(debounceTimeout)
-  debounceTimeout = setTimeout(mockApplyFilter, debounceInterval)
-}
+// Computed properties
+const availableDzongkhags = computed(() => filters.value.region ? dzongkhagMapping[filters.value.region] : []);
+const hasFilters = computed(() => selectedReport.value || filters.value.region || filters.value.dzongkhag || filters.value.ageGroups.length || filters.value.gender.length || dateRange.value);
+const canApplyFilters = computed(() => selectedReport.value !== null);
 
-mockApplyFilter()
+// Computed property for active filters list
+const activeFiltersList = computed(() => {
+  const list = [];
+  if (selectedReport.value) list.push({ id: 'report', label: `Report: ${selectedReport.value}` });
+  if (filters.value.agencyType) list.push({ id: 'agencyType', label: `Agency Type: ${filters.value.agencyType}` });
+  if (filters.value.classLevel) list.push({ id: 'classLevel', label: `Class Level: ${filters.value.classLevel}` });
+  if (filters.value.region) list.push({ id: 'region', label: `Region: ${filters.value.region}` });
+  if (filters.value.dzongkhag) list.push({ id: 'dzongkhag', label: `Dzongkhag: ${filters.value.dzongkhag}` });
+  if (filters.value.ageGroups.length > 0) list.push({ id: 'ageGroups', label: `Age Groups: ${filters.value.ageGroups.join(', ')}` });
+  if (filters.value.gender.length > 0) list.push({ id: 'gender', label: `Gender: ${filters.value.gender.join(', ')}` });
+  if (dateRange.value) list.push({ id: 'dateRange', label: `Date Range: ${dateRange.value[0]} - ${dateRange.value[1]}` });
+  return list;
+});
 
-// Function to handle option selection
-const selectOption = (option) => {
-  selectedOption.value = option
-}
+// Methods
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const response = await axios.get(endpoints.newServiceAndTreatment);
+    processedData.value = response.data; // Process data if needed
+  } catch (error) {
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch data', life: 3000 });
+  } finally {
+    loading.value = false;
+  }
+};
 
-// Options for Select Fields - Monitor Report
-const monitorFieldOptions = [
-  { label: 'Rescreening', value: 'Rescreening' },
-  { label: 'Counseling', value: 'Counseling' },
-  { label: 'Assessment', value: 'Assessment' },
-  { label: 'Follow', value: 'Follow' },
-  { label: 'Referrals', value: 'Referrals' }
-]
+let isApplyingFilters = false;
 
-// Options for Select Filters - Monitor Report
-const monitorFilterOptions = [
-  { label: 'Year', value: 'year' },
-  { label: 'Gender', value: 'gender' },
-  { label: 'Dzongkha', value: 'dzongkha' },
-  { label: 'Location', value: 'location' },
-  { label: 'Age', value: 'age' },
-  { label: 'Class', value: 'class' },
-  { label: 'Employment History', value: 'employment' }
-]
+const applyFilters = async () => {
+  isApplyingFilters = true;
+  showReport.value = false;
+  await fetchData();
+  showReport.value = true;
+  isApplyingFilters = false;
+  toast.add({ severity: 'success', summary: 'Success', detail: 'Filters applied successfully', life: 3000 });
+};
 
-// Options for Select Fields - Severity Report
-const severityFieldOptions = [
-{ label: 'Depression', value: 'depression' },
-  { label: 'Anxiety', value: 'anxiety' },
-  { label: 'ACE', value: 'ace' },
-  { label: 'Suicidal Behaviours', value: 'suicidal_behaviours' },
-  { label: 'Lifetime Use', value: 'lifetime_use' },
-  { label: 'Current Use', value: 'current_use' },
-  { label: 'Substance Wise', value: 'substance_wise' }
-]
+watch([selectedReport, filters, dateRange], () => {
+  if (!isApplyingFilters) {
+    showReport.value = false;
+  }
+}, { deep: true });
 
-// Options for Select Filters - Severity Report
-const severityFilterOptions = [
-{ label: 'Year', value: 'year' },
-  { label: 'Gender', value: 'gender' },
-  { label: 'Dzongkha', value: 'dzongkha' },
-  { label: 'Location', value: 'location' },
-  { label: 'Age', value: 'age' },
-  { label: 'Class', value: 'class' },
-  { label: 'Employment History', value: 'employment' }
-]
+const resetFilters = () => {
+  selectedReport.value = null;
+  dateRange.value = null;
+  filters.value = { agencyType: null, classLevel: null, region: null, dzongkhag: null, ageGroups: [], gender: [] };
+  showReport.value = false;
+};
 
-// Options for Select Fields - Case Report
-const caseFieldOptions = [
-{ label: 'Total Case Ongoing', value: 'total_ongoing' },
-  { label: 'Total Case Discontinued', value: 'total_discontinued' },
-  { label: 'Total Case Closed', value: 'total_closed' }
-]
+const handleAgencyTypeChange = () => {
+  if (filters.value.agencyType !== 'SCHOOL') filters.value.classLevel = null;
+};
 
-// Options for Select Filters - Case Report
-const caseFilterOptions = [
-{ label: 'Year', value: 'year' },
-  { label: 'Gender', value: 'gender' },
-  { label: 'Dzongkha', value: 'dzongkha' },
-  { label: 'Location', value: 'location' },
-  { label: 'Age', value: 'age' },
-  { label: 'Class', value: 'class' },
-  { label: 'Employment History', value: 'employment' }
-]
+const handleRegionChange = () => filters.value.dzongkhag = '';
+
+const removeFilter = (filterId) => {
+  switch (filterId) {
+    case 'report': selectedReport.value = null; break;
+    case 'agencyType': filters.value.agencyType = null; break;
+    case 'classLevel': filters.value.classLevel = null; break;
+    case 'region': filters.value.region = null; break;
+    case 'dzongkhag': filters.value.dzongkhag = null; break;
+    case 'ageGroups': filters.value.ageGroups = []; break;
+    case 'gender': filters.value.gender = []; break;
+    case 'dateRange': dateRange.value = null; break;
+  }
+};
+
+// Watchers
+// watch([selectedReport, filters, dateRange], () => { showReport.value = false; }, { deep: true });
 </script>
 
-<style>
-/* Add your custom styles here */
-.option {
-  cursor: pointer;
+<style scoped>
+.filter-configurator {
+  padding: 1.5rem;
+  background-color: #f8fafc;
+  min-height: 100vh;
 }
 
-.card {
-  border: none;
-  border-radius: 15px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.config-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
 }
 
-.card-text {
-  font-size: 1.2rem;
-  font-weight: bold;
+.config-header {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.option.active {
-  background-color: #4ba9a8; /* Add your preferred highlight color here */
+.header-title {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
 }
 
-/* Adjusting Element Plus styles */
-.el-select {
+.filter-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  padding: 1.5rem;
+}
+
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2B656F;
+  margin-bottom: 0.75rem;
+}
+
+.location-section,
+.date-range-section {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.location-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.active-filters {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 1rem 1.5rem;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.filter-actions {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+/* PrimeVue Component Overrides */
+:deep(.p-dropdown),
+:deep(.p-multiselect),
+:deep(.p-calendar) {
   width: 100%;
 }
 
-.custom-select {
-  height: 45px; /* Adjust the height as needed */
+:deep(.p-dropdown-item),
+:deep(.p-multiselect-item) {
+  padding: 0.75rem 1rem;
+  color: #475569;
 }
 
-.el-button {
-  margin-top: 1rem;
+:deep(.p-chip) {
+  background: #e0f2f1;
+  color: #2B656F;
+  border: 1px solid #2B656F;
+}
+
+:deep(.p-chip .p-chip-remove-icon) {
+  color: #2B656F;
+}
+
+:deep(.p-button) {
+  transition: all 0.2s ease;
+}
+
+:deep(.p-button-white) {
+  color: white !important;
+}
+
+:deep(.p-button-white:hover) {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-content {
+    grid-template-columns: 1fr;
+  }
+
+  .location-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    flex-direction: column-reverse;
+  }
+
+  .filter-actions .p-button {
+    width: 100%;
+  }
 }
 </style>

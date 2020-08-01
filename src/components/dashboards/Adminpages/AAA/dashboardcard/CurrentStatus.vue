@@ -1,54 +1,124 @@
 <template>
-    <div class="container bg">
-      <h1 class="text-center mt-5 mb-4">Current Status In Bhutan</h1>
-  
-      <div class="row">
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header text-center">
-              <h5 class="card-title mb-0">Total Case Ongoing</h5>
-            </div>
-            <div class="card-body d-flex justify-content-between align-items-center">
-              <i class="bi bi-person-circle fs-3 text-primary me-2"></i>
-              <p class="card-text fs-4 text-center mb-0">{{ totalCaseOngoing }}</p>
-            </div>
+  <div class="status-container">
+    <h3 class="status-title">Current Status in The Organization</h3>
+    <div class="status-cards">
+      <div v-for="(status, index) in statuses" :key="index" class="status-card">
+        <div class="card-content">
+          <div class="card-icon">
+            <span class="material-symbols-outlined">{{ status.iconClass }}</span>
           </div>
-        </div>
-  
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header text-center">
-              <h5 class="card-title mb-0">Total Case Discontinue</h5>
-            </div>
-            <div class="card-body d-flex justify-content-between align-items-center">
-              <i class="bi bi-person-dash fs-3 text-danger me-2"></i>
-              <p class="card-text fs-4 text-center mb-0">{{ totalCaseDiscontinue }}</p>
-            </div>
-          </div>
-        </div>
-  
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header text-center">
-              <h5 class="card-title mb-0">Total Case Closed</h5>
-            </div>
-            <div class="card-body d-flex justify-content-between align-items-center">
-              <i class="bi bi-person-check fs-3 text-success me-2"></i>
-              <p class="card-text fs-4 text-center mb-0">{{ totalCaseClosed }}</p>
-            </div>
+          <div class="card-info">
+            <h4 class="card-title">{{ status.title }}</h4>
+            <p class="card-count">{{ formatNumber(status.count) }}</p>
           </div>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  const totalCaseOngoing = 10; // Example data, replace with actual counts
-  const totalCaseDiscontinue = 5; // Example data, replace with actual counts
-  const totalCaseClosed = 20; // Example data, replace with actual counts
-  </script>
-  
-  <style scoped>
+  </div>
+</template>
 
-  </style>
-  
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import { inject } from 'vue';
+
+// Inject the data instead of using store
+const serviceAndTreatmentData = inject('serviceAndTreatmentData');
+
+const formatNumber = (num) => {
+  if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
+  if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
+  return num;
+};
+
+const totalOngoingCase = computed(() =>
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "On Going"
+  ).length || 0
+);
+
+const totalClosedCase = computed(() =>
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "Case Closed"
+  ).length || 0
+);
+
+const totalDiscontinueCase = computed(() =>
+  serviceAndTreatmentData.value?.filter(item =>
+    item.service_and_treatment?.case_status === "Case Discontinue"
+  ).length || 0
+);
+
+const statuses = computed(() => [
+  { title: 'Total Case Ongoing', iconClass: 'description', count: totalOngoingCase.value },
+  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
+  { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
+]);
+</script>
+
+<style scoped>
+.status-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.status-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2B656F;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.status-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.status-card {
+  flex: 1;
+  padding: 1.5rem;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card-count {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.status-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .status-cards {
+    flex-direction: column;
+  }
+}
+</style>

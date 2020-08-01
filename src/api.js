@@ -1,65 +1,67 @@
-// api.js
+function getBaseUrl() {
+  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+    const apiHost = import.meta.env.VITE_API_HOST || 'localhost'
+    const apiPort = import.meta.env.VITE_API_PORT || '8123'
+    const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http'
+    return `${apiProtocol}://${apiHost}:${apiPort}`
+  } else {
+    return import.meta.env.VITE_PRODUCTION_API_URL
+    // return 'http://localhost:8123'
+  }
+}
 
-const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
+function getScreeningBaseUrl() {
+  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
+    const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost'
+    const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686'
+    const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http'
+    return `${screeningProtocol}://${screeningHost}:${screeningPort}`
+  } else {
+    return import.meta.env.VITE_PRODUCTION_SCREENING_URL
+  }
+}
+// Function to combine base URL with middle params
+function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
+  return `${baseUrl}/api/v1/${middleParams}`
+}
 
-// Define base URL based on the condition
-const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5';
+// Define base URLs
+const baseUrl = getBaseUrl()
+const baseScreeningUrl = getScreeningBaseUrl()
 
-// Define base URL based on the condition
-const baseScreeningUrl = isLocalhost5173 ? 'http://localhost:8080' : 'http://172.30.3.16';
+// Define middle params
+const accessMiddleParams = 'access'
+const settingsMiddleParams = 'settings'
+const screeningMiddleParams = 'screening'
+const measurementMiddleParams = 'measurement'
+const monitoringMiddleParams = 'monitoring'
+const reportingMiddleParams = 'reporting'
+const counselorScreeningMiddleParams = 'screening'
 
-// Define api middle params
-const accessMiddleParams = '/api/v1/access';
+// Combine base URLs with middle params
+const accessBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, accessMiddleParams)
+const settingsBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, settingsMiddleParams)
+const screeningBaseUrl = combineBaseUrlWithMiddleParams(baseScreeningUrl, screeningMiddleParams)
+const measurementBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, measurementMiddleParams)
+const monitoringBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, monitoringMiddleParams)
+const reportingBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, reportingMiddleParams)
+const counselorScreeningBaseUrl = combineBaseUrlWithMiddleParams(
+  baseUrl,
+  counselorScreeningMiddleParams
+)
 
-// Define api middle params
-const settingsMiddleParams = '/api/v1/settings';
-
-// Define api middle params
-const screeningMiddleParams = '/api/v1/screening';
-
-// Define api middle params
-const measurementMiddleParams = '/api/v1/measurement';
-
-// Define api middle params
-const monitoringMiddleParams = '/api/v1/monitoring';
-
-// Define api middle params
-const reportingMiddleParams = '/api/v1/reporting';
-
-// Define api middle params
-const counselorScreeningMiddleParams = '/api/v1/screening';
-
-// Combine BaseURL and middle params for ease of use
-const accessBaseUrl = `${baseUrl}${accessMiddleParams}`;
-
-// Combine BaseURL and middle params for ease of use
-const settingsBaseUrl = `${baseUrl}${settingsMiddleParams}`;
-
-// Combine BaseURL and middle params for ease of use
-const screeningBaseUrl = `${baseScreeningUrl}${screeningMiddleParams}`;
-
-// Combine BaseURL and middle params for ease of use
-const measurementBaseUrl = `${baseUrl}${measurementMiddleParams}`;
-
-// Combine BaseURL and middle params for ease of use
-const moitoringBaseUrl = `${baseUrl}${monitoringMiddleParams}`;
-
-// Combine BaseURL and middle params for ease of use
-const reportingBaseUrl = `${baseUrl}${reportingMiddleParams}`;
-
-// Combine BaseURL and middle params for ease of use
-const counselorScreeninggBaseUrl = `${baseUrl}${counselorScreeningMiddleParams}`;
-
-// Define your API endpoints
+// Define API endpoints
 const endpoints = {
   getCitizenDetails: `${accessBaseUrl}/get-citizen-details/`,
   getRcscDetails: `${accessBaseUrl}/get-rcsc-details/`,
   registerUser: `${accessBaseUrl}/register-user/`,
-  registerCounselorUser: `${accessBaseUrl}/register-counselor-user/`,
+  registerCounselorCaseUser: `${accessBaseUrl}/register-counselor-case-user/`,
+  registerCounselorEventUser: `${accessBaseUrl}/register-counselor-event-user/`,
   registerAgency: `${accessBaseUrl}/register-agency/`,
   getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
   getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,
   authenticateToken: `${accessBaseUrl}/authenticate-token/`,
+  confirmUser: `${accessBaseUrl}/check_email_cid/`,
 
   verifyPreRecordedUser: `${accessBaseUrl}/verify-pre-recorded-user/`,
   registerPreRecordedUser: `${accessBaseUrl}/register-pre-recorded-user/`,
@@ -73,32 +75,59 @@ const endpoints = {
   updateUserInfo: `${accessBaseUrl}/update-user-info/`,
   changePassword: `${accessBaseUrl}/change-password/`,
 
+  fetchReferralCounselors: `${accessBaseUrl}/get-referral-counselors/`,
+
   settings: `${settingsBaseUrl}/appconfig/`,
   menuItem: `${settingsBaseUrl}/menuItem/`,
   getVideo: `${settingsBaseUrl}/get-videos/`,
 
-  // screening endpoint 
-  ScreeningPreTests: `${screeningBaseUrl}/screening-questions/`,
+  // Screening endpoint
+  screeningPreTests: `${screeningBaseUrl}/screening-questions/`,
   assistTest: `${screeningBaseUrl}/assist-screening/`,
 
-  // submission endpoint
+  // Submission endpoint
   submitCluster: `${measurementBaseUrl}/submit-screening/`,
   getMeasurement: `${measurementBaseUrl}/get-measurement/`,
   getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
   getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
-  getSUDData: `${measurementBaseUrl}/get-sud-data/`,
+  getSUDData: `${measurementBaseUrl}/get-sud-data/`, //life time use current
+  getSchoolEnvData: `${measurementBaseUrl}/get-school-env-data/`,
+  getDiagnosis: `${measurementBaseUrl}/diagnosis/`,
 
-  // monitoring endpoints
-  getRescreeningList: `${moitoringBaseUrl}/check-rescreening-flags/`,
-  getServiceAndTreatmentList: `${moitoringBaseUrl}/get-service-and-treatment/`,
-  getReferralList: `${moitoringBaseUrl}/get-referral-list/`,
+  // Monitoring endpoints
+  getRescreeningList: `${monitoringBaseUrl}/check-rescreening-flags/`,
+  getServiceAndTreatmentList: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
+  generateServiceAndTreatment: `${monitoringBaseUrl}/generate-service-and-treatment/`,
+  getReferralList: `${monitoringBaseUrl}/get-referral-list/`,
+  rescreenSubmission: `${monitoringBaseUrl}/submit-rescreening/`,
+  getUserMonitoringDetails: `${monitoringBaseUrl}/get-user-monitoring-details/`,
+  updateServiceAndTreatment: `${monitoringBaseUrl}/update-service-and-treatment/`,
+  updateReferralStatus: `${monitoringBaseUrl}/update-referral-status/`,
+  rejectReferral: `${monitoringBaseUrl}/reject-referral/`,
+  acceptReferral: `${monitoringBaseUrl}/accept-referral/`,
+  getNotifications: `${monitoringBaseUrl}/get-notification/`,
+  markNotificationAsRead: `${monitoringBaseUrl}/notifications/mark-as-read/`,
 
-  // reporting endpoints
+  // Reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,
+  getReport: `${reportingBaseUrl}/get-reporting-model-data/`,
+  updateUserArchive: `${reportingBaseUrl}/update-user-archive/`,
 
-  // counselor endpoints
-  createEventScreening: `${counselorScreeninggBaseUrl}/create-event-screening/`,
-  getEventInfo: (counselorName) => `${counselorScreeninggBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
-};
+  // Counselor endpoints
+  createEventScreening: `${counselorScreeningBaseUrl}/create-event-screening/`,
+  getEventInfo: (counselorName) =>
+    `${counselorScreeningBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
+  caseScreenSubmission: `${counselorScreeningBaseUrl}/submit-case-screening/`,
+  eventScreenSubmission: `${counselorScreeningBaseUrl}/submit-event-screening/`,
+  getEventScreeningList: `${counselorScreeningBaseUrl}/get-event-screenings/`,
+  updateEventScreeningList: `${counselorScreeningBaseUrl}/update-event-screening/`,
 
-export default endpoints;
+  // New Endpoints
+  getCaseRecords: `${counselorScreeningBaseUrl}/case-records/`,
+  getEventRecords: `${counselorScreeningBaseUrl}/event-records/`,
+  getClusterRecords: `${monitoringBaseUrl}/final-submissions/`,
+  newServiceAndTreatment: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
+  newReferrals: `${monitoringBaseUrl}/referrals/`
+}
+
+export default endpoints

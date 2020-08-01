@@ -22,5 +22,5 @@
 <script setup>
 import ChangePasswordCard from "@/components/dashboards/Adminpages/Sud/sudProfile/SUDChangePasswordCard.vue"
 import PersonalDetailsCard from "@/components/dashboards/Adminpages/Sud/sudProfile/SUDPersonalDetailsCard.vue"
-// import SudAdminDetailsCard from "@/components/dashboards/Adminpages/Sud/sudProfile/SUDAdminDetailsCard.vue"
+import SudAdminDetailsCard from "@/components/dashboards/Adminpages/Sud/sudProfile/SudAdminDetailsCard.vue"
 </script>

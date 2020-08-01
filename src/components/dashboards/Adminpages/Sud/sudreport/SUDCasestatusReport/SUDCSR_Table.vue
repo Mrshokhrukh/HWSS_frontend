@@ -1,0 +1,121 @@
+<template>
+  <div class="card">
+    <DataTable :value="tableData" tableStyle="min-width: 50rem" class="edged-table">
+      <ColumnGroup type="header">
+        <Row>
+          <Column header="Case Status" :colspan="3" class="main-header" />
+        </Row>
+        <Row>
+          <Column header="Ongoing Case" />
+          <Column header="DISCONTINUED CASES" />
+          <Column header="CLOSED CASES" />
+        </Row>
+      </ColumnGroup>
+      <Column field="ongoingCase">
+        <template #body="slotProps">
+          {{ slotProps.data.ongoingCase }}
+        </template>
+      </Column>
+      <Column field="discontinuedCases">
+        <template #body="slotProps">
+          {{ slotProps.data.discontinuedCases }}
+        </template>
+      </Column>
+      <Column field="closedCases">
+        <template #body="slotProps">
+          {{ slotProps.data.closedCases }}
+        </template>
+      </Column>
+    </DataTable>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import ColumnGroup from 'primevue/columngroup';
+import Row from 'primevue/row';
+
+const props = defineProps({
+  filteredData: {
+    type: Array,
+    required: true
+  }
+});
+
+// Computed properties for counts using new data structure
+const ongoingCaseCount = computed(() =>
+  props.filteredData.filter(item => item.case_status === 'On Going').length
+);
+
+const caseDiscontinueCount = computed(() =>
+  props.filteredData.filter(item => item.case_status === 'Case Discontinued').length
+);
+
+const caseClosedCount = computed(() =>
+  props.filteredData.filter(item => item.case_status === 'Case Closed').length
+);
+
+// Aggregate data for DataTable
+const aggregateData = computed(() => ({
+  ongoingCase: ongoingCaseCount.value,
+  discontinuedCases: caseDiscontinueCount.value,
+  closedCases: caseClosedCount.value
+}));
+
+// Wrap aggregateData in an array for DataTable
+const tableData = computed(() => [aggregateData.value]);
+</script>
+
+<style scoped>
+.card {
+  margin-top: 20px;
+}
+
+:deep(.edged-table) {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+:deep(.edged-table th),
+:deep(.edged-table td) {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+:deep(.p-datatable-thead > tr > th) {
+  background-color: #2C6975;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+}
+
+:deep(.p-datatable-tbody > tr > td) {
+  text-align: center;
+}
+
+:deep(.main-header) {
+  text-align: center !important;
+  font-size: 1.2em;
+  background-color: #2C6975 !important;
+}
+
+:deep(.p-datatable-wrapper) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.p-datatable-table) {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:deep(.p-datatable-tbody > tr:nth-child(even)) {
+  background-color: rgba(44, 105, 117, 0.05);
+}
+
+:deep(.p-datatable-tbody > tr:hover) {
+  background-color: rgba(44, 105, 117, 0.1);
+}
+</style>

@@ -1,67 +1,180 @@
 <template>
-    <div class="row">
-        <div class="container">
-            <el-row :gutter="20" v-if="videos.length > 0">
-                <el-col :span="12" v-for="(video, index) in videos" :key="index">
-                    <el-card :body-style="{ padding: '0px' }">
-                        <div class="card-body p-5">
-                            <h5 class="card-title text-center mb-3">{{ video.topic }}</h5>
-                            <img :src="getThumbnailUrl(video.thumbnail)" alt="Video Thumbnail"
-                                class="img-fluid w-100 rounded">
-                            <div class="text-center mt-3">
-                                <el-button type="text" class="play-button" @click="playVideo(video.url)">
-                                    <i class="el-icon-video-play"></i>
-                                </el-button>
-                            </div>
-                        </div>
-                    </el-card>
-                </el-col>
-            </el-row>
-            <div v-else class="card w-100 bg-light">
-                <div class="card-body text-center">
-                    <h5 class="card-title">No videos available</h5>
-                </div>
-            </div>
-        </div>
+  <div class="container py-5" :class="{ 'theme-light': isLightTheme }">
+    <div v-if="loading" class="text-center my-5">
+      <div class="spinner" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
+    <div v-else-if="videos.length === 0" class="alert text-center my-5" role="alert">
+      No videos available at the moment. Please check back later.
+    </div>
+    <div v-else class="video-grid">
+      <div v-for="(video, index) in videos" :key="index" class="video-card">
+        <div class="card-content">
+          <h3 class="video-title">{{ video.topic }}</h3>
+          <div class="video-container">
+            <iframe v-if="video.video_link" :src="getVideoEmbedUrl(video.video_link)" frameborder="0"
+              allowfullscreen></iframe>
+          </div>
+          <button class="toggle-btn" @click="toggleDetails(index)">
+            {{ showDetails[index] ? 'Hide Details' : 'Show Details' }}
+          </button>
+          <transition name="fade">
+            <div v-if="showDetails[index]" class="video-details">
+              <p v-html="video.description"></p>
+            </div>
+          </transition>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { ElRow, ElCol, ElCard, ElButton } from 'element-plus';
 import endpoints from '@/api';
 
-// Define a reactive variable to store the fetched videos
 const videos = ref([]);
+const loading = ref(true);
+const showDetails = ref([]);
+const isLightTheme = ref(false); // You can toggle this based on user preference
 
-// Function to play the video
-const playVideo = (url) => {
-    // Logic to play the video
-    console.log('Playing video:', url);
-};
-
-// Fetch videos from the backend when the component is mounted
 onMounted(async () => {
-    try {
-        const response = await axios.get(endpoints.getVideo);
-        videos.value = response.data;
-    } catch (error) {
-        console.error('Error fetching videos:', error);
-    }
+  try {
+    const response = await axios.get(endpoints.getVideo);
+    videos.value = response.data.map(video => ({
+      topic: video.topic,
+      description: JSON.parse(video.description).html,
+      video_link: video.video_link
+    }));
+    showDetails.value = new Array(videos.value.length).fill(false);
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+  } finally {
+    loading.value = false;
+  }
 });
 
-// Function to get the thumbnail URL with base URL
-const getThumbnailUrl = (thumbnail) => {
-    const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
-  const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'http://172.30.3.5'; // Adjust the condition as needed
-  return baseUrl + thumbnail;
+const getVideoEmbedUrl = (videoLink) => {
+  const videoId = videoLink.split('v=')[1];
+  return `https://www.youtube.com/embed/${videoId}`;
+};
+
+const toggleDetails = (index) => {
+  showDetails.value[index] = !showDetails.value[index];
 };
 </script>
 
 <style scoped>
-/* Add custom styles here if needed */
-.play-button {
-    font-size: 24px;
+.theme-light {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  color: #333;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.video-card {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-content {
+  padding: 1.5rem;
+}
+
+.video-title {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #2B656F;
+}
+
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.toggle-btn {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+.toggle-btn:hover {
+  opacity: 0.9;
+}
+
+.video-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(43, 101, 111, 0.3);
+  border-radius: 50%;
+  border-top-color: #2B656F;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.alert {
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

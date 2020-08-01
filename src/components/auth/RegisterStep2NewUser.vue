@@ -1,13 +1,14 @@
 <template>
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="d-flex justify-content-center align-items-center mt-5" >
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="card mb-5 p-3">
                         <div class="logo-container position-absolute top-0 end-0 mt-3 me-3">
-                            <button class="btn custom-btn">
+                            <button
+                                class="card custom-btn d-flex flex-row justify-content-center align-items-center p-2" @click.prevent="showNDILoginAlert">
                                 <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
-                                <a href="#" class="text-white font-weight-bold">Use Bhutan NDI</a>
+                                <a href="#" class="text-white font-weight-bold ms-2">Use Bhutan NDI</a>
                             </button>
                         </div>
                         <div class="text-center mt-3">
@@ -37,9 +38,9 @@
                                             :key="identifier.value">
                                             <input class="form-check-input" type="radio" :id="identifier.id"
                                                 :value="identifier.value" v-model="formData.selectedIdentifier">
-                                            <label class="form-check-label text-muted" :for="identifier.id">{{
-                            identifier.label
-                        }}</label>
+                                            <label class="form-check-label text-muted" :for="identifier.id">
+                                                {{ identifier.label }}
+                                            </label>
                                         </div>
                                     </div>
 
@@ -98,7 +99,7 @@
                                     <div v-if="formData.selectedIdentifier === 'casefile'" class="form-group mt-4">
                                         <!-- Improved Display message or prompt for Case File -->
                                         <div class="alert alert-info" role="alert">
-                                            <h4 class="alert-heading">Important Notice for Case File Holders!</h4>
+                                            <h4 class="alert-heading">Important Notice: for any Other Documents other than Citizenship ID Card!</h4>
                                             <p>Please contact The PEMA directly to proceed with your registration.
                                                 Ensure
                                                 you provide the following details:</p>
@@ -106,8 +107,9 @@
                                             <div class="ms-4">
                                                 <p class="mb-1">Required Details:</p>
                                                 <div class="ps-3">
-                                                    <div><i class="fas fa-check-circle text-success"></i> Case File
-                                                        Number</div>
+                                                    <div><i
+                                                            class="fas fa-check-circle text-success text-capitalize"></i>
+                                                        Document Number (Case file Number / Student Code / Work permit / others...) </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Nationality
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> First Name
@@ -120,11 +122,19 @@
                                                     <div><i class="fas fa-check-circle text-success"></i> Date of Birth
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Sex</div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Email Address (If Any)
+                                                    </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Mobile Number
                                                     </div>
                                                     <div><i class="fas fa-check-circle text-success"></i> Permanent
                                                         Address
-                                                        (Village, Gewog, Dzongkhag)</div>
+                                                        (Village, Gewog, Dzongkhag)
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Current School or 
+                                                        Working Agency
+                                                    </div>
+                                                    <div><i class="fas fa-check-circle text-success"></i> Current Class and Section (If Student)
+                                                    </div>
                                                 </div>
                                             </div>
                                             <p class="mt-3">Your cooperation is highly appreciated.</p>
@@ -276,6 +286,7 @@
         <!-- Loading, Success, and Failed Modals/Overlays can be inserted here if they should be fullscreen -->
     </div>
 </template>
+
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
@@ -295,9 +306,9 @@ const formData = ref({
 });
 
 const identifiers = [
-    { id: 'cidRadio', value: 'cid', label: 'CID Number' },
-    { id: 'casefileRadio', value: 'casefile', label: 'Casefile No' },
-    { id: 'passportRadio', value: 'passport', label: 'Foreign Passport/Work Permit' },
+    { id: 'cidRadio', value: 'cid', label: 'Citizenship ID Card' },
+    { id: 'casefileRadio', value: 'casefile', label: 'Other Documents' },
+    // { id: 'passportRadio', value: 'passport', label: 'Foreign Passport/Work Permit' },
 ];
 
 const months = [
@@ -464,6 +475,14 @@ const moveToStep3 = (citizenDetails) => {
     emit('go-to-next-step', 'step-three', citizenDetails);
 };
 
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
+};
 </script>
 
 
@@ -535,7 +554,7 @@ const moveToStep3 = (citizenDetails) => {
     color: white;
     font-size: inherit;
     border: none;
-    border-radius: 20px;
+    border-radius: 50px;
     cursor: pointer;
 }
 

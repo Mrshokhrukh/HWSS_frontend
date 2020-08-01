@@ -1,0 +1,283 @@
+<template>
+    <div v-if="showWidget" class="chat-widget-container">
+        <!-- Chat Widget Icon -->
+        <div v-if="isStudent || isPublic" class="chat-icon" :class="{ 'active': isChatOpen }" @click="toggleChat">
+            <i class="bi bi-chat-dots-fill"></i>
+        </div>
+
+        <!-- Chat Widget -->
+        <div v-if="isStudent || isPublic" class="chat-widget card shadow" v-show="isChatOpen">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Chat with HWSS</span>
+                <div>
+                    <i class="bi bi-dash-lg me-2" @click="minimizeChat"></i>
+                    <i class="bi bi-x-lg" @click="closeChat"></i>
+                </div>
+            </div>
+            <div class="card-body chat-messages" ref="chatMessagesRef">
+                <div v-for="(message, index) in messages" :key="index" :class="getMessageClass(message)">
+                    <p>{{ message.text }}</p>
+                </div>
+                <div v-if="showCounselorLink" class="message received counselor-link">
+                    <p>If you'd like to proceed with chatting, we have a dedicated platform to chat with a real
+                        counselor anonymously.</p>
+                    <a href="https://thepemachat.gov.bt" target="_blank" class="btn btn-outline-light mt-2">Chat with a
+                        Counselor</a>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="input-group">
+                    <input type="text" class="form-control" v-model="newMessage" @keyup.enter="sendMessage"
+                        placeholder="Type your message...">
+                    <button class="btn send-btn" @click="sendMessage">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message for admins and counselors -->
+        <div v-if="isAdmin || isCounselor" class="chat-unavailable alert">
+            <i class="bi bi-info-circle me-2"></i>
+            Chat feature is not available for admins and counselors.
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const showWidget = ref(true)
+const isChatOpen = ref(false)
+const messages = ref([])
+const newMessage = ref('')
+const messageCount = ref(0)
+const showCounselorLink = ref(false)
+const chatMessagesRef = ref(null)
+
+const isStudent = ref(true)
+const isPublic = ref(false)
+const isAdmin = ref(false)
+const isCounselor = ref(false)
+
+const toggleChat = () => {
+    isChatOpen.value = !isChatOpen.value
+    if (isChatOpen.value && messages.value.length === 0) {
+        messages.value.push({ text: "Kuzu zangpo La! I am The PEMA ChatBot. How can I assist you today?", sentByUser: false })
+    }
+}
+
+const minimizeChat = () => {
+    isChatOpen.value = false
+}
+
+const closeChat = () => {
+    isChatOpen.value = false
+    messages.value = []
+    messageCount.value = 0
+    showCounselorLink.value = false
+}
+
+const getMessageClass = (message) => {
+    return {
+        'message': true,
+        'sent': message.sentByUser,
+        'received': !message.sentByUser
+    }
+}
+
+const sendMessage = () => {
+    if (newMessage.value.trim() !== '') {
+        messages.value.push({ text: newMessage.value, sentByUser: true })
+        newMessage.value = ''
+        messageCount.value++
+
+        if (messageCount.value === 1) {
+            setTimeout(() => {
+                messages.value.push({ text: "I'm still in the process of learning and might not have all the answers yet. Is there something specific you'd like help with?", sentByUser: false })
+            }, 1000)
+        } else if (messageCount.value === 2) {
+            setTimeout(() => {
+                showCounselorLink.value = true
+            }, 1000)
+        }
+    }
+}
+
+const scrollToBottom = () => {
+    if (chatMessagesRef.value) {
+        chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+    }
+}
+
+watch(messages, () => {
+    nextTick(() => {
+        scrollToBottom()
+    })
+}, { deep: true })
+
+onMounted(() => {
+    watch(() => route.path, (newPath) => {
+        const lowercasePath = newPath.toLowerCase();
+        const pathsToCheck = ['public-dashboard', 'student-dashboard', 'login', 'register'];
+
+        showWidget.value = pathsToCheck.some(path => lowercasePath.includes(path));
+    }, { immediate: true });
+});
+</script>
+
+<style scoped>
+.chat-widget-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.chat-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.chat-icon:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.chat-icon i {
+    font-size: 28px;
+    color: white;
+}
+
+.chat-widget {
+    width: 350px;
+    height: 500px;
+    position: absolute;
+    bottom: 80px;
+    right: 0;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    padding: 15px;
+    font-weight: bold;
+}
+
+.card-header i {
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.card-header i:hover {
+    color: #ccc;
+}
+
+.chat-messages {
+    height: 380px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #f8f9fa;
+}
+
+.message {
+    max-width: 80%;
+    margin-bottom: 15px;
+    padding: 12px 18px;
+    border-radius: 20px;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.sent {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+    border-bottom-right-radius: 5px;
+}
+
+.received {
+    background-color: white;
+    color: #333;
+    align-self: flex-start;
+    border-bottom-left-radius: 5px;
+}
+
+.counselor-link {
+    background-color: #e9ecef;
+}
+
+.counselor-link a {
+    color: #2B656F;
+    border-color: #2B656F;
+}
+
+.counselor-link a:hover {
+    background-color: #2B656F;
+    color: white;
+}
+
+.card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 15px;
+}
+
+.input-group .form-control {
+    border-radius: 20px 0 0 20px;
+    border: 1px solid #ced4da;
+}
+
+.send-btn {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border: none;
+    border-radius: 0 20px 20px 0;
+    padding: 10px 15px;
+}
+
+.send-btn:hover {
+    opacity: 0.9;
+}
+
+.chat-unavailable {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    max-width: 300px;
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border: none;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.chat-icon {
+    animation: float 3s ease-in-out infinite;
+}
+</style>

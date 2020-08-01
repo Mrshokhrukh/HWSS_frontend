@@ -1,13 +1,7 @@
 <template>
   <div class="content-wrapper">
-    <!-- Chat Widget Icon -->
-    <div class="chat-icon" :class="{ 'active': isChatOpen }" @click="toggleChat">
-      <img :src="chatIcon" alt="Chat Icon" />
-    </div>
-
-    <!-- Chat Widget -->
-    <div class="chat-widget" v-if="isChatOpen">
-      <ChatWidget :isOpen="isChatOpen" @minimize="minimizeChat" @close="closeChat" @sendMessage="handleNewMessage" />
+    <div>
+      <NewChatWidget />
     </div>
 
     <header>
@@ -30,34 +24,25 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import endpoints from '@/api'
 import Cookies from 'js-cookie'
-import chatIcon from '@/assets/images/chat.gif'
-import ChatWidget from '@/components/common/ChatWidget.vue'
+import NewChatWidget from '@/components/common/NewChatWidget.vue'
 
 const copyright = ref('')
 const isMobileDevice = ref(false)
 const csrfToken = ref('')
 
-const isChatOpen = ref(false)
-const messages = ref([])
-
-const toggleChat = () => {
-  isChatOpen.value = !isChatOpen.value;
-}
-
-const minimizeChat = () => {
-  isChatOpen.value = false; // Minimize logic
-}
-
-const closeChat = () => {
-  isChatOpen.value = false; // Close logic
-}
-
-const handleNewMessage = (message) => {
-  messages.value.push({ text: message, sentByUser: true });
-}
-
 onMounted(async () => {
-  // Fetch CSRF token
+  // Check if mobile device
+  isMobileDevice.value = window.innerWidth <= 768;
+
+  // Redirect if mobile
+  if (isMobileDevice.value) {
+    alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
+
+    setTimeout(() => {
+      window.location.href = "https://www.google.com";
+    }, 500);
+  }
+
   try {
     const csrfResponse = await axios.get(endpoints.getCSRFToken)
     if (csrfResponse.data && csrfResponse.data.csrf_token) {
@@ -68,7 +53,6 @@ onMounted(async () => {
     console.error('Error fetching CSRF token:', error)
   }
 
-  // Fetch copyright message
   try {
     const response = await axios.get(endpoints.settings)
     if (response.data && response.data.length > 0 && response.data[0].copyright_message) {
@@ -80,17 +64,6 @@ onMounted(async () => {
     console.error('Error fetching copyright message:', error)
   }
 
-  // Check if mobile device
-  isMobileDevice.value = window.innerWidth <= 768;
-
-  // Redirect if mobile
-  if (isMobileDevice.value) {
-    alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
-
-    setTimeout(() => {
-      window.location.href = "https://www.google.com";
-    }, 5000);
-  }
 })
 </script>
 

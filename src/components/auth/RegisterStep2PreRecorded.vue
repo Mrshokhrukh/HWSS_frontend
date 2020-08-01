@@ -2,7 +2,7 @@
   <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
     <div class="col-md-8">
       <div class="card shadow">
-        <div class="logo-container">
+        <div class="logo-container card d-flex flex-row justify-content-center align-items-center" @click.prevent="showNDILoginAlert">
           <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
           <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
         </div>
@@ -11,28 +11,29 @@
           <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
           <p class="lead" style="color: #2B656F; font-weight: bold">Prerecorded User Validation</p>
         </div>
-        <div class="container p-4">
-          <div class="card-body text-start form">
-            <h5 class="card-title cust-text bold h2">User Details</h5>
+        <div class="p-4">
+          <div class="card p-4 text-start form">
+            <h4 class="card-title cust-text bold  text-center">User Details</h4>
             <p class="card-text cust-text bold">Please kindly enter your details below to check if you are prerecorded
               or not</p>
             <form @submit.prevent="verifyUser">
               <div class="mb-3">
-                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID / Casefile no / Any Other Any other identity Number</label>
+                <label for="cid" class="form-label cust-text bold">Enter Your Citizenship ID / Casefile no / Student Code /
+                  Any other identity Number</label>
                 <input type="text" class="form-control" id="cid" v-model="cid" required>
               </div>
               <div class="row g-3">
-                <p class="cust-text bold">What’s your date of birth?</p>
+                <p class="cust-text mb-1 bold">What’s your date of birth?</p>
                 <div class="col-md-4">
-                  <label for="day" class="form-label text-success">Day:</label>
+                  <label for="day" class="form-label hwss-primary">Day:</label>
                   <input type="number" id="day" v-model="day" min="1" max="31" class="form-control" required>
                 </div>
                 <div class="col-md-4">
-                  <label for="month" class="form-label text-success">Month:</label>
+                  <label for="month" class="form-label hwss-primary">Month:</label>
                   <input type="number" id="month" v-model="month" min="1" max="12" class="form-control" required>
                 </div>
                 <div class="col-md-4">
-                  <label for="year" class="form-label text-success">Year:</label>
+                  <label for="year" class="form-label hwss-primary">Year:</label>
                   <input type="number" id="year" v-model="year" min="1900" max="2100" class="form-control" required>
                 </div>
               </div>
@@ -43,7 +44,7 @@
         </div>
         <div class="card-footer text-muted text-center">
           Already have an Account?
-          <router-link to="/login" class="text-primary">Sign In</router-link>
+          <router-link to="/login" class="hwss-primary bold">Sign In</router-link>
         </div>
       </div>
     </div>
@@ -67,8 +68,8 @@ const router = useRouter();
 
 const verifyUser = async () => {
   try {
-    console.log('Sending request to verify user...');
-    console.log('CID:', cid.value);
+    // console.log('Sending request to verify user...');
+    // console.log('CID:', cid.value);
 
     const response = await axios.get(endpoints.verifyPreRecordedUser, {
       params: {
@@ -76,13 +77,13 @@ const verifyUser = async () => {
       },
     });
 
-    console.log('Response received:', response.data);
+    // console.log('Response received:', response.data);
 
     const dataArray = response.data;
     const dataObject = Array.isArray(dataArray) ? dataArray[0] : dataArray;
 
     if (dataObject.success) {
-      console.log('User verification successful.');
+      // console.log('User verification successful.');
 
       const userDOB = dataObject.user.date_of_birth;
 
@@ -98,7 +99,7 @@ const verifyUser = async () => {
         emit('go-to-next-step', 'step-two-prerecorded');
       }
     } else {
-      console.log('User verification failed:', dataObject.message);
+      // console.log('User verification failed:', dataObject.message);
 
       if (response.status === 400 && dataObject.message === 'Pre-recorded user is already registered.') {
         Swal.fire('Notice', 'User with this ID card is already registered. Please log in to continue.', 'info');
@@ -125,20 +126,29 @@ const verifyUser = async () => {
 
 // Helper method to save user_data to session/local storage
 const saveUserData = (userData) => {
-  console.log('Saving user data to session storage:', userData);
+  // console.log('Saving user data to session storage:', userData);
   sessionStorage.setItem('user_data', JSON.stringify(userData));
 };
 
 // Helper method to save agency_data to session/local storage
 const saveAgencyData = (agencyData) => {
-  console.log('Saving agency data to session storage:', agencyData);
+  // console.log('Saving agency data to session storage:', agencyData);
   sessionStorage.setItem('agency_data', JSON.stringify(agencyData));
 };
 
 // Helper method to save user_agency_data to session/local storage
 const saveUserAgencyData = (userAgencyData) => {
-  console.log('Saving user agency data to session storage:', userAgencyData);
+  // console.log('Saving user agency data to session storage:', userAgencyData);
   sessionStorage.setItem('user_agency_data', JSON.stringify(userAgencyData));
+};
+
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
 };
 </script>
 

@@ -2,27 +2,31 @@
     <div>
         <div class="row p-4 bg-light">
             <div class="col-3 left-selectors">
-                <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
-                <div>
-                    <ul>
-                        <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
-                            :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
-                            <a href="#" class="p-3">
-                                <input type="checkbox" class="form-check-input" :checked="menu.completed"
-                                    :disabled="menu.completed">
-                                <span class="ms-2">{{ menu.name }}</span>
-                            </a>
-                        </li>
-                    </ul>
+                <div class="card p-4 h-100">
+                    <h5 class="hwss-primary mb-5">Selected Assessment:</h5>
+                    <div>
+                        <ul>
+                            <li v-for="menu in menus" :key="menu.id" @click="selectMenu(menu)"
+                                :class="{ 'active': selectedMenu && selectedMenu.id === menu.id }">
+                                <a href="#" class="p-3">
+                                    <input type="checkbox" class="form-check-input" :checked="menu.completed"
+                                        :disabled="menu.completed">
+                                    <span class="ms-2">{{ menu.name }}</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <div class="col-9">
-                <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
-                    @goToNext="handleChangeComponent"></component>
-                <div v-else>
-                    <div class="d-flex justify-content-center">
-                        <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
+                <div class="card p-4 h-100">
+                    <component v-if="currentScreeningComponent" :is="currentScreeningComponent"
+                        @goToNext="handleChangeComponent"></component>
+                    <div v-else>
+                        <div class="d-flex justify-content-center">
+                            <h4 class="my-5">Select the Accessment Tool you want to begin with!</h4>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -32,28 +36,35 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import CaseScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningGAD.vue';
-import CaseScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningPHQ.vue';
-import CaseScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningASSIST.vue';
-import CaseScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningACE.vue';
+import ScreeningGAD from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningGAD.vue';
+import ScreeningPHQ from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningPHQ.vue';
+import ScreeningASSIST from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningASSIST.vue';
+import ScreeningACE from '@/components/dashboards/counselorScreenings/counselorScreeningStages/ScreeningACE.vue';
 import Swal from 'sweetalert2';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+import endpoints from '@/api';
 
 const router = useRouter();
 
 const emit = defineEmits(['goBackToSelectTools', 'goToNext']);
 
+// Define reactive variables
 const currentScreeningComponent = ref(null);
 const selectedMenu = ref(null);
 const menus = ref([]);
 const nextMenu = ref(null);
+const isSubmitting = ref(false);
+
+const ClientUserIdCaseBase = JSON.parse(localStorage.getItem('ClientUserIdEventBase')) || [];
+const eventId = JSON.parse(localStorage.getItem('eventId')) || [];
 
 // Define component mapping
 const componentMap = {
-    'GAD': CaseScreeningGAD,
-    'PHQ': CaseScreeningPHQ,
-    'ASSIST': CaseScreeningASSIST,
-    'ACE': CaseScreeningACE,
+    'GAD7': ScreeningGAD,
+    'PHQ9': ScreeningPHQ,
+    'ASSIST': ScreeningASSIST,
+    'ACE': ScreeningACE,
 };
 
 // Method to select menu
@@ -71,14 +82,12 @@ onMounted(() => {
     if (savedMenus) {
         menus.value = savedMenus.map(menu => ({ ...menu, completed: false }));
         selectedMenu.value = menus.value[0];
-    } else {
-        console.log('No menu saved');
     }
 });
 
 // Watch for changes in selected menu and save to local storage
 watch(selectedMenu, (newValue) => {
-    localStorage.setItem('selectedMenu', JSON.stringify([newValue])); // Store selected menu as an array
+    localStorage.setItem('selectedMenu', JSON.stringify([newValue]));
 });
 
 const handleChangeComponent = (nextMenuName) => {
@@ -89,8 +98,9 @@ const handleChangeComponent = (nextMenuName) => {
     const index = selectedTools.findIndex(tool => tool.name === nextMenuName);
 
     let nextToolName;
-    if (index !== -1 && index < selectedTools.length - 1) nextToolName = selectedTools[index + 1].name;
-    else {
+    if (index !== -1 && index < selectedTools.length - 1) {
+        nextToolName = selectedTools[index + 1].name;
+    } else {
         Swal.fire({
             icon: 'question',
             title: 'All tests have been completed',
@@ -100,7 +110,10 @@ const handleChangeComponent = (nextMenuName) => {
             cancelButtonText: 'No, not yet'
         }).then((result) => {
             if (result.isConfirmed) {
-                submitAssessments();
+                // Check if submission is already in progress
+                if (!isSubmitting.value) {
+                    submitAssessments();
+                }
             }
         });
         return;
@@ -123,27 +136,129 @@ const handleChangeComponent = (nextMenuName) => {
     currentScreeningComponent.value = componentMap[nextToolName];
 };
 
-const submitAssessments = () => {
-    // Perform fake submission (replace with actual submission logic)
-    setTimeout(() => {
-        // Show success message
+const submitAssessments = async () => {
+    if (isSubmitting.value) return; // Prevent multiple submissions
+    isSubmitting.value = true; // Lock the submission process
+
+    Swal.fire({
+        title: 'Submitting...',
+        text: 'Please wait while your assessments are being submitted.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const userId = ClientUserIdCaseBase;
+        const submissionEventId = eventId;
+
+        const getDataFromLocalStorage = (key) => {
+            try {
+                const data = localStorage.getItem(`${key}_set_counselor_screening`);
+                return data ? JSON.parse(data) : {};
+            } catch (error) {
+                console.error(`Error parsing ${key} data:`, error);
+                return {};
+            }
+        };
+
+        const gadData = getDataFromLocalStorage('GAD');
+        const phqData = getDataFromLocalStorage('PHQ');
+        const aceData = getDataFromLocalStorage('ACE');
+        const assistData = getDataFromLocalStorage('ASSIST');
+        const schoolEnvData = getDataFromLocalStorage('SCHOOLENV');
+
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('gadData', JSON.stringify(gadData));
+        formData.append('phqData', JSON.stringify(phqData));
+        formData.append('aceData', JSON.stringify(aceData));
+        formData.append('eventId', submissionEventId);
+
+        if (assistData && assistData.length > 0) {
+            const assistRiskSeverity = calculateAssistRiskSeverity(assistData);
+            formData.append('assistRiskSeverity', JSON.stringify(assistRiskSeverity));
+        }
+
+        formData.append('schoolEnvData', JSON.stringify(schoolEnvData));
+
+        const response = await axios.post(endpoints.eventScreenSubmission, formData);
+        sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify(ClientUserIdCaseBase));
+        clearLocalStorageData();
+        console.info(response)
         Swal.fire({
             icon: 'success',
             title: 'Assessments Submitted Successfully',
-            text: 'Thank you for submitting the assessments.',
+            text: 'Assessments submitted successfully for the current user.',
             confirmButtonText: 'OK'
         }).then(() => {
-            // Redirect to "/counselor-dashboard"
             router.push('/counselor-dashboard');
         });
-    }, 1000); // Simulating a delay for submission
+    } catch (error) {
+        console.error('Error submitting assessments:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to submit assessments. Please try again later.',
+            confirmButtonText: 'OK'
+        });
+    } finally {
+        isSubmitting.value = false; // Unlock the submission process
+    }
 };
 
+// Function to calculate risk severity for ASSIST data
+const calculateAssistRiskSeverity = (assistData) => {
+    const substanceScores = {};
+    assistData.forEach(entry => {
+        const substanceName = entry.substance;
+        const point = entry.point;
+        substanceScores[substanceName] = (substanceScores[substanceName] || 0) + point;
+    });
 
+    const thresholds = {
+        mild: 3,
+        moderate: 5,
+        moderatelySevere: 8,
+        severe: 11
+    };
+
+    // Determine risk severity for each substance
+    const assistRiskSeverity = {};
+    for (const substanceName in substanceScores) {
+        const score = substanceScores[substanceName];
+        if (score >= thresholds.severe) {
+            assistRiskSeverity[substanceName] = 'severe';
+        } else if (score >= thresholds.moderatelySevere) {
+            assistRiskSeverity[substanceName] = 'moderately severe';
+        } else if (score >= thresholds.moderate) {
+            assistRiskSeverity[substanceName] = 'moderate';
+        } else if (score >= thresholds.mild) {
+            assistRiskSeverity[substanceName] = 'mild';
+        } else {
+            assistRiskSeverity[substanceName] = 'none';
+        }
+        // Append the total score to the substance's risk severity
+        assistRiskSeverity[substanceName] += ` (${score})`;
+    }
+
+    return assistRiskSeverity;
+};
+
+// Function to clear localStorage data for assessments
+const clearLocalStorageData = () => {
+    ['GAD', 'PHQ', 'ACE', 'ASSIST', 'SCHOOLENV'].forEach(key => {
+        localStorage.removeItem(`${key}_set_counselor_screening`);
+    });
+    localStorage.removeItem('answeredSubstances');
+    localStorage.removeItem('selectedMenu');
+    localStorage.removeItem('selectedTools');
+    localStorage.removeItem('eventId');
+    localStorage.removeItem('approvedSelectedTools');
+    localStorage.removeItem('ClientUserIdEventBase');
+    localStorage.removeItem('ClientUserIdCaseBase');
+};
 </script>
-
-
-
 
 <style scoped>
 .hwss-icon {

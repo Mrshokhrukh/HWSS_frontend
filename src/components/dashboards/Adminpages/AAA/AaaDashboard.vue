@@ -1,7 +1,6 @@
 <template>
-    <div class="container">
     <div>
-        <CurrentStatus />
+        <CurrentStatus :filteredData="treatmentData" />
     </div>
     <div>
         <ScreeningData />
@@ -9,14 +8,11 @@
     <div>
         <TestTypeScreening />
     </div>
-    </div>
 </template>
 
 <script setup>
 import CurrentStatus from "@/components/dashboards/Adminpages/AAA/dashboardcard/CurrentStatus.vue";
 import ScreeningData from "@/components/dashboards/Adminpages/AAA/dashboardcard/ScreeningData.vue";
 import TestTypeScreening from "@/components/dashboards/Adminpages/AAA/dashboardcard/TestTypeScreening.vue";
-</script>
 
-<style scoped>
-</style>
+</script>

@@ -1,34 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import { ref, computed } from 'vue';
 import axios from 'axios';
 import endpoints from '@/api';
-
-const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
-
-const userType = ref([]);
-
-if(userDetailsStore){
-  userType.value = computed(() => {
-    const role = userDetailsStore.user.role?.toLowerCase();
-    if (!role) return "public";
-  
-    if (role.includes("admin")) {
-      return "admin";
-    } else if (role.includes("counselor")) {
-      return "counselor";
-    } else if (role === "student") {
-      return "student";
-    } else {
-      return role;
-    }
-  });
-}
-
-localStorage.setItem('userType', userType.value);
-
+import NotFoundPage from '@/views/errorpages/pagenotfound404.vue'
 // Define a reusable dashboard component
-const DashboardView = () => import('@/views/dashboard/DashboardView.vue');
+const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
 
 
 // Define a function to generate routes for user dashboards
@@ -115,6 +91,14 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Counselor Settings`, requiresAuth: true }
     },
+    {
+      path: `/${userType}-dashboard/flagged-reports`,
+      name: `${userType}-flagged-reports`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Flagged Reports`, requiresAuth: true },
+      props: (route) => ({ flag: route.query.flag }) // Pass query parameter as prop to the component
+    },
+
 
     // -------------------------- Admin specific routes ---------------------------------------------------
     {
@@ -136,8 +120,14 @@ const generateDashboardRoutes = (userType) => {
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin help`, requiresAuth: true }
     },
     {
-      path: `/${userType}-dashboard/admin-setting`,
+      path: `/${userType}-dashboard/admin-settings`,
       name: `${userType}-admin-setting`,
+      component: DashboardView,
+      meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin setting`, requiresAuth: true }
+    },
+    {
+      path: `/${userType}-dashboard/admin-chart-maker`,
+      name: `${userType}-admin-chart-maker`,
       component: DashboardView,
       meta: { title: `${userType.charAt(0).toUpperCase() + userType.slice(1)} Admin setting`, requiresAuth: true }
     },
@@ -157,6 +147,11 @@ const createAppRouter = () => {
         name: 'home',
         component: HomeView,
         meta: { title: 'Home' }
+      },
+      {
+        path: '/:pathMatch(.*)*',
+        redirect: { name: 'NotFound' },
+        component: NotFoundPage,
       },
       {
         path: '/login',
@@ -184,44 +179,101 @@ const createAppRouter = () => {
     ],
   });
 
+  // Define constants for route names
+  const ROUTE_LOGIN = 'login';
+
   router.beforeEach(async (to, from, next) => {
-    const isAuthenticated = localStorage.getItem('authToken') !== null;
+    try {
+      // Retrieve authentication token and expiry time from local storage
+      const authToken = localStorage.getItem('authToken');
+      const tokenExpiry = localStorage.getItem('tokenExpiry');
+      const isAuthenticated = authToken !== null;
   
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-      if (!isAuthenticated) {
-        next({ name: 'login' }); // Redirect to login page if not authenticated
-      } else {
-        // Validate token
-        try {
-          const authToken = localStorage.getItem('authToken');
-          const response = await axios.post(endpoints.authenticateToken, null, {
-            headers: {
-              'Authorization': `Token ${authToken}`
-            }
-          });
-          if (response.data.valid) {
-            next(); // User is authenticated, allow access
-          } else {
-            localStorage.removeItem('authToken'); // Remove invalid token from local storage
-            next({ name: 'login' }); // Redirect to login page if token is invalid
-          }
-        } catch (error) {
-          console.error('Error validating token:', error);
-          next({ name: 'login' }); // Redirect to login page if there's an error validating token
+      // Check if token has expired
+      const isTokenExpired = tokenExpiry && new Date(tokenExpiry) < new Date();
+  
+      // If token is expired, clear storage and redirect to login
+      if (isAuthenticated && isTokenExpired) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenExpiry');
+        localStorage.removeItem('userDetailsStore');
+        localStorage.removeItem('userType');
+  
+        next({ name: ROUTE_LOGIN });
+        return;
+      }
+  
+      if (isAuthenticated && !isTokenExpired) {
+        // Retrieve user type from local storage
+        const userType = localStorage.getItem('userType');
+  
+        // If the user is authenticated and trying to access non-authenticated pages
+        if (!to.matched.some(record => record.meta.requiresAuth)) {
+          // Redirect the user to their respective dashboard based on their user type
+          next({ name: `${userType}-dashboard` });
+          return;
         }
       }
-    } else if (['login', 'register', 'forgot-password', 'home'].includes(to.name)) {
-      if (isAuthenticated) {
-        next({ name: `${userType.value}-dashboard` }); // Redirect to user's dashboard based on their userType
+  
+      // If the route requires authentication, proceed with authentication logic
+      if (to.matched.some(record => record.meta.requiresAuth)) {
+        if (!isAuthenticated) {
+          // Redirect to login page if the user is not authenticated
+          next({ name: ROUTE_LOGIN });
+        } else {
+          // Validate authentication token by making an API call
+          const response = await axios.post(endpoints.authenticateToken, null, {
+            headers: { 'Authorization': `Token ${authToken}` },
+          });
+  
+          if (response.data.valid) {
+            // Set user type and allow access
+            const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+            if (!localStorage.getItem('userType')) {
+              const role = userDetailsStore?.user?.role?.toLowerCase() || "public";
+              let userType;
+              if (role.includes("admin")) {
+                userType = "admin";
+              } else if (role.includes("_counselor")) {
+                userType = "counselor";
+              } else if (role === "student") {
+                userType = "student";
+              } else {
+                userType = "public";
+              }
+              localStorage.setItem('userType', userType);
+            }
+  
+            next();
+          } else {
+            // Remove invalid token from local storage
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('tokenExpiry');
+            localStorage.removeItem('userDetailsStore');
+            localStorage.removeItem('userType');
+  
+            // Redirect to login page if token is invalid
+            next({ name: ROUTE_LOGIN });
+          }
+        }
       } else {
-        next(); // Allow access to these pages if not logged in
+        // Allow access to other routes
+        next();
       }
-    } else {
-      next(); // Allow access to other routes
+    } catch (error) {
+      // Handle errors
+      console.error('Error validating token:', error);
+  
+      // Clear storage and redirect to login page if there's an error validating token
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('tokenExpiry');
+      localStorage.removeItem('userDetailsStore');
+      localStorage.removeItem('userType');
+  
+      next({ name: ROUTE_LOGIN });
     }
   });
-
+  
   return router;
 };
-
 export default createAppRouter;

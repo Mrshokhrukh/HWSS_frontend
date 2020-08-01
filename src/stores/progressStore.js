@@ -83,7 +83,7 @@ export const useProgressStore = defineStore('progress', {
             this.scores.GAD7 = 0;
 
             // Calculate PHQ2 score
-            const phq2Questions = [4, 5];
+            const phq2Questions = [2,3];
             phq2Questions.forEach(qId => {
                 const answer = this.answers.find(a => a.questionId === qId)?.answer;
                 if (answer) {
@@ -92,7 +92,7 @@ export const useProgressStore = defineStore('progress', {
             });
 
             // Calculate GAD2 score
-            const gad2Questions = [15, 16];
+            const gad2Questions = [12, 13];
             gad2Questions.forEach(qId => {
                 const answer = this.answers.find(a => a.questionId === qId)?.answer;
                 if (answer) {
@@ -101,7 +101,7 @@ export const useProgressStore = defineStore('progress', {
             });
 
             // Calculate PHQ9 score
-            const phq9Questions = [8, 9, 10, 11, 12, 13, 14];
+            const phq9Questions = [5, 6, 7, 8, 9, 10, 11,];
             phq9Questions.forEach(qId => {
                 const answer = this.answers.find(a => a.questionId === qId)?.answer;
                 if (answer) {
@@ -112,7 +112,7 @@ export const useProgressStore = defineStore('progress', {
             this.scores.PHQ9 += this.scores.PHQ2;
 
             // Calculate GAD7 score
-            const gad7Questions = [19, 20, 21, 22, 23];
+            const gad7Questions = [14,15,16,17,18];
             gad7Questions.forEach(qId => {
                 const answer = this.answers.find(a => a.questionId === qId)?.answer;
                 if (answer) {

@@ -1,56 +1,42 @@
 <template>
-	<div class="card p-5">
-		<div class="row border-div container-fluid p-5">
-			<div class="col-md-8">
-				<div v-if="loading" class="loading-container">
-					<div class="loading-spinner"></div>
-					<p>Loading...</p>
-				</div>
-				<div v-else>
-					<h1 class="text-center bold mb-4" v-if="clusterTestStatus === 'active'">
-						{{ clusterTestTitle }}
-					</h1>
-					<p class="custom-font mb-4" v-if="clusterTestStatus === 'active'">
-						{{ clusterTestContent }}
-					</p>
-					<p class="custom-text-color mb-5" v-if="clusterTestStatus === 'active'">
-						{{ clusterTestDisclaimer }}
-					</p>
-					<div class="d-flex justify-content-center" v-if="clusterTestStatus === 'active'">
-						<button class="btn btn-primary btn-lg custom-size-btn" @click="continueAction">
-							Continue
-						</button>
+	<div class="card shadow-lg border-0 rounded-3 overflow-hidden">
+		<div class="card-body p-0">
+			<div class="row g-0">
+				<div class="col-lg-8 p-5">
+					<div v-if="loading" class="loading-container">
+						<div class="loading-spinner"></div>
+						<p class="loading-text">Loading...</p>
 					</div>
-					<div v-if="clusterTestStatus !== 'active'">
-						<p>
-							Currently, there are no tests available. In the meantime, consider reading
-							these articles for mental health awareness:
-						</p>
-						<ul>
-							<li>
-								<a href="https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm"
-									target="_blank">Understanding Depression <i class="fas fa-external-link-alt"></i>
+					<div v-else>
+						<div v-if="clusterTestStatus === 'active'">
+							<h1 class="fw-bold mb-4 hwss-primary gradient-text">{{ clusterTestTitle }}</h1>
+							<p class="lead mb-4">{{ clusterTestContent }}</p>
+							<div class="alert alert-info mb-4 custom-alert" role="alert">
+								<i class="bi bi-info-circle-fill me-2"></i>
+								{{ clusterTestDisclaimer }}
+							</div>
+							<button @click="continueAction"
+								class="btn btn-primary btn-lg w-100 py-3 fw-bold text-uppercase gradient-button">
+								Continue <i class="bi bi-arrow-right-circle ms-2"></i>
+							</button>
+						</div>
+						<div v-else>
+							<h2 class="h3 mb-4 gradient-text">No Tests Available</h2>
+							<p class="lead mb-4">Currently, there are no tests available. In the meantime, consider
+								reading these articles for mental health awareness:</p>
+							<div class="list-group custom-list-group">
+								<a v-for="(article, index) in articles" :key="index" :href="article.url" target="_blank"
+									class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+									<span>{{ article.title }}</span>
+									<i class="bi bi-box-arrow-up-right"></i>
 								</a>
-							</li>
-							<li>
-								<a href="https://www.nimh.nih.gov/health/topics/anxiety-disorders" target="_blank">Anxiety
-									Disorders <i class="fas fa-external-link-alt"></i></a>
-							</li>
-							<li>
-								<a href="https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction"
-									target="_blank">Coping with Drug Use and Addiction
-									<i class="fas fa-external-link-alt"></i></a>
-							</li>
-							<li>
-								<a href="https://www.mentalhealth.gov/basics/what-is-mental-health" target="_blank">Mental
-									Health and Wellness <i class="fas fa-external-link-alt"></i></a>
-							</li>
-						</ul>
+							</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="col-md-4 text-center">
-				<img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon" />
+				<div class="col-lg-4 d-flex align-items-center justify-content-center gradient-bg p-5">
+					<img :src="clusterTestIcon" :alt="app_name" class="img-fluid animated-icon" />
+				</div>
 			</div>
 		</div>
 	</div>
@@ -61,22 +47,26 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import endpoints from "@/api";
 import { useRouter } from "vue-router";
+import clusterTestIcon from '@/assets/images/book1.png'
 
 const router = useRouter();
 const clusterTestTitle = ref("");
 const clusterTestContent = ref("");
 const clusterTestDisclaimer = ref("");
-const clusterTestIcon = ref("");
 const app_name = ref("");
 
 const clusterTestStatus = ref("");
 const loading = ref(true);
 const cacheDuration = 5 * 60 * 1000;
 
-// const emit = defineEmits(["continue"]);
+const articles = [
+	{ title: "Understanding Depression", url: "https://www.helpguide.org/articles/depression/depression-symptoms-and-warning-signs.htm" },
+	{ title: "Anxiety Disorders", url: "https://www.nimh.nih.gov/health/topics/anxiety-disorders" },
+	{ title: "Coping with Drug Use and Addiction", url: "https://www.drugabuse.gov/publications/drugfacts/understanding-drug-use-addiction" },
+	{ title: "Mental Health and Wellness", url: "https://www.mentalhealth.gov/basics/what-is-mental-health" },
+];
 
 const continueAction = () => {
-	// emit("continue");
 	if (clusterTestStatus.value === 'active') {
 		router.push('/student-dashboard/screening-start')
 	}
@@ -97,7 +87,7 @@ async function checkClusterTestStatus() {
 	}
 
 	try {
-		const response = await axios.get(endpoints.ScreeningPreTests);
+		const response = await axios.get(endpoints.screeningPreTests);
 		const clusterTest = response.data.find((test) => test.name === "Cluster Screening");
 		if (clusterTest) {
 			clusterTestStatus.value = clusterTest.status;
@@ -109,14 +99,12 @@ async function checkClusterTestStatus() {
 	} catch (error) {
 		console.error("Error fetching cluster test status:", error);
 	} finally {
-		// Simulate loading delay for demonstration
 		setTimeout(() => {
 			loading.value = false;
-		}, 1200); // 2 seconds delay
+		}, 1200);
 	}
 }
 
-// Fetch data from the API when the component is mounted
 onMounted(async () => {
 	checkClusterTestStatus();
 	try {
@@ -126,7 +114,6 @@ onMounted(async () => {
 			clusterTestTitle.value = data.cluster_test_title;
 			clusterTestContent.value = data.cluster_test_content;
 			clusterTestDisclaimer.value = data.cluster_test_disclaimer;
-			clusterTestIcon.value = data.cluster_test_icon;
 			app_name.value = data.app_name;
 		}
 	} catch (error) {
@@ -136,70 +123,90 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.border-div {
-	border: 1px solid #c9c9c9;
-	border-radius: 10px;
+.card {
+	background: #ffffff;
+	transition: box-shadow 0.3s ease-in-out;
 }
 
-.custom-size-btn {
-	width: 100%;
-	height: auto;
-	font-size: 18px;
-	background-color: #2c6975;
+.card:hover {
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.custom-text-color {
-	color: #2c6975;
-	font-weight: 800;
+.gradient-bg {
+	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
 
-.custom-font {
+.gradient-text {
+	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+	color: transparent;
+}
+
+.gradient-button {
+	background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+	border: none;
+	color: white;
+	padding: 1rem 2rem;
+	border-radius: 12px;
+	font-size: 1.125rem;
 	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	box-shadow: 0 4px 6px -1px rgba(43, 101, 111, 0.2);
 }
 
-ul {
-	list-style-type: none;
-	/* Remo
-		ve bullet points */
-	padding: 0;
+.gradient-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 8px -1px rgba(43, 101, 111, 0.3);
 }
 
-ul li a {
-	color: #2b656f;
-	/* Primary app color */
-	text-decoration: none;
-	/* Remove underline */
-	line-height: 2.2rem;
+.animated-icon {
+	transition: transform 0.3s ease-in-out;
 }
 
-ul li a:hover {
-	text-decoration: underline;
-	/* Optional: add underline on hover for b1.2remetter UX */
+.animated-icon:hover {
+	transform: scale(1.05);
 }
 
-/* Add this to give links a slight underline on hover, making it clear t-ey are clickable */
-ul li a:hover {
-	text-decoration: underline;
+.custom-list-group .list-group-item {
+	transition: all 0.3s ease;
+	border-left: 4px solid transparent;
 }
 
-/* Loading animation styles */
+.custom-list-group .list-group-item:hover {
+	background-color: #f8f9fa;
+	border-left-color: #2B656F;
+	transform: translateX(5px);
+}
+
+.custom-alert {
+	border-left: 4px solid #2B656F;
+	background-color: rgba(43, 101, 111, 0.1);
+}
+
 .loading-container {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	flex-direction: column;
+	height: 300px;
 }
 
 .loading-spinner {
-	border: 5px solid #f3f3f3;
-	/* Light grey */
-	border-top: 5px solid #2c6975;
-	/* Blue */
+	border: 4px solid rgba(43, 101, 111, 0.1);
+	border-top: 4px solid #2B656F;
 	border-radius: 50%;
-	width: 50px;
-	height: 50px;
+	width: 40px;
+	height: 40px;
 	animation: spin 1s linear infinite;
-	margin-bottom: 10px;
+}
+
+.loading-text {
+	margin-top: 1rem;
+	color: #2B656F;
+	font-weight: 600;
 }
 
 @keyframes spin {

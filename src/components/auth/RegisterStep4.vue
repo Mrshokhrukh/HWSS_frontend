@@ -4,6 +4,11 @@
             <div class="row justify-content-center">
                 <div class="col-md-8">
                     <div class="card shadow p-3 mb-5">
+                        <div class="logo-container card d-flex flex-row justify-content-center align-items-center d-none"
+                            @click.prevent="showNDILoginAlert">
+                            <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+                            <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
+                        </div>
 
                         <div class="text-center mt-3">
                             <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
@@ -57,6 +62,28 @@
                                     <input type="password" id="confirmPassword" v-model="confirmPassword"
                                         class="form-control p-2 bg-transparent border-dark" required>
                                 </div>
+
+                                <div class="my-4 row">
+                                    <!-- Disclaimer -->
+                                    <div class="disclaimer-container d-flex align-items-center mb-3">
+                                        <input type="checkbox" id="disclaimer" v-model="disclaimerChecked" class="me-2">
+                                        <label for="disclaimer">
+                                            The information I have provided is true to the best of my knowledge. I
+                                            understand that the information collected may be shared to provide services
+                                            and interventions.
+                                        </label>
+                                    </div>
+
+                                    <!-- Agreement Link -->
+                                    <div class="agreement-link">
+                                        <input type="checkbox" id="termsAndPolicy" v-model="termsAndPolicy"
+                                            class="me-2">
+                                        By signing up, I agree to
+                                        <a class="hwss-primary fw-bold" href="#"
+                                            @click.prevent="showTermsModal = true">Terms and Policies</a>
+                                        of The PEMA HWSS Platform.
+                                    </div>
+                                </div>
                                 <button type="submit" class="btn  ml-2 custom-btn mt-3 col-md-12">Sign Up</button>
                             </form>
                         </div>
@@ -79,6 +106,52 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal for Terms and Policies -->
+    <Dialog v-model:visible="showTermsModal" header="Terms and Policies" :style="{ width: '50vw' }">
+        <div>
+            <p>Welcome to The PEMA HWSS (Health and Wellbeing Screening System) platform ("PEMA HWSS"). By accessing or
+                using PEMA HWSS, you agree to be bound by these Terms of Service ("Terms"). Please read these Terms
+                carefully before accessing or using PEMA HWSS. If you do not agree with these Terms, you may not access
+                or use PEMA HWSS.</p>
+
+            <p><b>Use of PEMA HWSS:</b> PEMA HWSS is intended for personal and non-commercial use only. You may not use
+                PEMA HWSS for any illegal or unauthorized purpose.</p>
+
+            <p><b>Account Registration:</b> In order to access certain features of PEMA HWSS, you may be required to
+                register for an account. You agree to provide accurate, current, and complete information during the
+                registration process and to keep your account information updated.</p>
+
+            <p><b>Privacy:</b> Your privacy is important to us. Please review our Privacy Policy to understand how we
+                collect, use, and disclose information about you when you access or use PEMA HWSS.</p>
+
+            <p><b>User Content:</b> You retain ownership of any content you submit, post, or display on PEMA HWSS ("User
+                Content"). By submitting, posting, or displaying User Content, you grant PEMA HWSS a worldwide,
+                non-exclusive, royalty-free license to use, reproduce, modify, adapt, publish, translate, distribute,
+                and display such User Content in connection with providing PEMA HWSS.</p>
+
+            <p><b>Prohibited Conduct:</b> You may not engage in any conduct that, in our sole discretion, restricts or
+                inhibits any other user from using or enjoying PEMA HWSS, or that could damage, disable, overburden, or
+                impair PEMA HWSS.</p>
+
+            <p><b>Intellectual Property:</b> All intellectual property rights in PEMA HWSS are owned by or licensed to
+                us. You may not use PEMA HWSS for any purpose not expressly permitted by these Terms.</p>
+
+            <p><b>Disclaimer of Warranties:</b> PEMA HWSS is provided on an "as is" and "as available" basis, without
+                any warranties of any kind, either express or implied.</p>
+
+            <p><b>Limitation of Liability:</b> In no event shall PEMA HWSS be liable for any indirect, incidental,
+                special, consequential, or punitive damages, arising out of or in connection with your use of PEMA HWSS.
+            </p>
+
+            <p><b>Governing Law:</b> These Terms shall be governed by and construed in accordance with the laws of
+                Bhutan.</p>
+
+            <p><b>Changes to Terms:</b> We reserve the right to modify or update these Terms at any time without prior
+                notice. Your continued use of PEMA HWSS after any such changes constitutes your acceptance of the new
+                Terms.</p>
+        </div>
+    </Dialog>
 </template>
 
 <script setup>
@@ -94,6 +167,9 @@ const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const errorMessage = ref('');
+const showTermsModal = ref(false);
+const disclaimerChecked = ref(false);
+const termsAndPolicy = ref(false);
 
 const passwordValidationMessage = computed(() => {
     const messages = [];
@@ -129,6 +205,16 @@ const createUser = async () => {
         return;
     }
 
+    if (!disclaimerChecked.value || !termsAndPolicy.value) {
+        // Show an error message using SweetAlert
+        Swal.fire({
+            icon: 'warning',
+            title: 'Oops...',
+            text: 'Please agree to both the disclaimer and terms and policies before signing up.'
+        });
+        return;
+    }
+
     try {
         let userData = JSON.parse(sessionStorage.getItem('user_data'));
         const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
@@ -140,7 +226,7 @@ const createUser = async () => {
 
         const userSubmissionData = { userData, agencyData, userAgencyData };
 
-        console.log(userSubmissionData);
+        // console.log(userSubmissionData);
 
         const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)?.[1];
         if (!csrftoken) {
@@ -252,7 +338,7 @@ const createUser = async () => {
                 });
 
                 if (confirmNewUsername.isConfirmed) {
-                    userData.username = confirmNewUsername.value;
+                    userData.username = confirmNewUsername;
                     sessionStorage.setItem('user_data', JSON.stringify(userData));
                     createUser();
                 }
@@ -285,30 +371,14 @@ const createUser = async () => {
                     createUser();
                 }
             } else if (errorDetail.includes('access_customuser.identity_number')) {
-                const confirmNewIdentity = await Swal.fire({
+                Swal.fire({
                     title: 'CID/Identity number already exists!',
                     text: `The CID/Identity number ${userData.identity} is already registered. Enter a new CID/Identity number:`,
                     input: 'text',
                     showCancelButton: true,
                     confirmButtonText: 'Use New CID/Identity',
                     cancelButtonText: 'Cancel',
-                    showLoaderOnConfirm: true,
-                    preConfirm: (newIdentity) => {
-                        return new Promise((resolve) => {
-                            if (!newIdentity) {
-                                Swal.showValidationMessage('Please enter a new CID/Identity number');
-                            } else {
-                                resolve();
-                            }
-                        });
-                    }
                 });
-
-                if (confirmNewIdentity.isConfirmed) {
-                    userData.identity_number = confirmNewIdentity.value;
-                    sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    createUser();
-                }
             } else {
                 errorMessage.value = 'Error creating user. Please try again.';
             }
@@ -319,8 +389,15 @@ const createUser = async () => {
     }
 };
 
+const showNDILoginAlert = () => {
+    Swal.fire({
+        title: 'Coming Soon!',
+        text: 'Login with NDI feature is coming soon. Stay tuned!',
+        icon: 'info',
+        confirmButtonColor: '#2B656F'
+    });
+};
 </script>
-
 
 <style scoped>
 .error-modal {

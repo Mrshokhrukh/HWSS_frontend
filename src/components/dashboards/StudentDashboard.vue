@@ -1,32 +1,40 @@
 <template>
-	<div class="container-fluid d-flex align-items-center min-vh-100">
+	<div class="container-fluid">
+		<header class="header">
+			<!-- Header content goes here -->
+		</header>
+
 		<!-- General Dashboard View -->
-		<div v-if="currentRoute === '/student-dashboard'" class="row row-cols-1 row-cols-md-2 g-4">
-			<div class="col-md-8">
-				<div class="card">
-					<div class="card-body">
-						<LandingDashboardCard :userName="userName" />
+		<div v-if="currentRoute === '/student-dashboard'">
+			<div class="row g-4 my-2">
+				<div class="col-md-8">
+					<div class="card">
+						<div class="card-body">
+							<LandingDashboardCard :userName="userName" />
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4">
+					<div class="card h-100">
+						<div class="card-body">
+							<ContactDetailCard />
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="col-md-4">
-				<div class="card h-100">
-					<div class="card-body">
-						<ContactDetailCard />
+			<div class="row g-4 my-2">
+				<div class="col-md-8">
+					<div class="card m-0 p-0 h-100">
+						<div class="card-body m-0 p-0">
+							<ImageCard />
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="col-md-8">
-				<div class="card m-0 p-0 h-100">
-					<div class="card-body m-0 p-0">
-						<ImageCard />
-					</div>
-				</div>
-			</div>
-			<div class="col-md-4">
-				<div class="card h-100">
-					<div class="container">
-						<PemaResponseServicesCard />
+				<div class="col-md-4">
+					<div class="card h-100">
+						<div class="container">
+							<PemaResponseServicesCard />
+						</div>
 					</div>
 				</div>
 			</div>
@@ -44,6 +52,12 @@
 		<div v-if="currentRoute === '/student-dashboard/profile'" class="screening-dashboard">
 			<StudentProfile />
 		</div>
+
+		<footer class="footer">
+			<div class="container text-center my-4">
+				<p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+			</div>
+		</footer>
 	</div>
 </template>
 
@@ -62,6 +76,26 @@ const userName = ref("");
 const route = useRoute();
 
 const currentRoute = computed(() => route.path);
+
+// Dynamically get the current year
+const currentYear = new Date().getFullYear();
+
+// Dynamically populate website name
+const websiteName = "The PEMA HWSS";
 </script>
 
-<style scoped></style>
+<style scoped>
+.container-fluid {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.header {
+	height: 8rem;
+}
+
+.footer {
+	margin-top: auto;
+}
+</style>

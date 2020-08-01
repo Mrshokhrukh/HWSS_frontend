@@ -1,141 +1,388 @@
 <template>
-    <div class="container">
-      <div class="card">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <h2 class="card-title text-center">Substances</h2>
-              <div class="substances-list">
-                <div class="row">
-                  <div class="col-md-6" v-for="(pair, index) in substancePairs" :key="index">
-                    <button v-for="substance in pair" :key="substance" class="btn btn-block" :class="{ 'btn-primary': selectedSubstance === substance, 'btn-secondary': selectedSubstance !== substance }" @click="selectSubstance(substance)">
-                      {{ substance }}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div v-if="selectedSubstance">
-                <h2 class="text-center">Count of {{ selectedSubstance }}</h2>
-                <canvas ref="chartCanvas"></canvas>
-              </div>
-              <div v-else>
-                <p class="text-center">Select a substance to view its count</p>
-              </div>
-            </div>
-          </div>
+  <div class="risk-level-container">
+    <h2 class="main-title">Risk Level Analysis</h2>
+    <div class="content-wrapper">
+      <div class="buttons-section">
+        <h3 class="section-title">Substances</h3>
+        <div class="button-grid">
+          <button v-for="substance in substances" :key="substance" @click="setActiveButton(substance)"
+            :class="['substance-btn', { active: activeButton === substance }]">
+            {{ substance }}
+          </button>
+        </div>
+      </div>
+      <div class="charts-section">
+        <div class="chart-card">
+          <h4 class="chart-title">High Risk Count by Gender</h4>
+          <canvas id="donutChartTotal"></canvas>
+        </div>
+        <div class="chart-card">
+          <h4 class="chart-title">Moderate Risk Count by Gender</h4>
+          <canvas id="donutChartModerate"></canvas>
+        </div>
+        <div class="chart-card full-width">
+          <h4 class="chart-title">Risk Comparison</h4>
+          <canvas id="barChart"></canvas>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, watch, onMounted } from 'vue';
-  import { Chart, registerables } from 'chart.js';
-  
-  const substances = ref(['Cigarettes', 'Alcohol', 'Cannabis', 'Cocaine', 'Heroin', 'Methamphetamine', 'Prescription Drugs', 'Other']);
-  const selectedSubstance = ref(null);
-  
-  const substancePairs = ref([]);
-  
-  onMounted(() => {
-    // Arrange substances in pairs
-    for (let i = 0; i < substances.value.length; i += 2) {
-      substancePairs.value.push([substances.value[i], substances.value[i + 1]]);
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, inject, watch } from 'vue';
+import Chart from 'chart.js/auto';
+
+const serviceAndTreatmentData = inject('serviceAndTreatmentData', []);
+
+const activeButton = ref(null);
+const substances = [
+  'Tobacco', 'Alcohol', 'Cannabis', 'Cocaine', 'Amphetamine-type',
+  'Inhalant', 'Sedative', 'Hallucinogens', 'Opioids', 'Others'
+];
+
+// Mapping of substance names to their data keys
+const substanceKeyMapping = {
+  'Tobacco': 'tobacco',
+  'Alcohol': 'alcoholic',
+  'Cannabis': 'cannabis',
+  'Cocaine': 'cocaine',
+  'Amphetamine-type': 'amphetamine',
+  'Inhalant': 'inhalants',
+  'Sedative': 'sedatives',
+  'Hallucinogens': 'hallucinogens',
+  'Opioids': 'opioids',
+  'Others': 'other'
+};
+
+function extractMeasurementData(data) {
+  if (!data) return [];
+
+  return data.reduce((results, item) => {
+    if (item.screening_data?.assist_data) {
+      const assistData = Array.isArray(item.screening_data.assist_data) ?
+        item.screening_data.assist_data :
+        [item.screening_data.assist_data];
+
+      const processedData = {
+        gender: item.user?.gender || "unknown",
+      };
+
+      assistData.forEach(assist => {
+        if (assist.substance__name) {
+          const substance = assist.substance__name.toLowerCase();
+          const riskLevel = assist.risk_flag || "no data";
+
+          if (substance.includes('tobacco')) processedData.tobacco = riskLevel;
+          else if (substance.includes('alcohol')) processedData.alcoholic = riskLevel;
+          else if (substance.includes('cannabis')) processedData.cannabis = riskLevel;
+          else if (substance.includes('cocaine')) processedData.cocaine = riskLevel;
+          else if (substance.includes('amphetamine')) processedData.amphetamine = riskLevel;
+          else if (substance.includes('inhalant')) processedData.inhalants = riskLevel;
+          else if (substance.includes('sedative')) processedData.sedatives = riskLevel;
+          else if (substance.includes('hallucinogen')) processedData.hallucinogens = riskLevel;
+          else if (substance.includes('opioid')) processedData.opioids = riskLevel;
+          else if (substance.includes('other')) processedData.other = riskLevel;
+        }
+      });
+
+      results.push(processedData);
     }
+    return results;
+  }, []);
+}
+
+function countRiskLevels(data) {
+  const initialCounts = {};
+
+  // Initialize counts for all substances
+  Object.values(substanceKeyMapping).forEach(substance => {
+    initialCounts[`${substance}_moderate_male`] = 0;
+    initialCounts[`${substance}_moderate_female`] = 0;
+    initialCounts[`${substance}_high_male`] = 0;
+    initialCounts[`${substance}_high_female`] = 0;
   });
-  
-  const renderChart = () => {
-    if (!selectedSubstance.value) return;
-    const ctx = chartCanvas.value.getContext('2d');
-    // Example: Dummy data for the selected substance
-    const data = [10, 20, 15, 30]; // Replace with your actual data
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-        datasets: [
-          {
-            label: selectedSubstance.value,
-            data: data,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            display: true
-          },
-          tooltip: {
-            mode: 'index',
-            intersect: false
-          }
-        },
-        scales: {
-          x: {
-            stacked: true
-          },
-          y: {
-            stacked: true,
-            ticks: {
-              beginAtZero: true
+
+  // Count risk levels
+  return data.reduce((counts, personData) => {
+    Object.entries(substanceKeyMapping).forEach(([_, substanceKey]) => {
+      const riskLevel = personData[substanceKey]?.toLowerCase();
+      const gender = personData.gender.toLowerCase();
+
+      if (riskLevel?.includes('moderate')) {
+        counts[`${substanceKey}_moderate_${gender}`]++;
+      } else if (riskLevel?.includes('severe')) {
+        counts[`${substanceKey}_high_${gender}`]++;
+      }
+    });
+    return counts;
+  }, initialCounts);
+}
+
+let donutChartTotalInstance = null;
+let donutChartModerateInstance = null;
+let barChartInstance = null;
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom',
+      labels: {
+        color: '#333',
+        font: {
+          size: 12,
+          family: "'Arial', sans-serif"
+        }
+      }
+    }
+  }
+};
+
+function renderChart(type, canvasId, data, options) {
+  const existingChart = type === 'donut' ?
+    (canvasId === 'donutChartTotal' ? donutChartTotalInstance : donutChartModerateInstance) :
+    barChartInstance;
+
+  if (existingChart) {
+    existingChart.destroy();
+  }
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const chart = new Chart(ctx, {
+    type: type === 'donut' ? 'doughnut' : 'bar',
+    data,
+    options
+  });
+
+  if (type === 'donut' && data.datasets[0].data.length === 1 && data.datasets[0].data[0] === 1 ||
+    type === 'bar' && !data.datasets.some(dataset => dataset.data.some(value => value > 0))) {
+    const chartArea = chart.chartArea;
+    const centerX = (chartArea.left + chartArea.right) / 2;
+    const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#666';
+    ctx.fillText('No data available', centerX, centerY);
+    ctx.restore();
+  }
+
+  return chart;
+}
+
+function updateCharts() {
+  const extractedData = extractMeasurementData(serviceAndTreatmentData.value);
+  const counts = countRiskLevels(extractedData);
+
+  const substanceKey = substanceKeyMapping[activeButton.value];
+  if (!substanceKey) return;
+
+  const data = {
+    'High-risk total male': counts[`${substanceKey}_high_male`],
+    'High-risk total female': counts[`${substanceKey}_high_female`],
+    'Moderate-risk total male': counts[`${substanceKey}_moderate_male`],
+    'Moderate-risk total female': counts[`${substanceKey}_moderate_female`],
+  };
+
+  const totalHighRisk = data['High-risk total male'] + data['High-risk total female'];
+  const totalModerateRisk = data['Moderate-risk total male'] + data['Moderate-risk total female'];
+
+  // Configure chart data
+  const donutDataTotal = {
+    labels: ['Male', 'Female'],
+    datasets: [{
+      data: totalHighRisk === 0 ? [1] : [data['High-risk total male'], data['High-risk total female']],
+      backgroundColor: totalHighRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+      hoverBackgroundColor: totalHighRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+    }]
+  };
+
+  const donutDataModerate = {
+    labels: ['Male', 'Female'],
+    datasets: [{
+      data: totalModerateRisk === 0 ? [1] : [data['Moderate-risk total male'], data['Moderate-risk total female']],
+      backgroundColor: totalModerateRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+      hoverBackgroundColor: totalModerateRisk === 0 ? ['#e6e6e6'] : ['#2c6975', '#00000'],
+    }]
+  };
+
+  const barData = {
+    labels: ['High Risk', 'Moderate Risk'],
+    datasets: [{
+      label: 'Male',
+      backgroundColor: '#2c6975',
+      data: [data['High-risk total male'], data['Moderate-risk total male']],
+    }, {
+      label: 'Female',
+      backgroundColor: '#00000',
+      data: [data['High-risk total female'], data['Moderate-risk total female']],
+    }]
+  };
+
+  const donutOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            if (context.chart.data.datasets[0].data.length === 1 &&
+              context.chart.data.datasets[0].data[0] === 1) {
+              return 'No data available';
             }
+            return `${context.label}: ${context.raw}`;
           }
         }
-      },
-      plugins: registerables
-    });
+      }
+    }
   };
-  
-  const selectSubstance = (substance) => {
-    selectedSubstance.value = substance;
+
+  const barOptions = {
+    ...chartOptions,
+    scales: {
+      x: { stacked: true },
+      y: {
+        stacked: true,
+        min: 0,
+        ticks: { stepSize: 1 }
+      }
+    },
+    plugins: {
+      ...chartOptions.plugins,
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            if (context.raw === 0) return `${context.dataset.label}: No data`;
+            return `${context.dataset.label}: ${context.raw}`;
+          }
+        }
+      }
+    }
   };
-  
-  watch(selectedSubstance, renderChart);
-  const chartCanvas = ref(null);
-  </script>
-  
-  <style scoped>
-  .container {
-    margin-top: 20px;
+
+  donutChartTotalInstance = renderChart('donut', 'donutChartTotal', donutDataTotal, donutOptions);
+  donutChartModerateInstance = renderChart('donut', 'donutChartModerate', donutDataModerate, donutOptions);
+  barChartInstance = renderChart('bar', 'barChart', barData, barOptions);
+}
+
+const setActiveButton = (buttonName) => {
+  activeButton.value = buttonName;
+  updateCharts();
+};
+
+// Watch for changes in the injected data
+watch(serviceAndTreatmentData, () => {
+  if (activeButton.value) {
+    updateCharts();
   }
-  
-  .substances-list {
-    padding: 10px;
+}, { deep: true });
+
+onMounted(() => {
+  setActiveButton(substances[0]);
+});
+</script>
+
+<style scoped>
+/* Styles remain exactly the same as in your original code */
+.risk-level-container {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  border-radius: 15px;
+  padding: 2rem;
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.main-title {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 2rem;
+}
+
+.buttons-section {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.substance-btn {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  color: #2B656F;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.substance-btn:hover,
+.substance-btn.active {
+  background: #2B656F;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e6f3f5;
+}
+
+.charts-section {
+  flex: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.chart-card {
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 10px;
+  padding: 1rem;
+  flex: 1 1 calc(50% - 0.5rem);
+  min-width: 250px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card.full-width {
+  flex-basis: 100%;
+}
+
+.chart-title {
+  color: #2B656F;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+canvas {
+  width: 100% !important;
+  height: 200px !important;
+}
+
+@media (max-width: 1024px) {
+  .content-wrapper {
+    flex-direction: column;
   }
-  
-  .substances-list .row .col-md-6 {
-    padding: 5px;
+
+  .chart-card {
+    flex-basis: 100%;
   }
-  
-  .card {
-    margin: 0 auto;
-    width : 100%;
-  }
-  
-  .card-title {
-    margin-bottom: 20px;
-  }
-  
-  .btn-primary {
-    background-color: white;
-    color: black;
-    border: 1px solid black;
-  }
-  
-  .btn-secondary {
-    background-color: #f2f2f2;
-    color: black;
-    border: 1px solid black;
-  }
-  
-  .canvas-container {
-    margin-top: 20px;
-  }
-  </style>
-  
+}
+</style>

@@ -33,7 +33,7 @@ function switchComponent(component) {
 async function fetchCounselorScreeningQuestions() {
     try {
         isLoadingQuestions.value = true;
-        const response = await axios.get(`${endpoints.ScreeningPreTests}?name=Case Screening`);
+        const response = await axios.get(`${endpoints.screeningPreTests}?name=Case Screening`);
         counselorScreeningQuestions.value = response.data;
         sessionStorage.setItem('counselorScreeningQuestions', JSON.stringify(counselorScreeningQuestions.value));
     } catch (error) {
@@ -54,13 +54,13 @@ onMounted(() => {
             if (userData.ageGroup !== undefined) {
                 userAgeGroup.value = userData.ageGroup;
             } else {
-                console.log('Error: ageGroup not found in userAgeData');
+                console.error('Error: ageGroup not found in userAgeData');
             }
         } else {
-            console.log('Error: userAgeData not found in session storage');
+            console.error('Error: userAgeData not found in session storage');
         }
     } catch (error) {
-        console.log('Error parsing userAgeData:', error);
+        console.error('Error parsing userAgeData:', error);
     }
 });
 

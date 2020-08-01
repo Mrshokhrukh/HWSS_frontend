@@ -1,44 +1,52 @@
 <template>
-    <div>
-        <div class="row p-4 bg-light">
-            <div class="col-3 left-selectors">
-                <div class="card h-100 p-4">
-                    <h5 class="hwss-primary mb-5">Screening Tools</h5>
-                    <div>
-                        <ul>
-                            <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
-                                :class="{ 'active': index === selectedMenuIndex }">
-                                <a href="#">{{ menu.name }}</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+    <div class="tool-selector-container">
+        <div class="tool-selector-layout">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <h4 class="sidebar-title">Screening Tools</h4>
+                <nav class="tool-navigation">
+                    <ul>
+                        <li v-for="(menu, index) in menus" :key="index" @click="selectMenu(index)"
+                            :class="{ 'active': index === selectedMenuIndex }">
+                            <a href="#" class="nav-link">
+                                {{ menu.name }}
+                                <div class="nav-indicator"></div>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
 
-            <div class="col-9">
-                <div class="row mb-5">
-                    <div class="d-flex align-items-center justify-content-between w-100">
-                        <div>
-                            <button class="btn hwss-btn-outline" @click="goBack">Back</button>
-                        </div>
-                        <div>
-                            <button class="btn hwss-btn2 me-3" @click="selectAll"
-                                :disabled="selectedMenu.value === 0">{{
-                                selectAllText }}</button>
-                            <button class="btn hwss-btn" @click="proceed"
-                                :disabled="selectedTools.length === 0">Proceed</button>
-                        </div>
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <button class="btn-back" @click="goBack">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        Back
+                    </button>
+                    <div class="action-buttons">
+                        <button class="btn-secondary" @click="selectAll" :disabled="selectedMenu.value === 0">
+                            {{ selectAllText }}
+                        </button>
+                        <button class="btn-primary" @click="proceed" :disabled="selectedTools.length === 0">
+                            Proceed
+                        </button>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-4 mb-4" v-for="(tool, index) in selectedMenu.tools" :key="index">
-                        <div class="selectable-card card py-5" @click="toggleSelection(tool)">
-                            <div class="tick-area">
-                                <input class="form-check-input" type="checkbox" :checked="isSelected(tool)">
-                            </div>
-                            <span class="hwss-icon material-symbols-outlined">{{ tool.icon }}</span>
-                            <p>{{ tool.name }}</p>
+
+                <!-- Tools Grid -->
+                <div class="tools-grid">
+                    <div v-for="(tool, index) in selectedMenu.tools" :key="index" class="tool-card"
+                        :class="{ 'disabled': !isSchoolCounselor && tool.name === 'SCHOOL ENV' }"
+                        @click="toggleSelection(tool)">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" :checked="isSelected(tool)"
+                                :disabled="!isSchoolCounselor && tool.name === 'SCHOOL ENV'">
+                            <div class="checkbox-indicator"></div>
                         </div>
+                        <span class="tool-icon material-symbols-outlined">{{ tool.icon }}</span>
+                        <p class="tool-name">{{ tool.name }}</p>
                     </div>
                 </div>
             </div>
@@ -49,26 +57,37 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 
-const emit = defineEmits(['proceed', 'goBack']);
+const emit = defineEmits(['proceedToScreening', 'goBack']);
+
+// Retrieve userOriginalRole from local storage
+const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+const userOriginalRole = userDetailsStore.user.role;
+
+// Check if the user is a school counselor
+const isSchoolCounselor = ref(userOriginalRole === 'school_counselor');
 
 // Define a separate array of tool objects
 const allTools = [
-    { id: 1, name: 'PHQ', icon: 'self_improvement' },
-    { id: 2, name: 'GAD', icon: 'sentiment_calm' },
+    { id: 1, name: 'PHQ9', icon: 'self_improvement' },
+    { id: 2, name: 'GAD7', icon: 'sentiment_calm' },
     { id: 3, name: 'ASSIST', icon: 'vaccines' },
-    { id: 4, name: 'ACE', icon: 'family_restroom' }
+    { id: 4, name: 'ACE', icon: 'family_restroom' },
+    { id: 5, name: 'SCHOOL ENV', icon: 'school' }
 ];
 
 const menus = ref([
     {
-        name: 'Both Tools', tools: allTools
+        name: 'All Tools', tools: allTools // Show all tools
     },
     {
-        name: 'Mental Health Tools', tools: allTools.filter(tool => tool.name !== 'ASSIST')
+        name: 'Mental Health Tools', tools: allTools.filter(tool => ['GAD7', 'PHQ9', 'ACE'].includes(tool.name)) // Show only GAD7, PHQ9, ACE
     },
     {
-        name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
-    }
+        name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST') // Show only ASSIST
+    },
+    {
+        name: 'School Environment Tools', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV') // Show only SCHOOL ENV
+    },
 ]);
 
 const selectedMenuIndex = ref(0);
@@ -96,13 +115,19 @@ const toggleSelection = (tool) => {
         // Add the tool if it's not selected
         selectedTools.value.push({ id: tool.id, name: tool.name });
     }
+
+    // Reorder the selected tools array based on the order in allTools array
+    selectedTools.value.sort((a, b) => {
+        return allTools.findIndex(tool => tool.id === a.id) - allTools.findIndex(tool => tool.id === b.id);
+    });
+
     // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
 
 const goBack = () => {
     // Implement go back logic
-    console.log('Go back clicked');
+    // console.log('Go back clicked');
     emit('goBackToRegister');
 };
 
@@ -133,82 +158,237 @@ const saveSelectedTools = () => {
 onMounted(() => {
     selectMenu(selectedMenuIndex.value);
 });
-
 </script>
 
 <style scoped>
-.hwss-icon {
-    font-size: 5rem;
+.tool-selector-container {
+    background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(43, 101, 111, 0.08);
+}
+
+.tool-selector-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    min-height: 600px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    padding: 1rem;
+}
+
+.sidebar-title {
+    color: #2B656F;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+}
+
+.tool-navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #1D4851;
+    text-decoration: none;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    background: rgba(43, 101, 111, 0.05);
+}
+
+.active .nav-link {
+    color: #2B656F;
+    font-weight: 600;
+    background: rgba(43, 101, 111, 0.08);
+}
+
+.nav-indicator {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0;
+    background: #2B656F;
+    transition: all 0.3s ease;
+}
+
+.active .nav-indicator {
+    width: 100%;
+}
+
+/* Main Content Styles */
+.main-content {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+/* Button Styles */
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(43, 101, 111, 0.2);
+    border-radius: 25px;
+    background: white;
+    color: #2B656F;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: rgba(43, 101, 111, 0.05);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    border: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: white;
+    border: 1px solid rgba(43, 101, 111, 0.2);
     color: #2B656F;
 }
 
-.tick-area {
+.btn-primary:hover:not(:disabled), 
+.btn-secondary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(43, 101, 111, 0.15);
+}
+
+/* Tools Grid */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.tool-card {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(43, 101, 111, 0.1);
+}
+
+.tool-card:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.1);
+}
+
+.checkbox-wrapper {
     position: absolute;
     top: 1rem;
     left: 1rem;
-    z-index: 10;
-    border-radius: 50%;
 }
 
-.tick-area input[type="checkbox"] {
-    border: 2px solid #2B656F !important;
+.checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #2B656F;
     border-radius: 50%;
-    scale: 1.5;
-}
-
-.selectable-card {
-    text-align: center;
-    border-radius: 8px;
+    appearance: none;
     cursor: pointer;
-}
-
-.left-selectors ul {
-    padding: 0;
-}
-
-.left-selectors ul li {
-    list-style: none;
-    margin-bottom: 1.5rem;
-}
-
-.left-selectors ul li a {
-    text-decoration: none;
-    color: #5d5d5d;
-    font-weight: 500;
     position: relative;
-    /* Add relative positioning */
+    transition: all 0.3s ease;
 }
 
-.left-selectors ul li.active a {
-    background: #ccdfc8;
-    font-weight: 600;
-    width: 100%;
-}
-
-/* Hover effect */
-.left-selectors ul li a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    width: 100%;
-    /* Start with full width */
-    height: 2px;
+.checkbox-wrapper input[type="checkbox"]:checked {
     background-color: #2B656F;
-    transition: width 0.3s ease, left 0.3s ease;
-    /* Add transition for width and left */
-    transform: scaleX(0);
-    /* Initially scale the width to 0 */
-    transform-origin: center;
-    /* Set the transform origin to the center */
 }
 
-.left-selectors ul li a:hover::after {
-    left: 0;
-    /* Start from left edge */
-    width: 100%;
-    /* Expand width to 100% on hover */
-    transform: scaleX(1);
-    /* Scale width to 1 */
+.checkbox-wrapper input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.tool-icon {
+    font-size: 3.5rem;
+    color: #2B656F;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.tool-name {
+    color: #1D4851;
+    font-weight: 500;
+    margin: 0;
+}
+
+.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .tool-selector-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        padding: 0;
+    }
+
+    .tool-navigation {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+
+    .tool-navigation ul {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .action-bar {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .action-buttons {
+        width: 100%;
+        justify-content: space-between;
+    }
 }
 </style>

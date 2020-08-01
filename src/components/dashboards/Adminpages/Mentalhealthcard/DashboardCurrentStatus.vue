@@ -1,29 +1,15 @@
 <template>
-  <div class="">
-    <h1 class="text-center fw-bold mt-5 mb-4" style="color: #2c6975;">Current Status in Bhutan</h1>
-    <div class="row">
-      <div class="col-md-4">
-        <div class="card bg-light mb-3">
-          <div class="card-body text-center">
-            <h5 class="card-title">Total Case Ongoing</h5>
-            <p class="card-text display-4 fw-bold"><i class="fas fa-user-injured me-2"></i>{{ totalCaseOngoing }}</p>
+  <div class="status-container">
+    <h3 class="status-title">Current Status in Bhutan</h3>
+    <div class="status-cards">
+      <div v-for="(status, index) in statuses" :key="index" class="status-card">
+        <div class="card-content">
+          <div class="card-icon">
+            <span class="material-symbols-outlined">{{ status.iconClass }}</span>
           </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card bg-light mb-3">
-          <div class="card-body text-center">
-            <h5 class="card-title">Total Case Discontinued</h5>
-            <p class="card-text display-4 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>{{
-              totalCaseUnresolved }}</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card bg-light mb-3">
-          <div class="card-body text-center">
-            <h5 class="card-title">Total Case Closed</h5>
-            <p class="card-text display-4 fw-bold"><i class="fas fa-check-circle me-2"></i>{{ totalCaseClosed }}</p>
+          <div class="card-info">
+            <h4 class="card-title">{{ status.title }}</h4>
+            <p class="card-count">{{ formatNumber(status.count) }}</p>
           </div>
         </div>
       </div>
@@ -32,39 +18,101 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, inject, onMounted } from 'vue';
 
-// Variables to store the numbers fetched from the API
-const totalCaseOngoing = ref(0);
-const totalCaseUnresolved = ref(0);
-const totalCaseClosed = ref(0);
+// Inject the data from parent component
+const newServiceAndTreatment = inject('serviceAndTreatmentData', []);
 
-// Function to fetch data from the API
-const fetchData = async () => {
-  try {
-    const response = await fetch('YOUR_API_ENDPOINT');
-    const data = await response.json();
-    // Assuming API response contains total case ongoing, unresolved, and closed counts
-    totalCaseOngoing.value = data.totalCaseOngoing;
-    totalCaseUnresolved.value = data.totalCaseUnresolved;
-    totalCaseClosed.value = data.totalCaseClosed;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
+const formatNumber = (num) => {
+  if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
+  if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(2) + 'K';
+  return num;
 };
 
-onMounted(() => {
-  fetchData();
-});
+// Updated computed properties to use injected data
+const totalOngoingCase = computed(() =>
+  newServiceAndTreatment.value?.filter(item => item.case_status === "On Going").length || 0
+);
+
+const totalClosedCase = computed(() =>
+  newServiceAndTreatment.value?.filter(item => item.case_status === "Case Closed").length || 0
+);
+
+const totalDiscontinueCase = computed(() =>
+  newServiceAndTreatment.value?.filter(item => item.case_status === "Case Discontinue").length || 0
+);
+
+const statuses = computed(() => [
+  { title: 'Total Case Ongoing', iconClass: 'description', count: totalOngoingCase.value },
+  { title: 'Total Case Discontinue', iconClass: 'credit_card_off', count: totalDiscontinueCase.value },
+  { title: 'Total Case Closed', iconClass: 'fact_check', count: totalClosedCase.value }
+]);
 </script>
 
 <style scoped>
-/* Add custom styles here */
-.display-4 {
-  font-size: 2.5rem;
+.status-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.status-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2B656F;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.status-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.status-card {
+  flex: 1;
+  padding: 1.5rem;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
 .card-title {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.card-count {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.status-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .status-cards {
+    flex-direction: column;
+  }
 }
 </style>
