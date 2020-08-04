@@ -1,67 +1,93 @@
-# Node modules
+# -------------------
+# Core
+# -------------------
 node_modules/
-
-# Vite + Vue build output
 dist/
-.svelte-kit/
 .vite/
 
-# Local development
+# -------------------
+# Environment Configs
+# -------------------
 .env
-.env.*.local
+.env.*
 *.local
-*.env.*
 
-# IDEs & Editors
+# -------------------
+# IDE / Editor Settings
+# -------------------
 .vscode/
 .idea/
 *.sw?
-*.sublime-project
-*.sublime-workspace
+*.sublime-*
 
-# Logs
+# -------------------
+# OS Specific
+# -------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# -------------------
+# Logs & Debug
+# -------------------
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 bun.lockb
+*.tsbuildinfo
 
-# macOS cruft
-.DS_Store
-
-# Dependency locks (optional, choose one)
+# -------------------
+# Dependency Locks
+# Keep ONLY the one you're using
+# -------------------
 package-lock.json
 pnpm-lock.yaml
-# yarn.lock — keep if you're using Yarn
-# bun.lockb — ignore it since it's not part of your current flow
+# yarn.lock        <- KEEP THIS if using yarn
+bun.lock   
 
-# Cypress stuff
-cypress/videos/
+# -------------------
+# Cypress
+# -------------------
 cypress/screenshots/
-cypress/e2e/.DS_Store
+cypress/videos/
 cypress/e2e/*.spec.ts.map
+cypress/e2e/.DS_Store
 
-# Coverage reports
+# -------------------
+# Coverage & Test Artifacts
+# -------------------
 coverage/
 *.lcov
 
+# -------------------
 # Docker
+# -------------------
 *.pid
-*.pid.lock
 *.sock
+*.pid.lock
 docker-compose.override.yml
 
-# Misc build
-*.tsbuildinfo
+# -------------------
+# Auto-generated
+# -------------------
+auto-imports.d.ts
+components.d.ts
+
+# -------------------
+# Build Artifacts & Archives
+# -------------------
 *.tgz
 
-# Auto-generated types
-components.d.ts
-auto-imports.d.ts
-
-# Others
+# -------------------
+# Project-specific trash
+# -------------------
 retry-yarn.sh
+et --hard 644bf2055445cbc8626fec96dbeaeb573a82cd5f
 
-# Optional: OS-dependent
-Thumbs.db
-ehthumbs.db
+# -------------------
+# Nginx files
+# Uncomment if you don’t want these in version control
+# -------------------
+# nginx/
+# nginx.conf
