@@ -109,9 +109,11 @@ const disabledSubstancesQ345 = computed(() => {
 
     if (q68Index === -1) return []; // Question 68 not found
 
-    // Only apply this disable logic for question 68 and the next 3 questions
+    // Only apply this disable logic for the questions AFTER question 68
     const currentPosition = currentQuestionIndex.value - 1; // 0-based index
-    const isInRange = currentPosition >= q68Index && currentPosition <= q68Index + 3;
+    
+    // --- FIX: Changed >= to > to prevent disabling on the current question ---
+    const isInRange = currentPosition > q68Index && currentPosition <= q68Index + 3;
 
     if (isInRange) {
         return currentQuestion.substances.filter(substance => {
@@ -129,8 +131,9 @@ const shouldDisableSubstance = (substance) => {
     // Question 68's disable logic applies to next 3 questions based on position
     const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
     const currentPosition = currentQuestionIndex.value - 1;
+    // --- FIX: Changed >= to > here as well to match the source logic ---
     const isInQ68Range = q68Index !== -1 &&
-        currentPosition >= q68Index &&
+        currentPosition > q68Index &&
         currentPosition <= q68Index + 3;
 
     const isDisabledFromQ68 = isInQ68Range && disabledSubstancesQ345.value.includes(substance);

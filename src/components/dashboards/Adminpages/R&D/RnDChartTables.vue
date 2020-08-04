@@ -13,7 +13,12 @@
 
     <div class="card-body p-3">
       <DataTable :value="tableData" :rowHover="true" class="table-modern" responsiveLayout="scroll" stripedRows
-        showGridlines tableStyle="min-width: 50rem" size="small">
+        showGridlines tableStyle="min-width: 50rem" size="small" 
+        :paginator="true" 
+        :rows="5"
+        :rowsPerPageOptions="[5, 10, 25, 50, 100]"
+        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries">
 
         <ColumnGroup type="header">
           <Row>
@@ -140,15 +145,12 @@ const displaySUDDialog = ref(false);
 const selectedSchool = ref('');
 const selectedSUDData = ref({});
 
-// New function to process substance data from multiple sources
 const processSubstanceData = (item, data) => {
-  // Try case_substance_risks first (from the first paste)
   const caseSubstanceRisks = item.case_substance_risks;
   if (Array.isArray(caseSubstanceRisks)) {
     caseSubstanceRisks.forEach(substance => {
       if (substance.substance_name && substance.risk_flag) {
         const substanceType = mapSubstanceType(substance.substance_name.toLowerCase());
-        // Extract just the risk level from the flag (e.g., "severe (24)" -> "severe")
         const riskLevelText = substance.risk_flag.split(' ')[0];
         const riskLevel = mapRiskLevel(riskLevelText);
         
@@ -157,10 +159,9 @@ const processSubstanceData = (item, data) => {
         }
       }
     });
-    return; // If we processed this data, no need to check assist_data
+    return;
   }
   
-  // Fallback to assist_data (original code path)
   const assistData = item.screening_data?.assist_data;
   if (Array.isArray(assistData)) {
     assistData.forEach(substance => {
@@ -179,100 +180,95 @@ const processSubstanceData = (item, data) => {
 const tableData = computed(() => {
   const schoolEvents = new Map();
 
-  props.filteredData.forEach(item => {
-    const schoolEvent = item.user?.agency_details?.agency?.agency_name || 
-                        item.user?.active_agency?.agency_name || 'Unknown';
+  if (!Array.isArray(props.filteredData)) {
+    return [];
+  }
 
-    if (!schoolEvents.has(schoolEvent)) {
-      schoolEvents.set(schoolEvent, {
-        schoolEvent,
+  props.filteredData.forEach(item => {
+    const agencyName = item.user?.active_agency?.agency_name ||
+                       item.user?.agency_details?.agency?.agency_name || 'Unknown';
+
+    if (agencyName === 'Unknown') return;
+
+    let groupKey;
+    if (item.screening_data?.event) {
+      groupKey = `Event: ${item.screening_data.event}`;
+    } else if (item.screening_data?.case) {
+      groupKey = agencyName;
+    } else {
+      groupKey = `${agencyName} (Other)`;
+    }
+
+    if (!schoolEvents.has(groupKey)) {
+      schoolEvents.set(groupKey, {
+        schoolEvent: groupKey,
         individualsScreened: 0,
         suicidalBehavior: 0,
         phq: { Minimal: 0, Mild: 0, Moderate: 0, 'Moderately Severe': 0, Severe: 0 },
         gad: { Minimal: 0, Mild: 0, Moderate: 0, 'Moderately Severe': 0, Severe: 0 },
         sud: {}
       });
-      // Initialize SUD data structure
       substances.forEach(substance => {
-        schoolEvents.get(schoolEvent).sud[substance.toLowerCase()] = {
+        schoolEvents.get(groupKey).sud[substance.toLowerCase()] = {
           'No Risk': 0, 'Low Risk': 0, 'Moderate Risk': 0, 'High Risk': 0
         };
       });
     }
 
-    const data = schoolEvents.get(schoolEvent);
+    const data = schoolEvents.get(groupKey);
     data.individualsScreened++;
 
-    // Process PHQ and GAD data directly from screening_data
     if (item.screening_data) {
-      // For PHQ data
       const phqInterpretation = item.screening_data.phq_interpretation;
       if (phqInterpretation) {
-        // Handle "None or Minimal" special case
         let level = phqInterpretation === "None or Minimal" ? "Minimal" : phqInterpretation;
-        // Capitalize first letter
         level = level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
-        
         if (Object.prototype.hasOwnProperty.call(data.phq, level)) {
           data.phq[level]++;
         }
       }
 
-      // For GAD data
       const gadInterpretation = item.screening_data.gad_interpretation;
       if (gadInterpretation) {
         let level = gadInterpretation;
-        // Capitalize first letter
         level = level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
-        
         if (Object.prototype.hasOwnProperty.call(data.gad, level)) {
           data.gad[level]++;
         }
       }
 
-      // Check for suicidal behavior in PHQ data
       if (Array.isArray(item.screening_data.phq_data)) {
-        const suicidalQuestion = item.screening_data.phq_data.find(q => 
+        const suicidalQuestion = item.screening_data.phq_data.find(q =>
           q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
         );
-        
-        if (suicidalQuestion && 
-            (suicidalQuestion.selectedOption === 'Nearly every day' || 
-             suicidalQuestion.score >= 3)) {
+        if (suicidalQuestion && (suicidalQuestion.selectedOption === 'Nearly every day' || suicidalQuestion.score >= 3)) {
           data.suicidalBehavior++;
         }
       }
     }
 
-    // Process substance data with our new function
     processSubstanceData(item, data);
   });
 
   return Array.from(schoolEvents.values());
 });
 
-// Updated to handle more substance name variations
 const mapSubstanceType = (substanceName) => {
-  if (substanceName.includes('alcoholic') || substanceName.includes('alcohol') || substanceName.includes('beer') || substanceName.includes('wine')) return 'alcoholic';
+  if (substanceName.includes('alcoholic') || substanceName.includes('alcohol')) return 'alcoholic';
   if (substanceName.includes('tobacco') || substanceName.includes('cigarette')) return 'tobacco';
-  if (substanceName.includes('cannabis') || substanceName.includes('marijuana') || substanceName.includes('hash')) return 'cannabis';
+  if (substanceName.includes('cannabis') || substanceName.includes('marijuana')) return 'cannabis';
   if (substanceName.includes('cocaine')) return 'cocaine';
   if (substanceName.includes('amphetamine') || substanceName.includes('meth')) return 'amphetamine';
-  if (substanceName.includes('inhalant') || substanceName.includes('glue') || substanceName.includes('petrol')) return 'inhalants';
+  if (substanceName.includes('inhalant')) return 'inhalants';
   if (substanceName.includes('sedative') || substanceName.includes('sleeping')) return 'sedatives';
-  if (substanceName.includes('hallucinogen') || substanceName.includes('lsd')) return 'hallucinogens';
-  if (substanceName.includes('opioid') || substanceName.includes('heroin') || substanceName.includes('morphine')) return 'opioids';
-  if (substanceName.includes('other')) return 'other';
+  if (substanceName.includes('hallucinogen')) return 'hallucinogens';
+  if (substanceName.includes('opioid')) return 'opioids';
   return 'other';
 };
 
-// Updated to handle the format from case_substance_risks
 const mapRiskLevel = (flag) => {
   if (!flag) return null;
-  
-  // Convert to lowercase for case-insensitive comparison
   const flagLower = flag.toLowerCase();
-  
   if (flagLower.includes('none')) return 'No Risk';
   if (flagLower.includes('low')) return 'Low Risk';
   if (flagLower.includes('moderate')) return 'Moderate Risk';
@@ -289,10 +285,7 @@ const showSUDDetails = (data) => {
 const getSUDDetails = (substance) => {
   const substanceLower = substance.toLowerCase();
   if (!selectedSUDData.value || !selectedSUDData.value[substanceLower]) {
-    return riskLevels.map(level => ({
-      riskLevel: level,
-      count: 0
-    }));
+    return riskLevels.map(level => ({ riskLevel: level, count: 0 }));
   }
   return riskLevels.map(level => ({
     riskLevel: level,
@@ -302,77 +295,52 @@ const getSUDDetails = (substance) => {
 
 const downloadPDF = async () => {
   const doc = new jsPDF();
-
-  // Add title
   doc.setFontSize(16);
   doc.text('School/Event Data Report', 14, 15);
-
-  // Convert table data to format suitable for autoTable
   const tableHeaders = [
-    'Agency/Event',
-    'Individuals Screened',
-    'Suicidal Behavior',
+    'Agency/Event', 'Individuals Screened', 'Suicidal Behavior',
     ...severityLevels.map(level => `PHQ ${level}`),
     ...severityLevels.map(level => `GAD ${level}`)
   ];
-
   const tableRows = tableData.value.map(row => [
-    row.schoolEvent,
-    row.individualsScreened,
-    row.suicidalBehavior,
+    row.schoolEvent, row.individualsScreened, row.suicidalBehavior,
     ...Object.values(row.phq),
     ...Object.values(row.gad)
   ]);
-
   doc.autoTable({
     head: [tableHeaders],
     body: tableRows,
     startY: 25,
     theme: 'grid',
-    styles: {
-      fontSize: 8,
-      cellPadding: 2
-    },
-    headStyles: {
-      fillColor: [43, 101, 111],
-      textColor: 255
-    },
-    alternateRowStyles: {
-      fillColor: [245, 245, 245]
-    }
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [43, 101, 111], textColor: 255 },
+    alternateRowStyles: { fillColor: [245, 245, 245] }
   });
-
   doc.save('school-event-data.pdf');
 };
 
 const printTable = () => {
-  const printContent = document.querySelector('.p-datatable');
+  const printContent = document.querySelector('.p-datatable-wrapper');
   const WinPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
-
   WinPrint.document.write(`
     <html>
-      <head>
-        <title>Print Table</title>
+      <head><title>Print Table</title>
         <style>
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          body { font-family: sans-serif; }
+          table { border-collapse: collapse; width: 100%; font-size: 10px; }
+          th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
           th { background-color: #2B656F; color: white; }
           tr:nth-child(even) { background-color: #f2f2f2; }
         </style>
       </head>
-      <body>
-        ${printContent.outerHTML}
-      </body>
-    </html>
-  `);
-
+      <body><h3>School/Event Data Report</h3>${printContent.outerHTML}</body>
+    </html>`);
   WinPrint.document.close();
   WinPrint.focus();
   WinPrint.print();
   WinPrint.close();
 };
 
-// Helper functions for Bootstrap classes
 const getSeverityClass = (level, value) => {
   if (value === 0) return 'text-secondary bg-secondary-subtle';
   switch (level) {
@@ -395,25 +363,21 @@ const getRiskLevelClass = (level) => {
   }
 };
 </script>
+
 <style scoped>
-/* Custom gradient */
 .custom-gradient {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
 }
-
-/* Custom styles to complement Bootstrap */
 :deep(.btn-custom) {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: white;
   font-size: 0.875rem;
 }
-
 :deep(.btn-custom:hover) {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.35);
 }
-
 :deep(.btn-secondary-custom) {
   background: #2B656F;
   border: none;
@@ -422,15 +386,12 @@ const getRiskLevelClass = (level) => {
   border-radius: 0.375rem;
   font-size: 0.875rem;
 }
-
 :deep(.btn-secondary-custom:hover) {
   background: #1D4851;
 }
-
 .table-modern {
   font-size: 0.875rem;
 }
-
 .table-modern :deep(.header-main) {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: white;
@@ -439,7 +400,6 @@ const getRiskLevelClass = (level) => {
   font-size: 0.875rem;
   font-weight: 500;
 }
-
 .table-modern :deep(.header-secondary) {
   background: #1D4851;
   color: rgba(255, 255, 255, 0.9);
@@ -447,98 +407,71 @@ const getRiskLevelClass = (level) => {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
 }
-
 :deep(.p-datatable .p-datatable-tbody > tr > td) {
   padding: 0.5rem 0.75rem;
 }
-
 .dialog-modern :deep(.p-dialog-header) {
   background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
   color: white;
   padding: 1rem;
 }
-
 .dialog-modern :deep(.p-tabview-nav-link) {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
 }
-
 :deep(.p-datatable) {
   border-radius: 0.375rem;
   overflow: hidden;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
 }
-
 :deep(.p-datatable .p-datatable-wrapper) {
-  border-radius: 0.375rem;
+  border-radius: 0.375rem 0.375rem 0 0;
   border: 1px solid rgba(43, 101, 111, 0.1);
 }
-
 :deep(.badge) {
   font-weight: 500;
   padding: 0.25em 0.75em;
   font-size: 0.75rem;
 }
-
 :deep(.badge.bg-primary-subtle) {
   background-color: rgba(43, 101, 111, 0.1) !important;
   color: #2B656F !important;
 }
-
-/* Severity classes with new color scheme */
-:deep(.severity-minimal) {
-  background-color: rgba(43, 101, 111, 0.1);
-  color: #2B656F;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 0.25rem;
-}
-
-:deep(.severity-mild) {
-  background-color: rgba(43, 101, 111, 0.2);
-  color: #2B656F;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 0.25rem;
-}
-
-:deep(.severity-moderate) {
-  background-color: rgba(43, 101, 111, 0.3);
-  color: #2B656F;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 0.25rem;
-}
-
-:deep(.severity-severe) {
-  background-color: rgba(43, 101, 111, 0.4);
-  color: white;
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 0.25rem;
-}
-
-/* Dialog styling improvements */
-:deep(.p-dialog) {
-  border-radius: 0.375rem;
-  overflow: hidden;
-  font-size: 0.875rem;
-}
-
-:deep(.p-dialog-content) {
-  padding: 1rem;
-}
-
-:deep(.p-tabview .p-tabview-panels) {
-  padding: 1rem 0;
-}
-
-/* Add compact styling for the DataTable */
 :deep(.p-datatable.p-datatable-sm .p-datatable-thead > tr > th) {
   padding: 0.5rem 0.75rem;
 }
-
 :deep(.p-datatable.p-datatable-sm .p-datatable-tbody > tr > td) {
   padding: 0.5rem 0.75rem;
+}
+:deep(.p-paginator) {
+  background: #f8f9fa;
+  border: 1px solid rgba(43, 101, 111, 0.1);
+  border-top: none;
+  padding: 0.5rem 0.75rem;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+:deep(.p-paginator .p-paginator-current) {
+  font-size: 0.875rem;
+}
+:deep(.p-paginator .p-dropdown) {
+  height: 2.25rem;
+}
+:deep(.p-paginator .p-paginator-first),
+:deep(.p-paginator .p-paginator-prev),
+:deep(.p-paginator .p-paginator-next),
+:deep(.p-paginator .p-paginator-last) {
+  min-width: 2.25rem;
+  height: 2.25rem;
+}
+:deep(.p-paginator .p-paginator-pages .p-paginator-page) {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.25rem;
+}
+:deep(.p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
+  background: #2B656F;
+  border-color: #2B656F;
+  color: white;
 }
 </style>

@@ -108,10 +108,8 @@ const safeJSONParse = (data) => {
 const getMentalHealthData = (item) => {
     const screeningData = item.screening_data;
 
-    // Handle string "Data not available" case
     if (screeningData === "Data not available") return null;
 
-    // If it's a string, try to parse it
     if (typeof screeningData === 'string') {
         return safeJSONParse(screeningData);
     }
@@ -123,28 +121,39 @@ const getSubstanceData = (item) => {
     const eventData = item.event_substance_risks;
     const caseData = item.case_substance_risks;
 
-    // If only one exists, return that
     if (!eventData && !caseData) return null;
     if (!eventData) return caseData;
     if (!caseData) return eventData;
 
-    // If both exist, compare dates and use latest
     const eventDate = new Date(eventData[0]?.created_at || 0);
     const caseDate = new Date(caseData[0]?.created_at || 0);
     return eventDate > caseDate ? eventData : caseData;
 };
 
+/**
+ * [FIXED] This function is updated to be more robust.
+ * It now handles interpretation strings that may contain extra words (e.g., "Mild depression")
+ * by extracting the core severity level, ensuring accurate data counting.
+ */
 const standardizeInterpretation = (interpretation) => {
     if (!interpretation) return null;
-    interpretation = interpretation.toLowerCase();
+    const lower = interpretation.toLowerCase().trim();
 
-    // Handle special cases
-    if (interpretation === 'none or minimal') return 'Minimal';
-    if (interpretation === 'moderately severe') return 'Moderately Severe';
-
-    // Capitalize first letter
-    return interpretation.charAt(0).toUpperCase() + interpretation.slice(1);
+    // Handle multi-word cases first as they are more specific.
+    if (lower.startsWith('moderately severe')) {
+        return 'Moderately Severe';
+    }
+    if (lower.startsWith('none or minimal')) {
+        return 'Minimal';
+    }
+    
+    // For other cases, assume the severity level is the first word.
+    const firstWord = lower.split(' ')[0];
+    
+    // Capitalize the first word to match the keys in SEVERITY_LEVELS.
+    return firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
 };
+
 
 // Common Chart Options
 const commonChartOptions = {
@@ -399,13 +408,11 @@ const substanceRiskChartSeries = computed(() => {
     const riskLevels = ['none', 'low', 'moderate', 'severe'];
     const substances = substanceRiskChartOptions.value.xaxis.categories;
 
-    // Initialize counts
     const riskCounts = {};
     substances.forEach(substance => {
         riskCounts[substance] = Object.fromEntries(riskLevels.map(level => [level, 0]));
     });
 
-    // Map substance names from the data to chart categories
     const substanceNameMap = {
         'Tobacco': 'Tobacco',
         'Alcoholic': 'Alcohol',
@@ -417,7 +424,6 @@ const substanceRiskChartSeries = computed(() => {
         'Hallucinogens': 'Hallucinogens',
         'Opioids': 'Opioids',
         'Other': 'Other',
-        // 'Any': 'Other'
     };
 
     props.filteredData.forEach(item => {
@@ -425,9 +431,7 @@ const substanceRiskChartSeries = computed(() => {
         if (!substanceData) return;
 
         substanceData.forEach(substance => {
-            // Extract first word of substance name
             const firstWord = substance.substance_name.split(' ')[0];
-            // Map to correct category name
             const categoryName = substanceNameMap[firstWord] || firstWord;
             const riskFlag = substance.risk_flag.toLowerCase().split(' ')[0];
 

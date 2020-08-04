@@ -65,7 +65,7 @@
                         <tbody>
                             <tr v-for="substance in filterSubstances(currentQuestion.substances)" :key="substance"
                                 :class="{ 'table-row-disabled': isSubstanceDisabled(substance) }">
-                                <td class="text-capitalize text-black">
+                                <td class=" text-black">
                                     {{ renderSubstanceOptions(substance) }}
                                 </td>
                                 <td v-for="option in currentQuestion.answers" :key="option.id" class="text-center">

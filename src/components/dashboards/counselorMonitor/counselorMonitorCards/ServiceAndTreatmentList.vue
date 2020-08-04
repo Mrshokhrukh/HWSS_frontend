@@ -1,6 +1,6 @@
+```vue
 <template>
   <div class="dashboard-container">
-    <!-- Header remains the same -->
     <div class="dashboard-header">
       <div class="header-content">
         <h4 class="dashboard-title">
@@ -30,7 +30,6 @@
       </div>
     </div>
 
-    <!-- Loading State -->
     <div v-if="isLoading" class="loading-state">
       <div class="spinner-wrapper">
         <div class="spinner"></div>
@@ -38,7 +37,6 @@
       </div>
     </div>
 
-    <!-- Error State -->
     <div v-else-if="hasError" class="error-state">
       <div class="error-content">
         <i class="bi bi-exclamation-triangle"></i>
@@ -47,7 +45,6 @@
       </div>
     </div>
 
-    <!-- Enhanced Data Table -->
     <div class="table-wrapper">
       <DataTable
         :value="processedRows"
@@ -76,7 +73,6 @@
         ]"
         ref="dt"
       >
-        <!-- Date Column -->
         <Column field="date" header="Date" sortable>
           <template #body="slotProps">
             <div class="date-cell">
@@ -86,7 +82,6 @@
           </template>
         </Column>
 
-        <!-- Patient Details Column -->
         <Column field="full_name" header="Patient Details" sortable>
           <template #body="slotProps">
             <div class="patient-cell">
@@ -100,7 +95,6 @@
             </div>
           </template>
         </Column>
-        <!-- Status Columns -->
         <Column field="assessment_status" header="Assessment" sortable>
           <template #body="slotProps">
             <StatusBadge :status="slotProps.data.assessment_status" type="assessment" />
@@ -127,7 +121,6 @@
           </template>
         </Column>
 
-        <!-- Actions Column -->
         <Column header="Actions" :exportable="false" style="min-width: 8rem">
           <template #body="slotProps">
             <div class="actions-cell">
@@ -139,7 +132,7 @@
                 <i class="bi bi-eye-fill"></i>
               </Button>
               <Button
-                v-if="canEdit"
+                v-if="canEdit && slotProps.data.case_status !== 'Case Closed'"
                 class="action-btn edit-btn"
                 @click="viewDetails(slotProps.data, 'edit')"
                 v-tooltip.top="'Edit Record'"
@@ -167,7 +160,11 @@
             <span class="modal-subtitle">{{ selectedUser?.full_name }}</span>
           </h3>
           <div class="modal-actions">
-            <Button v-if="!isEditMode && canEdit" class="edit-mode-btn" @click="switchToEditMode">
+            <Button
+              v-if="!isEditMode && canEdit"
+              class="edit-mode-btn"
+              @click="switchToEditMode"
+            >
               <i class="bi bi-pencil-fill me-2"></i>
               Switch to Edit
             </Button>
@@ -179,16 +176,12 @@
           </div>
         </div>
 
-        <!-- Content Container -->
         <div class="d-flex position-relative" style="height: calc(100vh - 120px); overflow: hidden">
-          <!-- Sidebar -->
           <div class="modal-sidebar bg-light border-end overflow-auto" style="width: 320px">
             <div class="p-3">
-              <!-- Profile Header -->
               <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-4">
                   <div class="d-flex align-items-center">
-                    <!-- Avatar Section -->
                     <div
                       class="d-flex align-items-center justify-content-center bg-light rounded-circle p-3 me-4"
                       style="width: 64px; height: 64px"
@@ -196,7 +189,6 @@
                       <i class="bi bi-person-circle fs-1 hwss-primary"></i>
                     </div>
 
-                    <!-- User Info Section -->
                     <div>
                       <h4 class="mb-1 fw-bold">
                         {{ selectedUser?.user?.first_name }} {{ selectedUser?.user?.last_name }}
@@ -210,9 +202,7 @@
                 </div>
               </div>
 
-              <!-- Basic Info -->
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-person-badge fs-4 me-2 hwss-primary"></i>
@@ -220,11 +210,8 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
-                  <!-- Age and Sex Row -->
                   <div class="row g-4 mb-4">
-                    <!-- Age -->
                     <div class="col-6">
                       <div class="d-flex align-items-center">
                         <div
@@ -241,7 +228,6 @@
                       </div>
                     </div>
 
-                    <!-- Sex -->
                     <div class="col-6">
                       <div class="d-flex align-items-center">
                         <div
@@ -257,7 +243,6 @@
                     </div>
                   </div>
 
-                  <!-- Employee ID Row -->
                   <div class="row g-4 mb-3">
                     <div class="col-12">
                       <div class="d-flex align-items-center">
@@ -276,7 +261,6 @@
                     </div>
                   </div>
 
-                  <!-- Citizen ID Row -->
                   <div class="row g-4">
                     <div class="col-12">
                       <div class="d-flex align-items-center">
@@ -295,9 +279,7 @@
                 </div>
               </div>
 
-              <!-- Agency Info -->
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-building fs-4 me-2 hwss-primary"></i>
@@ -305,7 +287,6 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
                   <div class="d-flex align-items-center">
                     <div
@@ -323,9 +304,7 @@
                 </div>
               </div>
 
-              <!-- Personal Details -->
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-person-lines-fill fs-4 me-2 hwss-primary"></i>
@@ -333,10 +312,8 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
                   <div class="d-flex flex-column gap-4">
-                    <!-- Contact Number -->
                     <div class="d-flex align-items-center">
                       <div
                         class="d-flex align-items-center justify-content-center bg-light rounded-circle p-2 me-3"
@@ -349,7 +326,6 @@
                       </div>
                     </div>
 
-                    <!-- Mother's Name -->
                     <div class="d-flex align-items-center">
                       <div
                         class="d-flex align-items-center justify-content-center bg-light rounded-circle p-2 me-3"
@@ -364,7 +340,6 @@
                       </div>
                     </div>
 
-                    <!-- Father's Name -->
                     <div class="d-flex align-items-center">
                       <div
                         class="d-flex align-items-center justify-content-center bg-light rounded-circle p-2 me-3"
@@ -379,7 +354,6 @@
                       </div>
                     </div>
 
-                    <!-- Parents' Occupation -->
                     <div class="d-flex align-items-center">
                       <div
                         class="d-flex align-items-center justify-content-center bg-light rounded-circle p-2 me-3"
@@ -394,7 +368,6 @@
                       </div>
                     </div>
 
-                    <!-- Parental Status -->
                     <div class="d-flex align-items-center">
                       <div
                         class="d-flex align-items-center justify-content-center bg-light rounded-circle p-2 me-3"
@@ -412,9 +385,7 @@
                 </div>
               </div>
 
-              <!-- Address Information -->
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-geo-alt-fill fs-4 me-2 hwss-primary"></i>
@@ -422,9 +393,7 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
-                  <!-- Permanent Address Section -->
                   <div class="mb-4">
                     <div class="d-flex align-items-center mb-3">
                       <i class="bi bi-house-fill fs-5 me-2 hwss-primary"></i>
@@ -432,7 +401,6 @@
                     </div>
 
                     <div class="ps-4">
-                      <!-- Village -->
                       <div class="mb-3">
                         <div class="d-flex align-items-center">
                           <div
@@ -449,7 +417,6 @@
                         </div>
                       </div>
 
-                      <!-- Gewog -->
                       <div class="mb-3">
                         <div class="d-flex align-items-center">
                           <div
@@ -466,7 +433,6 @@
                         </div>
                       </div>
 
-                      <!-- Dzongkhag -->
                       <div class="mb-3">
                         <div class="d-flex align-items-center">
                           <div
@@ -485,7 +451,6 @@
                     </div>
                   </div>
 
-                  <!-- Present Address Section -->
                   <div>
                     <div class="d-flex align-items-center mb-3">
                       <i class="bi bi-house-door-fill fs-5 me-2 hwss-primary"></i>
@@ -493,7 +458,6 @@
                     </div>
 
                     <div class="ps-4">
-                      <!-- Village -->
                       <div class="mb-3">
                         <div class="d-flex align-items-center">
                           <div
@@ -510,7 +474,6 @@
                         </div>
                       </div>
 
-                      <!-- Gewog -->
                       <div class="mb-3">
                         <div class="d-flex align-items-center">
                           <div
@@ -527,7 +490,6 @@
                         </div>
                       </div>
 
-                      <!-- Dzongkhag -->
                       <div>
                         <div class="d-flex align-items-center">
                           <div
@@ -549,12 +511,9 @@
               </div>
             </div>
           </div>
-          <!-- Main Content Area -->
           <div class="modal-main-content flex-grow-1 overflow-auto">
             <div class="p-4">
-              <!-- Past Mental Health Records -->
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-journal-medical fs-4 me-2 hwss-primary"></i>
@@ -562,9 +521,7 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
-                  <!-- Records Container -->
                   <div v-if="selectedUser?.diagnosis?.length">
                     <div
                       v-for="(record, index) in selectedUser.diagnosis"
@@ -584,7 +541,6 @@
                     </div>
                   </div>
 
-                  <!-- No Records Message -->
                   <div v-else class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                       <div
@@ -599,7 +555,6 @@
               </div>
 
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-activity fs-4 me-2 hwss-primary"></i>
@@ -607,10 +562,8 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
                   <div class="row g-3">
-                    <!-- PHQ-9 Score -->
                     <div class="col-12">
                       <div class="d-flex align-items-center">
                         <div
@@ -637,7 +590,6 @@
                       </div>
                     </div>
 
-                    <!-- GAD-7 Score -->
                     <div class="col-12">
                       <div class="d-flex align-items-center">
                         <div
@@ -664,7 +616,6 @@
                       </div>
                     </div>
 
-                    <!-- ACE Score -->
                     <div class="col-12">
                       <div class="d-flex align-items-center">
                         <div
@@ -695,7 +646,6 @@
               </div>
 
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-clipboard2-pulse-fill fs-4 me-2 hwss-primary"></i>
@@ -703,7 +653,6 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
                   <template v-if="selectedUser.substanceRisks">
                     <div class="row g-4">
@@ -731,7 +680,6 @@
                     </div>
                   </template>
 
-                  <!-- Empty State -->
                   <div v-else class="text-center py-4">
                     <div class="d-flex flex-column align-items-center">
                       <div
@@ -746,7 +694,6 @@
               </div>
 
               <div class="card border-0 shadow-sm mb-4">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center">
                     <i class="bi bi-droplet-fill fs-4 me-2 hwss-primary"></i>
@@ -754,7 +701,6 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
                   <template
                     v-if="
@@ -782,7 +728,6 @@
                     </div>
                   </template>
 
-                  <!-- No Risk State -->
                   <template
                     v-else-if="
                       selectedUser.injectionRisk &&
@@ -802,7 +747,6 @@
                             class="badge"
                             :class="getRiskClass(selectedUser.injectionRisk.measurement)"
                           >
-                            <!-- Or your preferred class like bg-success -->
                             {{ selectedUser.injectionRisk.measurement }}
                           </span>
                         </div>
@@ -812,9 +756,7 @@
                 </div>
               </div>
 
-              <!-- Services and Treatment Form -->
               <div class="card border-0 shadow-sm mb-4" :class="{ 'opacity-75': !isEditMode }">
-                <!-- Card Header -->
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
@@ -825,10 +767,8 @@
                   </div>
                 </div>
 
-                <!-- Card Body -->
                 <div class="card-body p-4">
                   <div class="row g-4">
-                    <!-- Assessment Status -->
                     <div class="col-md-6">
                       <div class="d-flex align-items-start">
                         <div
@@ -853,7 +793,6 @@
                       </div>
                     </div>
 
-                    <!-- Case Status -->
                     <div class="col-md-6">
                       <div class="d-flex align-items-start">
                         <div
@@ -879,7 +818,6 @@
                       </div>
                     </div>
 
-                    <!-- Counseling Status -->
                     <div class="col-md-6">
                       <div class="d-flex align-items-start">
                         <div
@@ -905,7 +843,6 @@
                       </div>
                     </div>
 
-                    <!-- Follow Up Status -->
                     <div class="col-md-6">
                       <div class="d-flex align-items-start">
                         <div
@@ -964,7 +901,6 @@
                       </div>
                     </div>
 
-                    <!-- Comments -->
                     <div class="col-12">
                       <div class="d-flex align-items-start">
                         <div
@@ -987,7 +923,6 @@
                     </div>
                   </div>
 
-                  <!-- Save Button -->
                   <div class="d-flex justify-content-end mt-4">
                     <button class="btn btn-primary px-4" @click="saveChanges" v-if="isEditMode">
                       <i class="bi bi-check-lg me-2"></i>
@@ -997,7 +932,6 @@
                 </div>
               </div>
 
-              <!-- Referral Status Form -->
               <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white py-3 border-bottom">
                   <div class="d-flex align-items-center justify-content-between">
@@ -1014,7 +948,6 @@
                   :class="{ 'opacity-75': selectedUser.referred === 'Referred' || !isEditMode }"
                 >
                   <div class="row g-4">
-                    <!-- Refer To -->
                     <div class="col-md-6">
                       <div class="d-flex align-items-start">
                         <div
@@ -1040,7 +973,6 @@
                       </div>
                     </div>
 
-                    <!-- Official -->
                     <div class="col-md-6">
                       <div class="d-flex align-items-start">
                         <div
@@ -1066,7 +998,6 @@
                     </div>
                   </div>
 
-                  <!-- Referral Alert -->
                   <div
                     v-if="selectedUser.referred === 'Referred'"
                     class="alert alert-warning d-flex align-items-center mt-4 mb-3"
@@ -1075,7 +1006,6 @@
                     <span>User Already Referred</span>
                   </div>
 
-                  <!-- Refer Button -->
                   <div class="d-flex justify-content-end mt-4">
                     <button
                       class="btn btn-primary px-4"
@@ -1093,7 +1023,6 @@
           </div>
         </div>
 
-        <!-- Footer -->
         <div class="modal-footer">
           <div class="footer-buttons">
             <Button
@@ -2579,3 +2508,4 @@ watch(
   font-style: italic;
 }
 </style>
+```

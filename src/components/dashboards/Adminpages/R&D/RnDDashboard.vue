@@ -106,7 +106,7 @@
                     placeholder="Select Age Groups" class="w-full" :filter="true" display="chip">
                     <template #value="slotProps">
                       <div class="multiselect-value">
-                        <span v-if="slotProps.value.length === 0">Select Age Groups</span>
+                        <span v-if="!slotProps.value || slotProps.value.length === 0">Select Age Groups</span>
                         <Chip v-for="item in slotProps.value" :key="item.code" :label="item.name" class="mr-1" />
                       </div>
                     </template>
@@ -119,7 +119,7 @@
                     placeholder="Select Classes" class="w-full" :filter="true" display="chip">
                     <template #value="slotProps">
                       <div class="multiselect-value">
-                        <span v-if="slotProps.value.length === 0">Select Classes</span>
+                        <span v-if="!slotProps.value || slotProps.value.length === 0">Select Classes</span>
                         <Chip v-for="item in slotProps.value" :key="item.code" :label="item.name" class="mr-1" />
                       </div>
                     </template>
@@ -262,16 +262,13 @@ import TreatmentTrackingTab from './TreatmentTrackingTab.vue';
 import DataExportReportingtab from './DataExport&Reportingtab.vue';
 import SummaryMetrics from './SummaryMetrics.vue';
 
-// Inject the provided data
 const serviceAndTreatmentData = inject('serviceAndTreatmentData');
 const toast = useToast();
 
-// State Management
 const isFilterExpanded = ref(true);
 const isLoading = ref(false);
 const showResults = ref(false);
 
-// Filter state
 const filters = reactive({
   region: null,
   dzongkhag: null,
@@ -288,300 +285,124 @@ const filters = reactive({
   followUpStatus: null,
 });
 
-// Computed property for available years
 const availableYears = computed(() => {
   if (!serviceAndTreatmentData.value) return [];
-
-  // Get unique years from screening_data submission_dates
   const years = new Set(
     serviceAndTreatmentData.value
       .filter(item => item.screening_data?.submission_date)
       .map(item => new Date(item.screening_data.submission_date).getFullYear())
   );
-
-  return Array.from(years)
-    .sort((a, b) => b - a) // Sort in descending order
-    .map(year => ({
-      code: year.toString(),
-      name: year.toString()
-    }));
+  return Array.from(years).sort((a, b) => b - a).map(year => ({ code: year.toString(), name: year.toString() }));
 });
 
-// Constants and Options
-const regions = [
-  { code: 'WESTERN', name: 'Western' },
-  { code: 'CENTRAL', name: 'Central' },
-  { code: 'EASTERN', name: 'Eastern' }
-];
-
-const organizations = [
-  { code: 'EVENT_BASED', name: 'Event Based' },
-  { code: 'CASE_BASED', name: 'Case Based' },
-  { code: 'CLUSTER', name: 'Cluster' }
-];
-
-const clusterTypes = [
-  { code: 'GYALSUNG', name: 'Gyalsung' },
-  { code: 'SCHOOL', name: 'School' }
-];
-
+const regions = [{ code: 'WESTERN', name: 'Western' }, { code: 'CENTRAL', name: 'Central' }, { code: 'EASTERN', name: 'Eastern' }];
+const organizations = [{ code: 'EVENT_BASED', name: 'Event Based' }, { code: 'CASE_BASED', name: 'Case Based' }, { code: 'CLUSTER', name: 'Cluster' }];
+const clusterTypes = [{ code: 'GYALSUNG', name: 'Gyalsung' }, { code: 'SCHOOL', name: 'School' }];
 const ageGroups = [
-  { code: 'UNDER_10', name: 'Under 10 years' },
-  { code: '10_19', name: '10-19 years' },
-  { code: '20_24', name: '20-24 years' },
-  { code: '25_60', name: '25-60 years' },
-  { code: 'OVER_60', name: 'Over 60 years' }
+  { code: 'UNDER_10', name: 'Under 10 years' }, { code: '10_19', name: '10-19 years' }, { code: '20_24', name: '20-24 years' },
+  { code: '25_60', name: '25-60 years' }, { code: 'OVER_60', name: 'Over 60 years' }
 ];
-
 const schoolClasses = [
-  { code: 'PP', name: 'Pre-Primary' },
-  { code: '1', name: 'Class 1' },
-  { code: '2', name: 'Class 2' },
-  { code: '3', name: 'Class 3' },
-  { code: '4', name: 'Class 4' },
-  { code: '5', name: 'Class 5' },
-  { code: '6', name: 'Class 6' },
-  { code: '7', name: 'Class 7' },
-  { code: '8', name: 'Class 8' },
-  { code: '9', name: 'Class 9' },
-  { code: '10', name: 'Class 10' },
-  { code: '11', name: 'Class 11' },
-  { code: '12', name: 'Class 12' }
+  { code: 'PP', name: 'Pre-Primary' }, { code: '1', name: 'Class 1' }, { code: '2', name: 'Class 2' }, { code: '3', name: 'Class 3' }, { code: '4', name: 'Class 4' },
+  { code: '5', name: 'Class 5' }, { code: '6', name: 'Class 6' }, { code: '7', name: 'Class 7' }, { code: '8', name: 'Class 8' }, { code: '9', name: 'Class 9' },
+  { code: '10', name: 'Class 10' }, { code: '11', name: 'Class 11' }, { code: '12', name: 'Class 12' }
 ];
-
-const statusTypes = [
-  { code: 'Conducted', name: 'Conducted' },
-  { code: 'Not Conducted', name: 'Not Conducted' }
-];
-
-const caseStatusTypes = [
-  { code: 'On Going', name: 'On Going' },
-  { code: 'Case Closed', name: 'Case Closed' },
-  { code: 'Case Discontinued', name: 'Case Discontinued' }
-];
-
-const counselingStatusTypes = [
-  { code: 'Availed', name: 'Availed' },
-  { code: 'Not Required', name: 'Not Required' },
-  { code: 'Waiting List', name: 'Waiting List' }
-];
-
+const statusTypes = [{ code: 'Conducted', name: 'Conducted' }, { code: 'Not Conducted', name: 'Not Conducted' }];
+const caseStatusTypes = [{ code: 'On Going', name: 'On Going' }, { code: 'Case Closed', name: 'Case Closed' }, { code: 'Case Discontinued', name: 'Case Discontinued' }];
+const counselingStatusTypes = [{ code: 'Availed', name: 'Availed' }, { code: 'Not Required', name: 'Not Required' }, { code: 'Waiting List', name: 'Waiting List' }];
 const followUpStatusTypes = [
-  { code: 'Treatment Completed', name: 'Treatment Completed' },
-  { code: 'Undergoing Treatment', name: 'Undergoing Treatment' },
-  { code: 'Completed Counselling Sessions', name: 'Completed Counselling Sessions' },
-  { code: 'Unwilling to Undergo Treatment', name: 'Unwilling to Undergo Treatment' },
-  { code: 'Undergone Rehabilitation', name: 'Undergone Rehabilitation' },
-  { code: 'Undergoing Rehabilitation', name: 'Undergoing Rehabilitation' },
+  { code: 'Treatment Completed', name: 'Treatment Completed' }, { code: 'Undergoing Treatment', name: 'Undergoing Treatment' },
+  { code: 'Completed Counselling Sessions', name: 'Completed Counselling Sessions' }, { code: 'Unwilling to Undergo Treatment', name: 'Unwilling to Undergo Treatment' },
+  { code: 'Undergone Rehabilitation', name: 'Undergone Rehabilitation' }, { code: 'Undergoing Rehabilitation', name: 'Undergoing Rehabilitation' },
   { code: 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)', name: 'Hospital-based Outpatient SUD Treatment and Care (Primary Phase)' },
   { code: 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)', name: 'Hospital-based Outpatient SUD Treatment and Care (Continuing Care)' },
-  { code: 'School-based SUD Treatment and Care', name: 'School-based SUD Treatment and Care' },
-  { code: 'Institution-based SUD Treatment and Care', name: 'Institution-based SUD Treatment and Care' },
-  { code: 'Follow-up Drug Test Conducted', name: 'Follow-up Drug Test Conducted' },
-  { code: 'Detention-based SUD Treatment and Care', name: 'Detention-based SUD Treatment and Care' }
+  { code: 'School-based SUD Treatment and Care', name: 'School-based SUD Treatment and Care' }, { code: 'Institution-based SUD Treatment and Care', name: 'Institution-based SUD Treatment and Care' },
+  { code: 'Follow-up Drug Test Conducted', name: 'Follow-up Drug Test Conducted' }, { code: 'Detention-based SUD Treatment and Care', name: 'Detention-based SUD Treatment and Care' }
 ];
 
-// Computed Properties
+const getAgencyName = (item) => {
+  if (!item || !item.user) return null;
+  return item.user.active_agency?.agency_name || item.user.agency_details?.agency?.agency_name;
+};
+
 const availableDzongkhags = computed(() => {
   if (!filters.region || !filters.region.code) return [];
-
   const dzongkhagsByRegion = {
     WESTERN: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse', 'Thimphu Thromde', 'Phuentshogling Thromde'],
     CENTRAL: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue', 'Zhemgang'],
     EASTERN: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang', 'Samdrup Jongkhar Thromde', 'Trashi Yangtse']
   };
-
-  return dzongkhagsByRegion[filters.region.code].map(name => ({
-    code: name.toUpperCase(),
-    name
-  }));
+  return dzongkhagsByRegion[filters.region.code].map(name => ({ code: name.toUpperCase(), name }));
 });
 
 const filteredAgencies = computed(() => {
   if (!serviceAndTreatmentData.value || !filters.organization) return [];
 
   switch (filters.organization.code) {
-    case 'EVENT_BASED':
-      return Array.from(new Set(
-        serviceAndTreatmentData.value
-          .filter(item => item.screening_data?.event)
-          .map(item => ({
-            code: `Event ${item.screening_data.event}`,
-            name: `Event ${item.screening_data.event}`
-          }))
-      ));
-
-    case 'CASE_BASED':
+    case 'EVENT_BASED': {
+      const eventSet = new Set();
+      serviceAndTreatmentData.value
+        .filter(item => item.screening_data?.event)
+        .forEach(item => { eventSet.add(item.screening_data.event); });
+      return Array.from(eventSet).map(event => ({ code: `Event ${event}`, name: `Event ${event}` }));
+    }
+    case 'CASE_BASED': {
       const caseAgencies = new Set();
       serviceAndTreatmentData.value
         .filter(item => item.screening_data?.case)
         .forEach(item => {
-          if (item.user?.active_agency?.agency_name) {
-            caseAgencies.add(item.user.active_agency.agency_name);
-          }
+          const agencyName = getAgencyName(item);
+          if (agencyName) { caseAgencies.add(agencyName); }
         });
-      return Array.from(caseAgencies).map(name => ({
-        code: name,
-        name
-      }));
-
-    case 'CLUSTER':
-      // Just return school/gyalsung options
+      return Array.from(caseAgencies).map(name => ({ code: name, name }));
+    }
+    case 'CLUSTER': {
       return clusterTypes;
-
+    }
     default:
       return [];
   }
 });
 
-// Add a new computed property for school agencies
 const availableActiveAgencies = computed(() => {
-  if (!filters.organization?.code === 'CLUSTER' || !filters.agency) return [];
-
+  if (!filters.organization || filters.organization.code !== 'CLUSTER' || !filters.agency) return [];
   const uniqueAgencies = new Set();
-
-  // Only process items that don't have event or case in screening_data
   serviceAndTreatmentData.value
     .filter(item => !item.screening_data?.event && !item.screening_data?.case)
     .forEach(item => {
-      const agencyName = item.user?.active_agency?.agency_name;
+      const agencyName = getAgencyName(item);
       if (agencyName) {
         const lowerAgencyName = agencyName.toLowerCase();
-        if (filters.agency.code === 'SCHOOL' && lowerAgencyName.includes('school')) {
+        if (filters.agency.code === 'SCHOOL' && (lowerAgencyName.includes('school') || lowerAgencyName.includes('institute'))) {
           uniqueAgencies.add(agencyName);
         } else if (filters.agency.code === 'GYALSUNG' && lowerAgencyName.includes('gyalsung')) {
           uniqueAgencies.add(agencyName);
         }
       }
     });
-
-  return Array.from(uniqueAgencies).map(name => ({
-    code: name,
-    name
-  }));
+  return Array.from(uniqueAgencies).map(name => ({ code: name, name }));
 });
 
-const currentStatusValues = computed(() => {
-  if (!filters.currentStatus) return [];
-
-  const statusMap = {
-    ASSESSMENT: [
-      { code: 'Conducted', name: 'Conducted' },
-      { code: 'Not Conducted', name: 'Not Conducted' },
-      { code: 'Conducted', name: 'Conducted' },
-      { code: 'Not Conducted', name: 'Not Conducted' }
-    ]
-  };
-
-  return statusMap[filters.currentStatus.code] || [];
-});
-
-const hasActiveFilters = computed(() => {
-  return Object.values(filters).some(value =>
-    value !== null &&
-    (Array.isArray(value) ? value.length > 0 : true)
-  );
-});
-
-const activeFilterCount = computed(() => {
-  return Object.values(filters).filter(value =>
-    value !== null &&
-    (Array.isArray(value) ? value.length > 0 : true)
-  ).length;
-});
+const hasActiveFilters = computed(() => Object.values(filters).some(v => v !== null && (Array.isArray(v) ? v.length > 0 : true)));
+const activeFilterCount = computed(() => Object.values(filters).filter(v => v !== null && (Array.isArray(v) ? v.length > 0 : true)).length);
 
 const activeFilters = computed(() => {
   const active = [];
-
   if (filters.region) active.push({ key: 'region', label: `Region: ${filters.region.name}` });
   if (filters.dzongkhag) active.push({ key: 'dzongkhag', label: `Dzongkhag: ${filters.dzongkhag.name}` });
   if (filters.organization) active.push({ key: 'organization', label: `Organization: ${filters.organization.name}` });
-  if (filters.activeAgency) {
-    active.push({
-      key: 'activeAgency',
-      label: `Active Agency: ${filters.activeAgency.name}`
-    });
-  }
-  if (filters.ageGroups.length) {
-    active.push({
-      key: 'ageGroups',
-      label: `Age Groups: ${filters.ageGroups.map(g => g.name).join(', ')}`
-    });
-  }
-  if (filters.classes.length) {
-    active.push({
-      key: 'classes',
-      label: `Classes: ${filters.classes.map(c => c.name).join(', ')}`
-    });
-  }
-  if (filters.currentStatus && filters.statusValue) {
-    if (filters.currentStatus.code === 'ASSESSMENT') {
-      active.push({
-        key: 'status',
-        label: `Assessment Status: ${filters.statusValue.name}`
-      });
-    }
-    if (filters.currentStatus.code === 'ASSESSMENT') {
-      active.push({
-        key: 'status',
-        label: `Assessment Status: ${filters.statusValue.name}`
-      });
-    }
-  }
-  if (filters.year) {
-    active.push({
-      key: 'year',
-      label: `Screening Year: ${filters.year.name}`
-    });
-  }
-  if (filters.caseStatus) {
-    active.push({
-      key: 'caseStatus',
-      label: `Case Status: ${filters.caseStatus.name}`
-    });
-  }
-
-  if (filters.counselingStatus) {
-    active.push({
-      key: 'counselingStatus',
-      label: `Counseling Status: ${filters.counselingStatus.name}`
-    });
-  }
-
-  if (filters.followUpStatus) {
-    active.push({
-      key: 'followUpStatus',
-      label: `Follow Up Status: ${filters.followUpStatus.name}`
-    });
-  }
-  if (filters.caseStatus) {
-    active.push({
-      key: 'caseStatus',
-      label: `Case Status: ${filters.caseStatus.name}`
-    });
-  }
-
-  if (filters.counselingStatus) {
-    active.push({
-      key: 'counselingStatus',
-      label: `Counseling Status: ${filters.counselingStatus.name}`
-    });
-  }
-
-  if (filters.followUpStatus) {
-    active.push({
-      key: 'followUpStatus',
-      label: `Follow Up Status: ${filters.followUpStatus.name}`
-    });
-  }
-
+  if (filters.activeAgency) active.push({ key: 'activeAgency', label: `Active Agency: ${filters.activeAgency.name}` });
+  if (filters.ageGroups.length) active.push({ key: 'ageGroups', label: `Age Groups: ${filters.ageGroups.map(g => g.name).join(', ')}` });
+  if (filters.classes.length) active.push({ key: 'classes', label: `Classes: ${filters.classes.map(c => c.name).join(', ')}` });
+  if (filters.statusValue) active.push({ key: 'statusValue', label: `Assessment: ${filters.statusValue.name}` });
+  if (filters.caseStatus) active.push({ key: 'caseStatus', label: `Case Status: ${filters.caseStatus.name}` });
+  if (filters.counselingStatus) active.push({ key: 'counselingStatus', label: `Counseling: ${filters.counselingStatus.name}` });
+  if (filters.followUpStatus) active.push({ key: 'followUpStatus', label: `Follow Up: ${filters.followUpStatus.name}` });
+  if (filters.year) active.push({ key: 'year', label: `Screening Year: ${filters.year.name}` });
   return active;
 });
 
-const handleRegionChange = () => {
-  filters.dzongkhag = null;
-};
-
+const handleRegionChange = () => { filters.dzongkhag = null; };
 const handleOrganizationChange = () => {
   filters.agency = null;
   filters.activeAgency = null;
@@ -589,19 +410,17 @@ const handleOrganizationChange = () => {
 };
 
 const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
   const dob = new Date(dateOfBirth);
   const today = new Date();
   let age = today.getFullYear() - dob.getFullYear();
   const monthDiff = today.getMonth() - dob.getMonth();
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
-
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) { age--; }
   return age;
 };
 
 const getAgeGroup = (age) => {
+  if (age === null) return null;
   if (age < 10) return 'UNDER_10';
   if (age >= 10 && age <= 19) return '10_19';
   if (age >= 20 && age <= 24) return '20_24';
@@ -611,237 +430,108 @@ const getAgeGroup = (age) => {
 };
 
 const resetFilters = () => {
-  Object.keys(filters).forEach(key => {
-    filters[key] = Array.isArray(filters[key]) ? [] : null;
-  });
+  Object.keys(filters).forEach(key => { filters[key] = Array.isArray(filters[key]) ? [] : null; });
   showResults.value = false;
 };
 
 const removeFilter = (filterKey) => {
-  if (Array.isArray(filters[filterKey])) {
-    filters[filterKey] = [];
-  } else {
-    filters[filterKey] = null;
-  }
-
-  // Handle dependent fields
-  if (filterKey === 'region') {
-    filters.dzongkhag = null;
-  } else if (filterKey === 'organization') {
-    filters.agency = null;
-    filters.activeAgency = null;
-    filters.classes = [];
-  } else if (filterKey === 'agency') {
-    filters.activeAgency = null;
-  } else if (filterKey === 'currentStatus') {
-    filters.statusValue = null;
-  }
+  if (Array.isArray(filters[filterKey])) { filters[filterKey] = []; } else { filters[filterKey] = null; }
+  if (filterKey === 'region') filters.dzongkhag = null;
+  else if (filterKey === 'organization') { filters.agency = null; filters.activeAgency = null; filters.classes = []; }
+  else if (filterKey === 'agency') filters.activeAgency = null;
 };
-//pre process data
+
 function preprocessData(data) {
-  return data.map(item => ({
-    ...item,
-    referralDate: new Date(item.date), // Convert date strings to Date objects
-    assessmentCompleted: item.assessment_status === 'Conducted',
-    referralTime: calculateReferralTime(item), // Function to calculate referral time
-    treatmentDuration: calculateTreatmentDuration(item), //Function to calculate treatment duration
-    age: calculateAge(item.user?.date_of_birth), //Calculate age from date of birth
-    gender: item.user.gender,
-    // ... Add other relevant fields here ...
-  }));
+  if (!Array.isArray(data)) return [];
+  return data.map(item => ({ ...item, age: calculateAge(item.user?.date_of_birth) }));
 }
 
 const filteredData = computed(() => {
-  if (!serviceAndTreatmentData.value) {
-    return [];
-  }
-  const preprocessedData = preprocessData(serviceAndTreatmentData.value);
+  if (!serviceAndTreatmentData.value) return [];
+  const preprocessed = preprocessData(serviceAndTreatmentData.value);
 
-  return preprocessedData.filter(item => {
+  return preprocessed.filter(item => {
     let match = true;
 
-    // Region and Dzongkhag filtering
     if (filters.region) {
-      const itemDzongkhag =
-        item.user?.ps_add_dzongkhag ||
-        item.user?.perm_add_dzongkhag ||
-        item.screening_data?.ps_add_dzongkhag ||
-        item.user?.agency_details?.agency?.present_dzongkhag ||
-        item.user?.active_agency?.present_dzongkhag;
-
-      if (!itemDzongkhag) {
-        return false;
-      }
-
+      const itemDzongkhag = item.user?.ps_add_dzongkhag || item.user?.perm_add_dzongkhag || item.user?.agency_details?.agency?.present_dzongkhag || item.user?.active_agency?.present_dzongkhag;
+      if (!itemDzongkhag) return false;
       const dzongkhagRegion = getDzongkhagRegion(itemDzongkhag);
-
       match = match && dzongkhagRegion === filters.region.code;
-
-      if (filters.dzongkhag) {
-        const normalizedItemDzongkhag = itemDzongkhag.toUpperCase().trim();
-        const normalizedFilterDzongkhag = filters.dzongkhag.code.trim();
-
-        match = match && normalizedItemDzongkhag === normalizedFilterDzongkhag;
-      }
+      if (filters.dzongkhag) match = match && itemDzongkhag.toUpperCase().trim() === filters.dzongkhag.code.trim();
     }
 
-    // Organization and Agency filtering
     if (filters.organization) {
+      const itemAgencyName = getAgencyName(item);
       switch (filters.organization.code) {
         case 'EVENT_BASED':
           match = match && !!item.screening_data?.event;
-          if (filters.agency) {
-            match = match && `Event ${item.screening_data.event}` === filters.agency.code;
-          }
+          if (filters.agency) match = match && `Event ${item.screening_data.event}` === filters.agency.code;
           break;
-
         case 'CASE_BASED':
           match = match && !!item.screening_data?.case;
-          if (filters.agency) {
-            match = match && item.user?.active_agency?.agency_name === filters.agency.code;
-          }
+          if (filters.agency) match = match && itemAgencyName === filters.agency.code;
           break;
-
         case 'CLUSTER':
           match = match && !item.screening_data?.event && !item.screening_data?.case;
-
-          if (filters.agency?.code === 'SCHOOL') {
-            const agencyName = (item.user?.active_agency?.agency_name || '').toLowerCase();
-            const agencyDetailsName = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
-
-            match = match && (
-              agencyName.includes('school') ||
-              agencyDetailsName.includes('school')
-            );
-
-            if (filters.activeAgency) {
-              match = match && item.user?.active_agency?.agency_name === filters.activeAgency.code;
-            }
-          } else if (filters.agency?.code === 'GYALSUNG') {
-            const agencyName = (item.user?.active_agency?.agency_name || '').toLowerCase();
-            const agencyDetailsName = (item.user?.agency_details?.agency?.agency_name || '').toLowerCase();
-
-            match = match && (
-              agencyName.includes('gyalsung') ||
-              agencyDetailsName.includes('gyalsung')
-            );
-
-            if (filters.activeAgency) {
-              match = match && item.user?.active_agency?.agency_name === filters.activeAgency.code;
-            }
+          if (filters.activeAgency) {
+            match = match && itemAgencyName === filters.activeAgency.code;
+          } else if (filters.agency) {
+            const agencyNameLower = (itemAgencyName || '').toLowerCase();
+            if (filters.agency.code === 'SCHOOL') match = match && (agencyNameLower.includes('school') || agencyNameLower.includes('institute'));
+            else if (filters.agency.code === 'GYALSUNG') match = match && agencyNameLower.includes('gyalsung');
           }
           break;
       }
     }
 
-    // Age Group filtering
     if (filters.ageGroups.length > 0) {
-      const age = calculateAge(item.user?.date_of_birth);
-      const ageGroup = getAgeGroup(age);
+      const ageGroup = getAgeGroup(item.age);
       match = match && filters.ageGroups.some(group => group.code === ageGroup);
     }
-
-    // Class/Grade filtering (for schools)
     if (filters.organization?.code === 'SCHOOL' && filters.classes.length > 0) {
       const userClass = item.user?.agency_details?.user_class;
       match = match && filters.classes.some(cls => cls.code === userClass);
     }
+    if (filters.statusValue) match = match && item.assessment_status === filters.statusValue.code;
+    if (filters.caseStatus) match = match && item.case_status === filters.caseStatus.code;
+    if (filters.counselingStatus) match = match && item.counseling === filters.counselingStatus.code;
+    if (filters.followUpStatus) match = match && item.follow_up === filters.followUpStatus.code;
 
-    // Status filtering
-    if (filters.statusValue) {
-      match = match && item.assessment_status === filters.statusValue.code;
-    }
-
-    if (filters.caseStatus) {
-      match = match && item.case_status === filters.caseStatus.code;
-    }
-
-    // Year filtering based on screening_data submission_date
     if (filters.year && item.screening_data?.submission_date) {
       const submissionYear = new Date(item.screening_data.submission_date).getFullYear();
       match = match && submissionYear.toString() === filters.year.code;
-    }
-
-    // Counseling and Follow-up Status filtering
-    if (filters.counselingStatus) {
-      match = match && item.counseling === filters.counselingStatus.code;
-    }
-
-    if (filters.followUpStatus) {
-      match = match && item.follow_up === filters.followUpStatus.code;
     }
 
     return match;
   });
 });
 
-// Helper function to get region from dzongkhag
 const getDzongkhagRegion = (dzongkhag) => {
+  if (!dzongkhag) return null;
+  const upperDzongkhag = dzongkhag.toUpperCase();
   const regionMap = {
-    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'Chhukha', 'SAMTSE',
-      'THIMPHU THROMDE', 'PHUENTSHOGLING THROMDE'],
+    WESTERN: ['THIMPHU', 'PARO', 'HAA', 'PUNAKHA', 'GASA', 'CHHUKHA', 'SAMTSE', 'THIMPHU THROMDE', 'PHUENTSHOGLING THROMDE'],
     CENTRAL: ['BUMTHANG', 'DAGANA', 'SARPANG', 'TRONGSA', 'TSIRANG', 'WANGDUE', 'ZHEMGANG'],
-    EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG',
-      'SAMDRUP JONGKHAR THROMDE', 'TRASHI YANGTSE']
+    EASTERN: ['LHUENTSE', 'MONGAR', 'PEMAGATSHEL', 'SAMDRUP JONGKHAR', 'TRASHIGANG', 'SAMDRUP JONGKHAR THROMDE', 'TRASHI YANGTSE']
   };
-
   for (const [region, dzongkhags] of Object.entries(regionMap)) {
-    if (dzongkhags.includes(dzongkhag?.toUpperCase())) {
-      return region;
-    }
+    if (dzongkhags.includes(upperDzongkhag)) return region;
   }
   return null;
 };
 
-// Function to calculate referral time (in days)
-function calculateReferralTime(item) {
-  if (!item.referral_instance || !item.screening_data?.submission_date) return null;
-  const referralDate = new Date(item.referral_instance.date);
-  const assessmentDate = new Date(item.screening_data.submission_date);
-  const timeDifference = assessmentDate.getTime() - referralDate.getTime();
-  return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-}
-
-// Function to calculate treatment duration (in days)
-function calculateTreatmentDuration(item) {
-  if (!item.follow_up || !item.screening_data?.submission_date) return null;
-  const assessmentDate = new Date(item.screening_data.submission_date);
-  const treatmentEndDate = new Date(); // Placeholder - replace with actual treatment end date from your data
-  const timeDifference = treatmentEndDate.getTime() - assessmentDate.getTime();
-  return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-}
-
 const applyFilters = async () => {
-  try {
-    isLoading.value = true;
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    showResults.value = true;
-
-    toast.add({
-      severity: 'success',
-      summary: 'Filters Applied',
-      detail: `Successfully filtered data with ${activeFilterCount.value} criteria`,
-      life: 3000
-    });
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to apply filters. Please try again.',
-      life: 3000
-    });
-  } finally {
-    isLoading.value = false;
-  }
+  isLoading.value = true;
+  await new Promise(resolve => setTimeout(resolve, 500));
+  showResults.value = true;
+  toast.add({ severity: 'success', summary: 'Filters Applied', detail: `Filtered data with ${activeFilterCount.value} criteria.`, life: 3000 });
+  isLoading.value = false;
 };
 
-// Lifecycle hooks
-onMounted(() => {
-  // Initialize any required data or state
-  isFilterExpanded.value = true;
-});
+onMounted(() => { showResults.value = true; });
 </script>
+
 
 <style scoped>
 .dashboard-container {
