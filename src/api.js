@@ -96,6 +96,7 @@ const endpoints = {
 
   // Monitoring endpoints
   getRescreeningList: `${monitoringBaseUrl}/check-rescreening-flags/`,
+  markSubmissionSafe: `${monitoringBaseUrl}/mark-submission-safe/`,
   getServiceAndTreatmentList: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
   generateServiceAndTreatment: `${monitoringBaseUrl}/generate-service-and-treatment/`,
   getReferralList: `${monitoringBaseUrl}/get-referral-list/`,
