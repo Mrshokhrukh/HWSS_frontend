@@ -62,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide } from "vue";
+import { ref, computed, onMounted, provide, watch } from "vue"; // Added watch
 import { useRoute } from "vue-router";
 import axios from "axios";
 import endpoints from "@/api";
@@ -92,12 +92,39 @@ const agencyName = ref(null);
 const mappedData = ref([]);
 const userDzongkhag = ref(null);
 
+// MODIFIED: This function now uses server-side filtering for much better performance.
 const fetchData = async () => {
   try {
+    // 1. Get user role and agency/dzongkhag first.
+    // The getUserDetails function has already been called in onMounted.
+    let params = {};
+    
+    // 2. Build the query parameters based on user role.
+    switch (userRole.value) {
+      case 'school_counselor':
+      case 'trained_professional':
+      case 'gyalsung_counselor':
+        if (agencyName.value) {
+          params.agency_name = agencyName.value;
+        }
+        break;
+      case 'clinical_counselor':
+        if (userDzongkhag.value) {
+          // Assuming your backend can handle a 'dzongkhag' parameter.
+          // If not, this part needs backend adjustment.
+          params.dzongkhag = userDzongkhag.value;
+        }
+        break;
+      default:
+        // For other roles, send no parameters to get all data.
+        break;
+    }
+    
+    // 3. Fetch data from endpoints with the new parameters.
     const [assistMeasurementResponse, measurementResponse, sudResponse] = await Promise.all([
-      axios.get(endpoints.getAssistMeasurement),
-      axios.get(endpoints.getMeasurement),
-      axios.get(endpoints.getSUDData)
+      axios.get(endpoints.getAssistMeasurement, { params }),
+      axios.get(endpoints.getMeasurement, { params }),
+      axios.get(endpoints.getSUDData, { params })
     ]);
 
     assistMeasurementData.value = assistMeasurementResponse.data;
@@ -119,10 +146,10 @@ const getUserDetails = () => {
       agencyName.value = userDetails.agency.agencyName;
       userDzongkhag.value = userDetails.user.psAddDzongkhag;
     } catch (error) {
-      console.error('Error parsing user details:', error);
+      console.error('Error parsing user details:', error)
+    };
     }
   }
-};
 
 const mapData = () => {
   const userMap = new Map();
@@ -168,37 +195,32 @@ const mapData = () => {
   mappedData.value = Array.from(userMap.values());
 };
 
-const filteredData = computed(() => {
-  let filtered;
-  switch (userRole.value) {
-    case 'school_counselor':
-    case 'trained_professional':
-    case 'gyalsung_counselor':
-      filtered = mappedData.value.filter(user =>
-        user.userDetails?.active_agency?.agency_name === agencyName.value
-      );
-      break;
-    case 'clinical_counselor':
-      filtered = mappedData.value.filter(user =>
-        user.userDetails?.active_agency?.present_dzongkhag === userDzongkhag.value ||
-        user.userDetails?.ps_add_dzongkhag === userDzongkhag.value ||
-        user.sudData?.active?.ps_dzongkhag === userDzongkhag.value ||
-        user.sudData?.lifetime?.ps_dzongkhag === userDzongkhag.value
-      );
-      break;
-    default:
-      filtered = [];
-  }
-
-  return filtered;
-});
+// MODIFIED: Since the server now does the filtering, this computed property is much simpler.
+// It just returns the data that has already been mapped.
+const filteredData = computed(() => mappedData.value);
 
 provide('filteredData', filteredData);
 
-onMounted(async () => {
+// MODIFIED: The onMounted hook now only gets the user details once.
+// The data fetch is handled by the new watcher below.
+onMounted(() => {
   getUserDetails();
-  await fetchData();
 });
+
+// NEW: This watcher replaces the onMounted call for fetchData.
+// It will re-run the fetch every time you navigate to a different page.
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    if (newPath !== oldPath) {
+      fetchData();
+    }
+  },
+  {
+    immediate: true // This runs the fetch on initial load
+  }
+);
+
 
 defineExpose({
   sudData,

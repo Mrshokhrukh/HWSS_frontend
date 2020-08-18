@@ -1,5 +1,6 @@
 <template>
-  <!-- Main Card Container -->
+  <div>
+    <!-- Main Card Container -->
   <div class="card text-center h-100 shadow-lg">
     <div class="card-header bg-gradient-primary">
       <h4 class="severity-title text-white mb-0 font-bold">{{ cardTitle }}</h4>
@@ -200,6 +201,7 @@
       </div>
     </Dialog>
   </Teleport>
+  </div>
 </template>
 
 <script setup>
