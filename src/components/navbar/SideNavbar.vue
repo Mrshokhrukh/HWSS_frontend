@@ -124,7 +124,7 @@ const userType = computed(() => {
 });
 
 const filteredMenus = computed(() => {
-	const role = userDetailsStore.user.role?.toLowerCase();
+	const role = String(userDetailsStore.user?.role ?? '').toLowerCase();
 
 	// Special handling for CECD_ADMIN
 	if (role === 'cecd_admin') {
