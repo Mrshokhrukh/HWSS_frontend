@@ -6,7 +6,5 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const Card: typeof import('primevue/card')['Card']
-  const Chart: typeof import('primevue/chart')['Chart']
-  const ElMessage: typeof import('element-plus/es')['ElMessage']
+
 }
