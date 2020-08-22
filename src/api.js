@@ -5,8 +5,8 @@ function getBaseUrl() {
     const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http'
     return `${apiProtocol}://${apiHost}:${apiPort}`
   } else {
-    return import.meta.env.VITE_PRODUCTION_API_URL
-    // return 'http://localhost:8123'
+    // return import.meta.env.VITE_PRODUCTION_API_URL
+    return 'http://localhost:8123'
   }
 }
 
@@ -96,6 +96,7 @@ const endpoints = {
 
   // Monitoring endpoints
   getRescreeningList: `${monitoringBaseUrl}/check-rescreening-flags/`,
+  markSubmissionSafe: `${monitoringBaseUrl}/mark-submission-safe/`,
   getServiceAndTreatmentList: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
   generateServiceAndTreatment: `${monitoringBaseUrl}/generate-service-and-treatment/`,
   getReferralList: `${monitoringBaseUrl}/get-referral-list/`,

@@ -22,6 +22,7 @@ import MultiSelect from 'primevue/multiselect';
 import Calendar from 'primevue/calendar';
 import Button from 'primevue/button';
 import Chip from 'primevue/chip';
+import Tooltip from 'primevue/tooltip';
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -31,6 +32,7 @@ app.use(SweetAlertPlugin);
 app.use(VueConfetti);
 app.use(VueChartkick);
 app.use(PrimeVue);
+app.directive('tooltip', Tooltip);
 app.use(ConfirmationService);
 app.use(ToastService);
 app.use(ConfirmDialog)

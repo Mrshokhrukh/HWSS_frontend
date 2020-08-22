@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="dashboard-container">
     <div class="dashboard-header">
@@ -145,7 +144,7 @@
       </DataTable>
     </div>
 
-    <Dialog
+      <Dialog
       v-model:visible="showModal"
       :modal="true"
       :closable="false"
@@ -1050,19 +1049,23 @@ import { ref, computed, onMounted, watchEffect, watch } from 'vue'
 import axios from 'axios'
 import endpoints from '@/api'
 import Swal from 'sweetalert2'
+import { FilterMatchMode } from 'primevue/api';
 import AutoComplete from 'primevue/autocomplete'
 import StatusBadge from './StatusBadge.vue'
 
+// --- No changes to this section ---
 const showModal = ref(false)
 const selectedUser = ref({
   diagnosis: []
 })
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
 const officialOptions = ref([])
 const filteredOfficials = ref([])
 const selfRole = ref('')
 const isLoading = ref(false)
 const hasError = ref(false)
-
 const rowData = ref([])
 const searchQuery = ref('')
 const selectedFields = ref([
@@ -1079,11 +1082,60 @@ const selectedFields = ref([
   'follow_up',
   'comments'
 ])
-
 const fullNames = ref(new Map())
-
 const isEditMode = ref(false)
 const canEdit = computed(() => !!selfRole.value)
+const sortField = ref('date');
+const sortOrder = ref(-1);
+const onSortChange = (event) => {
+  sortField.value = event.sortField;
+  sortOrder.value = event.sortOrder;
+};
+const myAgency = ref('')
+const selectedYear = ref(new Date().getFullYear())
+const years = computed(() => {
+  const currentYear = new Date().getFullYear()
+  return Array.from({ length: 10 }, (_, index) => currentYear - index)
+})
+const paginatorTemplate = 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport';
+
+// --- End of unchanged section ---
+
+// MODIFIED: This function now builds a dynamic URL to fetch pre-filtered data from the server.
+const getServiceList = async () => {
+  try {
+    isLoading.value = true
+    hasError.value = false
+
+    // 1. Start with the base URL.
+    let requestUrl = endpoints.newServiceAndTreatment
+
+    // 2. Append the agency_name as a query parameter if it exists.
+    if (myAgency.value && myAgency.value !== 'Unknown Agency') {
+      requestUrl = `${endpoints.newServiceAndTreatment}?agency_name=${encodeURIComponent(myAgency.value)}`
+    }
+
+    // 3. Fetch the pre-filtered data from the backend.
+    const response = await axios.get(requestUrl)
+
+    // 4. The response.data is already filtered by agency.
+    // We only need to apply the year filter on this much smaller dataset.
+    rowData.value = response.data.filter((row) => {
+      const screeningDate = row?.screening_data?.submission_date
+      const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null
+      // The agencyMatch check is no longer needed here!
+      return submissionYear === selectedYear.value
+    })
+  } catch (error) {
+    hasError.value = true
+    rowData.value = [] // Clear data on error
+    console.error('Error fetching data:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// --- All helper functions and computed properties below are unchanged ---
 
 const getActiveCount = () => {
   return (
@@ -1139,12 +1191,10 @@ const formatFullName = async (record) => {
       console.error('Invalid record structure:', record)
       return ''
     }
-
     const user = record.user
     const firstName = user.first_name || ''
     const middleName = user.middle_name ? ` ${user.middle_name}` : ''
     const lastName = user.last_name ? ` ${user.last_name}` : ''
-
     const fullName = `${firstName}${middleName}${lastName}`.trim()
     return fullName || ''
   } catch (error) {
@@ -1153,15 +1203,12 @@ const formatFullName = async (record) => {
   }
 }
 
-// Replace the async fullNameTemplate with this synchronous version
 const fullNameTemplate = (rowData) => {
   if (!rowData || !rowData.user) return ''
-
   const user = rowData.user
   const firstName = user.first_name || ''
   const middleName = user.middle_name ? ` ${user.middle_name}` : ''
   const lastName = user.last_name ? ` ${user.last_name}` : ''
-
   return `${firstName}${middleName}${lastName}`.trim()
 }
 
@@ -1183,7 +1230,6 @@ const getSeverityClass = (severity) => {
   if (!severity || severity === 'None' || severity === '') {
     return 'risk-none'
   }
-
   switch (severity?.toLowerCase()) {
     case 'severe':
     case 'high risk':
@@ -1204,14 +1250,11 @@ const getSeverityClass = (severity) => {
 
 const filterNonInjectionSubstances = (data) => {
   if (!data) return {}
-
   const substances = {}
   const excludedSubstances = ['injection']
-
   if (Array.isArray(data)) {
     data.forEach((substance) => {
       const nameKey = substance.substance__name || substance.substance_name
-
       if (
         nameKey &&
         !excludedSubstances.some((excluded) => nameKey.toLowerCase().trim().includes(excluded))
@@ -1221,7 +1264,6 @@ const filterNonInjectionSubstances = (data) => {
           substance.measurement,
           substance.total_score
         )
-
         substances[nameKey.toLowerCase().trim()] = {
           measurement: riskLevel,
           substanceName: nameKey
@@ -1232,7 +1274,6 @@ const filterNonInjectionSubstances = (data) => {
     Object.entries(data).forEach(([key, value]) => {
       if (key.endsWith('_measurement')) {
         const substanceName = key.replace('_measurement', '')
-
         if (
           substanceName &&
           !excludedSubstances.some((excluded) =>
@@ -1244,7 +1285,6 @@ const filterNonInjectionSubstances = (data) => {
             value.measurement,
             value.total_score
           )
-
           substances[substanceName.toLowerCase().trim()] = {
             measurement: riskLevel,
             substanceName: formatSubstanceName(substanceName)
@@ -1253,13 +1293,11 @@ const filterNonInjectionSubstances = (data) => {
       }
     })
   }
-
   return substances
 }
 
 const getSubstanceRisks = (user) => {
   let risks = {}
-
   if (user.screening_data?.assist_data) {
     risks = filterNonInjectionSubstances(user.screening_data.assist_data)
   } else if (user.case_substance_risks) {
@@ -1267,14 +1305,11 @@ const getSubstanceRisks = (user) => {
   } else if (user.event_substance_risks) {
     risks = filterNonInjectionSubstances(user.event_substance_risks)
   }
-
   return risks
 }
 
 const formatRole = (role) => {
   if (!role) return ''
-
-  // Split by underscore and convert to array
   return role
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -1282,40 +1317,28 @@ const formatRole = (role) => {
 }
 
 const formatRiskFlag = (riskFlag, measurement, totalScore) => {
-  // Initialize variables
   let risk = ''
   let score = null
-
-  // Case 1: Risk flag contains both risk and score e.g. "none (0)"
   if (typeof riskFlag === 'string' && riskFlag.includes('(')) {
     const matches = riskFlag.match(/(.*?)\s*\((\d+)\)/)
     if (matches) {
       risk = matches[1].trim()
       score = parseInt(matches[2])
     }
-  }
-  // Case 2: Separate risk flag and measurement e.g. "moderate" with measurement: 6.0
-  else {
+  } else {
     risk = riskFlag
-    // Try to get score from measurement or total_score
     score = measurement || totalScore || null
   }
-
-  // Standardize risk levels
   risk = risk.toLowerCase()
   if (risk === 'none' || risk === 'no risk') {
     risk = 'none'
     score = score || 0
   }
-
-  // Format the final string
   return score !== null ? `${risk} (${score})` : risk
 }
 
 const formatSubstanceName = (name) => {
   if (!name) return ''
-
-  // Create a mapping for simplified names
   const nameMapping = {
     'tobacco products (cigarettes, chewing tobacco etc)': 'Tobacco',
     'alcoholic beverages (beer, wine, spirits, ara etc.)': 'Alcoholic',
@@ -1328,17 +1351,12 @@ const formatSubstanceName = (name) => {
     'opioids (heroin, morphine, fentanyl, codeine, sp+, tramadol, bs etc)': 'Opioids',
     'other - specify': 'Other'
   }
-
-  // Get the base name (before any parentheses)
   const baseName = name.split('(')[0].trim().toLowerCase()
-
-  // Find the matching simplified name
   for (const [key, value] of Object.entries(nameMapping)) {
     if (baseName === key) {
       return value
     }
   }
-  // If no match found, return the capitalized first word
   const words = baseName.split(' ')
   if (words.length > 0) {
     return words[0].charAt(0).toUpperCase() + words[0].slice(1)
@@ -1348,10 +1366,7 @@ const formatSubstanceName = (name) => {
 
 const getRiskClass = (risk) => {
   if (!risk) return 'risk-low'
-
-  // Extract just the risk level without the score
   const riskLevel = risk.split('(')[0].trim().toLowerCase()
-
   if (riskLevel.includes('severe') || riskLevel.includes('high')) {
     return 'risk-high'
   } else if (riskLevel.includes('moderate')) {
@@ -1361,13 +1376,10 @@ const getRiskClass = (risk) => {
   }
 }
 
-const myAgency = ref('')
-
 const filteredRows = computed(() => {
   if (!searchQuery.value.trim() || !Array.isArray(rowData.value)) {
     return rowData.value
   }
-
   return rowData.value.filter((row) =>
     selectedFields.value.some((field) => {
       const fieldValue = row[field.split('.').pop()]
@@ -1378,22 +1390,17 @@ const filteredRows = computed(() => {
 
 const processedRows = computed(() => {
   if (!rowData.value) return []
-
   const processed = rowData.value.map((row) => {
     const assessmentStatus =
       row.assessment_status == null || row.assessment_status === '' ? 'N/A' : row.assessment_status
     const caseStatus = row.case_status == null || row.case_status === '' ? 'N/A' : row.case_status
-
-    //Handle both counseling and counseling status cases
     let counselingStatus = 'N/A'
     if (row.counseling != null && row.counseling !== '') {
       counselingStatus = row.counseling
     } else if (row.counseling_status != null && row.counseling_status !== '') {
       counselingStatus = row.counseling_status
     }
-
     const followUpStatus = row.follow_up == null || row.follow_up === '' ? 'N/A' : row.follow_up
-
     const processedRow = {
       ...row,
       full_name: fullNameTemplate(row),
@@ -1407,34 +1414,6 @@ const processedRows = computed(() => {
   })
   return processed
 })
-
-const selectedYear = ref(new Date().getFullYear()) // Default to the current year
-const years = computed(() => {
-  const currentYear = new Date().getFullYear()
-  return Array.from({ length: 10 }, (_, index) => currentYear - index) // Generate the past 10 years
-})
-
-const getServiceList = async () => {
-  try {
-    isLoading.value = true
-    hasError.value = false
-    const response = await axios.get(endpoints.newServiceAndTreatment)
-
-    rowData.value = response.data.filter((row) => {
-      const agencyMatch =
-        row?.user?.active_agency?.agency_name?.trim().toLowerCase() ===
-        myAgency.value.trim().toLowerCase()
-      const screeningDate = row?.screening_data?.submission_date
-      const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null
-      return agencyMatch && submissionYear === selectedYear.value
-    })
-  } catch (error) {
-    hasError.value = true
-    console.error('Error fetching data:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
 
 watchEffect(async () => {
   if (selectedUser.value && selectedUser.value.refer_to) {
@@ -1479,34 +1458,23 @@ const switchToEditMode = () => {
 
 const getInjectionRisk = (user) => {
   let hasInjectionUse = false
-
-  // Ensure user object exists; if not, return a default "No Risk" state
   if (!user) {
     return { measurement: 'No Risk', flag: 'No Risk' }
   }
-
-  // Check for "any drug" in case_substance_risks
-  // Ensure case_substance_risks is an array before calling .find()
   if (Array.isArray(user.case_substance_risks)) {
     const anyDrugRisk = user.case_substance_risks.find(
       (substance) =>
-        // Ensure substance and substance.substance_name are valid before processing
         substance &&
         typeof substance.substance_name === 'string' &&
         substance.substance_name.toLowerCase().trim() === 'any drug'
     )
-    // Ensure anyDrugRisk exists and total_score is a number
     if (anyDrugRisk && typeof anyDrugRisk.total_score === 'number' && anyDrugRisk.total_score > 0) {
       hasInjectionUse = true
     }
   }
-
-  // Check for "any drug" in event_substance_risks (if not already found)
-  // Ensure event_substance_risks is an array before calling .find()
   if (!hasInjectionUse && Array.isArray(user.event_substance_risks)) {
     const anyDrugRisk = user.event_substance_risks.find(
       (substance) =>
-        // Ensure substance and substance.substance_name are valid
         substance &&
         typeof substance.substance_name === 'string' &&
         substance.substance_name.toLowerCase().trim() === 'any drug'
@@ -1515,15 +1483,9 @@ const getInjectionRisk = (user) => {
       hasInjectionUse = true
     }
   }
-
-  // Check for "any drug" in screening_data.assist_data (if not already found)
-  // This is the critical part for the error:
-  // 1. Check if user.screening_data exists.
-  // 2. Check if user.screening_data.assist_data is an array.
   if (!hasInjectionUse && user.screening_data && Array.isArray(user.screening_data.assist_data)) {
     const anyDrugRisk = user.screening_data.assist_data.find(
       (substance) =>
-        // Ensure substance and substance.substance__name are valid (note: substance__name for assist_data)
         substance &&
         typeof substance.substance__name === 'string' &&
         substance.substance__name.toLowerCase().trim() === 'any drug'
@@ -1532,10 +1494,9 @@ const getInjectionRisk = (user) => {
       hasInjectionUse = true
     }
   }
-
   return {
     measurement: hasInjectionUse ? 'High Risk' : 'No Risk',
-    flag: hasInjectionUse ? 'High Risk' : 'No Risk' // 'flag' seems redundant if it's always same as measurement
+    flag: hasInjectionUse ? 'High Risk' : 'No Risk'
   }
 }
 
@@ -1556,7 +1517,6 @@ const calculateAge = (dob) => {
   if (isNaN(birthDate.getTime())) {
     return 'N/A'
   }
-
   const ageDifMs = Date.now() - birthDate.getTime()
   const ageDate = new Date(ageDifMs)
   return Math.abs(ageDate.getUTCFullYear() - 1970)
@@ -1565,7 +1525,6 @@ const calculateAge = (dob) => {
 const saveChanges = () => {
   const counselor = JSON.parse(localStorage.getItem('userDetailsStore'))
   const counselorId = counselor.user.id
-
   const formData = {
     updateData: {
       assessment_status: selectedUser.value.assessment_status,
@@ -1577,7 +1536,6 @@ const saveChanges = () => {
       updated_by: counselorId
     }
   }
-
   handleModalClose()
   Swal.fire({
     title: 'Confirm Save Changes!',
@@ -1627,13 +1585,10 @@ const referCase = async () => {
     console.error('Selected user is missing.')
     return
   }
-  // Get self id from localstorage
   const counselor = JSON.parse(localStorage.getItem('userDetailsStore'))
   const counselorId = counselor.user.id
   const selectedUserData = selectedUser.value
   const referredToName = selectedUserData.official
-
-  // Get form data - Fix: Use the correct user ID from the nested user object
   const formData = {
     referData: {
       referred_by: counselorId,
@@ -1641,7 +1596,6 @@ const referCase = async () => {
       user: selectedUserData.user.id
     }
   }
-
   handleModalClose()
   Swal.fire({
     title: 'Confirm Save Changes!',
@@ -1661,8 +1615,7 @@ const referCase = async () => {
               showConfirmButton: false,
               timer: 1500
             })
-            // Refresh the component data
-            getServiceList() // Call the method to refresh the list
+            getServiceList()
           } else {
             Swal.fire({
               icon: 'error',
@@ -1709,12 +1662,18 @@ onMounted(() => {
   getServiceList()
 })
 
+// NEW: This watch will re-run the getServiceList function whenever the selectedYear changes,
+// ensuring your year filter works correctly.
+watch(selectedYear, (newYear, oldYear) => {
+  if (newYear !== oldYear) {
+    getServiceList();
+  }
+});
+
 watch(
   () => filteredRows.value,
   async (newRows) => {
     if (!newRows) return
-
-    // Update all full names
     for (const row of newRows) {
       if (!fullNames.value.has(row.id)) {
         const formattedName = await formatFullName(row)
@@ -2508,4 +2467,3 @@ watch(
   font-style: italic;
 }
 </style>
-```

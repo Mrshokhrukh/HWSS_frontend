@@ -60,7 +60,6 @@ const isLoading = ref(true);
 const error = ref(null);
 const currentYear = new Date().getFullYear();
 
-// Initialize chartData with nested structure
 const chartData = reactive({
     caseBased: { Male: 0, Female: 0 },
     eventBased: { Male: 0, Female: 0 },
@@ -87,6 +86,72 @@ const isDataAvailable = computed(() => {
     });
 });
 
+// MODIFIED: This function now fetches pre-filtered data from the server
+const fetchAndFilterData = async () => {
+    try {
+        isLoading.value = true;
+        error.value = null;
+
+        // 1. Get the agency name from local storage.
+        const { agencyName } = getUserDetailsFromStorage();
+
+        // 2. Construct the URL with the agency_name query parameter.
+        let requestUrl = apiEndpoint;
+        if (agencyName && agencyName !== 'Unknown Agency') {
+            requestUrl = `${apiEndpoint}?agency_name=${encodeURIComponent(agencyName)}`;
+        }
+
+        // 3. Fetch the pre-filtered data from the backend.
+        const response = await axios.get(requestUrl);
+
+        // 4. Pass the smaller, pre-filtered dataset to the processing function.
+        processData(response.data || []);
+
+    } catch (err) {
+        console.error('Error fetching data:', err);
+        error.value = 'Failed to load data. Please try again later.';
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// MODIFIED: This function no longer needs to filter by agency.
+const processData = (dataArray) => {
+    // The agencyName check is no longer needed here.
+
+    // The client-side agency filter is now REMOVED. We only filter by year.
+    const filteredData = dataArray.filter(item => {
+        // const agencyMatch = ...; // THIS LINE IS GONE
+        const screeningDate = item.screening_data?.submission_date;
+        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
+        return submissionYear === currentYear;
+    });
+
+    // Reset counts before processing data
+    chartData.caseBased.Male = 0;
+    chartData.caseBased.Female = 0;
+    chartData.eventBased.Male = 0;
+    chartData.eventBased.Female = 0;
+    chartData.clusterBased.Male = 0;
+    chartData.clusterBased.Female = 0;
+
+    filteredData.forEach(item => {
+        const gender = item.user?.gender;
+        if (gender !== 'Male' && gender !== 'Female') return;
+        const screeningData = item.screening_data || {};
+
+        if ('case' in screeningData) {
+            chartData.caseBased[gender]++;
+        } else if ('event' in screeningData) {
+            chartData.eventBased[gender]++;
+        } else if ('initial_submission' in screeningData) {
+            chartData.clusterBased[gender]++;
+        }
+    });
+};
+
+
+// --- All other functions, computed properties, and hooks are unchanged ---
 
 const formatCategoryName = (category) => {
     const names = {
@@ -241,55 +306,6 @@ const agencyOrDzongkhag = computed(() => {
     const { agencyName, userDzongkhag } = getUserDetailsFromStorage();
     return agencyName || userDzongkhag;
 });
-
-const processData = (dataArray) => {
-    const { agencyName } = getUserDetailsFromStorage();
-
-    const filteredData = dataArray.filter(item => {
-        const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
-        const screeningDate = item.screening_data?.submission_date;
-        const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null;
-        return agencyMatch && submissionYear === currentYear;
-    });
-
-    // Reset counts before processing data
-    chartData.caseBased.Male = 0;
-    chartData.caseBased.Female = 0;
-    chartData.eventBased.Male = 0;
-    chartData.eventBased.Female = 0;
-    chartData.clusterBased.Male = 0;
-    chartData.clusterBased.Female = 0;
-
-    filteredData.forEach(item => {
-        const gender = item.user?.gender;
-        if (gender !== 'Male' && gender !== 'Female') return;
-        const screeningData = item.screening_data || {};
-
-        if ('case' in screeningData) {
-            chartData.caseBased[gender]++;
-        } else if ('event' in screeningData) {
-            chartData.eventBased[gender]++;
-        } else if ('initial_submission' in screeningData) {
-            chartData.clusterBased[gender]++;
-        }
-    });
-};
-
-const fetchAndFilterData = async () => {
-    try {
-        isLoading.value = true;
-        error.value = null;
-
-        const response = await axios.get(apiEndpoint);
-        processData(response.data || []);
-
-        isLoading.value = false;
-    } catch (err) {
-        console.error('Error fetching data:', err);
-        error.value = 'Failed to load data. Please try again later.';
-        isLoading.value = false;
-    }
-};
 
 onMounted(() => {
     fetchAndFilterData();

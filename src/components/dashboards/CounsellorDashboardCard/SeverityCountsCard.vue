@@ -17,7 +17,10 @@
 
     <div class="severity-grid">
       <div v-for="(item, index) in SEVERITY_ITEMS" :key="index" class="severity-item">
-        <div @click="setActiveIndex(index)" :class="['severity-card', { 'active-card': isActive(index) }]">
+        <div
+          @click="setActiveIndex(index)"
+          :class="['severity-card', { 'active-card': isActive(index) }]"
+        >
           <div class="card-body">
             <div class="count-wrapper">
               <div class="count-circle">
@@ -35,18 +38,34 @@
         <template v-if="activeItem.title !== 'Assist'">
           <div class="analysis-grid">
             <div class="indicator-section">
-              <SeverityIndicatorCard v-if="dataReady" :cardTitle="activeItem.title" :filteredData="getRelevantData"
-                :isLoading="isLoading" :severityCounts="severityCounts" :key="activeItem.title + 'indicator'" />
+              <SeverityIndicatorCard
+                v-if="dataReady"
+                :cardTitle="activeItem.title"
+                :filteredData="getRelevantData"
+                :isLoading="isLoading"
+                :severityCounts="severityCounts"
+                :key="activeItem.title + 'indicator'"
+              />
             </div>
             <div class="graph-section">
-              <SeverityGraphCard v-if="dataReady" :cardTitle="activeItem.title" :filteredData="getRelevantData"
-                :isLoading="isLoading" :key="activeItem.title + 'graph'" />
+              <SeverityGraphCard
+                v-if="dataReady"
+                :cardTitle="activeItem.title"
+                :filteredData="getRelevantData"
+                :isLoading="isLoading"
+                :key="activeItem.title + 'graph'"
+              />
             </div>
           </div>
         </template>
         <template v-else>
-          <AssistSeverityAndGraph v-if="dataReady" :data="assistStructuredData" :isLoading="isLoading"
-            :totalRiskUsers="assistStructuredData.total" :key="activeItem.title + 'assist'" />
+          <AssistSeverityAndGraph
+            v-if="dataReady"
+            :data="assistStructuredData"
+            :isLoading="isLoading"
+            :totalRiskUsers="assistStructuredData.total"
+            :key="activeItem.title + 'assist'"
+          />
         </template>
       </div>
     </transition>
@@ -60,46 +79,65 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watchEffect, nextTick } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, computed, onMounted, watchEffect, nextTick } from 'vue'
+import axios from 'axios'
+import endpoints from '@/api'
 
-import SeverityGraphCard from './SeverityGraphCard.vue';
-import AssistSeverityAndGraph from './AssistSeverityAndGraph.vue';
-import SeverityIndicatorCard from './SeverityIndicatorCard.vue';
+import SeverityGraphCard from './SeverityGraphCard.vue'
+import AssistSeverityAndGraph from './AssistSeverityAndGraph.vue'
+import SeverityIndicatorCard from './SeverityIndicatorCard.vue'
 
+// --- No changes to this section ---
 const SEVERITY_ITEMS = ref([
   {
     count: '0',
     title: 'Suicidal Behavior',
     field: 'phq_data',
-    threshold: value => {
+    threshold: (value) => {
       try {
         if (Array.isArray(value)) {
-          const suicidalQuestion = value.find(q =>
-            q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-          );
-          return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
+          const suicidalQuestion = value.find(
+            (q) =>
+              q.question &&
+              q.question.toLowerCase().includes('thoughts that you would be better off dead')
+          )
+          return (
+            suicidalQuestion &&
+            suicidalQuestion.score >= 1 &&
+            suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all'
+          )
         }
         if (typeof value === 'string') {
-          const phqData = JSON.parse(value);
+          const phqData = JSON.parse(value)
           if (phqData.responses) {
-            const suicidalQuestion = phqData.responses.find(q =>
-              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-            );
-            return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
+            const suicidalQuestion = phqData.responses.find(
+              (q) =>
+                q.question &&
+                q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            )
+            return (
+              suicidalQuestion &&
+              suicidalQuestion.score >= 1 &&
+              suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all'
+            )
           }
         }
         if (value && value.responses) {
-          const suicidalQuestion = value.responses.find(q =>
-            q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-          );
-          return suicidalQuestion && suicidalQuestion.score >= 1 && suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all';
+          const suicidalQuestion = value.responses.find(
+            (q) =>
+              q.question &&
+              q.question.toLowerCase().includes('thoughts that you would be better off dead')
+          )
+          return (
+            suicidalQuestion &&
+            suicidalQuestion.score >= 1 &&
+            suicidalQuestion.selectedOption?.toLowerCase() !== 'not at all'
+          )
         }
-        return false;
+        return false
       } catch (e) {
-        console.error('Error evaluating suicidal behavior threshold:', e);
-        return false;
+        console.error('Error evaluating suicidal behavior threshold:', e)
+        return false
       }
     }
   },
@@ -107,96 +145,148 @@ const SEVERITY_ITEMS = ref([
     count: '0',
     title: 'Depression',
     field: 'phq_score',
-    threshold: value => value >= 10
+    threshold: (value) => value >= 10
   },
   {
     count: '0',
     title: 'Anxiety',
     field: 'gad_score',
-    threshold: value => value >= 10
+    threshold: (value) => value >= 10
   },
   {
     count: '0',
     title: 'ACE',
     field: 'ace_score',
-    threshold: value => value >= 4
+    threshold: (value) => value >= 4
   },
   {
     count: '0',
     title: 'Assist',
     field: 'assist_data',
-    threshold: value => {
-      if (!value) return false;
+    threshold: (value) => {
+      if (!value) return false
       try {
-        const assistData = typeof value === 'string' ? JSON.parse(value) : value;
+        const assistData = typeof value === 'string' ? JSON.parse(value) : value
         if (Array.isArray(assistData)) {
-          return assistData.some(item =>
-            item?.risk_flag &&
-            item.risk_flag !== 'none' &&
-            item.risk_flag !== 'low' &&
-            item.risk_flag !== 'no risk' &&
-            item.risk_flag !== '' &&
-            item.risk_flag !== null
-          );
+          return assistData.some(
+            (item) =>
+              item?.risk_flag &&
+              item.risk_flag !== 'none' &&
+              item.risk_flag !== 'low' &&
+              item.risk_flag !== 'no risk' &&
+              item.risk_flag !== '' &&
+              item.risk_flag !== null
+          )
         } else if (typeof assistData === 'object') {
-          // Check all flags in the object
-          return Object.values(assistData).some(flag =>
-            flag &&
-            flag !== 'none' &&
-            flag !== 'low' &&
-            flag !== 'no risk' &&
-            flag !== '' &&
-            flag !== null
-          );
+          return Object.values(assistData).some(
+            (flag) =>
+              flag &&
+              flag !== 'none' &&
+              flag !== 'low' &&
+              flag !== 'no risk' &&
+              flag !== '' &&
+              flag !== null
+          )
         }
-        return false;
+        return false
       } catch (error) {
-        console.error('Error parsing assist_data:', error);
-        return false;
+        console.error('Error parsing assist_data:', error)
+        return false
       }
     }
   }
-]);
+])
 
-const selectedYear = ref(new Date().getFullYear());
+const selectedYear = ref(new Date().getFullYear())
 const availableYears = computed(() => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
-  // Show last 5 years
+  const currentYear = new Date().getFullYear()
+  const years = []
   for (let i = 0; i < 5; i++) {
-    years.push(currentYear - i);
+    years.push(currentYear - i)
   }
-  return years;
-});
+  return years
+})
 
-const activeIndex = ref(0);
-const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value]);
-const filteredData = ref([]);
+const activeIndex = ref(0)
+const activeItem = computed(() => SEVERITY_ITEMS.value[activeIndex.value])
+const filteredData = ref([])
 const assistStructuredData = ref({
   total: 0,
   substances: {},
-  injections: {}, // New: Separate data for injection cases
-  lifetime: 0, // Add these if you want to calculate them on the parent level
-  active: 0   // or you can calculate them inside the child as it was before
-});
-const isLoading = ref(true);
-const error = ref(null);
-const severityCounts = ref({});
-const dataReady = ref(false);
+  injections: {},
+  lifetime: 0,
+  active: 0
+})
+const isLoading = ref(true)
+const error = ref(null)
+const severityCounts = ref({})
+const dataReady = ref(false)
+// --- End of unchanged section ---
 
+// MODIFIED: This function now uses server-side filtering for agency_name
+const fetchAndFilterData = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+
+    // 1. Get the current user's agency name
+    const { agencyName } = getUserDetailsFromStorage()
+
+    // 2. Construct the URL with the agency_name as a query parameter
+    let requestUrl = endpoints.newServiceAndTreatment
+    if (agencyName && agencyName !== 'Unknown Agency') {
+      requestUrl = `${endpoints.newServiceAndTreatment}?agency_name=${encodeURIComponent(
+        agencyName
+      )}`
+    }
+
+    // 3. Fetch the pre-filtered data from the backend
+    const response = await axios.get(requestUrl)
+    const dataArray = response.data || []
+
+    // 4. The client-side agency filter is now REMOVED. We only filter by year.
+    filteredData.value = dataArray.filter((item) => {
+      // const agencyMatch = ...; // THIS LINE IS GONE
+      const screeningData = item.screening_data
+      const submissionYear = screeningData?.submission_date
+        ? new Date(screeningData.submission_date).getFullYear()
+        : null
+
+      // The agencyMatch check is removed from the return statement
+      return screeningData && submissionYear === selectedYear.value
+    })
+
+    updateSeverityCounts()
+    processAssistData()
+    dataReady.value = true
+  } catch (err) {
+    console.error('Error fetching data:', err)
+    error.value = 'Failed to load data'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// --- All other functions and computed properties below are unchanged ---
 
 const getRelevantData = computed(() => {
-  if (!activeItem.value || !filteredData.value.length) return [];
-  return filteredData.value;
-});
+  if (!activeItem.value || !filteredData.value.length) return []
+  return filteredData.value
+})
 
 const extractRiskLevel = (riskFlag) => {
-  if (!riskFlag) return 'low';
-  const lowerCaseFlag = riskFlag.toLowerCase();
-  if (lowerCaseFlag.includes('severe') || lowerCaseFlag.includes('high') || lowerCaseFlag === 'green') return 'high';
-  if (lowerCaseFlag.includes('moderate') || lowerCaseFlag.includes('moderately severe')) return 'moderate';
-  return 'low';
-};
+  if (!riskFlag) return 'low'
+  const lowerCaseFlag = riskFlag.toLowerCase()
+  if (
+    lowerCaseFlag.includes('severe') ||
+    lowerCaseFlag.includes('high') ||
+    lowerCaseFlag === 'green'
+  )
+    return 'high'
+  if (lowerCaseFlag.includes('moderate') || lowerCaseFlag.includes('moderately severe'))
+    return 'moderate'
+  return 'low'
+}
 
 const processAssistData = () => {
   const structured = {
@@ -205,102 +295,105 @@ const processAssistData = () => {
     injections: {},
     lifetime: 0,
     active: 0
-  };
+  }
 
-  filteredData.value.forEach(item => {
-    let hasNonNoneRisk = false;
-    let hasInjection = false;
-    const allAssistData = [];
-    const injectionAssistData = [];
+  filteredData.value.forEach((item) => {
+    let hasNonNoneRisk = false
+    let hasInjection = false
+    const allAssistData = []
+    const injectionAssistData = []
 
-    // Collect risk data from all possible locations
     if (item.case_substance_risks) {
-      allAssistData.push(...item.case_substance_risks);
+      allAssistData.push(...item.case_substance_risks)
     }
     if (item.event_substance_risks) {
-      allAssistData.push(...item.event_substance_risks);
+      allAssistData.push(...item.event_substance_risks)
     }
-
-    // Handle assist_data (both array and object format)
     if (item.screening_data?.assist_data) {
-      let assistData = item.screening_data.assist_data;
+      let assistData = item.screening_data.assist_data
       if (typeof assistData === 'string') {
-        assistData = JSON.parse(assistData);
+        assistData = JSON.parse(assistData)
       }
       if (Array.isArray(assistData)) {
-        allAssistData.push(...assistData);
+        allAssistData.push(...assistData)
       } else if (typeof assistData === 'object') {
-        // Check for injection_flag within assist_data object
-        if (assistData.injection_flag && assistData.injection_flag !== 'none' && assistData.injection_flag !== 'no risk' && assistData.injection_flag !== '' && assistData.injection_flag !== null) {
-          hasInjection = true;
+        if (
+          assistData.injection_flag &&
+          assistData.injection_flag !== 'none' &&
+          assistData.injection_flag !== 'no risk' &&
+          assistData.injection_flag !== '' &&
+          assistData.injection_flag !== null
+        ) {
+          hasInjection = true
           injectionAssistData.push({
-            substance_name: 'Injection', // Add Injection as substance_name
+            substance_name: 'Injection',
             risk_flag: assistData.injection_flag
-          });
+          })
         }
-        // Convert object to array format for easier processing of other substance risks
         Object.entries(assistData).forEach(([key, value]) => {
-          if (key.endsWith('_flag') && key !== 'injection_flag' && value && value !== 'none' && value !== 'no risk' && value !== '' && value !== null) {
+          if (
+            key.endsWith('_flag') &&
+            key !== 'injection_flag' &&
+            value &&
+            value !== 'none' &&
+            value !== 'no risk' &&
+            value !== '' &&
+            value !== null
+          ) {
             allAssistData.push({
               substance_name: key.replace('_flag', ''),
               risk_flag: value
-            });
+            })
           }
-        });
+        })
       }
     }
 
-    // Check if any substance (excluding injection) has a valid risk
     if (allAssistData.length > 0) {
-      hasNonNoneRisk = allAssistData.some(data => {
-        return extractRiskLevel(data.risk_flag) !== 'low' && data.substance_name !== 'Injection';
-      });
+      hasNonNoneRisk = allAssistData.some((data) => {
+        return extractRiskLevel(data.risk_flag) !== 'low' && data.substance_name !== 'Injection'
+      })
     }
 
-    const userGender = item.user?.gender || 'Unknown';
+    const userGender = item.user?.gender || 'Unknown'
 
     if (hasNonNoneRisk) {
-      structured.total++; // Increment total ONLY for non-injection substance risks
-      allAssistData.forEach(data => {
+      structured.total++
+      allAssistData.forEach((data) => {
         if (data.substance_name !== 'Injection') {
-          let name = data.substance__name || data.substance_name || 'Unknown Substance';
-          const risk = extractRiskLevel(data.risk_flag);
-          const normalizedSubstance = normalizeSubstanceName(name);
-
+          let name = data.substance__name || data.substance_name || 'Unknown Substance'
+          const risk = extractRiskLevel(data.risk_flag)
+          const normalizedSubstance = normalizeSubstanceName(name)
           if (!structured.substances[normalizedSubstance]) {
             structured.substances[normalizedSubstance] = {
               male: { high: 0, moderate: 0, low: 0 },
               female: { high: 0, moderate: 0, low: 0 },
               other: { high: 0, moderate: 0, low: 0 }
-            };
+            }
           }
-
-          structured.substances[normalizedSubstance][userGender.toLowerCase()][risk]++;
+          structured.substances[normalizedSubstance][userGender.toLowerCase()][risk]++
         }
-      });
+      })
     }
 
     if (hasInjection) {
-      // DO NOT increment structured.total here
-      injectionAssistData.forEach(data => {
-        let name = data.substance_name || 'Injection'; // Default to 'Injection' if not found
-        const risk = extractRiskLevel(data.risk_flag);
-
+      injectionAssistData.forEach((data) => {
+        let name = data.substance_name || 'Injection'
+        const risk = extractRiskLevel(data.risk_flag)
         if (!structured.injections[name]) {
           structured.injections[name] = {
             male: { high: 0, moderate: 0, low: 0 },
             female: { high: 0, moderate: 0, low: 0 },
             other: { high: 0, moderate: 0, low: 0 }
-          };
+          }
         }
-
-        structured.injections[name][userGender.toLowerCase()][risk]++;
-      });
+        structured.injections[name][userGender.toLowerCase()][risk]++
+      })
     }
-  });
+  })
 
-  assistStructuredData.value = structured;
-};
+  assistStructuredData.value = structured
+}
 
 const normalizeSubstanceName = (name) => {
   const substanceMap = {
@@ -308,16 +401,16 @@ const normalizeSubstanceName = (name) => {
     'Alcoholic beverages (beer, wine, spirits, ara etc.)': 'Alcohol',
     'Cannabis (marijuana, pot, grass, hash, black etc.)': 'Cannabis',
     'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc.)': 'Opioids',
-    'Cocaine': 'Cocaine',
+    Cocaine: 'Cocaine',
     'Amphetamine-type stimulants (meth, ecstasy, yebe, diet pills etc.)': 'Amphetamines',
     'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': 'Inhalants',
     'Sedatives or Sleeping Pills (N-10, diazepam etc.)': 'Sedatives',
     'Hallucinogens (LSD, trips, Ketamine, etc.)': 'Hallucinogens',
     'Other - specify': 'Other',
     'Any Drug': 'Any Drug'
-  };
-  return substanceMap[name] || name;
-};
+  }
+  return substanceMap[name] || name
+}
 
 const mapSubstanceKeyToName = (key) => {
   const substanceMap = {
@@ -332,202 +425,170 @@ const mapSubstanceKeyToName = (key) => {
     hallucinogens: 'Hallucinogens',
     injection: 'Injection',
     other: 'Other'
-  };
-  return substanceMap[key] || key;
-};
+  }
+  return substanceMap[key] || key
+}
 
 function isActive(index) {
-  return index === activeIndex.value;
+  return index === activeIndex.value
 }
 
 async function setActiveIndex(index) {
-  if (isLoading.value) return;
-  activeIndex.value = index;
-
-  await nextTick();
-
-  // Short timeout to ensure clean transition
+  if (isLoading.value) return
+  activeIndex.value = index
+  await nextTick()
   setTimeout(() => {
-    dataReady.value = true;
-    isLoading.value = false;
-  }, 100);
+    dataReady.value = true
+    isLoading.value = false
+  }, 100)
 }
 
 const getUserDetailsFromStorage = () => {
-  const userDetailsString = localStorage.getItem('userDetailsStore');
+  const userDetailsString = localStorage.getItem('userDetailsStore')
   if (!userDetailsString) {
-    console.error('No userDetailsStore found in localStorage');
-    return { agencyName: 'Unknown Agency' };
+    console.error('No userDetailsStore found in localStorage')
+    return { agencyName: 'Unknown Agency' }
   }
   try {
-    const userDetails = JSON.parse(userDetailsString);
-    return { agencyName: userDetails?.agency?.agencyName || 'Unknown Agency' };
+    const userDetails = JSON.parse(userDetailsString)
+    return { agencyName: userDetails?.agency?.agencyName || 'Unknown Agency' }
   } catch (error) {
-    console.error('Error parsing user details:', error);
-    return { agencyName: 'Unknown Agency' };
+    console.error('Error parsing user details:', error)
+    return { agencyName: 'Unknown Agency' }
   }
-};
-
-const fetchAndFilterData = async () => {
-  try {
-    isLoading.value = true;
-    error.value = null;
-    const response = await axios.get(endpoints.newServiceAndTreatment);
-    const dataArray = response.data || [];
-    const { agencyName } = getUserDetailsFromStorage();
-
-    filteredData.value = dataArray.filter(item => {
-      const agencyMatch = item.user?.active_agency?.agency_name === agencyName;
-      const screeningData = item.screening_data;
-      const submissionYear = screeningData?.submission_date
-        ? new Date(screeningData.submission_date).getFullYear()
-        : null;
-
-      return agencyMatch && screeningData && submissionYear === selectedYear.value;
-    });
-
-    updateSeverityCounts();
-    processAssistData();
-    dataReady.value = true;
-    isLoading.value = false;
-  } catch (err) {
-    console.error('Error fetching data:', err);
-    error.value = 'Failed to load data';
-    isLoading.value = false;
-  }
-};
+}
 
 const updateSeverityCounts = () => {
-  const counts = {};
-  SEVERITY_ITEMS.value.forEach(item => {
-    counts[item.title] = {};
-  });
-
-  filteredData.value.forEach(entry => {
-    const screeningData = entry.screening_data;
-    if (!screeningData || screeningData === "Data not available") return;
-    SEVERITY_ITEMS.value.forEach(item => {
-      let measurement = null;
-
+  const counts = {}
+  SEVERITY_ITEMS.value.forEach((item) => {
+    counts[item.title] = {}
+  })
+  filteredData.value.forEach((entry) => {
+    const screeningData = entry.screening_data
+    if (!screeningData || screeningData === 'Data not available') return
+    SEVERITY_ITEMS.value.forEach((item) => {
+      let measurement = null
       if (item.field === 'assist_data') {
-        let hasRisk = false;
-        // Check case_substance_risks
+        let hasRisk = false
         if (entry.case_substance_risks && entry.case_substance_risks.length > 0) {
-          hasRisk = entry.case_substance_risks.some(risk =>
-            extractRiskLevel(risk.risk_flag) !== 'low'
-          );
+          hasRisk = entry.case_substance_risks.some(
+            (risk) => extractRiskLevel(risk.risk_flag) !== 'low'
+          )
         }
-        // Check event_substance_risks
         if (!hasRisk && entry.event_substance_risks && entry.event_substance_risks.length > 0) {
-          hasRisk = entry.event_substance_risks.some(risk =>
-            extractRiskLevel(risk.risk_flag) !== 'low'
-          );
+          hasRisk = entry.event_substance_risks.some(
+            (risk) => extractRiskLevel(risk.risk_flag) !== 'low'
+          )
         }
-        // Check screening_data.assist_data
         if (!hasRisk && screeningData?.assist_data) {
           try {
-            let assistValue = screeningData.assist_data;
+            let assistValue = screeningData.assist_data
             if (assistValue) {
               if (typeof assistValue === 'string') {
-                assistValue = JSON.parse(assistValue);
+                assistValue = JSON.parse(assistValue)
               }
               if (Array.isArray(assistValue)) {
-                hasRisk = assistValue.some(data => extractRiskLevel(data.risk_flag) !== 'low');
+                hasRisk = assistValue.some((data) => extractRiskLevel(data.risk_flag) !== 'low')
               } else {
                 hasRisk = item.threshold(assistValue)
               }
             }
-
-          }
-          catch (error) {
-            console.error(`Error evaluating assist data:`, error);
+          } catch (error) {
+            console.error(`Error evaluating assist data:`, error)
           }
         }
         if (hasRisk) {
-          measurement = 'Has Risk';
+          measurement = 'Has Risk'
         }
-
       } else if (item.field === 'phq_data') {
         try {
-          let value = screeningData[item.field];
+          let value = screeningData[item.field]
           if (typeof value === 'string') {
-            value = JSON.parse(value);
+            value = JSON.parse(value)
           }
-
-          let hasSuicidalThoughts = false;
-
+          let hasSuicidalThoughts = false
           if (Array.isArray(value)) {
-            const suicideQuestion = value.find(q =>
-              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-            );
-            hasSuicidalThoughts = suicideQuestion?.score >= 1 && suicideQuestion.selectedOption?.toLowerCase() !== 'not at all';
+            const suicideQuestion = value.find(
+              (q) =>
+                q.question &&
+                q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            )
+            hasSuicidalThoughts =
+              suicideQuestion?.score >= 1 &&
+              suicideQuestion.selectedOption?.toLowerCase() !== 'not at all'
           } else if (value?.responses) {
-            const suicideQuestion = value.responses.find(q =>
-              q.question && q.question.toLowerCase().includes('thoughts that you would be better off dead')
-            );
-            hasSuicidalThoughts = suicideQuestion?.score >= 1 && suicideQuestion.selectedOption?.toLowerCase() !== 'not at all';
+            const suicideQuestion = value.responses.find(
+              (q) =>
+                q.question &&
+                q.question.toLowerCase().includes('thoughts that you would be better off dead')
+            )
+            hasSuicidalThoughts =
+              suicideQuestion?.score >= 1 &&
+              suicideQuestion.selectedOption?.toLowerCase() !== 'not at all'
           }
           if (hasSuicidalThoughts) {
             measurement = 'Has Suicidal Thoughts'
           }
         } catch (error) {
-          console.error(`Error evaluating PHQ data:`, error);
+          console.error(`Error evaluating PHQ data:`, error)
         }
-
       } else {
-        let value = screeningData[item.field];
-        if (value === undefined || value === null) return;
+        let value = screeningData[item.field]
+        if (value === undefined || value === null) return
         try {
-          if (typeof value === 'string' && item.field !== 'phq_score' && item.field !== 'gad_score') {
-            value = JSON.parse(value);
+          if (
+            typeof value === 'string' &&
+            item.field !== 'phq_score' &&
+            item.field !== 'gad_score'
+          ) {
+            value = JSON.parse(value)
           }
-
           if (item.threshold(value)) {
             if (item.title === 'Depression') {
-              measurement = screeningData.phq_interpretation || null;
+              measurement = screeningData.phq_interpretation || null
             } else if (item.title === 'Anxiety') {
-              measurement = screeningData.gad_interpretation || null;
+              measurement = screeningData.gad_interpretation || null
             } else if (item.title === 'ACE') {
-              measurement = screeningData.ace_interpretation || null;
+              measurement = screeningData.ace_interpretation || null
             } else {
-              measurement = 'Has Risk';
+              measurement = 'Has Risk'
             }
           }
         } catch (error) {
-          console.error(`Error evaluating threshold for ${item.title}:`, error);
+          console.error(`Error evaluating threshold for ${item.title}:`, error)
         }
       }
       if (measurement) {
-        counts[item.title][measurement] = (counts[item.title][measurement] || 0) + 1;
+        counts[item.title][measurement] = (counts[item.title][measurement] || 0) + 1
       }
-    });
-  });
-  SEVERITY_ITEMS.value.forEach(item => {
-    let total = 0;
+    })
+  })
+  SEVERITY_ITEMS.value.forEach((item) => {
+    let total = 0
     for (let key in counts[item.title]) {
-      total += counts[item.title][key];
+      total += counts[item.title][key]
     }
-    item.count = total.toString();
-  });
-  severityCounts.value = counts;
-};
+    item.count = total.toString()
+  })
+  severityCounts.value = counts
+}
 
 watchEffect(() => {
   if (selectedYear.value) {
-    fetchAndFilterData();
+    fetchAndFilterData()
   }
-});
+})
 
 onMounted(async () => {
-  await fetchAndFilterData();
-});
+  await fetchAndFilterData()
+})
 
 watchEffect(() => {
   if (filteredData.value.length > 0) {
-    processAssistData();
-    updateSeverityCounts();
+    processAssistData()
+    updateSeverityCounts()
   }
-});
+})
 </script>
 
 <style scoped>
@@ -559,7 +620,7 @@ watchEffect(() => {
 
 .year-label {
   display: block;
-  color: #2B656F;
+  color: #2b656f;
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
   font-weight: 500;
@@ -573,9 +634,9 @@ watchEffect(() => {
 .year-select {
   width: 100%;
   background-color: white;
-  border: 2px solid #2B656F;
+  border: 2px solid #2b656f;
   border-radius: 12px;
-  color: #2B656F;
+  color: #2b656f;
   font-weight: 600;
   padding: 0.75rem 1rem;
   appearance: none;
@@ -588,7 +649,7 @@ watchEffect(() => {
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #2B656F;
+  color: #2b656f;
   pointer-events: none;
   font-size: 0.75rem;
 }
@@ -616,7 +677,7 @@ watchEffect(() => {
 }
 
 .active-card {
-  background: linear-gradient(165deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(165deg, #2b656f 0%, #1d4851 100%);
   border-color: #3d7d89;
   box-shadow: 0 12px 24px rgba(43, 101, 111, 0.2);
 }
@@ -645,7 +706,7 @@ watchEffect(() => {
 .count-number {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #2B656F;
+  color: #2b656f;
   transition: color 0.3s ease;
 }
 
@@ -655,7 +716,7 @@ watchEffect(() => {
 
 .card-title {
   text-align: center;
-  color: #2B656F;
+  color: #2b656f;
   font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -702,7 +763,7 @@ watchEffect(() => {
   width: 40px;
   height: 40px;
   border: 3px solid #f3f3f3;
-  border-top: 3px solid #2B656F;
+  border-top: 3px solid #2b656f;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
