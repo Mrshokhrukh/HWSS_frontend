@@ -195,6 +195,15 @@ const fetchEventStatus = async () => {
 
         if (response.status === 200) {
             const eventData = response.data;
+            
+            // Check if event has already passed its dates
+            const currentDate = new Date();
+            const eventStartDate = new Date(eventData.start_date);
+            const eventEndDate = new Date(eventData.end_date);
+            
+            // Check if event has already started or ended
+            const hasEventStarted = currentDate > eventStartDate;
+            const hasEventEnded = currentDate > eventEndDate;
 
             // Check if eventId is already saved in localStorage
             const savedEventId = localStorage.getItem('eventId');
@@ -204,14 +213,42 @@ const fetchEventStatus = async () => {
             }
 
             if (eventData.approval_status === 'pending') {
+                let message = 'The admin has not yet approved your event screening request.';
+                
+                if (hasEventStarted) {
+                    message += ' This event has already started and cannot be approved.';
+                } else if (hasEventEnded) {
+                    message += ' This event has already ended and cannot be approved.';
+                }
+                
                 Swal.fire({
                     title: 'Event Screening Pending',
-                    text: 'The admin has not yet approved your event screening request.',
+                    text: message,
                     icon: 'warning'
                 }).then(() => {
                     router.push('/counselor-dashboard');
                 });
             } else if (eventData.approval_status === 'approved') {
+                // Check if event is still valid (not started or ended)
+                if (hasEventEnded) {
+                    Swal.fire({
+                        title: 'Event Expired',
+                        text: 'This event has already ended and is no longer valid.',
+                        icon: 'error'
+                    }).then(() => {
+                        router.push('/counselor-dashboard');
+                    });
+                    return;
+                }
+                
+                if (hasEventStarted) {
+                    Swal.fire({
+                        title: 'Event In Progress',
+                        text: 'This event has already started.',
+                        icon: 'info'
+                    });
+                }
+                
                 // Save selected tools locally
                 const selectedTools = eventData.selected_tool;
                 localStorage.setItem('approvedSelectedTools', JSON.stringify(selectedTools));
