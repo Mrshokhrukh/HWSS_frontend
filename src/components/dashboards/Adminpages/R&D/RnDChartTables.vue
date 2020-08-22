@@ -1,7 +1,7 @@
 <template>
   <div class="card border-0 shadow-sm rounded-3 mx-3 my-4">
     <div class="card-header border-0 p-3 custom-gradient">
-      <h3 class="fs-5 fw-semibold text-white mb-1">School/Event Data</h3>
+      <h3 class="fs-5 fw-semibold text-white mb-1">Overall Assessment Data</h3>
       <p class="text-white-50 mb-2 small">Comprehensive screening results and analysis</p>
 
       <div class="d-flex gap-2 mb-1">
@@ -22,7 +22,7 @@
 
         <ColumnGroup type="header">
           <Row>
-            <Column header="School/Event Data" :colspan="1" :rowspan="2" headerClass="header-main py-2" />
+            <Column header="Agency" :colspan="1" :rowspan="2" headerClass="header-main py-2" />
             <Column header="Screening Results" :colspan="2" headerClass="header-main py-2" />
             <Column header="PHQ Assessment" :colspan="5" headerClass="header-main text-center py-2" />
             <Column header="GAD Assessment" :colspan="5" headerClass="header-main text-center py-2" />
@@ -296,7 +296,7 @@ const getSUDDetails = (substance) => {
 const downloadPDF = async () => {
   const doc = new jsPDF();
   doc.setFontSize(16);
-  doc.text('School/Event Data Report', 14, 15);
+  doc.text('Agency Report', 14, 15);
   const tableHeaders = [
     'Agency/Event', 'Individuals Screened', 'Suicidal Behavior',
     ...severityLevels.map(level => `PHQ ${level}`),
@@ -333,7 +333,7 @@ const printTable = () => {
           tr:nth-child(even) { background-color: #f2f2f2; }
         </style>
       </head>
-      <body><h3>School/Event Data Report</h3>${printContent.outerHTML}</body>
+      <body><h3> Agency Report</h3>${printContent.outerHTML}</body>
     </html>`);
   WinPrint.document.close();
   WinPrint.focus();
