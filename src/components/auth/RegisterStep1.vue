@@ -1,5 +1,5 @@
 <template>
-    <div class="min-vh-100 d-flex justify-content-center align-items-center authbg">
+    <div class="min-vh-100 d-flex justify-content-center align-items-center authbg" >
         <div class="card shadow-lg bg-body rounded card-reg mx-auto" style="width: 100%; max-width: 1000px;">
             <div class="row g-0 loginbg">
                 <div
