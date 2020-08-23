@@ -129,7 +129,14 @@
                             </div>
                         </template>
                     </Column>
-
+                    <!-- total user Column -->
+                    <Column field="total_users_to_screened" header="Total User" :sortable="true">
+                        <template #body="{ data }">
+                            <div class="counselor-cell">
+                                <span class="counselor-name">{{ data.total_users_to_screened }}</span>
+                            </div>
+                        </template>
+                    </Column>
                     <!-- Counselor Column -->
                     <Column field="counselor" header="Counselor" :sortable="true">
                         <template #body="{ data }">
