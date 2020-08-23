@@ -446,6 +446,16 @@ const state = reactive({
   mobileError: ''
 })
 
+const cleanMobileNumber = (mobileNumber) => {
+  if (!mobileNumber) return ''
+  
+  // Remove any non-digit characters
+  const cleaned = mobileNumber.replace(/\D/g, '')
+  
+  // Truncate to 15 digits if longer
+  return cleaned.length > 15 ? cleaned.substring(0, 15) : cleaned
+}
+
 const validateCID = () => {
   const cidPattern = /^\d+$/
 
@@ -463,8 +473,23 @@ const validateCID = () => {
 }
 
 const validateMobileNumber = () => {
+  const mobileNumber = formData.value.mob_number || ''
+  const cleanedNumber = cleanMobileNumber(mobileNumber)
+  
+  // Update the form data with cleaned number
+  if (mobileNumber !== cleanedNumber) {
+    formData.value.mob_number = cleanedNumber
+  }
+  
   const mobilePattern = /^[0-9]{10,15}$/
-  if (!mobilePattern.test(formData.value.mob_number)) {
+  
+  // If mobile number is empty, clear the error
+  if (!cleanedNumber.trim()) {
+    state.mobileError = ''
+    return
+  }
+  
+  if (!mobilePattern.test(cleanedNumber)) {
     state.mobileError = 'Please enter a valid mobile number (10-15 digits).'
   } else {
     state.mobileError = ''
@@ -487,7 +512,7 @@ const fetchCitizenDetails = async () => {
           !formData.value.selectedDate ||
           !formData.value.selectedYear ||
           state.cidError !== '' ||
-          state.mobileError !== ''
+          (formData.value.mob_number && formData.value.mob_number.trim() && state.mobileError !== '')
         ) {
           Swal.fire('Error', 'Please fill in all required fields and fix any validation errors.', 'error')
           return
@@ -532,7 +557,7 @@ const fetchCitizenDetails = async () => {
             last_name: citizenDetails.lastName,
             date_of_birth: formatDOB(citizenDetails.dob),
             gender: mapGender(citizenDetails.gender),
-            mob_number: validatedMobileNumber,
+            mob_number: cleanMobileNumber(validatedMobileNumber),
             perm_add_village: citizenDetails.villageName,
             perm_add_gewog: citizenDetails.gewogName,
             perm_add_dzongkhag: citizenDetails.dzongkhagName,
@@ -578,7 +603,8 @@ const fetchCitizenDetails = async () => {
     }).then((result) => {
       if (result.isConfirmed) {
         // Validate mobile number before proceeding
-        if (state.mobileError !== '') {
+        const mobileNumberToValidate = formData.value.mob_number || ''
+        if (mobileNumberToValidate.trim() && state.mobileError !== '') {
           Swal.fire('Error', 'Please fix the mobile number validation error before proceeding.', 'error')
           return
         }
@@ -594,7 +620,7 @@ const fetchCitizenDetails = async () => {
           last_name: formData.value.last_name || '',
           date_of_birth: formData.value.date_of_birth,
           gender: formData.value.gender,
-          mob_number: validatedMobileNumber,
+          mob_number: cleanMobileNumber(validatedMobileNumber),
           perm_add_village: formData.value.perm_add_village,
           perm_add_gewog: formData.value.perm_add_gewog,
           perm_add_dzongkhag: formData.value.perm_add_dzongkhag,
