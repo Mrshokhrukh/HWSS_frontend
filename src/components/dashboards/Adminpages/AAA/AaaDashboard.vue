@@ -1,5 +1,6 @@
 <template>
     <div>
+        <div>
         <CurrentStatus :filteredData="treatmentData" />
     </div>
     <div>
@@ -7,6 +8,7 @@
     </div>
     <div>
         <TestTypeScreening />
+    </div>
     </div>
 </template>
 

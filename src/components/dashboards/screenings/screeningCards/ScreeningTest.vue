@@ -57,7 +57,7 @@
                             <tr>
                                 <th></th>
                                 <th v-for="option in currentQuestion.answers" :key="option.id"
-                                    class="text-center text-capitalize fs-6 text-black">
+                                    class="text-center fs-6 text-black">
                                     {{ option.option }}
                                 </th>
                             </tr>
