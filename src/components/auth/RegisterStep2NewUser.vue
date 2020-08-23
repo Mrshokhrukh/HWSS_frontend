@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex justify-content-center align-items-center mt-5">
+  <div class="d-flex justify-content-center align-items-center mt-5" >
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-md-8">
@@ -258,7 +258,10 @@
                           id="mob_number"
                           v-model="formData.mob_number"
                           class="form-control bg-transparent border-dark"
+                          maxlength="15"
+                          @input="validateMobileNumber"
                         />
+                        <small v-if="state.mobileError" class="text-danger">{{ state.mobileError }}</small>
                       </div>
                     </div>
 
@@ -410,7 +413,8 @@ const formData = ref({
   selectedDate: '',
   selectedYear: '',
   date_of_birth: '',
-  gender: ''
+  gender: '',
+  mob_number: ''
 })
 
 const identifiers = [
@@ -438,7 +442,8 @@ const showLoadingOverlay = ref(false)
 const showSuccessMessage = ref(false)
 const showFailedMessage = ref(false)
 const state = reactive({
-  cidError: ''
+  cidError: '',
+  mobileError: ''
 })
 
 const validateCID = () => {
@@ -457,6 +462,15 @@ const validateCID = () => {
   }
 }
 
+const validateMobileNumber = () => {
+  const mobilePattern = /^[0-9]{10,15}$/
+  if (!mobilePattern.test(formData.value.mob_number)) {
+    state.mobileError = 'Please enter a valid mobile number (10-15 digits).'
+  } else {
+    state.mobileError = ''
+  }
+}
+
 const dates = Array.from({ length: 31 }, (_, i) => ({
   value: String(i + 1).padStart(2, '0'),
   label: String(i + 1)
@@ -468,31 +482,49 @@ const emit = defineEmits(['go-to-next-step'])
 
 const fetchCitizenDetails = async () => {
   if (formData.value.selectedIdentifier === 'cid') {
-    if (
-      !formData.value.selectedMonth ||
-      !formData.value.selectedDate ||
-      !formData.value.selectedYear ||
-      state.cidError !== ''
-    ) {
-      return
-    }
+            if (
+          !formData.value.selectedMonth ||
+          !formData.value.selectedDate ||
+          !formData.value.selectedYear ||
+          state.cidError !== '' ||
+          state.mobileError !== ''
+        ) {
+          Swal.fire('Error', 'Please fill in all required fields and fix any validation errors.', 'error')
+          return
+        }
     try {
       showLoadingOverlay.value = true
       const csrfToken = getCSRFToken()
       const headers = { 'X-CSRFToken': csrfToken }
+     
       const response = await axios.get(`${endpoints.getCitizenDetails}${formData.value.cid}/`, {
         headers
-      })
+      });
+
       if (response.data) {
         const citizenDetails = response.data
         localStorage.setItem('userCID', citizenDetails.cid)
-        const formattedMonth = formData.value.selectedMonth.padStart(2, '0')
-        const formattedDate = formData.value.selectedDate.padStart(2, '0')
+        const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
+        const formattedDate = formData.value.selectedDate.padStart(2, '0');
         const enteredDOB = `${formattedDate}/${formattedMonth}/${formData.value.selectedYear}`
         const apiDOB = citizenDetails.dob
         if (enteredDOB === apiDOB) {
           const usernameSuffix =
             citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate
+          // Validate and truncate mobile number from API
+          const mobileNumber = citizenDetails.mobileNumber || ''
+          const validatedMobileNumber = mobileNumber.length > 15 ? mobileNumber.substring(0, 15) : mobileNumber
+          
+          // Show warning if mobile number was truncated
+          if (mobileNumber.length > 15) {
+            Swal.fire({
+              title: 'Mobile Number Truncated',
+              text: `The mobile number from your CID (${mobileNumber}) was longer than 15 digits and has been truncated to ${validatedMobileNumber} for database compatibility.`,
+              icon: 'warning',
+              confirmButtonText: 'OK'
+            })
+          }
+          
           const mappedData = {
             identity_number: citizenDetails.cid,
             first_name: citizenDetails.firstName,
@@ -500,7 +532,7 @@ const fetchCitizenDetails = async () => {
             last_name: citizenDetails.lastName,
             date_of_birth: formatDOB(citizenDetails.dob),
             gender: mapGender(citizenDetails.gender),
-            mob_number: citizenDetails.mobileNumber,
+            mob_number: validatedMobileNumber,
             perm_add_village: citizenDetails.villageName,
             perm_add_gewog: citizenDetails.gewogName,
             perm_add_dzongkhag: citizenDetails.dzongkhagName,
@@ -545,6 +577,16 @@ const fetchCitizenDetails = async () => {
       confirmButtonText: 'Yes, continue'
     }).then((result) => {
       if (result.isConfirmed) {
+        // Validate mobile number before proceeding
+        if (state.mobileError !== '') {
+          Swal.fire('Error', 'Please fix the mobile number validation error before proceeding.', 'error')
+          return
+        }
+        
+        // Validate and truncate mobile number
+        const mobileNumber = formData.value.mob_number || ''
+        const validatedMobileNumber = mobileNumber.length > 15 ? mobileNumber.substring(0, 15) : mobileNumber
+        
         const mappedData = {
           identity_number: formData.value.passport,
           first_name: formData.value.first_name,
@@ -552,7 +594,7 @@ const fetchCitizenDetails = async () => {
           last_name: formData.value.last_name || '',
           date_of_birth: formData.value.date_of_birth,
           gender: formData.value.gender,
-          mob_number: formData.value.mob_number,
+          mob_number: validatedMobileNumber,
           perm_add_village: formData.value.perm_add_village,
           perm_add_gewog: formData.value.perm_add_gewog,
           perm_add_dzongkhag: formData.value.perm_add_dzongkhag,
