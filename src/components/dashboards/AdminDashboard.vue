@@ -1,6 +1,5 @@
 <template>
   <div>
-    YES THIS DASHBOARD LOADED
     <!-- template for Mental Health admin -->
     <div class="card admin-card p-4 mb-3 h-100 w-100">
       <div v-if="userRole === 'mh_admin'">
