@@ -113,6 +113,7 @@ const endpoints = {
   generateReport: `${reportingBaseUrl}/generate-report/`,
   getReport: `${reportingBaseUrl}/get-reporting-model-data/`,
   updateUserArchive: `${reportingBaseUrl}/update-user-archive/`,
+  generateCounselorXLSEncryptedReport: `${reportingBaseUrl}/generate-counselor-report-encrypted-xls/`,
 
   // Counselor endpoints
   createEventScreening: `${counselorScreeningBaseUrl}/create-event-screening/`,

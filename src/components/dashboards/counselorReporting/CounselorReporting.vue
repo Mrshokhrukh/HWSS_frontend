@@ -722,7 +722,7 @@ const getDataType = (key) => {
   return 'text'
 }
 
-const generateExcelBlob = async () => {
+const generateExcelReportUsingBackendApi = async () => {
   const searchTerm = globalFilter.value.toLowerCase().trim()
   let sourceData = []
   let columnsToExport = []
@@ -785,13 +785,23 @@ const generateExcelBlob = async () => {
 
   if (!excelData.length) return null
 
-  const ws = XLSX.utils.json_to_sheet(excelData)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Reports')
-  const excelArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-  return new Blob([excelArrayBuffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  })
+  const ApiResponse = await axios.post(endpoints.generateCounselorXLSEncryptedReport, 
+    {
+        data: excelData,
+        columns_to_export: columnsToExport,
+        password: getPassword()
+    },
+    {
+      responseType: "blob",
+    }
+  );
+  const url = window.URL.createObjectURL(new Blob([ApiResponse.data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "report.xls"); // filename
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 const getPassword = () => {
@@ -802,26 +812,7 @@ const getPassword = () => {
 const downloadExcelWithZip = async () => {
   isDownloading.value = true
   try {
-    const excelBlob = await generateExcelBlob()
-    if (!excelBlob) {
-      alert('No data available to export for the current selection and filters.')
-      return
-    }
-
-    const blobWriter = new BlobWriter('application/zip')
-    const zipWriter = new ZipWriter(blobWriter, {
-      password: getPassword(),
-      encryptionStrength: 3
-    })
-
-    await zipWriter.add(`reports_${selectedYear.value}.xlsx`, new BlobReader(excelBlob))
-    await zipWriter.close()
-
-    const zipBlob = await blobWriter.getData()
-    const fileName = `hwss_report_${selectedYear.value}_${new Date()
-      .toISOString()
-      .slice(0, 10)}.zip`
-    saveAs(zipBlob, fileName)
+    await generateExcelReportUsingBackendApi()
   } catch (error) {
     console.error('Error generating or downloading zipped Excel file:', error)
     alert(`Error creating report: ${error.message}`)
