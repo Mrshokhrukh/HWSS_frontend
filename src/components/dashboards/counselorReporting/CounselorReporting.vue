@@ -363,6 +363,7 @@ const years = computed(() => {
 
 // ... (Your other constants like baseTableFields, tableFields, etc. are unchanged) ...
 const baseTableFields = [
+  { key: 'id', header: 'ID' },
   { key: 'full_name', header: 'Full Name' },
   { key: 'gender', header: 'Gender' },
   { key: 'dob', header: 'Date of Birth' },
@@ -384,7 +385,8 @@ const tableServiceFields = [
   { key: 'case_status', header: 'Case Status' },
   { key: 'counseling', header: 'Counseling' },
   { key: 'follow_up', header: 'Follow Up' },
-  { key: 'referred', header: 'Referral' }
+  { key: 'referred', header: 'Referral' },
+  { key: 'mark_as_safe', header: "Mark as Safe"}
 ]
 
 const gyalsungTableFields = [
@@ -556,6 +558,9 @@ const transformData = (item) => {
     counseling: item.counseling || 'N/A',
     follow_up: item.follow_up || 'N/A',
     referred: item.referred || 'N/A',
+    mark_as_safe: (screeningData.mark_as_safe === undefined || screeningData.mark_as_safe === null)
+  ? "N/A"
+  : (screeningData.mark_as_safe ? "TRUE" : "FALSE"),
     ...substances
   }
 }
