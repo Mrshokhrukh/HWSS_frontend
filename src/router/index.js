@@ -22,6 +22,12 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Dashboard`, ...commonMeta }
     },
+    {
+      path: `/${userType}-dashboard/register`,
+      name: `${userType}-register`,
+      component: DashboardView,
+      meta: { title: `${capitalizedUserType} Register`, ...commonMeta }
+    },
     // -------------------------- Student specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/screening`,
@@ -171,6 +177,7 @@ const createAppRouter = () => {
       // Use route nesting to dynamically generate user dashboard routes
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
+      ...generateDashboardRoutes('gyalsung'),
       ...generateDashboardRoutes('admin'),
       ...generateDashboardRoutes('public'),
       {

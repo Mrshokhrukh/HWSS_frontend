@@ -53,6 +53,7 @@ import SideNavbar from '@/components/navbar/SideNavbar.vue'
 import StudentDashboard from '@/components/dashboards/StudentDashboard.vue'
 import PublicDashboard from '@/components/dashboards/PublicDashboard.vue'
 import CounsellorDashboard from '@/components/dashboards/CounsellorDashboard.vue'
+import GyalsungClinicalCounselorDashboard from '@/components/dashboards/GyalsungDashboard/gyalsung/ClinicalCounselorDashboard.vue'
 import AdminDashboard2 from '@/components/dashboards/AdminDashboard.vue'
 import AdminDashboard from '@/components/dashboards/Adminpages/AdminDashboard/AdminDashboardMain.vue'
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue'
@@ -68,9 +69,11 @@ const userDetailsStore = useUserDetailsStore()
 
 // Computed
 const currentComponent = computed(() => {
-  const role = String(userDetailsStore.user?.role ?? '')
-    .toLowerCase()
-    .replace(/\s+/g, '-')
+  // const role = String(userDetailsStore.user?.role ?? '')
+  //   .toLowerCase()
+  //   .replace(/\s+/g, '-')
+
+  const role = 'gyalsung_clinical_counselor'
 
   switch (role) {
     case 'student':
@@ -80,6 +83,8 @@ const currentComponent = computed(() => {
     case 'gyalsung_counselor':
     case 'trained_professional':
       return CounsellorDashboard
+    case 'gyalsung_clinical_counselor':
+      return GyalsungClinicalCounselorDashboard
     case 'mh_admin':
     case 'sud_admin':
     case 'aaa_admin':
