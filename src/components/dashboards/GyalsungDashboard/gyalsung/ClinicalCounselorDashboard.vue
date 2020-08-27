@@ -4,6 +4,7 @@
       <TopNavbarCard />
     </div>
 
+    <!-- category change basen on the route -->
     <div v-if="isRegisterRoute">
       <component :is="RegisterPage" />
     </div>
@@ -13,13 +14,14 @@
     <div v-else-if="isScreeningRoute">
       <component :is="GyalsungScreening" />
     </div>
+
     <div v-else>
-      <div class="mb-3">
+      <div class="mb-3 pt-4">
         <input
           v-model="search"
           type="text"
-          class="form-control form-control-lg rounded-pill"
-          placeholder="Type to Search"
+          class="form-control form-control-lg rounded"
+          placeholder="Type to Search..."
         />
       </div>
 
@@ -63,7 +65,7 @@
               <td>
                 <span :class="getStatusClass(user.status)" class="badge">
                   {{ user.status || 'Registered' }}
-                </span> 
+                </span>
               </td>
             </tr>
 
@@ -138,7 +140,12 @@ const fetchUsers = async () => {
     }
 
     users.value = userData
-      .filter((user) => String(user.role || '').toLowerCase() === 'general_public')
+      .filter(
+        (
+          user // temporary filter users who is not gyalsung, actually it should be true
+        ) =>
+          String(user.role || '').toLowerCase() === 'general_public' && Boolean(!user?.is_gyalsung)
+      )
       .map((user) => {
         const mappedUser = {
           ...user,

@@ -230,7 +230,7 @@ const filteredMenus = computed(() => {
 
   // Regular role-based menu selection
   if (role === 'student') return menuConfig.student
-  
+
   if (role === 'gyalsung_clinical_counselor' || role === 'gyalsung_counselor')
     return menuConfig.gyalsung_counselor
 
