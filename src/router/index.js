@@ -140,28 +140,29 @@ const generateDashboardRoutes = (userType) => {
       name: `${userType}-admin-chart-maker`,
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Admin chart maker`, ...commonMeta }
-    },
+    }
 
     // -------------------------- Gyulsung specific routes (TEMPORARY To TEST) ----------------------------------------------
-   
-    {
-      path: `/${userType}-dashboard/gyalsung-screening`,
-      name: `${userType}-screening`,
-      component: DashboardView,
-      meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
-    },
-    {
-      path: `/${userType}-dashboard/reports`,
-      name: `${userType}-reports`,
-      component: DashboardView,
-      meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
-    },
-    {
-      path: `/${userType}-dashboard/register`,
-      name: `${userType}-register`,
-      component: DashboardView,
-      meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
-    }
+
+    // {
+    //   path: `/${userType}-dashboard/gyalsung-screening`,
+    //   name: `${userType}-screening`,
+    //   component: DashboardView,
+    //   meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
+    // },
+    // {
+    //   path: `/${userType}-dashboard/reports`,
+    //   name: `${userType}-reports`,
+    //   component: DashboardView,
+    //   meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
+    // },
+    // {
+    //   path: `/${userType}-dashboard/register`,
+    //   name: `${userType}-register`,
+    //   component: DashboardView,
+    //   meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
+    // }
+
     
   ]
 
