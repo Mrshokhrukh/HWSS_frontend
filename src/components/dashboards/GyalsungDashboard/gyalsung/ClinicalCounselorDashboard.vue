@@ -128,6 +128,8 @@ const fetchUsers = async () => {
       timeout: 10000
     })
 
+    console.log(response);
+    
     let userData = []
     if (Array.isArray(response.data)) {
       userData = response.data
@@ -139,6 +141,8 @@ const fetchUsers = async () => {
       userData = response.data.users
     }
 
+
+    
     users.value = userData
       .filter(
         (

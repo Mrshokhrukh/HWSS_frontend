@@ -131,7 +131,9 @@ const endpoints = {
   newReferrals: `${monitoringBaseUrl}/referrals/`
 }
 
-// to fetch users for gyulsung, temporary to test
-endpoints.getUsers = `http://localhost:8123/api/v1/access/users/`
+// these API's for gyulsung, temporary to test
+// endpoints.getUsers = `http://localhost:8123/api/v1/access/users/`
+endpoints.getUsers = `http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/`
+endpoints.registerGyulsung = `  `
 
 export default endpoints
