@@ -10,14 +10,24 @@
               type="text"
               class="form-control form-control-lg"
               placeholder="Enter CID"
+              :class="{ 'is-invalid': cidError }"
+              @input="validateCid"
+              maxlength="10"
             />
-            <button class="btn btn-primary btn-lg" :disabled="!cid || loading" @click="lookup">
+            <button
+              class="btn btn-primary btn-lg"
+              :disabled="!cid || loading || cidError"
+              @click="lookup"
+            >
               <span v-if="!loading">Search</span>
               <span v-else>Searching...</span>
             </button>
           </div>
+          <div v-if="cidError" class="invalid-feedback d-block">
+            {{ cidError }}
+          </div>
           <small class="text-muted mt-2 d-block"
-            >Enter CID and click Search to auto-fill details.</small
+            >Enter 10-digit CID and click Search to auto-fill details.</small
           >
         </div>
       </div>
@@ -78,7 +88,10 @@
           </div>
 
           <div class="d-flex justify-content-end mt-4">
-            <button class="btn btn-success btn-lg" @click="goNext">Next</button>
+            <button class="btn btn-success btn-lg" @click="registerUser" :disabled="submitting">
+              <span v-if="!submitting">REGISTER</span>
+              <span v-else>Registering...</span>
+            </button>
           </div>
         </div>
       </div>
@@ -117,10 +130,11 @@ import { useRouter } from 'vue-router'
 const cidNumber = ref('')
 const submitting = ref(false)
 const successModal = ref(null)
+const cidError = ref('')
 
 const router = useRouter()
 const cid = ref('')
-const loading = ref(false);
+const loading = ref(false)
 
 const form = ref({
   first_name: '',
@@ -135,8 +149,29 @@ const form = ref({
   dzongkhag: ''
 })
 
+const validateCid = () => {
+  const cidValue = cid.value.trim()
+
+  if (!cidValue) {
+    cidError.value = ''
+    return
+  }
+
+  if (!/^\d+$/.test(cidValue)) {
+    cidError.value = 'CID must contain only numbers'
+    return
+  }
+
+  if (cidValue.length !== 10) {
+    cidError.value = 'CID must be exactly 10 digits'
+    return
+  }
+
+  cidError.value = ''
+}
+
 const lookup = async () => {
-  if (!cid.value) return
+  if (!cid.value || cidError.value) return
   loading.value = true
   try {
     const res = await axios.get(endpoints.getCitizenDetails, { params: { cid: cid.value } })
@@ -154,10 +189,58 @@ const lookup = async () => {
   }
 }
 
-const goNext = () => {
-  // router.push('/gyalsung-clinical-counselor-dashboard/gyalsung-screening')
-  const modal = bootstrap.Modal.getInstance(successModal.value)
-  modal?.show()
+const registerUser = async () => {
+  if (!cid.value || cidError.value) {
+    alert('Please enter a valid CID first')
+    return
+  }
+
+  submitting.value = true
+  try {
+    // Format data according to registerCounselorCaseUser expectations
+    const registrationData = {
+      userData: {
+        CID: cid.value,
+        clientFullName:
+          `${form.value.first_name} ${form.value.middle_name} ${form.value.last_name}`.trim(),
+        DOB: form.value.date_of_birth,
+        gender: form.value.gender,
+        phoneNumber: form.value.mob_number
+      },
+      agencyData: {
+        agency_code: 'GYALSUNG',
+        agency_name: 'Gyalsung Academy',
+        agency_type: 'Educational Institution'
+      },
+      userAgencyData: {
+        user_code: cid.value,
+        user_role_agency: 'student'
+      }
+    }
+
+    const token = localStorage.getItem('authToken')
+    const response = await axios.post(endpoints.registerGyalsung, registrationData, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Token ${token}` } : {})
+      }
+    })
+
+    console.log('Registration response:', response)
+
+    // Show success modal
+    const modal = bootstrap.Modal.getInstance(successModal.value)
+    modal?.show()
+  } catch (error) {
+    console.error('Registration failed:', error)
+    if (error.response?.data?.error) {
+      alert(`Registration failed: ${error.response.data.error}`)
+    } else {
+      alert('Registration failed. Please try again.')
+    }
+  } finally {
+    submitting.value = false
+  }
 }
 
 const onCidChange = () => {
@@ -260,7 +343,8 @@ const startScreening = () => {
   const modal = bootstrap.Modal.getInstance(successModal.value)
   modal.hide()
 
-  alert('Starting screening process...')
+  // Navigate to screening page
+  router.push('/gyalsung-dashboard/gyalsung-screening')
 }
 
 onMounted(() => {})

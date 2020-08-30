@@ -235,7 +235,7 @@ const filteredMenus = computed(() => {
   //     return menuConfig.gyalsung_counselor
 
   if (role === 'gyalsung_clinical_counselor' || role === 'gyalsung_counselor')
-    return menuConfig.counselor
+    return menuConfig.gyalsung_counselor
 
   if (role.includes('counselor') || role.includes('trained')) return menuConfig.counselor
   //   if (role.includes('counselor') || role.includes('trained')) return menuConfig.gyalsung_counselor

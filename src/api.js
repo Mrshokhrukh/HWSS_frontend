@@ -131,9 +131,10 @@ const endpoints = {
   newReferrals: `${monitoringBaseUrl}/referrals/`
 }
 
-// these API's for gyulsung, temporary to test
-// endpoints.getUsers = `http://localhost:8123/api/v1/access/users/`
-endpoints.getUsers = `http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/`
-endpoints.registerGyulsung = `  `
+// Gyalsung API endpoints
+endpoints.getUsers = `${accessBaseUrl}/users/`
+endpoints.registerGyalsung = `${accessBaseUrl}/register-counselor-case-user/`
+endpoints.submitGyalsungScreening = `${measurementBaseUrl}/submit-screening/`
 
 export default endpoints
+    
