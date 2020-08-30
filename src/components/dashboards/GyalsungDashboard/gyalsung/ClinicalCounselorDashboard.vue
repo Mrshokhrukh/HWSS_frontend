@@ -118,8 +118,8 @@ const isReportRoute = computed(() => route.path === '/gyalsung-dashboard/reports
 const isScreeningRoute = computed(() => route.path === '/gyalsung-dashboard/gyalsung-screening')
 
 const fetchUsers = async () => {
-  loading.value = true
-  error.value = ''
+  loading.value = true;
+  error.value = '';
 
   try {
     const token = localStorage.getItem('authToken')
@@ -139,13 +139,9 @@ const fetchUsers = async () => {
       userData = response.data.users
     }
 
+    // Filter for gyalsung users and map the data to display format
     users.value = userData
-      .filter(
-        (
-          user // temporary filter users who is not gyalsung, actually it should be true
-        ) =>
-          String(user.role || '').toLowerCase() === 'general_public' && Boolean(!user?.is_gyalsung)
-      )
+      // .filter(user => user.is_gyalsung || user.role === 'gyalsung_counselor')
       .map((user) => {
         const mappedUser = {
           ...user,
@@ -199,6 +195,7 @@ const fetchUsers = async () => {
       })
   } catch (err) {
     console.error('Failed to fetch users:', err)
+    error.value = 'Failed to fetch users. Please try again.'
   } finally {
     loading.value = false
   }
