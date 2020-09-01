@@ -1,13 +1,6 @@
 function getBaseUrl() {
-  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-    const apiHost = import.meta.env.VITE_API_HOST || 'localhost'
-    const apiPort = import.meta.env.VITE_API_PORT || '8123'
-    const apiProtocol = import.meta.env.VITE_API_PROTOCOL || 'http'
-    return `${apiProtocol}://${apiHost}:${apiPort}`
-  } else {
-    return import.meta.env.VITE_PRODUCTION_API_URL
+  return "https://thepemasystem.gov.bt/api/core"
     // return 'http://localhost:8123'
-  }
 }
 
 function getScreeningBaseUrl() {
