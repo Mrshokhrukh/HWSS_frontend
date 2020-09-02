@@ -66,7 +66,7 @@ const userOriginalRole = userDetailsStore.user.role;
 // Check if the user is a school counselor
 const isSchoolCounselor = ref(userOriginalRole === 'school_counselor');
 
-// Define a separate array of tool objects
+// This remains the master list of all possible tools
 const allTools = [
     { id: 1, name: 'PHQ9', icon: 'self_improvement' },
     { id: 2, name: 'GAD7', icon: 'sentiment_calm' },
@@ -75,24 +75,19 @@ const allTools = [
     { id: 5, name: 'SCHOOL ENV', icon: 'school' }
 ];
 
-const menus = ref([
-    {
-        name: 'All Tools', tools: allTools
-    },
-    {
-        name: 'Mental Health Tools', tools: allTools.filter(tool => ['GAD7', 'PHQ9', 'ACE'].includes(tool.name))
-    },
-    {
-        name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
-    },
-    {
-        name: 'School Environment', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
-    }
-]);
+// *** MODIFICATION START ***
+// The menus ref is now initialized as an empty array. 
+// We will populate it dynamically based on the approved tools.
+const menus = ref([]);
+// *** MODIFICATION END ***
 
 const selectedMenuIndex = ref(0);
 
-const selectedMenu = computed(() => menus.value[selectedMenuIndex.value]);
+const selectedMenu = computed(() => {
+    // Add a check to prevent errors if menus is empty
+    return menus.value.length > 0 ? menus.value[selectedMenuIndex.value] : { tools: [] };
+});
+
 
 const selectedToolsKey = 'selectedTools';
 
@@ -109,35 +104,29 @@ const selectMenu = (index) => {
 const toggleSelection = (tool) => {
     const existingToolIndex = selectedTools.value.findIndex(t => t.id === tool.id);
     if (existingToolIndex !== -1) {
-        // Remove the tool if it's already selected
         selectedTools.value.splice(existingToolIndex, 1);
     } else {
-        // Add the tool if it's not selected
         selectedTools.value.push({ id: tool.id, name: tool.name });
     }
     
-    // Reorder the selected tools array based on the order in allTools array
     selectedTools.value.sort((a, b) => {
         return allTools.findIndex(tool => tool.id === a.id) - allTools.findIndex(tool => tool.id === b.id);
     });
 
-    // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
 
 const goBack = () => {
-    // Implement go back logic
-    // console.log('Go back clicked');
     emit('goBackToRegister');
 };
 
 const selectAll = () => {
+    if (!selectedMenu.value.tools) return; // Safety check
     if (selectedTools.value.length === selectedMenu.value.tools.length) {
         selectedTools.value = [];
     } else {
         selectedTools.value = selectedMenu.value.tools.map(tool => ({ id: tool.id, name: tool.name }));
     }
-    // Save selected tools to local storage whenever they change
     saveSelectedTools();
 };
 
@@ -145,7 +134,10 @@ const proceed = () => {
     emit('proceedToEventScreening');
 };
 
-const selectAllText = computed(() => selectedTools.value.length === selectedMenu.value.tools.length ? 'Deselect All' : 'Select All');
+const selectAllText = computed(() => {
+    if (!selectedMenu.value.tools) return 'Select All'; // Safety check
+    return selectedTools.value.length === selectedMenu.value.tools.length ? 'Deselect All' : 'Select All';
+});
 
 const isSelected = (tool) => {
     return selectedTools.value.some(selectedTool => selectedTool.id === tool.id);
@@ -155,8 +147,61 @@ const saveSelectedTools = () => {
     localStorage.setItem(selectedToolsKey, JSON.stringify(selectedTools.value));
 };
 
+// function to build the menus based on approved tools
+const initializeMenus = () => {
+    // 1. Read the approved tool category from localStorage
+    const approvedToolsCategory = JSON.parse(localStorage.getItem('approvedSelectedTools'));
+
+    const availableMenus = [];
+
+    // 2. Build the menus array based on the category string
+    switch (approvedToolsCategory) {
+        case 'All Tools':
+            availableMenus.push({
+                name: 'All Tools', tools: allTools
+            });
+            availableMenus.push({
+                name: 'Mental Health Tools', tools: allTools.filter(tool => ['GAD7', 'PHQ9', 'ACE'].includes(tool.name))
+            });
+            availableMenus.push({
+                name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
+            });
+            if (isSchoolCounselor.value) {
+                availableMenus.push({
+                    name: 'School Environment', tools: allTools.filter(tool => tool.name === 'SCHOOL ENV')
+                });
+            }
+            break;
+
+        case 'SUD Tools':
+             availableMenus.push({
+                name: 'SUD Tools', tools: allTools.filter(tool => tool.name === 'ASSIST')
+            });
+            break;
+
+        case 'Mental Health Tools':
+             availableMenus.push({
+                name: 'Mental Health Tools', tools: allTools.filter(tool => ['GAD7', 'PHQ9', 'ACE'].includes(tool.name))
+            });
+            break;
+        
+        default:
+            // If nothing is found, menus will be empty.
+            console.warn("No approved tool category found in localStorage.");
+            break;
+    }
+    
+    menus.value = availableMenus;
+};
+
 onMounted(() => {
-    selectMenu(selectedMenuIndex.value);
+    // Call our new function when the component is mounted
+    initializeMenus();
+
+    // Set the initial menu if menus were successfully populated
+    if (menus.value.length > 0) {
+        selectMenu(0);
+    }
 });
 </script>
 
