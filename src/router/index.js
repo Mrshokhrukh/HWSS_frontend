@@ -162,8 +162,6 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Gyulsung User `, ...commonMeta }
     }
-
-    
   ]
 
   return dashboardRoutes
@@ -226,6 +224,7 @@ const createAppRouter = () => {
   // Helper function to get user type from user details
   const getUserTypeFromDetails = (userDetailsStore) => {
     const role = userDetailsStore?.user?.role?.toLowerCase() || 'public'
+
     if (role.includes('admin')) {
       return 'admin'
     } else if (role.includes('_counselor')) {

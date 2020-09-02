@@ -72,7 +72,7 @@ const currentComponent = computed(() => {
   // const role = String(userDetailsStore.user?.role ?? '')
   //   .toLowerCase()
   //   .replace(/\s+/g, '-')
-  const role = 'gyalsung_clinical_counselor';
+  const role = 'gyalsung_clinical_counselor'
 
   switch (role) {
     case 'student':
