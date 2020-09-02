@@ -1,22 +1,10 @@
 <template>
-    <div class="">
-      <div class="bg-white rounded">
-        <TopNavbarCard />
+    <div class="card h-100">
+      <div class="card-header bg-teal text-white">
+        <h5 class="card-title mb-0">Gyalsung Profiles</h5>
       </div>
-  
-      <!-- category change basen on the route -->
-      <div v-if="isRegisterRoute">
-        <component :is="RegisterPage" />
-      </div>
-      <div v-else-if="isReportRoute">
-        <component :is="GyalsungReport" />
-      </div>
-      <div v-else-if="isScreeningRoute">
-        <component :is="GyalsungScreening" />
-      </div>
-  
-      <div v-else>
-        <div class="mb-3 pt-4">
+      <div class="card-body">
+        <div class="mb-3">
           <input
             v-model="search"
             type="text"
@@ -59,8 +47,8 @@
                 <td>{{ formatName(user) }}</td>
                 <td>{{ user.identity_number || user.cid || '-' }}</td>
                 <td>{{ formatDate(user.date_of_birth || user.dob) }}</td>
-                <td>{{ user.mob_number || '-' }}</td>
-                <td>{{ formatDate(user.date_joined) || '-' }}</td>
+                <td>{{ user.mob_number || user.contact || '-' }}</td>
+                <td>{{ formatDate(user.date_joined || user.appointmentDate) || '-' }}</td>
                 <td class="text-wrap">{{ user.hospital || '-' }}</td>
                 <td>
                   <span :class="getStatusClass(user.status)" class="badge">
@@ -71,7 +59,7 @@
   
               <tr v-if="!loading && filteredUsers.length === 0 && !error">
                 <td colspan="8" class="text-center text-muted py-4">
-                  {{ search ? 'No users found matching your search' : 'No public users found' }}
+                  {{ search ? 'No users found matching your search' : 'No gyalsung users found' }}
                 </td>
               </tr>
             </tbody>
@@ -83,19 +71,13 @@
   
   <script setup>
   import { ref, computed, onMounted } from 'vue'
-  import { useRoute } from 'vue-router'
   import axios from 'axios'
   import endpoints from '@/api'
-  import RegisterPage from './GyalsungRegister.vue'
-  import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue'
-  import GyalsungReport from './GyalsungReport.vue'
-  import GyalsungScreening from './GyalsungScreening.vue'
   
   const users = ref([])
-  const loading = ref(false);
+  const loading = ref(false)
   const error = ref('')
   const search = ref('')
-  const route = useRoute()
   
   const filteredUsers = computed(() => {
     const searchTerm = search.value.trim().toLowerCase()
@@ -105,25 +87,27 @@
     }
   
     return users.value.filter((user) => {
-      const searchableFields = [user.name, user.cid, user.contact, user.hospital, user.status].filter(
-        Boolean
-      )
+      const searchableFields = [
+        user.name, 
+        user.cid, 
+        user.contact, 
+        user.hospital, 
+        user.status,
+        user.identity_number,
+        user.mob_number
+      ].filter(Boolean)
   
       return searchableFields.some((field) => String(field).toLowerCase().includes(searchTerm))
     })
   })
   
-  const isRegisterRoute = computed(() => route.path === '/gyalsung-dashboard/register')
-  const isReportRoute = computed(() => route.path === '/gyalsung-dashboard/reports')
-  const isScreeningRoute = computed(() => route.path === '/gyalsung-dashboard/gyalsung-screening')
-  
-  const fetchUsers = async () => {
-    loading.value = true;
-    error.value = '';
+  const fetchGyalsungUsers = async () => {
+    loading.value = true
+    error.value = ''
   
     try {
       const token = localStorage.getItem('authToken')
-      const response = await axios.get(endpoints.getUsers, {
+      const response = await axios.get(endpoints.getGyalsungCounselorUsers, {
         headers: token ? { Authorization: `Token ${token}` } : {},
         timeout: 10000
       })
@@ -139,63 +123,60 @@
         userData = response.data.users
       }
   
-      // Filter for gyalsung users and map the data to display format
-      users.value = userData
-        // .filter(user => user.is_gyalsung || user.role === 'gyalsung_counselor')
-        .map((user) => {
-          const mappedUser = {
-            ...user,
-            id: user.id || user.user_id || user.userId,
-            name:
-              user.name ||
-              user.full_name ||
-              user.fullName ||
-              `${user.first_name || user.firstName || ''} ${user.middle_name || user.middleName || ''} ${user.last_name || user.lastName || ''}`.trim() ||
-              user.username ||
-              '-',
-            cid:
-              user.cid ||
-              user.identity_number ||
-              user.identityNumber ||
-              user.citizen_id ||
-              user.citizenId ||
-              '-',
-            dob:
-              user.dob || user.date_of_birth || user.dateOfBirth || user.birth_date || user.birthDate,
-            contact:
-              user.contact ||
-              user.mobile_number ||
-              user.mobileNumber ||
-              user.phone_number ||
-              user.phoneNumber ||
-              user.personal_contact ||
-              user.personalContact ||
-              user.phone ||
-              user.mobile ||
-              '-',
-            appointmentDate:
-              user.appointmentDate ||
-              user.appointment_date ||
-              user.appointmentDate ||
-              user.scheduled_date ||
-              user.scheduledDate ||
-              user.booking_date ||
-              user.bookingDate,
-            hospital:
-              user.hospital ||
-              user.hospital_name ||
-              user.hospitalName ||
-              user.clinic ||
-              user.facility ||
-              '-',
-            status: user.status || user.appointment_status || user.appointmentStatus || 'Registered'
-          }
-  
-          return mappedUser
-        })
+      users.value = userData.map((user) => {
+        return {
+          ...user,
+          id: user.id || user.user_id || user.userId,
+          name:
+            user.name ||
+            user.full_name ||
+            user.fullName ||
+            `${user.first_name || user.firstName || ''} ${user.middle_name || user.middleName || ''} ${user.last_name || user.lastName || ''}`.trim() ||
+            user.username ||
+            '-',
+          cid:
+            user.cid ||
+            user.identity_number ||
+            user.identityNumber ||
+            user.citizen_id ||
+            user.citizenId ||
+            '-',
+          dob:
+            user.dob || user.date_of_birth || user.dateOfBirth || user.birth_date || user.birthDate,
+          contact:
+            user.contact ||
+            user.mobile_number ||
+            user.mobileNumber ||
+            user.phone_number ||
+            user.phoneNumber ||
+            user.personal_contact ||
+            user.personalContact ||
+            user.phone ||
+            user.mobile ||
+            user.mob_number ||
+            '-',
+          appointmentDate:
+            user.appointmentDate ||
+            user.appointment_date ||
+            user.appointmentDate ||
+            user.scheduled_date ||
+            user.scheduledDate ||
+            user.booking_date ||
+            user.bookingDate ||
+            user.date_joined,
+          hospital:
+            user.hospital ||
+            user.hospital_name ||
+            user.hospitalName ||
+            user.clinic ||
+            user.facility ||
+            '-',
+          status: user.status || user.appointment_status || user.appointmentStatus || 'Registered'
+        }
+      })
     } catch (err) {
-      console.error('Failed to fetch users:', err)
-      error.value = 'Failed to fetch users. Please try again.'
+      console.error('Failed to fetch gyalsung users:', err)
+      error.value = 'Failed to fetch gyalsung users. Please try again.'
     } finally {
       loading.value = false
     }
@@ -278,11 +259,15 @@
   }
   
   onMounted(() => {
-    fetchUsers()
+    fetchGyalsungUsers()
   })
   </script>
   
   <style scoped>
+  .card-header.bg-teal {
+    background-color: #2b656f !important;
+  }
+  
   .table-teal {
     background-color: #2b656f;
   }

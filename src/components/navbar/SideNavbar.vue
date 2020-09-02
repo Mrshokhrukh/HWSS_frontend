@@ -75,6 +75,7 @@ const menuConfig = {
 	],
 	counselor: [
 		{ text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Register", route: "/counselor-dashboard/counselor-approval", iconClass: "fa-solid fa-thumbs-up" },
 		{ text: "Screening", route: "/counselor-dashboard/counselor-screening", iconClass: "fa-solid fa-person-circle-question" },
 		{ text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
 		{ text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },

@@ -20,11 +20,17 @@
         </div>
       </div>
 
+      <!-- Gyalsung Profiles Card -->
+      <div class="col-md-12 mb-4">
+        <GyalsungProfiles />
+      </div>
+
       <div class="col-md-12 my-4">
         <SeverityCountsCard />
       </div>
     </div>
 
+    <!-- Rest of your route components remain the same -->
     <div v-if="currentRoute === '/counselor-dashboard/counselor-screening'" class="screening-dashboard">
       <CounselorScreening />
     </div>
@@ -62,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide, watch } from "vue"; // Added watch
+import { ref, computed, onMounted, provide, watch } from "vue";
 import { useRoute } from "vue-router";
 import axios from "axios";
 import endpoints from "@/api";
@@ -77,6 +83,7 @@ import CounselorMonitor from '@/components/dashboards/counselorMonitor/Counselor
 import CounselorHelp from '@/components/dashboards/counselorHelp/CounselorHelp.vue';
 import CounselorSetting from '@/components/dashboards/counselorSetting/CounselorSetting.vue';
 import CounselorFlagReports from '@/components/dashboards/counselorReporting/CounselorFlagReports.vue';
+import GyalsungProfiles from '@/components/dashboards/GyalsungModel/GyalsungProfiles.vue'; 
 
 const route = useRoute();
 const currentRoute = computed(() => route.path);
@@ -221,7 +228,6 @@ watch(
   }
 );
 
-
 defineExpose({
   sudData,
   assistMeasurementData,
@@ -236,6 +242,10 @@ defineExpose({
 </script>
 
 <style scoped>
+.bg-color {
+  background-color: #f8f9fa;
+}
+
 .nav-link {
   color: #2B656F !important;
   border-radius: 20px 50px 0 0;

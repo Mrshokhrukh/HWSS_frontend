@@ -101,6 +101,7 @@ const endpoints = {
   acceptReferral: `${monitoringBaseUrl}/accept-referral/`,
   getNotifications: `${monitoringBaseUrl}/get-notification/`,
   markNotificationAsRead: `${monitoringBaseUrl}/notifications/mark-as-read/`,
+  getGyalsungCounselorUsers: `${baseUrl}/api/v1/gyalsung/counselor-users/`,
 
   // Reporting endpoints
   generateReport: `${reportingBaseUrl}/generate-report/`,
