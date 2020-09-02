@@ -69,10 +69,10 @@ const userDetailsStore = useUserDetailsStore()
 
 // Computed
 const currentComponent = computed(() => {
-  // const role = String(userDetailsStore.user?.role ?? '')
-  //   .toLowerCase()
-  //   .replace(/\s+/g, '-')
-  const role = 'gyalsung_clinical_counselor';
+  const role = String(userDetailsStore.user?.role ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+  // const role = 'gyalsung_clinical_counselor'
 
   switch (role) {
     case 'student':
@@ -82,8 +82,8 @@ const currentComponent = computed(() => {
     case 'gyalsung_counselor':
     case 'trained_professional':
       return CounsellorDashboard
-    case 'gyalsung_clinical_counselor':
-      return GyalsungClinicalCounselorDashboard
+    // case 'gyalsung_clinical_counselor':
+    //   return GyalsungClinicalCounselorDashboard
     case 'mh_admin':
     case 'sud_admin':
     case 'aaa_admin':

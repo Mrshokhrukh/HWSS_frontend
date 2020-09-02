@@ -231,11 +231,8 @@ const filteredMenus = computed(() => {
   // Regular role-based menu selection
   if (role === 'student') return menuConfig.student
 
-  //   if (role === 'gyalsung_clinical_counselor' || role === 'gyalsung_counselor')
-  //     return menuConfig.gyalsung_counselor
-
-  if (role === 'gyalsung_clinical_counselor' || role === 'gyalsung_counselor')
-    return menuConfig.gyalsung_counselor
+  // if (role === 'gyalsung_clinical_counselor' || role === 'gyalsung_counselor')
+  //   return menuConfig.gyalsung_counselor
 
   if (role.includes('counselor') || role.includes('trained')) return menuConfig.counselor
   //   if (role.includes('counselor') || role.includes('trained')) return menuConfig.gyalsung_counselor
