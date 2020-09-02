@@ -65,6 +65,7 @@ declare module 'vue' {
     ChartComponent: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/ReportComponent/MonitorReport/ChartComponent.vue')['default']
     ChatWidget: typeof import('./src/components/common/ChatWidget.vue')['default']
     Chip: typeof import('primevue/chip')['default']
+    ClinicalCounselorDashboard: typeof import('./src/components/dashboards/GyalsungModel/ClinicalCounselorDashboard.vue')['default']
     Column: typeof import('primevue/column')['default']
     ContactDetailCard: typeof import('./src/components/dashboards/dashboardCard/ContactDetailCard.vue')['default']
     CounsellorDashboard: typeof import('./src/components/dashboards/CounsellorDashboard.vue')['default']
