@@ -1,6 +1,6 @@
 function getBaseUrl() {
-  // return "https://thepemasystem.gov.bt/api/core"
-    return 'http://localhost:8123'
+  return "https://thepemasystem.gov.bt/api/core"
+    // return 'http://localhost:8123'
 }
 
 function getScreeningBaseUrl() {
