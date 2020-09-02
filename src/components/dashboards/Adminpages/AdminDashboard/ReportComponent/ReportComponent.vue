@@ -33,14 +33,14 @@
                         <!-- Organization and Agency -->
                         <div class="col-md-6 col-lg-4">
                             <div class="mb-3">
-                                <label class="form-label">Organization</label>
-                                <Dropdown v-model="filters.organization" :options="organizations" optionLabel="name"
-                                    class="w-100" placeholder="Select Organization" @change="handleOrganizationChange"
+                                <label class="form-label">Cluster Type</label>
+                                <Dropdown v-model="filters.organization" :options="clusters" optionLabel="name"
+                                    class="w-100" placeholder="Select Cluster" @change="handleOrganizationChange"
                                     :filter="true" :showClear="true">
                                     <template #value="slotProps">
                                         <div class="d-flex align-items-center">
                                             <i class="pi pi-briefcase me-2"></i>
-                                            <span>{{ slotProps.value?.name || 'Select Organization' }}</span>
+                                            <span>{{ slotProps.value?.name || 'Select Cluster' }}</span>
                                         </div>
                                     </template>
                                 </Dropdown>
@@ -197,7 +197,7 @@ const regions = [
     { code: 'EASTERN', name: 'Eastern Region' }
 ];
 
-const organizations = [
+const clusters = [
     { code: 'EVENT_BASED', name: 'Event Based' },
     { code: 'CASE_BASED', name: 'Case Based' },
     { code: 'CLUSTER', name: 'Cluster' },
