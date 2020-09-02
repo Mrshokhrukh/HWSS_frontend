@@ -184,13 +184,10 @@ const fetchQuestions = async () => {
     const token = localStorage.getItem('authToken')
     const headers = token ? { Authorization: `Token ${token}` } : {}
 
-    const response = await axios.get(
-      `http://localhost:8686/api/v1/screening/screening-questions/`,
-      {
-        headers,
-        timeout: 5000
-      }
-    )
+    const response = await axios.get(`http://localhost:8686/api/v1/question_bank/question/`, {
+      headers,
+      timeout: 5000
+    })
 
     let questionData = []
 

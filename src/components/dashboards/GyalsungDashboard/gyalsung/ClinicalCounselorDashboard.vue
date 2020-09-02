@@ -92,7 +92,7 @@ import GyalsungReport from './GyalsungReport.vue'
 import GyalsungScreening from './GyalsungScreening.vue'
 
 const users = ref([])
-const loading = ref(false)
+const loading = ref(false);
 const error = ref('')
 const search = ref('')
 const route = useRoute()
