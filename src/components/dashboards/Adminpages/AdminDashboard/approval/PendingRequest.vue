@@ -1,14 +1,11 @@
 <template>
   <div class="event-management mt-4">
-    <!-- Main Container -->
     <div class="main-container">
-      <!-- Header Section with enhanced gradient effect -->
       <div class="header-section">
         <h2 class="gradient-title">Event Management</h2>
         <p class="header-subtitle">Review &amp; Manage Upcoming Event Screenings</p>
       </div>
 
-      <!-- Enhanced Stats Cards -->
       <div class="stats-grid">
         <div class="stats-card">
           <div class="stats-content">
@@ -59,9 +56,7 @@
         </div>
       </div>
 
-      <!-- Enhanced Content Card -->
       <div class="content-card">
-        <!-- Controls with improved styling -->
         <div class="controls-section">
           <div class="controls-container">
             <div class="search-controls">
@@ -86,7 +81,6 @@
           </div>
         </div>
 
-        <!-- Enhanced DataTable -->
         <DataTable
           v-model:filters="filters"
           :value="pendingEvents"
@@ -99,7 +93,6 @@
           stripedRows
           responsiveLayout="scroll"
         >
-          <!-- Enhanced Date Column -->
           <Column field="start_date" header="Start Date" :sortable="true">
             <template #body="{ data }">
               <div class="date-cell">
@@ -110,7 +103,6 @@
             </template>
           </Column>
 
-          <!-- Enhanced Event Details Column -->
           <Column field="event_name" header="Event Details" :sortable="true">
             <template #body="{ data }">
               <div class="event-details">
@@ -126,7 +118,6 @@
             </template>
           </Column>
 
-          <!-- Tools Column -->
           <Column field="selected_tool" header="Tools" :sortable="true">
             <template #body="{ data }">
               <span class="tool-pill">
@@ -135,7 +126,6 @@
             </template>
           </Column>
 
-          <!-- Duration Column -->
           <Column field="duration" header="Duration" :sortable="true">
             <template #body="{ data }">
               <div class="duration-cell">
@@ -150,15 +140,6 @@
               </div>
             </template>
           </Column>
-          <!-- total user Column -->
-          <Column field="total_users_to_screened" header="Total User" :sortable="true">
-            <template #body="{ data }">
-              <div class="counselor-cell">
-                <span class="counselor-name">{{ data.total_users_to_screened }}</span>
-              </div>
-            </template>
-          </Column>
-          <!-- Counselor Column -->
           <Column field="counselor" header="Counselor" :sortable="true">
             <template #body="{ data }">
               <div class="counselor-cell">
@@ -169,7 +150,6 @@
             </template>
           </Column>
 
-          <!-- Actions Column -->
           <Column header="Actions">
             <template #body="{ data }">
               <div class="action-buttons">
@@ -181,7 +161,6 @@
             </template>
           </Column>
 
-          <!-- Empty State -->
           <template #empty>
             <div class="empty-state">
               <div class="empty-icon">
@@ -192,7 +171,6 @@
             </div>
           </template>
 
-          <!-- Loading State -->
           <template #loading>
             <div class="loading-state">
               <div class="loading-icon">
@@ -206,7 +184,6 @@
       </div>
     </div>
 
-    <!-- Event Details Dialog -->
     <Dialog v-model:visible="visible" :modal="true" class="enhanced-dialog">
       <template #header>
         <div class="dialog-header">
@@ -216,45 +193,73 @@
       </template>
 
       <div class="dialog-content">
-        <!-- Event Info Cards -->
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="info-header">
-              <i class="fas fa-calendar"></i>
-              <label>Event Details</label>
+        <div class="details-grid">
+          <div class="details-column">
+            <div class="info-card">
+              <div class="info-header">
+                <i class="fas fa-calendar-alt"></i>
+                <label>Event & Location</label>
+              </div>
+              <h4 class="info-title">{{ eventData.event_name }}</h4>
+              <p class="info-subtitle">{{ eventData.location }}</p>
             </div>
-            <h4 class="info-title">{{ eventData.event_name }}</h4>
-            <p class="info-subtitle">{{ eventData.location }}</p>
+            <div class="info-card">
+              <div class="info-header">
+                <i class="fas fa-user-tie"></i>
+                <label>Assigned Counselor</label>
+              </div>
+              <h4 class="info-title">
+                {{ eventData.counselor && eventData.counselor !== 'null null' ? eventData.counselor : 'Not Assigned' }}
+              </h4>
+            </div>
+            <div class="info-card">
+              <div class="info-header">
+                <i class="fas fa-tools"></i>
+                <label>Screening Tool</label>
+              </div>
+              <h4 class="info-title">{{ eventData.selected_tool || 'N/A' }}</h4>
+            </div>
           </div>
-
-          <div class="info-card">
-            <div class="info-header">
-              <i class="fas fa-clock"></i>
-              <label>Duration & Tools</label>
+          <div class="details-column">
+            <div class="info-card">
+              <div class="info-header">
+                <i class="fas fa-clock"></i>
+                <label>Date & Duration</label>
+              </div>
+              <h4 class="info-title">
+                {{ formatDate(eventData.start_date) }} - {{ formatDate(eventData.end_date) }}
+              </h4>
+              <p class="info-subtitle">{{ formatDuration(eventData.duration) }}</p>
             </div>
-            <h4 class="info-title">{{ formatDuration(eventData.duration) }}</h4>
-            <p class="info-subtitle">{{ eventData.selected_tool }}</p>
-          </div>
-          <div class="info-card">
-            <div class="info-header">
-              <i class="fas fa-users"></i>
-              <label>Participants</label>
+            <div class="info-card">
+              <div class="info-header">
+                <i class="fas fa-user-edit"></i>
+                <label>Created By</label>
+              </div>
+              <h4 class="info-title">{{ eventData.created_by?.username }}</h4>
+              <p class="info-subtitle">{{ eventData.created_by?.email }}</p>
             </div>
-            <h4 class="info-title">{{ eventData.total_users_to_screened }}</h4>
-            <p class="info-subtitle">Individuals to be Screened</p>
+            <div class="info-card">
+              <div class="info-header">
+                <i class="fas fa-users"></i>
+                <label>Participants</label>
+              </div>
+              <h4 class="info-title">{{ eventData.total_users_to_screened }}</h4>
+              <p class="info-subtitle">Individuals to be Screened</p>
+            </div>
           </div>
         </div>
 
-        <!-- Purpose -->
         <div class="purpose-section">
           <div class="info-header">
             <i class="fas fa-bullseye"></i>
             <label>Event Purpose</label>
           </div>
-          <p class="purpose-text">{{ eventData.event_purpose }}</p>
+          <p class="purpose-text">
+            {{ eventData.event_purpose || 'No purpose was provided for this event.' }}
+          </p>
         </div>
 
-        <!-- Actions -->
         <div class="dialog-actions">
           <button @click="acceptEvent(eventData)" class="btn-approve">
             <i class="fas fa-check"></i>
@@ -268,7 +273,6 @@
       </div>
     </Dialog>
 
-    <!-- Reject Dialog -->
     <Dialog v-model:visible="showPopup" :modal="true" class="enhanced-reject-dialog">
       <template #header>
         <h3 class="dialog-title">Rejection Feedback</h3>
@@ -365,6 +369,7 @@ const pendingEvents = computed(() => {
 })
 
 const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -373,6 +378,8 @@ const formatDate = (dateString) => {
 }
 
 const formatDuration = (duration) => {
+  if (duration === null || duration === undefined) return 'N/A'
+  if (duration === 0) return 'Less than a day'
   return duration === 1 ? '1 day' : `${duration} days`
 }
 
@@ -729,11 +736,11 @@ onMounted(() => {
   background-color: rgba(43, 101, 111, 0.05);
 }
 
-/* Enhanced Dialog Base Styles */
+/* Enhanced Dialog Base Styles - WIDER MODAL */
 .enhanced-dialog,
 .enhanced-reject-dialog {
   --modal-radius: 16px;
-  max-width: 600px;
+  max-width: 800px; /* Increased from 600px */
   margin: 0 auto;
 }
 
@@ -776,12 +783,18 @@ onMounted(() => {
   background: white;
 }
 
-/* Info Grid */
-.info-grid {
+/* MODAL: Details Grid */
+.details-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+.details-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .info-card {
@@ -814,12 +827,14 @@ onMounted(() => {
   font-weight: 600;
   color: #2b656f;
   margin: 0 0 0.5rem 0;
+  word-wrap: break-word;
 }
 
 .info-subtitle {
   color: #6c757d;
   font-size: 0.9rem;
   margin: 0;
+  word-wrap: break-word;
 }
 
 /* Purpose Section */
@@ -842,38 +857,27 @@ onMounted(() => {
   margin-bottom: 1.5rem;
 }
 
-.form-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  margin-top: 0.5rem;
-  color: #495057;
-  transition: all 0.2s ease;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: #2b656f;
-  box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
-}
-
+.form-select,
 .form-textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #dee2e6;
   border-radius: 8px;
   margin-top: 0.5rem;
-  resize: vertical;
-  min-height: 120px;
   color: #495057;
   transition: all 0.2s ease;
 }
 
+.form-select:focus,
 .form-textarea:focus {
   outline: none;
   border-color: #2b656f;
   box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 120px;
 }
 
 /* Dialog Actions */
@@ -938,11 +942,13 @@ onMounted(() => {
 }
 
 /* Responsive Adjustments */
-@media (max-width: 640px) {
-  .info-grid {
+@media (max-width: 768px) {
+  .details-grid {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 640px) {
   .dialog-actions {
     flex-direction: column;
   }
@@ -952,13 +958,6 @@ onMounted(() => {
   .btn-cancel {
     width: 100%;
     justify-content: center;
-  }
-
-  .enhanced-dialog,
-  .enhanced-reject-dialog {
-    --modal-radius: 16px;
-    max-width: 800px; /* Increased from 600px */
-    margin: 0 auto;
   }
 }
 

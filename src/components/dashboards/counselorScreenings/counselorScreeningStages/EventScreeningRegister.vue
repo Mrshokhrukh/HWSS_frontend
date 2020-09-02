@@ -253,7 +253,7 @@ const fetchEventStatus = async () => {
 
                 Swal.fire({
                     title: 'Event Screening Approved',
-                    text: 'Proceeding to tool selection.',
+                    text: 'Proceeding to user registration selection.',
                     icon: 'success',
                     timer: 1000,
                     showConfirmButton: false
