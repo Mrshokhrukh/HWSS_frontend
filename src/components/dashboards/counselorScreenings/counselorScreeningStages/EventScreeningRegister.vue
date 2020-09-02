@@ -333,7 +333,7 @@ watch(endDate, (newValue, oldValue) => {
     const start = new Date(startDate.value);
     const end = new Date(newValue);
     const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     duration.value = diffDays;
 });
 
