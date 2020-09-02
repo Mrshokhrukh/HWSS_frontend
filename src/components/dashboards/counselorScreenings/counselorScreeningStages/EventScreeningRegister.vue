@@ -195,32 +195,28 @@ const fetchEventStatus = async () => {
 
         if (response.status === 200) {
             const eventData = response.data;
-            
-            // Check if event has already passed its dates
+
+            // Normalize dates to compare just the date part
             const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
             const eventStartDate = new Date(eventData.start_date);
+            eventStartDate.setHours(0, 0, 0, 0);
             const eventEndDate = new Date(eventData.end_date);
-            
-            // Check if event has already started or ended
-            const hasEventStarted = currentDate > eventStartDate;
-            const hasEventEnded = currentDate > eventEndDate;
+            eventEndDate.setHours(0, 0, 0, 0);
 
             // Check if eventId is already saved in localStorage
             const savedEventId = localStorage.getItem('eventId');
             if (!savedEventId || savedEventId !== eventData.eventId.toString()) {
-                // Save eventId to localStorage
                 localStorage.setItem('eventId', eventData.eventId);
             }
 
             if (eventData.approval_status === 'pending') {
                 let message = 'The admin has not yet approved your event screening request.';
-                
-                if (hasEventStarted) {
-                    message += ' This event has already started and cannot be approved.';
-                } else if (hasEventEnded) {
+                if (currentDate > eventEndDate) {
                     message += ' This event has already ended and cannot be approved.';
+                } else if (currentDate > eventStartDate) {
+                    message += ' This event has already started and cannot be approved.';
                 }
-                
                 Swal.fire({
                     title: 'Event Screening Pending',
                     text: message,
@@ -229,8 +225,7 @@ const fetchEventStatus = async () => {
                     router.push('/counselor-dashboard');
                 });
             } else if (eventData.approval_status === 'approved') {
-                // Check if event is still valid (not started or ended)
-                if (hasEventEnded) {
+                if (currentDate > eventEndDate) {
                     Swal.fire({
                         title: 'Event Expired',
                         text: 'This event has already ended and is no longer valid.',
@@ -240,16 +235,19 @@ const fetchEventStatus = async () => {
                     });
                     return;
                 }
-                
-                if (hasEventStarted) {
+
+                if (currentDate < eventStartDate) {
                     Swal.fire({
-                        title: 'Event In Progress',
-                        text: 'This event has already started.',
+                        title: 'Event Approved',
+                        text: `Screening can only begin on the event start date: ${eventData.start_date}.`,
                         icon: 'info'
+                    }).then(() => {
+                        router.push('/counselor-dashboard');
                     });
+                    return;
                 }
-                
-                // Save selected tools locally
+
+                // Event is approved and ready for screening (today or in progress)
                 const selectedTools = eventData.selected_tool;
                 localStorage.setItem('approvedSelectedTools', JSON.stringify(selectedTools));
 
@@ -264,11 +262,12 @@ const fetchEventStatus = async () => {
                     emit('proceedToUserSelectionTools');
                 }, 500);
             } else {
+                // Handle other statuses like 'rejected' if necessary
                 eventStatus.value = eventData.approval_status;
             }
         }
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error fetching event status:', error);
     }
 };
 
