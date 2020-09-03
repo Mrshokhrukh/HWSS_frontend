@@ -1,5 +1,6 @@
 <template>
   <div class="container-fluid bg-color">
+    <!-- Main Dashboard Content -->
     <div class="row my-2" v-if="currentRoute === '/counselor-dashboard'">
       <div class="col-md-4 mb-4">
         <div class="h-100">
@@ -29,31 +30,25 @@
       </div>
     </div>
 
-    <div
-      v-if="currentRoute === '/counselor-dashboard/counselor-screening'"
-      class="screening-dashboard"
-    >
+    <!-- Gyalsung Register Route - Multiple condition checks -->
+    <div v-if="showGyalsungRegister" class="gyalsung-register">
+      <GyalsungRegister />
+    </div>
+
+    <!-- Other Routes -->
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-screening'" class="screening-dashboard">
       <CounselorScreening />
     </div>
 
-    <div
-      v-if="currentRoute === '/counselor-dashboard/counselor-monitor'"
-      class="screening-dashboard"
-    >
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-monitor'" class="screening-dashboard">
       <CounselorMonitor />
     </div>
 
-    <div
-      v-if="currentRoute === '/counselor-dashboard/counselor-rescreening'"
-      class="screening-dashboard"
-    >
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-rescreening'" class="screening-dashboard">
       <CounselorRescreening />
     </div>
 
-    <div
-      v-if="currentRoute === '/counselor-dashboard/counselor-reports'"
-      class="screening-dashboard"
-    >
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-reports'" class="screening-dashboard">
       <CounselorReporting />
     </div>
 
@@ -61,17 +56,11 @@
       <CounselorHelp />
     </div>
 
-    <div
-      v-if="currentRoute === '/counselor-dashboard/counselor-settings'"
-      class="screening-dashboard"
-    >
+    <div v-if="currentRoute === '/counselor-dashboard/counselor-settings'" class="screening-dashboard">
       <CounselorSetting />
     </div>
 
-    <div
-      v-if="currentRoute.includes('/counselor-dashboard/flagged-reports')"
-      class="screening-dashboard"
-    >
+    <div v-if="currentRoute.includes('/counselor-dashboard/flagged-reports')" class="screening-dashboard">
       <CounselorFlagReports :flag="flag" />
     </div>
 
@@ -84,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, provide, watch } from 'vue' // Added watch
+import { ref, computed, onMounted, provide, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import apiClient from '@/apiClient'
 import endpoints from '@/api'
@@ -92,6 +81,7 @@ import QuickToolCard from '@/components/dashboards/CounsellorDashboardCard/Quick
 import ScreeningPrevYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningPrevYearCard.vue'
 import ScreeningCurrentYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningCurrentYearCard.vue'
 import SeverityCountsCard from '@/components/dashboards/CounsellorDashboardCard/SeverityCountsCard.vue'
+import GyalsungProfiles from '@/components/dashboards/GyalsungModel/GyalsungProfiles.vue'
 import CounselorScreening from '@/components/dashboards/counselorScreenings/CounselorScreening.vue'
 import CounselorRescreening from '@/components/dashboards/counselorRescreenings/CounselorRescreening.vue'
 import CounselorReporting from '@/components/dashboards/counselorReporting/CounselorReporting.vue'
@@ -99,12 +89,32 @@ import CounselorMonitor from '@/components/dashboards/counselorMonitor/Counselor
 import CounselorHelp from '@/components/dashboards/counselorHelp/CounselorHelp.vue'
 import CounselorSetting from '@/components/dashboards/counselorSetting/CounselorSetting.vue'
 import CounselorFlagReports from '@/components/dashboards/counselorReporting/CounselorFlagReports.vue'
+import GyalsungRegister from '@/components/dashboards/GyalsungModel/GyalsungRegister.vue'
 
 const route = useRoute()
 const currentRoute = computed(() => route.path)
 const flag = computed(() => route.query.flag)
 const currentYear = new Date().getFullYear()
 const websiteName = 'The PEMA HWSS'
+
+// Debug mode - set to false in production
+const showDebugInfo = ref(true)
+
+// Enhanced computed property for Gyalsung Register visibility
+const showGyalsungRegister = computed(() => {
+  const path = currentRoute.value.toLowerCase()
+  const gyalsungRoutes = [
+    '/gyalsungmodel/gyalsungregister',
+    '/GyalsungModel/GyalsungRegister',
+    '/gyalsung/register',
+    '/counselor-dashboard/gyalsung-register'
+  ]
+  
+  return gyalsungRoutes.some(routePath => 
+    path === routePath.toLowerCase() || 
+    path.includes(routePath.toLowerCase())
+  )
+})
 
 const sudData = ref(null)
 const assistMeasurementData = ref(null)
@@ -118,7 +128,6 @@ const fetchData = async () => {
   try {
     let params = {}
 
-    // 2. Build the query parameters based on user role.
     switch (userRole.value) {
       case 'school_counselor':
       case 'trained_professional':
@@ -136,7 +145,6 @@ const fetchData = async () => {
         break
     }
 
-    // 3. Fetch data from endpoints with the new parameters.
     const [assistMeasurementResponse, measurementResponse, sudResponse] = await Promise.all([
       apiClient.get(endpoints.getAssistMeasurement, { params }),
       apiClient.get(endpoints.getMeasurement, { params }),
@@ -217,17 +225,37 @@ provide('filteredData', filteredData)
 
 onMounted(() => {
   getUserDetails()
+  console.log('=== CounsellorDashboard Mounted ===')
+  console.log('Current route on mount:', route.path)
+  console.log('Show Gyalsung Register:', showGyalsungRegister.value)
+  console.log('Route params:', route.params)
+  console.log('Route query:', route.query)
 })
 
 watch(
   () => route.path,
   (newPath, oldPath) => {
-    if (newPath !== oldPath) {
+    console.log('=== Route Change Detected ===')
+    console.log('Route changed from:', oldPath)
+    console.log('Route changed to:', newPath)
+    console.log('Show Gyalsung Register:', showGyalsungRegister.value)
+    
+    // Only fetch data for non-Gyalsung routes
+    if (!showGyalsungRegister.value) {
       fetchData()
     }
   },
   {
     immediate: true 
+  }
+)
+
+// Watch the computed property directly
+watch(
+  showGyalsungRegister,
+  (newValue, oldValue) => {
+    console.log('=== Gyalsung Register Visibility Changed ===')
+    console.log('Show Gyalsung Register changed from:', oldValue, 'to:', newValue)
   }
 )
 
@@ -240,7 +268,8 @@ defineExpose({
   mappedData,
   filteredData,
   fetchData,
-  getUserDetails
+  getUserDetails,
+  showGyalsungRegister
 })
 </script>
 
@@ -265,5 +294,26 @@ defineExpose({
 
 .footer {
   margin-top: auto;
+}
+
+.screening-dashboard {
+  min-height: calc(100vh - 120px);
+}
+
+.gyalsung-register {
+  min-height: calc(100vh - 120px);
+  padding: 0;
+  background-color: #e8f6ee;
+}
+
+/* Debug styles */
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
 }
 </style>

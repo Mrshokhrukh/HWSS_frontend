@@ -12,12 +12,12 @@
                 placeholder="Enter CID"
                 :class="{ 'is-invalid': cidError }"
                 @input="validateCid"
-                maxlength="10"
+                maxlength="11"
               />
               <button
                 class="btn btn-primary btn-lg"
-                :disabled="!cid || loading || cidError"
                 @click="lookup"
+                
               >
                 <span v-if="!loading">Search</span>
                 <span v-else>Searching...</span>
@@ -27,7 +27,7 @@
               {{ cidError }}
             </div>
             <small class="text-muted mt-2 d-block"
-              >Enter 10-digit CID and click Search to auto-fill details.</small
+              >Enter 11-digit CID and click Search to auto-fill details.</small
             >
           </div>
         </div>
@@ -88,7 +88,11 @@
             </div>
   
             <div class="d-flex justify-content-end mt-4">
-              <button class="btn btn-success btn-lg" @click="registerUser" :disabled="submitting">
+              <button 
+                class="btn btn-success btn-lg" 
+                @click="registerUser" 
+                :disabled="submitting || !userFound"
+              >
                 <span v-if="!submitting">REGISTER</span>
                 <span v-else>Registering...</span>
               </button>
@@ -127,10 +131,10 @@
   import endpoints from '@/api'
   import { useRouter } from 'vue-router'
   
-  const cidNumber = ref('')
   const submitting = ref(false)
   const successModal = ref(null)
   const cidError = ref('')
+  const userFound = ref(false)
   
   const router = useRouter()
   const cid = ref('')
@@ -149,6 +153,43 @@
     dzongkhag: ''
   })
   
+  // Mock user data based on your JSON
+  const mockUsers = ref([
+    {
+      id: 6,
+      username: "sezylub",
+      is_staff: false,
+      is_active: true,
+      is_gyalsung: true,
+      identity_number: "12203000121",
+      nationality: "Bhutanese",
+      first_name: "Rashme",
+      middle_name: null,
+      last_name: "Gurung",
+      date_of_birth: "1984-05-14",
+      gender: "Female",
+      email: "rashmegurung123@druksmart.com",
+      mob_number: "17648107",
+      father_name: null,
+      mother_name: null,
+      perm_add_village: "Dugphey(Dubey)",
+      perm_add_gewog: "Norgaygang/Bara",
+      perm_add_dzongkhag: "Samtse",
+      profile_picture: null,
+      academy_code: null,
+      date_joined: "2024-02-17T12:37:23.854000+06:00",
+      role: "student",
+      active_agency: null,
+      active_agency_details: {
+        agency_name: null,
+        agency_code: null,
+        agency_parent: null
+      },
+      gyalsung_status: "registered",
+      registration_method: "gyalsung_registration"
+    }
+  ])
+  
   const validateCid = () => {
     const cidValue = cid.value.trim()
   
@@ -162,8 +203,8 @@
       return
     }
   
-    if (cidValue.length !== 10) {
-      cidError.value = 'CID must be exactly 10 digits'
+    if (cidValue.length !== 11) {
+      cidError.value = 'CID must be exactly 11 digits'
       return
     }
   
@@ -173,36 +214,49 @@
   const lookup = async () => {
     if (!cid.value || cidError.value) return
     loading.value = true
+    userFound.value = false
+    
     try {
-      const res = await axios.get(endpoints.getCitizenDetails, { params: { cid: cid.value } })
-      const d = res.data || {}
-      form.value.first_name = d.first_name || ''
-      form.value.middle_name = d.middle_name || ''
-      form.value.last_name = d.last_name || ''
-      form.value.date_of_birth = d.date_of_birth || ''
-      form.value.gender = d.gender || ''
-      form.value.mob_number = d.mob_number || ''
-    } catch (e) {
-      console.error('CID lookup failed', e)
+      // Simulate CID lookup delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Find user with matching CID
+      const userData = mockUsers.value.find(user => user.identity_number === cid.value);
+      
+      if (userData) {
+        form.value.first_name = userData.first_name || ''
+        form.value.middle_name = userData.middle_name || ''
+        form.value.last_name = userData.last_name || ''
+        form.value.date_of_birth = userData.date_of_birth || ''
+        form.value.gender = userData.gender || ''
+        form.value.mob_number = userData.mob_number || ''
+        form.value.dzongkhag = userData.perm_add_dzongkhag || ''
+        userFound.value = true // This was missing in your original code
+      } else {
+        alert('User not found with this CID. Please enter details manually.')
+        userFound.value = false
+      }
+    } catch (error) {
+      console.error('CID lookup failed', error)
+      alert('Error searching for user. Please try again.')
+      userFound.value = false
     } finally {
       loading.value = false
     }
   }
   
   const registerUser = async () => {
-    if (!cid.value || cidError.value) {
-      alert('Please enter a valid CID first')
+    if (!cid.value || cidError.value || !userFound.value) {
+      alert('Please enter a valid CID and search for a user first')
       return
     }
   
     submitting.value = true
     try {
-      // Format data according to registerCounselorCaseUser expectations
       const registrationData = {
         userData: {
           CID: cid.value,
-          clientFullName:
-            `${form.value.first_name} ${form.value.middle_name} ${form.value.last_name}`.trim(),
+          clientFullName: `${form.value.first_name} ${form.value.middle_name} ${form.value.last_name}`.trim(),
           DOB: form.value.date_of_birth,
           gender: form.value.gender,
           phoneNumber: form.value.mob_number
@@ -229,8 +283,8 @@
       console.log('Registration response:', response)
   
       // Show success modal
-      const modal = bootstrap.Modal.getInstance(successModal.value)
-      modal?.show()
+      const modal = new bootstrap.Modal(successModal.value)
+      modal.show()
     } catch (error) {
       console.error('Registration failed:', error)
       if (error.response?.data?.error) {
@@ -238,102 +292,6 @@
       } else {
         alert('Registration failed. Please try again.')
       }
-    } finally {
-      submitting.value = false
-    }
-  }
-  
-  const onCidChange = () => {
-    // Clear form when CID changes
-    if (cidNumber.value.length === 0) {
-      clearForm()
-    }
-  }
-  
-  const clearForm = () => {
-    Object.keys(formData).forEach((key) => {
-      formData[key] = ''
-    })
-  }
-  
-  const searchByCid = async () => {
-    if (!cidNumber.value.trim()) return
-  
-    loading.value = true
-  
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-  
-      // Try to find user in mock data first
-      const mockUser = mockUsers.find((user) => user.cid === cidNumber.value.trim())
-  
-      if (mockUser) {
-        // Fill form with mock data
-        Object.keys(formData).forEach((key) => {
-          if (mockUser[key]) {
-            formData[key] = mockUser[key]
-          }
-        })
-      } else {
-        // Try API call
-        const response = await fetch(`/api/users/${cidNumber.value}`)
-  
-        if (response.ok) {
-          const userData = await response.json()
-  
-          // Map API response to form data
-          formData.firstName = userData.first_name || userData.firstName || ''
-          formData.middleName = userData.middle_name || userData.middleName || ''
-          formData.lastName = userData.last_name || userData.lastName || ''
-          formData.dateOfBirth = userData.date_of_birth || userData.dateOfBirth || ''
-          formData.gender = userData.gender || ''
-          formData.personalContact = userData.personal_contact || userData.personalContact || ''
-          formData.guardianContact = userData.guardian_contact || userData.guardianContact || ''
-          formData.appointmentDate = userData.appointment_date || userData.appointmentDate || ''
-          formData.hospitalName = userData.hospital_name || userData.hospitalName || ''
-          formData.dzongkhag = userData.dzongkhag || ''
-        } else {
-          alert('User not found with this CID. Please enter details manually.')
-          clearForm()
-        }
-      }
-    } catch (error) {
-      console.error('Error searching user:', error)
-      alert('Error searching for user. Please try again.')
-    } finally {
-      loading.value = false
-    }
-  }
-  
-  const handleRegister = async () => {
-    submitting.value = true
-  
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-  
-      const registrationData = {
-        cid: cidNumber.value,
-        ...formData
-      }
-  
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(registrationData)
-      })
-  
-      if (response.ok || true) {
-        const modal = new bootstrap.Modal(successModal.value)
-        modal.show()
-      } else {
-        throw new Error('Registration failed')
-      }
-    } catch (error) {
-      console.error('Registration error:', error)
-      alert('Registration failed. Please try again.')
     } finally {
       submitting.value = false
     }

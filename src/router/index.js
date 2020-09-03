@@ -168,6 +168,19 @@ const createAppRouter = () => {
         component: () => import('@/views/auth/RegisterView.vue'),
         meta: { title: 'Register' }
       },
+      // ========================== GYALSUNG MODEL ROUTES - ADD THIS SECTION ==========================
+      {
+        path: '/GyalsungModel/GyalsungRegister',
+        name: 'gyalsung-register',
+        component: DashboardView,
+        meta: { title: 'Gyalsung Register', requiresAuth: true }
+      },
+      {
+        path: '/gyalsungmodel/gyalsungregister',
+        redirect: '/GyalsungModel/GyalsungRegister'
+      },
+      // ========================================================================================
+      
       // Use route nesting to dynamically generate user dashboard routes
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
