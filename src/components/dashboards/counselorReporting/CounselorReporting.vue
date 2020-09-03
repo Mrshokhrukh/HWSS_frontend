@@ -308,7 +308,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
@@ -386,7 +386,7 @@ const tableServiceFields = [
   { key: 'counseling', header: 'Counseling' },
   { key: 'follow_up', header: 'Follow Up' },
   { key: 'referred', header: 'Referral' },
-  { key: 'mark_as_safe', header: "Mark as Safe"}
+  { key: 'mark_as_safe', header: 'Mark as Safe' }
 ]
 
 const gyalsungTableFields = [
@@ -496,7 +496,7 @@ const fetchReportDataForYear = async (year) => {
     )}`
 
     // 3. Fetch the pre-filtered data from the backend.
-    const response = await axios.get(requestUrl)
+    const response = await apiClient.get(requestUrl)
 
     const dataArray = response.data || []
 
@@ -558,9 +558,12 @@ const transformData = (item) => {
     counseling: item.counseling || 'N/A',
     follow_up: item.follow_up || 'N/A',
     referred: item.referred || 'N/A',
-    mark_as_safe: (screeningData.mark_as_safe === undefined || screeningData.mark_as_safe === null)
-  ? "N/A"
-  : (screeningData.mark_as_safe ? "TRUE" : "FALSE"),
+    mark_as_safe:
+      screeningData.mark_as_safe === undefined || screeningData.mark_as_safe === null
+        ? 'N/A'
+        : screeningData.mark_as_safe
+        ? 'TRUE'
+        : 'FALSE',
     ...substances
   }
 }
@@ -590,39 +593,41 @@ const extractSubstances = (item) => {
     'Tobacco products (cigarettes, chewing tobacco etc)': 'tobacco_flag',
     'Alcoholic beverages (beer, wine, spirits, ara etc.)': 'alcohol_flag',
     'Cannabis (marijuana, pot, grass, hash, black etc.)': 'cannabis_flag',
-    'Cocaine': 'cocaine_flag',
+    Cocaine: 'cocaine_flag',
     'Amphetamine-type stimulants (meth, ecstasy, diet pills etc.)': 'amphetamine_flag',
     'Inhalants (dendrite, glue, petrol, paint thinner, etc.)': 'inhalants_flag',
     'Sedatives or Sleeping Pills (N-10, diazepam etc.)': 'sedatives_flag',
     'Hallucinogens (LSD, trips, Ketamine, etc.)': 'hallucinogens_flag',
-    'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': 'opioids_flag',
-  };
-  const result = {};
-  Object.values(substanceMapping).forEach(key => { result[key] = 'grey'; });
+    'Opioids (heroin, morphine, fentanyl, codeine, SP+, tramadol, BS etc)': 'opioids_flag'
+  }
+  const result = {}
+  Object.values(substanceMapping).forEach((key) => {
+    result[key] = 'grey'
+  })
 
   const processSubstanceArray = (substances) => {
-    if (!Array.isArray(substances)) return;
+    if (!Array.isArray(substances)) return
     substances.forEach((substance) => {
       // ✅ Note: Changed key from substance.substance_name to substance.substance__name to match API response
-      const mappedKey = substanceMapping[substance.substance__name]; 
+      const mappedKey = substanceMapping[substance.substance__name]
       if (mappedKey) {
-        result[mappedKey] = mapSeverity(substance.risk_flag);
+        result[mappedKey] = mapSeverity(substance.risk_flag)
       }
-    });
-  };
-  
+    })
+  }
+
   // ✨ FIX: Use Array.isArray to safely handle assist_data
-  const assistData = item.screening_data?.assist_data;
+  const assistData = item.screening_data?.assist_data
   const allSubstances = [
     ...(item.case_substance_risks || []),
     ...(item.event_substance_risks || []),
     ...(Array.isArray(assistData) ? assistData : [])
-  ];
+  ]
 
-  processSubstanceArray(allSubstances);
+  processSubstanceArray(allSubstances)
 
-  return result;
-};
+  return result
+}
 
 const mapSeverity = (riskFlag) => {
   if (!riskFlag) return 'grey'
@@ -790,23 +795,24 @@ const generateExcelReportUsingBackendApi = async () => {
 
   if (!excelData.length) return null
 
-  const ApiResponse = await axios.post(endpoints.generateCounselorXLSEncryptedReport, 
+  const ApiResponse = await apiClient.post(
+    endpoints.generateCounselorXLSEncryptedReport,
     {
-        data: excelData,
-        columns_to_export: columnsToExport,
-        password: getPassword()
+      data: excelData,
+      columns_to_export: columnsToExport,
+      password: getPassword()
     },
     {
-      responseType: "blob",
+      responseType: 'blob'
     }
-  );
-  const url = window.URL.createObjectURL(new Blob([ApiResponse.data]));
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", "report.xls"); // filename
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  )
+  const url = window.URL.createObjectURL(new Blob([ApiResponse.data]))
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', 'report.xls') // filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
 }
 
 const getPassword = () => {

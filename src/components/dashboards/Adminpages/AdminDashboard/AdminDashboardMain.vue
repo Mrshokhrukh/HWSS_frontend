@@ -21,7 +21,7 @@
 <script setup>
 import { computed, ref, onMounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 
 // Import the unified components
@@ -153,7 +153,7 @@ const userDetailsInLocal = () => {
 const fetchServiceAndTreatmentData = async () => {
   try {
     const { agencyName: userAgencyName, roleName: userRole } = userDetailsInLocal()
-    const serviceResponse = await axios.get(endpoints.getServiceAndTreatmentList)
+    const serviceResponse = await apiClient.get(endpoints.getServiceAndTreatmentList)
 
     if (serviceResponse.data && roleConfig[userRole]) {
       let filteredData = serviceResponse.data

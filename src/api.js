@@ -1,129 +1,156 @@
+// /src/api.js
+
+// Automatically returns the correct base URL for the core API.
 function getBaseUrl() {
-  // return "https://thepemasystem.gov.bt/api/core"
-    return 'http://localhost:8123'
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8123';
+  } else {
+    return 'https://thepemasystem.gov.bt/api/core';
+  }
 }
 
 function getScreeningBaseUrl() {
-  if (import.meta.env.VITE_DEVELOPMENT_MODE === 'true') {
-    const screeningHost = import.meta.env.VITE_SCREENING_HOST || 'localhost'
-    const screeningPort = import.meta.env.VITE_SCREENING_PORT || '8686'
-    const screeningProtocol = import.meta.env.VITE_SCREENING_PROTOCOL || 'http'
-    return `${screeningProtocol}://${screeningHost}:${screeningPort}`
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8686';
   } else {
-    return import.meta.env.VITE_PRODUCTION_SCREENING_URL
+    return 'https://thepemasystem.gov.bt/api/screening';
   }
 }
-// Function to combine base URL with middle params
-function combineBaseUrlWithMiddleParams(baseUrl, middleParams) {
-  return `${baseUrl}/api/v1/${middleParams}`
+
+// --- 2. API CONFIGURATION ---
+const apiConfig = {
+  core: {
+    baseUrl: getBaseUrl(),
+    modules: {
+      access: 'access',
+      settings: 'settings',
+      measurement: 'measurement',
+      monitoring: 'monitoring',
+      reporting: 'reporting',
+      counselorScreening: 'screening' 
+    }
+  },
+  screening: {
+    baseUrl: getScreeningBaseUrl(),
+    modules: {
+      screening: 'screening'
+    }
+  }
+};
+
+// --- 3. ENDPOINT DEFINITIONS ---
+const endpointDefinitions = {
+  access: {
+    getCitizenDetails: 'get-citizen-details/',
+    getRcscDetails: 'get-rcsc-details/',
+    registerUser: 'register-user/',
+    registerCounselorCaseUser: 'register-counselor-case-user/',
+    registerCounselorEventUser: 'register-counselor-event-user/',
+    registerAgency: 'register-agency/',
+    getEmisStudent: 'get-emis-student-details/',
+    getEmisEmployee: 'get-emis-staff-details/',
+    authenticateToken: 'authenticate-token/',
+    confirmUser: 'check_email_cid/',
+    verifyPreRecordedUser: 'verify-pre-recorded-user/',
+    registerPreRecordedUser: 'register-pre-recorded-user/',
+    registerPreRecordedAgency: 'register-pre-recorded-agency/',
+    loginUsers: 'login/',
+    getUserDetails: 'get-user-details/',
+    logOutUser: 'user-logout/',
+    passwordResetRequest: 'password-reset-request/',
+    passwordReset: (token) => `password-reset/${token}/`,
+    getCSRFToken: 'get_csrf_token/',
+    updateUserInfo: 'update-user-info/',
+    changePassword: 'change-password/',
+    fetchReferralCounselors: 'get-referral-counselors/'
+  },
+  settings: {
+    settings: 'appconfig/',
+    menuItem: 'menuItem/',
+    getVideo: 'get-videos/'
+  },
+  screening: {
+    screeningPreTests: 'screening-questions/',
+    assistTest: 'assist-screening/'
+  },
+  measurement: {
+    submitCluster: 'submit-screening/',
+    getMeasurement: 'get-measurement/',
+    getAssistMeasurement: 'get-assist-measurement/',
+    getSubmissionData: 'get-submission-data/',
+    getSUDData: 'get-sud-data/',
+    getSchoolEnvData: 'get-school-env-data/',
+    getDiagnosis: 'diagnosis/'
+  },
+  monitoring: {
+    getRescreeningList: 'check-rescreening-flags/',
+    markSubmissionSafe: 'mark-submission-safe/',
+    getServiceAndTreatmentList: 'service-and-treatment/get-service-and-treatment/',
+    generateServiceAndTreatment: 'generate-service-and-treatment/',
+    getReferralList: 'get-referral-list/',
+    rescreenSubmission: 'submit-rescreening/',
+    getUserMonitoringDetails: 'get-user-monitoring-details/',
+    updateServiceAndTreatment: 'update-service-and-treatment/',
+    updateReferralStatus: 'update-referral-status/',
+    rejectReferral: 'reject-referral/',
+    acceptReferral: 'accept-referral/',
+    getNotifications: 'get-notification/',
+    markNotificationAsRead: 'notifications/mark-as-read/',
+    getClusterRecords: 'final-submissions/',
+    newServiceAndTreatment: 'service-and-treatment/get-service-and-treatment/',
+    newReferrals: 'referrals/'
+  },
+  reporting: {
+    generateReport: 'generate-report/',
+    getReport: 'get-reporting-model-data/',
+    updateUserArchive: 'update-user-archive/',
+    generateCounselorXLSEncryptedReport: 'generate-counselor-report-encrypted-xls/'
+  },
+  counselorScreening: {
+    createEventScreening: 'create-event-screening/',
+    getEventInfo: (counselorName) => `get-event-info/${encodeURIComponent(counselorName)}/`,
+    caseScreenSubmission: 'submit-case-screening/',
+    eventScreenSubmission: 'submit-event-screening/',
+    getEventScreeningList: 'get-event-screenings/',
+    updateEventScreeningList: 'update-event-screening/',
+    getCaseRecords: 'case-records/',
+    getEventRecords: 'event-records/'
+  }
+};
+
+// --- 4. ENDPOINT BUILDER ---
+function buildEndpoints() {
+  const builtEndpoints = {};
+
+  const { core, screening } = apiConfig;
+  const getModulePath = (baseUrl, module) => `${baseUrl}/api/v1/${module}`;
+
+  for (const moduleName in endpointDefinitions) {
+    const endpointsForModule = endpointDefinitions[moduleName];
+
+    let basePath;
+    if (core.modules[moduleName]) {
+      basePath = getModulePath(core.baseUrl, core.modules[moduleName]);
+    } else if (screening.modules[moduleName]) {
+      basePath = getModulePath(screening.baseUrl, screening.modules[moduleName]);
+    } else {
+      console.error(`Module "${moduleName}" is not configured in apiConfig.`);
+      continue;
+    }
+
+    for (const endpointKey in endpointsForModule) {
+      const endpointValue = endpointsForModule[endpointKey];
+      if (typeof endpointValue === 'function') {
+        builtEndpoints[endpointKey] = (...args) => `${basePath}/${endpointValue(...args)}`;
+      } else {
+        builtEndpoints[endpointKey] = `${basePath}/${endpointValue}`;
+      }
+    }
+  }
+  return builtEndpoints;
 }
 
-// Define base URLs
-const baseUrl = getBaseUrl()
-const baseScreeningUrl = getScreeningBaseUrl()
+// --- 5. EXPORT ---
+const endpoints = buildEndpoints();
 
-// Define middle params
-const accessMiddleParams = 'access'
-const settingsMiddleParams = 'settings'
-const screeningMiddleParams = 'screening'
-const measurementMiddleParams = 'measurement'
-const monitoringMiddleParams = 'monitoring'
-const reportingMiddleParams = 'reporting'
-const counselorScreeningMiddleParams = 'screening'
-
-// Combine base URLs with middle params
-const accessBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, accessMiddleParams)
-const settingsBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, settingsMiddleParams)
-const screeningBaseUrl = combineBaseUrlWithMiddleParams(baseScreeningUrl, screeningMiddleParams)
-const measurementBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, measurementMiddleParams)
-const monitoringBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, monitoringMiddleParams)
-const reportingBaseUrl = combineBaseUrlWithMiddleParams(baseUrl, reportingMiddleParams)
-const counselorScreeningBaseUrl = combineBaseUrlWithMiddleParams(
-  baseUrl,
-  counselorScreeningMiddleParams
-)
-
-// Define API endpoints
-const endpoints = {
-  getCitizenDetails: `${accessBaseUrl}/get-citizen-details/`,
-  getRcscDetails: `${accessBaseUrl}/get-rcsc-details/`,
-  registerUser: `${accessBaseUrl}/register-user/`,
-  registerCounselorCaseUser: `${accessBaseUrl}/register-counselor-case-user/`,
-  registerCounselorEventUser: `${accessBaseUrl}/register-counselor-event-user/`,
-  registerAgency: `${accessBaseUrl}/register-agency/`,
-  getEmisStudent: `${accessBaseUrl}/get-emis-student-details/`,
-  getEmisEmployee: `${accessBaseUrl}/get-emis-staff-details/`,
-  authenticateToken: `${accessBaseUrl}/authenticate-token/`,
-  confirmUser: `${accessBaseUrl}/check_email_cid/`,
-
-  verifyPreRecordedUser: `${accessBaseUrl}/verify-pre-recorded-user/`,
-  registerPreRecordedUser: `${accessBaseUrl}/register-pre-recorded-user/`,
-  registerPreRecordedAgency: `${accessBaseUrl}/register-pre-recorded-agency/`,
-  loginUsers: `${accessBaseUrl}/login/`,
-  getUserDetails: `${accessBaseUrl}/get-user-details/`,
-  logOutUser: `${accessBaseUrl}/user-logout/`,
-  passwordResetRequest: `${accessBaseUrl}/password-reset-request/`,
-  passwordReset: (token) => `${accessBaseUrl}/password-reset/${token}/`,
-  getCSRFToken: `${accessBaseUrl}/get_csrf_token/`,
-  updateUserInfo: `${accessBaseUrl}/update-user-info/`,
-  changePassword: `${accessBaseUrl}/change-password/`,
-
-  fetchReferralCounselors: `${accessBaseUrl}/get-referral-counselors/`,
-
-  settings: `${settingsBaseUrl}/appconfig/`,
-  menuItem: `${settingsBaseUrl}/menuItem/`,
-  getVideo: `${settingsBaseUrl}/get-videos/`,
-
-  // Screening endpoint
-  screeningPreTests: `${screeningBaseUrl}/screening-questions/`,
-  assistTest: `${screeningBaseUrl}/assist-screening/`,
-
-  // Submission endpoint
-  submitCluster: `${measurementBaseUrl}/submit-screening/`,
-  getMeasurement: `${measurementBaseUrl}/get-measurement/`,
-  getAssistMeasurement: `${measurementBaseUrl}/get-assist-measurement/`,
-  getSubmissionData: `${measurementBaseUrl}/get-submission-data/`,
-  getSUDData: `${measurementBaseUrl}/get-sud-data/`, //life time use current
-  getSchoolEnvData: `${measurementBaseUrl}/get-school-env-data/`,
-  getDiagnosis: `${measurementBaseUrl}/diagnosis/`,
-
-  // Monitoring endpoints
-  getRescreeningList: `${monitoringBaseUrl}/check-rescreening-flags/`,
-  markSubmissionSafe: `${monitoringBaseUrl}/mark-submission-safe/`,
-  getServiceAndTreatmentList: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
-  generateServiceAndTreatment: `${monitoringBaseUrl}/generate-service-and-treatment/`,
-  getReferralList: `${monitoringBaseUrl}/get-referral-list/`,
-  rescreenSubmission: `${monitoringBaseUrl}/submit-rescreening/`,
-  getUserMonitoringDetails: `${monitoringBaseUrl}/get-user-monitoring-details/`,
-  updateServiceAndTreatment: `${monitoringBaseUrl}/update-service-and-treatment/`,
-  updateReferralStatus: `${monitoringBaseUrl}/update-referral-status/`,
-  rejectReferral: `${monitoringBaseUrl}/reject-referral/`,
-  acceptReferral: `${monitoringBaseUrl}/accept-referral/`,
-  getNotifications: `${monitoringBaseUrl}/get-notification/`,
-  markNotificationAsRead: `${monitoringBaseUrl}/notifications/mark-as-read/`,
-  getGyalsungCounselorUsers: `${baseUrl}/api/v1/gyalsung/counselor-users/`,
-
-  // Reporting endpoints
-  generateReport: `${reportingBaseUrl}/generate-report/`,
-  getReport: `${reportingBaseUrl}/get-reporting-model-data/`,
-  updateUserArchive: `${reportingBaseUrl}/update-user-archive/`,
-  generateCounselorXLSEncryptedReport: `${reportingBaseUrl}/generate-counselor-report-encrypted-xls/`,
-
-  // Counselor endpoints
-  createEventScreening: `${counselorScreeningBaseUrl}/create-event-screening/`,
-  getEventInfo: (counselorName) =>
-    `${counselorScreeningBaseUrl}/get-event-info/${encodeURIComponent(counselorName)}/`,
-  caseScreenSubmission: `${counselorScreeningBaseUrl}/submit-case-screening/`,
-  eventScreenSubmission: `${counselorScreeningBaseUrl}/submit-event-screening/`,
-  getEventScreeningList: `${counselorScreeningBaseUrl}/get-event-screenings/`,
-  updateEventScreeningList: `${counselorScreeningBaseUrl}/update-event-screening/`,
-
-  // New Endpoints
-  getCaseRecords: `${counselorScreeningBaseUrl}/case-records/`,
-  getEventRecords: `${counselorScreeningBaseUrl}/event-records/`,
-  getClusterRecords: `${monitoringBaseUrl}/final-submissions/`,
-  newServiceAndTreatment: `${monitoringBaseUrl}/service-and-treatment/get-service-and-treatment/`,
-  newReferrals: `${monitoringBaseUrl}/referrals/`
-}
-
-export default endpoints
+export default endpoints;

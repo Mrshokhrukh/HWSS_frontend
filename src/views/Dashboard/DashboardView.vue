@@ -46,7 +46,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserDetailsStore } from '@/stores/userDetails'
 import endpoints from '@/api'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 
 // Components
 import SideNavbar from '@/components/navbar/SideNavbar.vue'
@@ -106,8 +106,8 @@ watch(route, () => {
 onMounted(async () => {
   if (currentComponent.value !== StudentDashboard && currentComponent.value !== PublicDashboard) {
     try {
-      await axios.get(endpoints.getClusterRecords)
-      await axios.get(endpoints.newServiceAndTreatment)
+      await apiClient.get(endpoints.getClusterRecords)
+      await apiClient.get(endpoints.newServiceAndTreatment)
     } catch (error) {
       console.error('Error fetching cluster records:', error)
     }

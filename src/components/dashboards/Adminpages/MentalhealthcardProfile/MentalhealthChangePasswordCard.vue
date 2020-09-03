@@ -1,132 +1,152 @@
 <template>
   <div class="card h-100 change-password-card">
-      <div class="card-content">
-          <div class="card-header text-center">
-              <h4>Change Password</h4>
-          </div>
-          <div class="card-body">
-              <form @submit.prevent="changePassword">
-                  <div class="form-group">
-                      <label for="oldPassword" class="form-label">Old Password</label>
-                      <div class="input-group">
-                          <input :type="showOldPassword ? 'text' : 'password'" class="form-control" id="oldPassword"
-                              v-model="oldPassword">
-                          <button type="button" class="btn btn-outline-secondary" @click="toggleOldPassword">
-                              <i :class="showOldPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
-                          </button>
-                      </div>
-                  </div>
-                  <div class="form-group">
-                      <label for="newPassword" class="form-label">New Password</label>
-                      <div class="input-group">
-                          <input :type="showNewPassword ? 'text' : 'password'" class="form-control" id="newPassword"
-                              v-model="newPassword">
-                          <button type="button" class="btn btn-outline-secondary" @click="toggleNewPassword">
-                              <i :class="showNewPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
-                          </button>
-                      </div>
-                  </div>
-                  <div class="form-group">
-                      <label for="confirmPassword" class="form-label">Confirm New Password</label>
-                      <div class="input-group">
-                          <input :type="showConfirmPassword ? 'text' : 'password'" class="form-control"
-                              id="confirmPassword" v-model="confirmPassword">
-                          <button type="button" class="btn btn-outline-secondary" @click="toggleConfirmPassword">
-                              <i :class="showConfirmPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
-                          </button>
-                      </div>
-                  </div>
-                  <button type="submit" class="btn custom-btn">
-                      <span>Change Password</span>
-                      <i class="bi bi-arrow-right"></i>
-                  </button>
-              </form>
-          </div>
+    <div class="card-content">
+      <div class="card-header text-center">
+        <h4>Change Password</h4>
       </div>
+      <div class="card-body">
+        <form @submit.prevent="changePassword">
+          <div class="form-group">
+            <label for="oldPassword" class="form-label">Old Password</label>
+            <div class="input-group">
+              <input
+                :type="showOldPassword ? 'text' : 'password'"
+                class="form-control"
+                id="oldPassword"
+                v-model="oldPassword"
+              />
+              <button type="button" class="btn btn-outline-secondary" @click="toggleOldPassword">
+                <i :class="showOldPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="newPassword" class="form-label">New Password</label>
+            <div class="input-group">
+              <input
+                :type="showNewPassword ? 'text' : 'password'"
+                class="form-control"
+                id="newPassword"
+                v-model="newPassword"
+              />
+              <button type="button" class="btn btn-outline-secondary" @click="toggleNewPassword">
+                <i :class="showNewPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+            <div class="input-group">
+              <input
+                :type="showConfirmPassword ? 'text' : 'password'"
+                class="form-control"
+                id="confirmPassword"
+                v-model="confirmPassword"
+              />
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                @click="toggleConfirmPassword"
+              >
+                <i :class="showConfirmPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill'"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn custom-btn">
+            <span>Change Password</span>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import axios from 'axios';
-import Swal from 'sweetalert2';
-import endpoint from '@/api';
-import { useRouter } from 'vue-router';
-import { useUserDetailsStore } from "@/stores/userDetails";
+import { ref } from 'vue'
+import apiClient from '@/apiClient'
+import Swal from 'sweetalert2'
+import endpoint from '@/api'
+import { useRouter } from 'vue-router'
+import { useUserDetailsStore } from '@/stores/userDetails'
 
-const oldPassword = ref('');
-const newPassword = ref('');
-const confirmPassword = ref('');
-const showOldPassword = ref(false);
-const showNewPassword = ref(false);
-const showConfirmPassword = ref(false);
+const oldPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const showOldPassword = ref(false)
+const showNewPassword = ref(false)
+const showConfirmPassword = ref(false)
 
-const userDetailsStore = useUserDetailsStore();
+const userDetailsStore = useUserDetailsStore()
 
-const toggleOldPassword = () => showOldPassword.value = !showOldPassword.value;
-const toggleNewPassword = () => showNewPassword.value = !showNewPassword.value;
-const toggleConfirmPassword = () => showConfirmPassword.value = !showConfirmPassword.value;
+const toggleOldPassword = () => (showOldPassword.value = !showOldPassword.value)
+const toggleNewPassword = () => (showNewPassword.value = !showNewPassword.value)
+const toggleConfirmPassword = () => (showConfirmPassword.value = !showConfirmPassword.value)
 
 const changePassword = async () => {
   if (newPassword.value !== confirmPassword.value) {
-      Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: 'New password and confirm password do not match!'
-      });
-      return;
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: 'New password and confirm password do not match!'
+    })
+    return
   }
 
   try {
-      const authToken = localStorage.getItem('authToken');
+    const authToken = localStorage.getItem('authToken')
 
-      if (!authToken) {
-          throw new Error('Authentication token not found');
+    if (!authToken) {
+      throw new Error('Authentication token not found')
+    }
+
+    const response = await apiClient.post(
+      endpoint.changePassword,
+      {
+        current_password: oldPassword.value,
+        new_password: newPassword.value,
+        confirm_password: confirmPassword.value
+      },
+      {
+        headers: {
+          Authorization: `Token ${authToken}`
+        }
       }
+    )
 
-      const response = await axios.post(endpoint.changePassword, {
-          current_password: oldPassword.value,
-          new_password: newPassword.value,
-          confirm_password: confirmPassword.value
-      }, {
-          headers: {
-              'Authorization': `Token ${authToken}`
+    if (response.status !== 200) {
+      throw new Error('Failed to change password')
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Success',
+      text: 'Password changed successfully!'
+    }).then(() => {
+      if (localStorage) {
+        for (let key in localStorage) {
+          if (key !== 'userScreenedToday') {
+            localStorage.removeItem(key)
           }
-      });
-
-      if (response.status !== 200) {
-          throw new Error('Failed to change password');
+        }
       }
-
-      Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: 'Password changed successfully!'
-      }).then(() => {
-          if (localStorage) {
-              for (let key in localStorage) {
-                  if (key !== 'userScreenedToday') {
-                      localStorage.removeItem(key);
-                  }
-              }
-          }
-          if (sessionStorage) {
-              sessionStorage.clear();
-          }
-          if (userDetailsStore) {
-              userDetailsStore.clearUserDetails();
-          }
-          const router = useRouter();
-          router.push('/login');
-      });
+      if (sessionStorage) {
+        sessionStorage.clear()
+      }
+      if (userDetailsStore) {
+        userDetailsStore.clearUserDetails()
+      }
+      const router = useRouter()
+      router.push('/login')
+    })
   } catch (error) {
-      Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: error.message || 'Failed to change password!'
-      });
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: error.message || 'Failed to change password!'
+    })
   }
-};
+}
 </script>
 
 <style scoped>
@@ -145,7 +165,7 @@ const changePassword = async () => {
 }
 
 .card-header {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   border-bottom: none;
   padding: 1rem;
@@ -163,7 +183,7 @@ const changePassword = async () => {
 }
 
 .form-label {
-  color: #2B656F;
+  color: #2b656f;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
@@ -182,11 +202,11 @@ const changePassword = async () => {
 .input-group .btn {
   border: none;
   background-color: #f8f9fa;
-  color: #2B656F;
+  color: #2b656f;
 }
 
 .custom-btn {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   border: none;
   border-radius: 10px;

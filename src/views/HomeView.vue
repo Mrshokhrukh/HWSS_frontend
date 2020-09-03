@@ -6,8 +6,16 @@
         <div class="col-lg-6 mb-5 mb-lg-0">
           <div class="content text-center text-lg-start">
             <p class="d-none">Debug - landingTagLine: {{ landingTagLine }}</p>
-            <p class="quote mb-4"
-              v-typing="{ text: landingTagLine, loop: true, typeSpeed: 50, backSpeed: 30, backDelay: 2000 }"></p>
+            <p
+              class="quote mb-4"
+              v-typing="{
+                text: landingTagLine,
+                loop: true,
+                typeSpeed: 50,
+                backSpeed: 30,
+                backDelay: 2000
+              }"
+            ></p>
             <transition appear name="fade-slide-up">
               <h1 class="title">The PEMA</h1>
             </transition>
@@ -25,13 +33,25 @@
         <div class="col-lg-6">
           <div class="image-background-container position-relative overflow-hidden">
             <transition name="fade-in" appear>
-              <img :src="landingImgBg" alt="Background" class="bg-image img-fluid" @load="bgLoaded = true"
-                v-show="bgLoaded">
+              <img
+                :src="landingImgBg"
+                alt="Background"
+                class="bg-image img-fluid"
+                @load="bgLoaded = true"
+                v-show="bgLoaded"
+              />
             </transition>
             <transition name="zoom-fade" appear>
-              <img :src="logoUrl" alt="PEMA Logo" class="logo-image img-fluid" @load="logoLoaded = true"
-                v-show="logoLoaded" @mouseover="startLogoAnimation" @mouseleave="stopLogoAnimation"
-                :class="{ 'logo-pulse': isLogoAnimating }">
+              <img
+                :src="logoUrl"
+                alt="PEMA Logo"
+                class="logo-image img-fluid"
+                @load="logoLoaded = true"
+                v-show="logoLoaded"
+                @mouseover="startLogoAnimation"
+                @mouseleave="stopLogoAnimation"
+                :class="{ 'logo-pulse': isLogoAnimating }"
+              />
             </transition>
           </div>
         </div>
@@ -41,11 +61,20 @@
     <div class="download-group-container text-center mt-auto py-4">
       <h3 class="download-title mb-3">Download our app from:</h3>
       <div class="store-buttons d-flex flex-wrap justify-content-center">
-        <a :href="googlePlayLink" class="btn store-button google-play m-2" @mouseover="hoverStoreButton('google')"
-          @mouseleave="unhoverStoreButton('google')">
+        <a
+          :href="googlePlayLink"
+          class="btn store-button google-play m-2"
+          @mouseover="hoverStoreButton('google')"
+          @mouseleave="unhoverStoreButton('google')"
+        >
           <div class="button-content">
             <div class="icon-area" v-if="googlePlayImg">
-              <img :src="googlePlayImg" @error="googlePlayImg = null" alt="Google Play" class="store-icon">
+              <img
+                :src="googlePlayImg"
+                @error="googlePlayImg = null"
+                alt="Google Play"
+                class="store-icon"
+              />
             </div>
             <div v-else class="icon-area">
               <i class="fab fa-google-play"></i>
@@ -56,11 +85,20 @@
             </div>
           </div>
         </a>
-        <a :href="appleAppStoreLink" class="btn store-button app-store m-2" @mouseover="hoverStoreButton('apple')"
-          @mouseleave="unhoverStoreButton('apple')">
+        <a
+          :href="appleAppStoreLink"
+          class="btn store-button app-store m-2"
+          @mouseover="hoverStoreButton('apple')"
+          @mouseleave="unhoverStoreButton('apple')"
+        >
           <div class="button-content">
             <div class="icon-area" v-if="appStoreImg">
-              <img :src="appStoreImg" @error="appStoreImg = null" alt="App Store" class="store-icon">
+              <img
+                :src="appStoreImg"
+                @error="appStoreImg = null"
+                alt="App Store"
+                class="store-icon"
+              />
             </div>
             <div v-else class="icon-area">
               <i class="fab fa-app-store-ios"></i>
@@ -81,9 +119,7 @@
             <p class="mb-0 footer-text">
               &copy; {{ currentYear }} The PEMA Secretariat. All rights reserved.
             </p>
-            <p class="mb-0 footer-app-name">
-              HWSS - Health & Wellbeing Screening System
-            </p>
+            <p class="mb-0 footer-app-name">HWSS - Health & Wellbeing Screening System</p>
           </div>
           <!-- Updated Social Media Icons -->
           <div class="col-md-4 text-center text-md-end social-icons">
@@ -107,50 +143,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { vTyping } from '@/directives/vTyping';
-import axios from 'axios';
-import endpoints from '@/api';
-import logoUrl from '@/assets/images/landing_logo.png';
-import landingImgBg from '@/assets/images/landing_bg.png';
+import { ref, onMounted, computed } from 'vue'
+import { vTyping } from '@/directives/vTyping'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
+import logoUrl from '@/assets/images/landing_logo.png'
+import landingImgBg from '@/assets/images/landing_bg.png'
 
-const landingTagLine = ref('"Touching People, Building Lives"');
-const googlePlayLink = ref('');
-const appleAppStoreLink = ref('');
-const googlePlayImg = ref(new URL('@/assets/images/playstore_logo.png', import.meta.url).href);
-const appStoreImg = ref(new URL('@/assets/images/appstore_logo.png', import.meta.url).href);
-const currentYear = computed(() => new Date().getFullYear());
+const landingTagLine = ref('"Touching People, Building Lives"')
+const googlePlayLink = ref('')
+const appleAppStoreLink = ref('')
+const googlePlayImg = ref(new URL('@/assets/images/playstore_logo.png', import.meta.url).href)
+const appStoreImg = ref(new URL('@/assets/images/appstore_logo.png', import.meta.url).href)
+const currentYear = computed(() => new Date().getFullYear())
 
-const bgLoaded = ref(false);
-const logoLoaded = ref(false);
-const isLogoAnimating = ref(false);
-let logoAnimationInterval = null;
+const bgLoaded = ref(false)
+const logoLoaded = ref(false)
+const isLogoAnimating = ref(false)
+let logoAnimationInterval = null
 
 onMounted(async () => {
   try {
-    const response = await axios.get(endpoints.settings);
+    const response = await apiClient.get(endpoints.settings)
     if (response.data && response.data.length > 0) {
-      const data = response.data[0];
-      googlePlayLink.value = data.google_play_link;
-      appleAppStoreLink.value = data.apple_appstore_link;
+      const data = response.data[0]
+      googlePlayLink.value = data.google_play_link
+      appleAppStoreLink.value = data.apple_appstore_link
     }
   } catch (error) {
-    console.error('Error fetching details:', error);
+    console.error('Error fetching details:', error)
   }
-});
+})
 
 const startLogoAnimation = () => {
-  isLogoAnimating.value = true;
+  isLogoAnimating.value = true
   logoAnimationInterval = setInterval(() => {
-    isLogoAnimating.value = !isLogoAnimating.value;
-  }, 1000);
-};
+    isLogoAnimating.value = !isLogoAnimating.value
+  }, 1000)
+}
 
 const stopLogoAnimation = () => {
-  clearInterval(logoAnimationInterval);
-  isLogoAnimating.value = false;
-};
-
+  clearInterval(logoAnimationInterval)
+  isLogoAnimating.value = false
+}
 </script>
 
 
@@ -176,7 +211,7 @@ const stopLogoAnimation = () => {
 
 .landing::before,
 .landing::after {
-  content: "";
+  content: '';
   position: absolute;
   top: -50%;
   left: -50%;
@@ -184,7 +219,11 @@ const stopLogoAnimation = () => {
   bottom: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(ellipse at center, rgba(220, 240, 235, 0.3) 0%, rgba(202, 232, 225, 0.1) 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(220, 240, 235, 0.3) 0%,
+    rgba(202, 232, 225, 0.1) 70%
+  );
   animation: radialMove 20s ease-in-out infinite;
   z-index: 1;
   opacity: 0.7;
@@ -192,7 +231,11 @@ const stopLogoAnimation = () => {
 
 .landing::after {
   animation: radialMove 30s ease-in-out infinite reverse;
-  background: radial-gradient(ellipse at center, rgba(203, 235, 226, 0.3) 0%, rgba(184, 226, 213, 0.1) 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(203, 235, 226, 0.3) 0%,
+    rgba(184, 226, 213, 0.1) 70%
+  );
 }
 
 @keyframes gradientShift {
@@ -210,7 +253,6 @@ const stopLogoAnimation = () => {
 }
 
 @keyframes gradientMorph {
-
   0%,
   100% {
     background: linear-gradient(135deg, #9cbcc2, #f0f7f8);
@@ -252,7 +294,7 @@ const stopLogoAnimation = () => {
 }
 
 /* Ensure content is above the background */
-.landing>* {
+.landing > * {
   position: relative;
   z-index: 2;
 }
@@ -269,7 +311,7 @@ const stopLogoAnimation = () => {
 }
 
 .title {
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
   font-weight: 600;
   font-size: clamp(2rem, 5vw, 3.5rem);
   color: #000;
@@ -281,7 +323,7 @@ const stopLogoAnimation = () => {
 }
 
 .get-started {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   transition: background-color 0.3s ease;
   border-radius: 20px;
 }
@@ -442,7 +484,7 @@ const stopLogoAnimation = () => {
 }
 
 .footer {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: #ffffff;
   position: relative;
   overflow: hidden;
@@ -492,11 +534,11 @@ const stopLogoAnimation = () => {
   .footer-app-name {
     font-size: 0.8rem;
   }
-  
+
   .social-icons {
     margin-top: 1rem;
   }
-  
+
   .social-icons a {
     margin: 0 8px;
     font-size: 1rem;
@@ -615,7 +657,7 @@ const stopLogoAnimation = () => {
   bottom: -5px;
   width: 0;
   height: 2px;
-  background-color: #2B656F;
+  background-color: #2b656f;
   transition: width 0.5s ease;
 }
 
