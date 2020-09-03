@@ -70,117 +70,118 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted } from 'vue'
-  import axios from 'axios'
-  import endpoints from '@/api'
-  
-  const users = ref([])
-  const loading = ref(false)
-  const error = ref('')
-  const search = ref('')
-  
-  const filteredUsers = computed(() => {
-    const searchTerm = search.value.trim().toLowerCase()
-  
-    if (!searchTerm) {
-      return users.value
-    }
-  
-    return users.value.filter((user) => {
-      const searchableFields = [
-        user.name, 
-        user.cid, 
-        user.contact, 
-        user.hospital, 
-        user.status,
-        user.identity_number,
-        user.mob_number
-      ].filter(Boolean)
-  
-      return searchableFields.some((field) => String(field).toLowerCase().includes(searchTerm))
-    })
-  })
-  
-  const fetchGyalsungUsers = async () => {
-    loading.value = true
-    error.value = ''
-  
-    try {
-      const token = localStorage.getItem('authToken')
-      const response = await axios.get(endpoints.getGyalsungCounselorUsers, {
-        headers: token ? { Authorization: `Token ${token}` } : {},
-        timeout: 10000
-      })
-  
-      let userData = []
-      if (Array.isArray(response.data)) {
-        userData = response.data
-      } else if (response.data?.user_details) {
-        userData = response.data.user_details
-      } else if (response.data?.data) {
-        userData = response.data.data
-      } else if (response.data?.users) {
-        userData = response.data.users
-      }
-  
-      users.value = userData.map((user) => {
-        return {
-          ...user,
-          id: user.id || user.user_id || user.userId,
-          name:
-            user.name ||
-            user.full_name ||
-            user.fullName ||
-            `${user.first_name || user.firstName || ''} ${user.middle_name || user.middleName || ''} ${user.last_name || user.lastName || ''}`.trim() ||
-            user.username ||
-            '-',
-          cid:
-            user.cid ||
-            user.identity_number ||
-            user.identityNumber ||
-            user.citizen_id ||
-            user.citizenId ||
-            '-',
-          dob:
-            user.dob || user.date_of_birth || user.dateOfBirth || user.birth_date || user.birthDate,
-          contact:
-            user.contact ||
-            user.mobile_number ||
-            user.mobileNumber ||
-            user.phone_number ||
-            user.phoneNumber ||
-            user.personal_contact ||
-            user.personalContact ||
-            user.phone ||
-            user.mobile ||
-            user.mob_number ||
-            '-',
-          appointmentDate:
-            user.appointmentDate ||
-            user.appointment_date ||
-            user.appointmentDate ||
-            user.scheduled_date ||
-            user.scheduledDate ||
-            user.booking_date ||
-            user.bookingDate ||
-            user.date_joined,
-          hospital:
-            user.hospital ||
-            user.hospital_name ||
-            user.hospitalName ||
-            user.clinic ||
-            user.facility ||
-            '-',
-          status: user.status || user.appointment_status || user.appointmentStatus || 'Registered'
-        }
-      })
-    } catch (err) {
-      console.error('Failed to fetch gyalsung users:', err)
-      error.value = 'Failed to fetch gyalsung users. Please try again.'
-    } finally {
-      loading.value = false
-    }
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
+import endpoints from '@/api'
+
+const users = ref([])
+const loading = ref(false)
+const error = ref('')
+const search = ref('')
+
+const filteredUsers = computed(() => {
+  const searchTerm = search.value.trim().toLowerCase()
+
+  if (!searchTerm) {
+    return users.value
   }
+
+  return users.value.filter((user) => {
+    const searchableFields = [
+      user.name, 
+      user.cid, 
+      user.contact, 
+      user.hospital, 
+      user.status,
+      user.identity_number,
+      user.mob_number
+    ].filter(Boolean)
+
+    return searchableFields.some((field) => String(field).toLowerCase().includes(searchTerm))
+  })
+})
+
+const fetchGyalsungUsers = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const token = localStorage.getItem('authToken')
+    const response = await axios.get('http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/', {
+      headers: token ? { Authorization: `Token ${token}` } : {},
+      timeout: 10000
+    })
+
+    let userData = []
+    if (Array.isArray(response.data)) {
+      userData = response.data
+    } else if (response.data?.user_details) {
+      userData = response.data.user_details
+    } else if (response.data?.data) {
+      userData = response.data.data
+    } else if (response.data?.users) {
+      userData = response.data.users
+    }
+
+    users.value = userData.map((user) => {
+      return {
+        ...user,
+        id: user.id || user.user_id || user.userId,
+        name:
+          user.name ||
+          user.full_name ||
+          user.fullName ||
+          `${user.first_name || user.firstName || ''} ${user.middle_name || user.middleName || ''} ${user.last_name || user.lastName || ''}`.trim() ||
+          user.username ||
+          '-',
+        cid:
+          user.cid ||
+          user.identity_number ||
+          user.identityNumber ||
+          user.citizen_id ||
+          user.citizenId ||
+          '-',
+        dob:
+          user.dob || user.date_of_birth || user.dateOfBirth || user.birth_date || user.birthDate,
+        contact:
+          user.contact ||
+          user.mobile_number ||
+          user.mobileNumber ||
+          user.phone_number ||
+          user.phoneNumber ||
+          user.personal_contact ||
+          user.personalContact ||
+          user.phone ||
+          user.mobile ||
+          user.mob_number ||
+          '-',
+        appointmentDate:
+          user.appointmentDate ||
+          user.appointment_date ||
+          user.appointmentDate ||
+          user.scheduled_date ||
+          user.scheduledDate ||
+          user.booking_date ||
+          user.bookingDate ||
+          user.date_joined,
+        hospital:
+          user.hospital ||
+          user.hospital_name ||
+          user.hospitalName ||
+          user.clinic ||
+          user.facility ||
+          '-',
+        status: user.status || user.appointment_status || user.appointmentStatus || 'Registered'
+      }
+    })
+  } catch (err) {
+    console.error('Failed to fetch gyalsung users:', err)
+    error.value = 'Failed to fetch gyalsung users. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
   
   const formatName = (user) => {
     if (user.name) return user.name
