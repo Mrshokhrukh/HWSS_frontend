@@ -26,32 +26,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, onMounted } from 'vue'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
 
-const videos = ref([]);
+const videos = ref([])
 
 onMounted(async () => {
   try {
-    const response = await axios.get(endpoints.getVideo);
-    videos.value = response.data;
+    const response = await apiClient.get(endpoints.getVideo)
+    videos.value = response.data
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    console.error('Error fetching videos:', error)
   }
-});
+})
 
 const getVideoUrl = (videoSrc) => {
-  const isLocalhost5173 = window.location.hostname === 'localhost' && window.location.port === '5173';
-  const baseUrl = isLocalhost5173 ? 'http://localhost:8000' : 'https://thepemasystem.gov.bt/api/core'; // Adjust the condition as needed
-  return baseUrl + videoSrc;
-};
+  const isLocalhost5173 =
+    window.location.hostname === 'localhost' && window.location.port === '5173'
+  const baseUrl = isLocalhost5173
+    ? 'http://localhost:8000'
+    : 'https://thepemasystem.gov.bt/api/core' // Adjust the condition as needed
+  return baseUrl + videoSrc
+}
 
-const showDetails = ref([false, false, false, false]);
+const showDetails = ref([false, false, false, false])
 
 const toggleDetails = (index) => {
-  showDetails.value[index] = !showDetails.value[index];
-};
+  showDetails.value[index] = !showDetails.value[index]
+}
 </script>
 
 <style scoped>

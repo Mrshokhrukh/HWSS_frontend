@@ -1,491 +1,551 @@
 <template>
-    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
-        <div class="container my-5">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="card shadow p-3 mb-5">
-                        <div class="logo-container card d-flex flex-row justify-content-center align-items-center d-none"
-                            @click.prevent="showNDILoginAlert">
-                            <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
-                            <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
-                        </div>
+  <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh">
+    <div class="container my-5">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card shadow p-3 mb-5">
+            <div
+              class="logo-container card d-flex flex-row justify-content-center align-items-center d-none"
+              @click.prevent="showNDILoginAlert"
+            >
+              <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo" />
+              <a href="#" class="text-dark font-weight-bold">Login with NDI</a>
+            </div>
 
-                        <div class="text-center mt-3">
-                            <h1 class="display-4" style="color: #2B656F; font-weight: bold">Sign Up</h1>
-                            <p class="lead" style="color: #2B656F; font-weight: bold">Agency Based User </p>
-                        </div>
+            <div class="text-center mt-3">
+              <h1 class="display-4" style="color: #2b656f; font-weight: bold">Sign Up</h1>
+              <p class="lead" style="color: #2b656f; font-weight: bold">Agency Based User</p>
+            </div>
 
-                        <div class="progress-bar" role="progressbar" :style="{ width: progressBarWidth }"
-                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" @click="handleProgressBarClick(1)">
-                        </div>
+            <div
+              class="progress-bar"
+              role="progressbar"
+              :style="{ width: progressBarWidth }"
+              aria-valuenow="0"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              @click="handleProgressBarClick(1)"
+            ></div>
 
-                        <div class="step-container d-flex justify-content-between align-items-center">
-                            <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(1)">1</div>
-                            <hr class="flex-grow-1 mx-2">
-                            <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(2)">2</div>
-                            <hr class="flex-grow-1 mx-2">
-                            <div class="step-circle" @click="handleProgressBarClick(3)">3</div>
-                        </div>
-                        <div class="card">
-                            <div class="card-body text-muted form">
-                                <h5 class="mb-4">1. Detail Fetch</h5>
-                            </div>
-                        </div>
+            <div class="step-container d-flex justify-content-between align-items-center">
+              <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(1)">1</div>
+              <hr class="flex-grow-1 mx-2" />
+              <div class="step-circle bg-light text-dark" @click="handleProgressBarClick(2)">2</div>
+              <hr class="flex-grow-1 mx-2" />
+              <div class="step-circle" @click="handleProgressBarClick(3)">3</div>
+            </div>
+            <div class="card">
+              <div class="card-body text-muted form">
+                <h5 class="mb-4">1. Detail Fetch</h5>
+              </div>
+            </div>
 
-                        <div class="card my-5">
-                            <div class="card-body text-muted form">
-                                <h5 class="mb-4">2. User Detail</h5>
-                            </div>
-                        </div>
+            <div class="card my-5">
+              <div class="card-body text-muted form">
+                <h5 class="mb-4">2. User Detail</h5>
+              </div>
+            </div>
 
-
-                        <div class="container p-5 text-start" style="background-color: #E2E9EB; border-radius: 15px;">
-                            <h5 class="mb-3 text-mutedcust-text"> <span class="rounded-number  p-3">3</span> Login
-                                Details
-                            </h5>
-                            <form @submit.prevent="createUser">
-                                <!-- Username and password fields -->
-                                <div class="form-group cust-text  mx-auto">
-                                    <label for="username">Username:</label>
-                                    <input type="text" id="username" v-model="username"
-                                        class="form-control p-2 bg-transparent border-dark" required>
-                                </div>
-                                <div class="form-group cust-text mt-3 mx-auto">
-                                    <label for="password">Password:</label>
-                                    <input type="password" id="password" v-model="password" @input="validatePassword"
-                                        class="form-control p-2 bg-transparent border-dark" required>
-                                    <small class="text-danger">{{ passwordValidationMessage }}</small>
-                                </div>
-
-                                <div class="form-group cust-text mt-3 mx-auto">
-                                    <label for="confirmPassword">Confirm Password:</label>
-                                    <input type="password" id="confirmPassword" v-model="confirmPassword"
-                                        class="form-control p-2 bg-transparent border-dark" required>
-                                </div>
-
-                                <div class="my-4 row">
-                                    <!-- Disclaimer -->
-                                    <div class="disclaimer-container d-flex align-items-center mb-3">
-                                        <input type="checkbox" id="disclaimer" v-model="disclaimerChecked" class="me-2">
-                                        <label for="disclaimer">
-                                            The information I have provided is true to the best of my knowledge. I
-                                            understand that the information collected may be shared to provide services
-                                            and interventions.
-                                        </label>
-                                    </div>
-
-                                    <!-- Agreement Link -->
-                                    <div class="agreement-link">
-                                        <input type="checkbox" id="termsAndPolicy" v-model="termsAndPolicy"
-                                            class="me-2">
-                                        By signing up, I agree to
-                                        <a class="hwss-primary fw-bold" href="#"
-                                            @click.prevent="showTermsModal = true">Terms and Policies</a>
-                                        of The PEMA HWSS Platform.
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn  ml-2 custom-btn mt-3 col-md-12">Sign Up</button>
-                            </form>
-                        </div>
-                        <div class="text-center mt-4">
-                            Already Have an Account? <router-link to="login"
-                                style="color: #2B656F; font-weight: bold">Sign
-                                In</router-link>
-                        </div>
-
-                    </div>
+            <div
+              class="container p-5 text-start"
+              style="background-color: #e2e9eb; border-radius: 15px"
+            >
+              <h5 class="mb-3 text-mutedcust-text">
+                <span class="rounded-number p-3">3</span> Login Details
+              </h5>
+              <form @submit.prevent="createUser">
+                <!-- Username and password fields -->
+                <div class="form-group cust-text mx-auto">
+                  <label for="username">Username:</label>
+                  <input
+                    type="text"
+                    id="username"
+                    v-model="username"
+                    class="form-control p-2 bg-transparent border-dark"
+                    required
+                  />
                 </div>
-            </div>
+                <div class="form-group cust-text mt-3 mx-auto">
+                  <label for="password">Password:</label>
+                  <input
+                    type="password"
+                    id="password"
+                    v-model="password"
+                    @input="validatePassword"
+                    class="form-control p-2 bg-transparent border-dark"
+                    required
+                  />
+                  <small class="text-danger">{{ passwordValidationMessage }}</small>
+                </div>
 
-        </div>
+                <div class="form-group cust-text mt-3 mx-auto">
+                  <label for="confirmPassword">Confirm Password:</label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    v-model="confirmPassword"
+                    class="form-control p-2 bg-transparent border-dark"
+                    required
+                  />
+                </div>
 
-        <div v-if="errorMessage" class="error-modal d-none" @click="errorMessage = ''">
-            <div class="modal-content">
-                <p>{{ errorMessage }}</p>
-                <button class="close-btn" @click="errorMessage = ''">Close</button>
+                <div class="my-4 row">
+                  <!-- Disclaimer -->
+                  <div class="disclaimer-container d-flex align-items-center mb-3">
+                    <input
+                      type="checkbox"
+                      id="disclaimer"
+                      v-model="disclaimerChecked"
+                      class="me-2"
+                    />
+                    <label for="disclaimer">
+                      The information I have provided is true to the best of my knowledge. I
+                      understand that the information collected may be shared to provide services
+                      and interventions.
+                    </label>
+                  </div>
+
+                  <!-- Agreement Link -->
+                  <div class="agreement-link">
+                    <input
+                      type="checkbox"
+                      id="termsAndPolicy"
+                      v-model="termsAndPolicy"
+                      class="me-2"
+                    />
+                    By signing up, I agree to
+                    <a class="hwss-primary fw-bold" href="#" @click.prevent="showTermsModal = true"
+                      >Terms and Policies</a
+                    >
+                    of The PEMA HWSS Platform.
+                  </div>
+                </div>
+                <button type="submit" class="btn ml-2 custom-btn mt-3 col-md-12">Sign Up</button>
+              </form>
             </div>
+            <div class="text-center mt-4">
+              Already Have an Account?
+              <router-link to="login" style="color: #2b656f; font-weight: bold"
+                >Sign In</router-link
+              >
+            </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Modal for Terms and Policies -->
-    <Dialog v-model:visible="showTermsModal" header="Terms and Policies" :style="{ width: '50vw' }">
-        <div>
-            <p>Welcome to The PEMA HWSS (Health and Wellbeing Screening System) platform ("PEMA HWSS"). By accessing or
-                using PEMA HWSS, you agree to be bound by these Terms of Service ("Terms"). Please read these Terms
-                carefully before accessing or using PEMA HWSS. If you do not agree with these Terms, you may not access
-                or use PEMA HWSS.</p>
+    <div v-if="errorMessage" class="error-modal d-none" @click="errorMessage = ''">
+      <div class="modal-content">
+        <p>{{ errorMessage }}</p>
+        <button class="close-btn" @click="errorMessage = ''">Close</button>
+      </div>
+    </div>
+  </div>
 
-            <p><b>Use of PEMA HWSS:</b> PEMA HWSS is intended for personal and non-commercial use only. You may not use
-                PEMA HWSS for any illegal or unauthorized purpose.</p>
+  <!-- Modal for Terms and Policies -->
+  <Dialog v-model:visible="showTermsModal" header="Terms and Policies" :style="{ width: '50vw' }">
+    <div>
+      <p>
+        Welcome to The PEMA HWSS (Health and Wellbeing Screening System) platform ("PEMA HWSS"). By
+        accessing or using PEMA HWSS, you agree to be bound by these Terms of Service ("Terms").
+        Please read these Terms carefully before accessing or using PEMA HWSS. If you do not agree
+        with these Terms, you may not access or use PEMA HWSS.
+      </p>
 
-            <p><b>Account Registration:</b> In order to access certain features of PEMA HWSS, you may be required to
-                register for an account. You agree to provide accurate, current, and complete information during the
-                registration process and to keep your account information updated.</p>
+      <p>
+        <b>Use of PEMA HWSS:</b> PEMA HWSS is intended for personal and non-commercial use only. You
+        may not use PEMA HWSS for any illegal or unauthorized purpose.
+      </p>
 
-            <p><b>Privacy:</b> Your privacy is important to us. Please review our Privacy Policy to understand how we
-                collect, use, and disclose information about you when you access or use PEMA HWSS.</p>
+      <p>
+        <b>Account Registration:</b> In order to access certain features of PEMA HWSS, you may be
+        required to register for an account. You agree to provide accurate, current, and complete
+        information during the registration process and to keep your account information updated.
+      </p>
 
-            <p><b>User Content:</b> You retain ownership of any content you submit, post, or display on PEMA HWSS ("User
-                Content"). By submitting, posting, or displaying User Content, you grant PEMA HWSS a worldwide,
-                non-exclusive, royalty-free license to use, reproduce, modify, adapt, publish, translate, distribute,
-                and display such User Content in connection with providing PEMA HWSS.</p>
+      <p>
+        <b>Privacy:</b> Your privacy is important to us. Please review our Privacy Policy to
+        understand how we collect, use, and disclose information about you when you access or use
+        PEMA HWSS.
+      </p>
 
-            <p><b>Prohibited Conduct:</b> You may not engage in any conduct that, in our sole discretion, restricts or
-                inhibits any other user from using or enjoying PEMA HWSS, or that could damage, disable, overburden, or
-                impair PEMA HWSS.</p>
+      <p>
+        <b>User Content:</b> You retain ownership of any content you submit, post, or display on
+        PEMA HWSS ("User Content"). By submitting, posting, or displaying User Content, you grant
+        PEMA HWSS a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, adapt,
+        publish, translate, distribute, and display such User Content in connection with providing
+        PEMA HWSS.
+      </p>
 
-            <p><b>Intellectual Property:</b> All intellectual property rights in PEMA HWSS are owned by or licensed to
-                us. You may not use PEMA HWSS for any purpose not expressly permitted by these Terms.</p>
+      <p>
+        <b>Prohibited Conduct:</b> You may not engage in any conduct that, in our sole discretion,
+        restricts or inhibits any other user from using or enjoying PEMA HWSS, or that could damage,
+        disable, overburden, or impair PEMA HWSS.
+      </p>
 
-            <p><b>Disclaimer of Warranties:</b> PEMA HWSS is provided on an "as is" and "as available" basis, without
-                any warranties of any kind, either express or implied.</p>
+      <p>
+        <b>Intellectual Property:</b> All intellectual property rights in PEMA HWSS are owned by or
+        licensed to us. You may not use PEMA HWSS for any purpose not expressly permitted by these
+        Terms.
+      </p>
 
-            <p><b>Limitation of Liability:</b> In no event shall PEMA HWSS be liable for any indirect, incidental,
-                special, consequential, or punitive damages, arising out of or in connection with your use of PEMA HWSS.
-            </p>
+      <p>
+        <b>Disclaimer of Warranties:</b> PEMA HWSS is provided on an "as is" and "as available"
+        basis, without any warranties of any kind, either express or implied.
+      </p>
 
-            <p><b>Governing Law:</b> These Terms shall be governed by and construed in accordance with the laws of
-                Bhutan.</p>
+      <p>
+        <b>Limitation of Liability:</b> In no event shall PEMA HWSS be liable for any indirect,
+        incidental, special, consequential, or punitive damages, arising out of or in connection
+        with your use of PEMA HWSS.
+      </p>
 
-            <p><b>Changes to Terms:</b> We reserve the right to modify or update these Terms at any time without prior
-                notice. Your continued use of PEMA HWSS after any such changes constitutes your acceptance of the new
-                Terms.</p>
-        </div>
-    </Dialog>
+      <p>
+        <b>Governing Law:</b> These Terms shall be governed by and construed in accordance with the
+        laws of Bhutan.
+      </p>
+
+      <p>
+        <b>Changes to Terms:</b> We reserve the right to modify or update these Terms at any time
+        without prior notice. Your continued use of PEMA HWSS after any such changes constitutes
+        your acceptance of the new Terms.
+      </p>
+    </div>
+  </Dialog>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import endpoints from '@/api';
-import axios from 'axios';
-import Swal from 'sweetalert2';
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import endpoints from '@/api'
+import apiClient from '@/apiClient'
+import Swal from 'sweetalert2'
 
-const router = useRouter();
+const router = useRouter()
 
-const username = ref('');
-const password = ref('');
-const confirmPassword = ref('');
-const errorMessage = ref('');
-const showTermsModal = ref(false);
-const disclaimerChecked = ref(false);
-const termsAndPolicy = ref(false);
+const username = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const errorMessage = ref('')
+const showTermsModal = ref(false)
+const disclaimerChecked = ref(false)
+const termsAndPolicy = ref(false)
 
 const passwordValidationMessage = computed(() => {
-    const messages = [];
-    let requirementsMet = true;
+  const messages = []
+  let requirementsMet = true
 
-    if (password.value.length < 8) {
-        messages.push("be at least 8 characters long,");
-        requirementsMet = false;
-    }
-    if (!/\d/.test(password.value)) {
-        messages.push("include at least one number,");
-        requirementsMet = false;
-    }
-    if (!/[A-Z]/.test(password.value)) {
-        messages.push("include at least one uppercase letter,");
-        requirementsMet = false;
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password.value)) {
-        messages.push("include at least one special character (!@#$%^&*(),.?\":{}|<>).");
-        requirementsMet = false;
-    }
+  if (password.value.length < 8) {
+    messages.push('be at least 8 characters long,')
+    requirementsMet = false
+  }
+  if (!/\d/.test(password.value)) {
+    messages.push('include at least one number,')
+    requirementsMet = false
+  }
+  if (!/[A-Z]/.test(password.value)) {
+    messages.push('include at least one uppercase letter,')
+    requirementsMet = false
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password.value)) {
+    messages.push('include at least one special character (!@#$%^&*(),.?":{}|<>).')
+    requirementsMet = false
+  }
 
-    if (!requirementsMet) {
-        messages.unshift("Your password must:");
-    }
+  if (!requirementsMet) {
+    messages.unshift('Your password must:')
+  }
 
-    return messages.join(' ');
-});
+  return messages.join(' ')
+})
 
 const createUser = async () => {
-    if (password.value !== confirmPassword.value) {
-        Swal.fire('Error', 'Passwords do not match.', 'error');
-        return;
+  if (password.value !== confirmPassword.value) {
+    Swal.fire('Error', 'Passwords do not match.', 'error')
+    return
+  }
+
+  if (!disclaimerChecked.value || !termsAndPolicy.value) {
+    // Show an error message using SweetAlert
+    Swal.fire({
+      icon: 'warning',
+      title: 'Oops...',
+      text: 'Please agree to both the disclaimer and terms and policies before signing up.'
+    })
+    return
+  }
+
+  try {
+    let userData = JSON.parse(sessionStorage.getItem('user_data'))
+    const agencyData = JSON.parse(sessionStorage.getItem('agencyData'))
+    const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'))
+
+    userData = { ...userData, username: username.value, password: password.value }
+
+    sessionStorage.setItem('user_data', JSON.stringify(userData))
+
+    const userSubmissionData = { userData, agencyData, userAgencyData }
+
+    // console.log(userSubmissionData);
+
+    const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)?.[1]
+    if (!csrftoken) {
+      Swal.fire('Error', 'CSRF token not found in cookies.', 'error')
+      return
     }
 
-    if (!disclaimerChecked.value || !termsAndPolicy.value) {
-        // Show an error message using SweetAlert
+    const response = await apiClient.post(endpoints.registerUser, userSubmissionData, {
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+      withCredentials: true
+    })
+
+    if (response.status === 201) {
+      Swal.fire('Success', 'Registration successful!', 'success').then(() => {
+        router.push({ name: 'login' })
+        sessionStorage.removeItem('user_data')
+        sessionStorage.removeItem('agencyData')
+        sessionStorage.removeItem('userAgencyData')
+      })
+    } else {
+      Swal.fire('Error', `Error: ${response.data.error}`, 'error')
+
+      // Handle duplicate username and email errors
+      if (response.data.error) {
+        const errorDetail = response.data.error
+        if (errorDetail.includes('access_customuser.username')) {
+          const existingUsername = errorDetail.split("'")[1] // Assuming username is wrapped in quotes in the error message
+          const confirmNewUsername = await Swal.fire({
+            title: 'Username already exists!',
+            text: `The username ${existingUsername} is already taken. Enter a new username:`,
+            input: 'text',
+            showCancelButton: true,
+            confirmButtonText: 'Use New Username',
+            cancelButtonText: 'Cancel',
+            showLoaderOnConfirm: true,
+            preConfirm: (newUsername) => {
+              return new Promise((resolve) => {
+                if (!newUsername) {
+                  Swal.showValidationMessage('Please enter a new username')
+                } else {
+                  resolve()
+                }
+              })
+            }
+          })
+
+          if (confirmNewUsername.isConfirmed) {
+            userData.username = confirmNewUsername.value
+            sessionStorage.setItem('user_data', JSON.stringify(userData))
+            // Call createUser again with the new username in userData
+            createUser()
+          }
+        } else if (errorDetail.includes('access_customuser.email')) {
+          const existingEmail = errorDetail.split("'")[1]
+          const confirmNewEmail = await Swal.fire({
+            title: 'Email already exists!',
+            text: `The email ${existingEmail} is already registered. Enter a new email address:`,
+            input: 'email',
+            inputAttributes: {
+              autocapitalize: 'off'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Use New Email',
+            cancelButtonText: 'Cancel',
+            showLoaderOnConfirm: true,
+            preConfirm: (newEmail) => {
+              return new Promise((resolve) => {
+                if (!newEmail) {
+                  Swal.showValidationMessage('Please enter a new email address')
+                } else {
+                  resolve()
+                }
+              })
+            }
+          })
+
+          if (confirmNewEmail.isConfirmed) {
+            userData.email = confirmNewEmail.value
+            sessionStorage.setItem('user_data', JSON.stringify(userData))
+            // Call createUser again with the new email in userData
+            createUser()
+          }
+        }
+      }
+    }
+  } catch (error) {
+    let userData = JSON.parse(sessionStorage.getItem('user_data'))
+
+    if (error.response && error.response.data && error.response.data.error) {
+      const errorDetail = error.response.data.error
+      if (errorDetail.includes('access_customuser.username')) {
+        const confirmNewUsername = await Swal.fire({
+          title: 'Username already exists!',
+          text: `The username ${userData.username} is already taken. Enter a new username:`,
+          input: 'text',
+          showCancelButton: true,
+          confirmButtonText: 'Use New Username',
+          cancelButtonText: 'Cancel',
+          showLoaderOnConfirm: true,
+          preConfirm: (newUsername) => {
+            return new Promise((resolve) => {
+              if (!newUsername) {
+                Swal.showValidationMessage('Please enter a new username')
+              } else {
+                resolve()
+              }
+            })
+          }
+        })
+
+        if (confirmNewUsername.isConfirmed) {
+          userData.username = confirmNewUsername
+          sessionStorage.setItem('user_data', JSON.stringify(userData))
+          createUser()
+        }
+      } else if (errorDetail.includes('access_customuser.email')) {
+        const confirmNewEmail = await Swal.fire({
+          title: 'Email already exists!',
+          text: `The email ${userData.email} is already registered. Enter a new email address:`,
+          input: 'email',
+          inputAttributes: {
+            autocapitalize: 'off'
+          },
+          showCancelButton: true,
+          confirmButtonText: 'Use New Email',
+          cancelButtonText: 'Cancel',
+          showLoaderOnConfirm: true,
+          preConfirm: (newEmail) => {
+            return new Promise((resolve) => {
+              if (!newEmail) {
+                Swal.showValidationMessage('Please enter a new email address')
+              } else {
+                resolve()
+              }
+            })
+          }
+        })
+
+        if (confirmNewEmail.isConfirmed) {
+          userData.email = confirmNewEmail.value
+          sessionStorage.setItem('user_data', JSON.stringify(userData))
+          createUser()
+        }
+      } else if (errorDetail.includes('access_customuser.identity_number')) {
         Swal.fire({
-            icon: 'warning',
-            title: 'Oops...',
-            text: 'Please agree to both the disclaimer and terms and policies before signing up.'
-        });
-        return;
+          title: 'CID/Identity number already exists!',
+          text: `The CID/Identity number ${userData.identity} is already registered. Enter a new CID/Identity number:`,
+          input: 'text',
+          showCancelButton: true,
+          confirmButtonText: 'Use New CID/Identity',
+          cancelButtonText: 'Cancel'
+        })
+      } else {
+        errorMessage.value = 'Error creating user. Please try again.'
+      }
+    } else {
+      errorMessage.value = 'An unexpected error occurred. Please try again later.'
     }
-
-    try {
-        let userData = JSON.parse(sessionStorage.getItem('user_data'));
-        const agencyData = JSON.parse(sessionStorage.getItem('agencyData'));
-        const userAgencyData = JSON.parse(sessionStorage.getItem('userAgencyData'));
-
-        userData = { ...userData, username: username.value, password: password.value };
-
-        sessionStorage.setItem('user_data', JSON.stringify(userData));
-
-        const userSubmissionData = { userData, agencyData, userAgencyData };
-
-        // console.log(userSubmissionData);
-
-        const csrftoken = document.cookie.match(/csrftoken=(.*?)(?:;|$)/)?.[1];
-        if (!csrftoken) {
-            Swal.fire('Error', 'CSRF token not found in cookies.', 'error');
-            return;
-        }
-
-        const response = await axios.post(endpoints.registerUser, userSubmissionData, {
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-            withCredentials: true,
-        });
-
-        if (response.status === 201) {
-            Swal.fire('Success', 'Registration successful!', 'success').then(() => {
-                router.push({ name: 'login' });
-                sessionStorage.removeItem('user_data');
-                sessionStorage.removeItem('agencyData');
-                sessionStorage.removeItem('userAgencyData');
-            });
-        } else {
-            Swal.fire('Error', `Error: ${response.data.error}`, 'error');
-
-            // Handle duplicate username and email errors
-            if (response.data.error) {
-                const errorDetail = response.data.error;
-                if (errorDetail.includes('access_customuser.username')) {
-                    const existingUsername = errorDetail.split("'")[1]; // Assuming username is wrapped in quotes in the error message
-                    const confirmNewUsername = await Swal.fire({
-                        title: 'Username already exists!',
-                        text: `The username ${existingUsername} is already taken. Enter a new username:`,
-                        input: 'text',
-                        showCancelButton: true,
-                        confirmButtonText: 'Use New Username',
-                        cancelButtonText: 'Cancel',
-                        showLoaderOnConfirm: true,
-                        preConfirm: (newUsername) => {
-                            return new Promise((resolve) => {
-                                if (!newUsername) {
-                                    Swal.showValidationMessage('Please enter a new username');
-                                } else {
-                                    resolve();
-                                }
-                            });
-                        }
-                    });
-
-                    if (confirmNewUsername.isConfirmed) {
-                        userData.username = confirmNewUsername.value;
-                        sessionStorage.setItem('user_data', JSON.stringify(userData));
-                        // Call createUser again with the new username in userData
-                        createUser();
-                    }
-                } else if (errorDetail.includes('access_customuser.email')) {
-                    const existingEmail = errorDetail.split("'")[1];
-                    const confirmNewEmail = await Swal.fire({
-                        title: 'Email already exists!',
-                        text: `The email ${existingEmail} is already registered. Enter a new email address:`,
-                        input: 'email',
-                        inputAttributes: {
-                            autocapitalize: 'off'
-                        },
-                        showCancelButton: true,
-                        confirmButtonText: 'Use New Email',
-                        cancelButtonText: 'Cancel',
-                        showLoaderOnConfirm: true,
-                        preConfirm: (newEmail) => {
-                            return new Promise((resolve) => {
-                                if (!newEmail) {
-                                    Swal.showValidationMessage('Please enter a new email address');
-                                } else {
-                                    resolve();
-                                }
-                            });
-                        }
-                    });
-
-                    if (confirmNewEmail.isConfirmed) {
-                        userData.email = confirmNewEmail.value;
-                        sessionStorage.setItem('user_data', JSON.stringify(userData));
-                        // Call createUser again with the new email in userData
-                        createUser();
-                    }
-                }
-            }
-        }
-    } catch (error) {
-        let userData = JSON.parse(sessionStorage.getItem('user_data'));
-
-        if (error.response && error.response.data && error.response.data.error) {
-            const errorDetail = error.response.data.error;
-            if (errorDetail.includes('access_customuser.username')) {
-                const confirmNewUsername = await Swal.fire({
-                    title: 'Username already exists!',
-                    text: `The username ${userData.username} is already taken. Enter a new username:`,
-                    input: 'text',
-                    showCancelButton: true,
-                    confirmButtonText: 'Use New Username',
-                    cancelButtonText: 'Cancel',
-                    showLoaderOnConfirm: true,
-                    preConfirm: (newUsername) => {
-                        return new Promise((resolve) => {
-                            if (!newUsername) {
-                                Swal.showValidationMessage('Please enter a new username');
-                            } else {
-                                resolve();
-                            }
-                        });
-                    }
-                });
-
-                if (confirmNewUsername.isConfirmed) {
-                    userData.username = confirmNewUsername;
-                    sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    createUser();
-                }
-            } else if (errorDetail.includes('access_customuser.email')) {
-                const confirmNewEmail = await Swal.fire({
-                    title: 'Email already exists!',
-                    text: `The email ${userData.email} is already registered. Enter a new email address:`,
-                    input: 'email',
-                    inputAttributes: {
-                        autocapitalize: 'off'
-                    },
-                    showCancelButton: true,
-                    confirmButtonText: 'Use New Email',
-                    cancelButtonText: 'Cancel',
-                    showLoaderOnConfirm: true,
-                    preConfirm: (newEmail) => {
-                        return new Promise((resolve) => {
-                            if (!newEmail) {
-                                Swal.showValidationMessage('Please enter a new email address');
-                            } else {
-                                resolve();
-                            }
-                        });
-                    }
-                });
-
-                if (confirmNewEmail.isConfirmed) {
-                    userData.email = confirmNewEmail.value;
-                    sessionStorage.setItem('user_data', JSON.stringify(userData));
-                    createUser();
-                }
-            } else if (errorDetail.includes('access_customuser.identity_number')) {
-                Swal.fire({
-                    title: 'CID/Identity number already exists!',
-                    text: `The CID/Identity number ${userData.identity} is already registered. Enter a new CID/Identity number:`,
-                    input: 'text',
-                    showCancelButton: true,
-                    confirmButtonText: 'Use New CID/Identity',
-                    cancelButtonText: 'Cancel',
-                });
-            } else {
-                errorMessage.value = 'Error creating user. Please try again.';
-            }
-        } else {
-            errorMessage.value = 'An unexpected error occurred. Please try again later.';
-        }
-        Swal.fire('Error', errorMessage.value, 'User cancelled the registration process.');
-    }
-};
+    Swal.fire('Error', errorMessage.value, 'User cancelled the registration process.')
+  }
+}
 
 const showNDILoginAlert = () => {
-    Swal.fire({
-        title: 'Coming Soon!',
-        text: 'Login with NDI feature is coming soon. Stay tuned!',
-        icon: 'info',
-        confirmButtonColor: '#2B656F'
-    });
-};
+  Swal.fire({
+    title: 'Coming Soon!',
+    text: 'Login with NDI feature is coming soon. Stay tuned!',
+    icon: 'info',
+    confirmButtonColor: '#2B656F'
+  })
+}
 </script>
 
 <style scoped>
 .error-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1050;
-    cursor: pointer;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+  cursor: pointer;
 }
 
 .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    max-width: 500px;
-    width: 90%;
-    cursor: auto;
-    position: relative;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  cursor: auto;
+  position: relative;
 }
 
 .close-btn {
-    display: inline-block;
-    background-color: #2B656F;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    margin-top: 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    /* float: right; */
+  display: inline-block;
+  background-color: #2b656f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  /* float: right; */
 }
 
 .close-btn:hover {
-    background-color: #1f4d55;
+  background-color: #1f4d55;
 }
 
 .form {
-    background-color: #2B656F24;
-    border-radius: 10px;
+  background-color: #2b656f24;
+  border-radius: 10px;
 }
 
 .rounded-number {
-    background-color: #2B656F;
-    color: #fff;
-    height: 1rem;
-    width: 1rem;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  background-color: #2b656f;
+  color: #fff;
+  height: 1rem;
+  width: 1rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .step-container {
-    position: relative;
-    text-align: center;
-    transform: translateY(-43%);
+  position: relative;
+  text-align: center;
+  transform: translateY(-43%);
 }
 
 .step-circle {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: #2B656F;
-    border: 2px solid #2B656F;
-    color: white;
-    line-height: 30px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    cursor: pointer;
-    /* Added cursor pointer */
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #2b656f;
+  border: 2px solid #2b656f;
+  color: white;
+  line-height: 30px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  /* Added cursor pointer */
 }
 
 .custom-btn {
-    background-color: #2B656F;
-    color: white;
-    font-size: inherit;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+  background-color: #2b656f;
+  color: white;
+  font-size: inherit;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>

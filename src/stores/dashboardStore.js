@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api';
 
 export const useDashboardStore = defineStore('dashboard', {
@@ -84,7 +84,7 @@ export const useDashboardStore = defineStore('dashboard', {
           }
         }
 
-        const reportResponse = await axios.get(endpoints.getReport);
+        const reportResponse = await apiClient.get(endpoints.getReport);
         if (reportResponse.data && reportResponse.data.reporting_model_data) {
           let reportItems = reportResponse.data.reporting_model_data;
 
