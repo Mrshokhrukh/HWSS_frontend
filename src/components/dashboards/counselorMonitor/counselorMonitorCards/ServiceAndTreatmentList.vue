@@ -144,7 +144,7 @@
       </DataTable>
     </div>
 
-      <Dialog
+    <Dialog
       v-model:visible="showModal"
       :modal="true"
       :closable="false"
@@ -159,11 +159,7 @@
             <span class="modal-subtitle">{{ selectedUser?.full_name }}</span>
           </h3>
           <div class="modal-actions">
-            <Button
-              v-if="!isEditMode && canEdit"
-              class="edit-mode-btn"
-              @click="switchToEditMode"
-            >
+            <Button v-if="!isEditMode && canEdit" class="edit-mode-btn" @click="switchToEditMode">
               <i class="bi bi-pencil-fill me-2"></i>
               Switch to Edit
             </Button>
@@ -1046,10 +1042,10 @@
 
 <script setup>
 import { ref, computed, onMounted, watchEffect, watch } from 'vue'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 import Swal from 'sweetalert2'
-import { FilterMatchMode } from 'primevue/api';
+import { FilterMatchMode } from 'primevue/api'
 import AutoComplete from 'primevue/autocomplete'
 import StatusBadge from './StatusBadge.vue'
 
@@ -1060,7 +1056,7 @@ const selectedUser = ref({
 })
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-});
+})
 const officialOptions = ref([])
 const filteredOfficials = ref([])
 const selfRole = ref('')
@@ -1085,19 +1081,20 @@ const selectedFields = ref([
 const fullNames = ref(new Map())
 const isEditMode = ref(false)
 const canEdit = computed(() => !!selfRole.value)
-const sortField = ref('date');
-const sortOrder = ref(-1);
+const sortField = ref('date')
+const sortOrder = ref(-1)
 const onSortChange = (event) => {
-  sortField.value = event.sortField;
-  sortOrder.value = event.sortOrder;
-};
+  sortField.value = event.sortField
+  sortOrder.value = event.sortOrder
+}
 const myAgency = ref('')
 const selectedYear = ref(new Date().getFullYear())
 const years = computed(() => {
   const currentYear = new Date().getFullYear()
   return Array.from({ length: 10 }, (_, index) => currentYear - index)
 })
-const paginatorTemplate = 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport';
+const paginatorTemplate =
+  'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport'
 
 // --- End of unchanged section ---
 
@@ -1112,11 +1109,13 @@ const getServiceList = async () => {
 
     // 2. Append the agency_name as a query parameter if it exists.
     if (myAgency.value && myAgency.value !== 'Unknown Agency') {
-      requestUrl = `${endpoints.newServiceAndTreatment}?agency_name=${encodeURIComponent(myAgency.value)}`
+      requestUrl = `${endpoints.newServiceAndTreatment}?agency_name=${encodeURIComponent(
+        myAgency.value
+      )}`
     }
 
     // 3. Fetch the pre-filtered data from the backend.
-    const response = await axios.get(requestUrl)
+    const response = await apiClient.get(requestUrl)
 
     // 4. The response.data is already filtered by agency.
     // We only need to apply the year filter on this much smaller dataset.
@@ -1418,7 +1417,7 @@ const processedRows = computed(() => {
 watchEffect(async () => {
   if (selectedUser.value && selectedUser.value.refer_to) {
     try {
-      const response = await axios.get(
+      const response = await apiClient.get(
         `${endpoints.fetchReferralCounselors}?role=${selectedUser.value.refer_to}`
       )
       if (response && response.data && Array.isArray(response.data.data)) {
@@ -1643,7 +1642,7 @@ const referCase = async () => {
 
 const fetchUserdiagnosis = async (userId) => {
   try {
-    const response = await axios.get(`${endpoints.getDiagnosis}${userId}/`)
+    const response = await apiClient.get(`${endpoints.getDiagnosis}${userId}/`)
     if (response.status === 200 && response.data) {
       selectedUser.value.diagnosis = response.data.diagnosis || []
     } else {
@@ -1666,9 +1665,9 @@ onMounted(() => {
 // ensuring your year filter works correctly.
 watch(selectedYear, (newYear, oldYear) => {
   if (newYear !== oldYear) {
-    getServiceList();
+    getServiceList()
   }
-});
+})
 
 watch(
   () => filteredRows.value,

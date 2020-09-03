@@ -6,8 +6,7 @@
 
     <header>
       <div class="wrapper">
-        <nav>
-        </nav>
+        <nav></nav>
       </div>
     </header>
 
@@ -21,7 +20,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 import Cookies from 'js-cookie'
 import NewChatWidget from '@/components/common/NewChatWidget.vue'
@@ -32,19 +31,21 @@ const csrfToken = ref('')
 
 onMounted(async () => {
   // Check if mobile device
-  isMobileDevice.value = window.innerWidth <= 768;
+  isMobileDevice.value = window.innerWidth <= 768
 
   // Redirect if mobile
   if (isMobileDevice.value) {
-    alert("This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.");
+    alert(
+      'This application is not optimized for mobile use. Please revisit on a computer or use a tablet in landscape mode. Alternatively, consider downloading our dedicated app for mobile access.'
+    )
 
     setTimeout(() => {
-      window.location.href = "https://www.google.com";
-    }, 500);
+      window.location.href = 'https://www.google.com'
+    }, 500)
   }
 
   try {
-    const csrfResponse = await axios.get(endpoints.getCSRFToken)
+    const csrfResponse = await apiClient.get(endpoints.getCSRFToken)
     if (csrfResponse.data && csrfResponse.data.csrf_token) {
       csrfToken.value = csrfResponse.data.csrf_token
       Cookies.set('csrftoken', csrfToken.value)
@@ -54,7 +55,7 @@ onMounted(async () => {
   }
 
   try {
-    const response = await axios.get(endpoints.settings)
+    const response = await apiClient.get(endpoints.settings)
     if (response.data && response.data.length > 0 && response.data[0].copyright_message) {
       const currentYear = new Date().getFullYear()
       const message = response.data[0].copyright_message
@@ -63,7 +64,6 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error fetching copyright message:', error)
   }
-
 })
 </script>
 
@@ -75,7 +75,7 @@ onMounted(async () => {
 }
 
 .text-color {
-  color: #2B656F;
+  color: #2b656f;
 }
 
 .chat-icon {

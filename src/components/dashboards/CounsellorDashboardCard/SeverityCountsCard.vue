@@ -80,7 +80,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watchEffect, nextTick } from 'vue'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 
 import SeverityGraphCard from './SeverityGraphCard.vue'
@@ -241,7 +241,7 @@ const fetchAndFilterData = async () => {
     }
 
     // 3. Fetch the pre-filtered data from the backend
-    const response = await axios.get(requestUrl)
+    const response = await apiClient.get(requestUrl)
     const dataArray = response.data || []
 
     // 4. The client-side agency filter is now REMOVED. We only filter by year.

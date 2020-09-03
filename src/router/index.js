@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
-import axios from 'axios';
+import apiClient from '@/apiClient';
 import endpoints from '@/api';
 import NotFoundPage from '@/views/errorpages/pagenotfound404.vue';
 
@@ -234,7 +234,7 @@ const createAppRouter = () => {
     // and a token exists in storage. This avoids repeated API calls.
     if (isAuthenticatedInStorage && !isTokenExpired && !tokenValidityChecked) {
       try {
-        const response = await axios.post(endpoints.authenticateToken, null, {
+        const response = await apiClient.post(endpoints.authenticateToken, null, {
           headers: { 'Authorization': `Token ${authToken}` },
         });
 

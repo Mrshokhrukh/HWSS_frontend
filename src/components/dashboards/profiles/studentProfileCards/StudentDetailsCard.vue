@@ -18,21 +18,44 @@
             <div class="detail-grid">
               <div class="detail-row">
                 <label for="identityNumber">Citizenship Identity Number</label>
-                <input type="text" id="identityNumber" class="detail-input" readonly
-                  :value="userDetails.user.identityNumber">
+                <input
+                  type="text"
+                  id="identityNumber"
+                  class="detail-input"
+                  readonly
+                  :value="userDetails.user.identityNumber"
+                />
               </div>
               <div class="detail-row">
                 <label for="email">Email</label>
-                <input type="email" id="email" class="detail-input" readonly :value="userDetails.user.email">
+                <input
+                  type="email"
+                  id="email"
+                  class="detail-input"
+                  readonly
+                  :value="userDetails.user.email"
+                />
               </div>
               <div class="detail-row">
                 <label for="mobile">Mobile</label>
-                <input type="text" id="mobile" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.user.mobNumber">
+                <input
+                  type="text"
+                  id="mobile"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.user.mobNumber"
+                />
               </div>
               <div class="detail-row">
                 <label for="nationality">Nationality</label>
-                <input type="text" id="nationality" class="detail-input" readonly :value="userDetails.user.nationality">
+                <input
+                  type="text"
+                  id="nationality"
+                  class="detail-input"
+                  readonly
+                  :value="userDetails.user.nationality"
+                />
               </div>
             </div>
           </div>
@@ -42,23 +65,46 @@
             <div class="detail-grid">
               <div class="detail-row">
                 <label for="motherName">Mother's Name</label>
-                <input type="text" id="motherName" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.user.motherName">
+                <input
+                  type="text"
+                  id="motherName"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.user.motherName"
+                />
               </div>
               <div class="detail-row">
                 <label for="fatherName">Father's Name</label>
-                <input type="text" id="fatherName" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.user.fatherName">
+                <input
+                  type="text"
+                  id="fatherName"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.user.fatherName"
+                />
               </div>
               <div class="detail-row">
                 <label for="parentOccupation">Parent's Occupation</label>
-                <input type="text" id="parentOccupation" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.userAgency.parentOccupation">
+                <input
+                  type="text"
+                  id="parentOccupation"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.userAgency.parentOccupation"
+                />
               </div>
               <div class="detail-row">
                 <label for="parentStatus">Parent's Status</label>
-                <select id="parentStatus" class="detail-input" :disabled="!isEditing" :class="{ 'editable': isEditing }"
-                  v-model="userDetails.userAgency.parentStatus">
+                <select
+                  id="parentStatus"
+                  class="detail-input"
+                  :disabled="!isEditing"
+                  :class="{ editable: isEditing }"
+                  v-model="userDetails.userAgency.parentStatus"
+                >
                   <option value="both_parents">Both parents together</option>
                   <option value="divorced">Divorced</option>
                   <option value="single_deceased">Single (one deceased)</option>
@@ -73,13 +119,25 @@
             <div class="detail-grid">
               <div class="detail-row">
                 <label for="guardianName">Guardian Name (Optional)</label>
-                <input type="text" id="guardianName" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.userAgency.guardianName">
+                <input
+                  type="text"
+                  id="guardianName"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.userAgency.guardianName"
+                />
               </div>
               <div class="detail-row">
                 <label for="guardianOccupation">Guardian Occupation (Optional)</label>
-                <input type="text" id="guardianOccupation" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.userAgency.guardianOccupation">
+                <input
+                  type="text"
+                  id="guardianOccupation"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.userAgency.guardianOccupation"
+                />
               </div>
             </div>
           </div>
@@ -89,18 +147,33 @@
             <div class="detail-grid">
               <div class="detail-row">
                 <label for="permAddVillage">Village</label>
-                <input type="text" id="permAddVillage" class="detail-input" readonly
-                  :value="userDetails.user.permAddVillage">
+                <input
+                  type="text"
+                  id="permAddVillage"
+                  class="detail-input"
+                  readonly
+                  :value="userDetails.user.permAddVillage"
+                />
               </div>
               <div class="detail-row">
                 <label for="permAddGewog">Gewog</label>
-                <input type="text" id="permAddGewog" class="detail-input" readonly
-                  :value="userDetails.user.permAddGewog">
+                <input
+                  type="text"
+                  id="permAddGewog"
+                  class="detail-input"
+                  readonly
+                  :value="userDetails.user.permAddGewog"
+                />
               </div>
               <div class="detail-row">
                 <label for="permAddDzongkhag">Dzongkhag</label>
-                <input type="text" id="permAddDzongkhag" class="detail-input" readonly
-                  :value="userDetails.user.permAddDzongkhag">
+                <input
+                  type="text"
+                  id="permAddDzongkhag"
+                  class="detail-input"
+                  readonly
+                  :value="userDetails.user.permAddDzongkhag"
+                />
               </div>
             </div>
           </div>
@@ -110,8 +183,13 @@
             <div class="detail-grid">
               <div class="detail-row">
                 <label for="currentLivingWith">Currently Living With</label>
-                <select id="currentLivingWith" class="detail-input" :disabled="!isEditing"
-                  :class="{ 'editable': isEditing }" v-model="userDetails.userAgency.currentLivingWith">
+                <select
+                  id="currentLivingWith"
+                  class="detail-input"
+                  :disabled="!isEditing"
+                  :class="{ editable: isEditing }"
+                  v-model="userDetails.userAgency.currentLivingWith"
+                >
                   <option value="parents">Parents</option>
                   <option value="guardian">Guardian</option>
                   <option value="friend">Friend</option>
@@ -121,13 +199,25 @@
               </div>
               <div v-if="userDetails.userAgency.currentLivingWith === 'others'" class="detail-row">
                 <label for="otherLivingWith">Specify with whom you live with</label>
-                <input type="text" id="otherLivingWith" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.userAgency.otherLivingWith">
+                <input
+                  type="text"
+                  id="otherLivingWith"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.userAgency.otherLivingWith"
+                />
               </div>
               <div class="detail-row">
                 <label for="psAddDzongkhag">Present Address</label>
-                <input type="text" id="psAddDzongkhag" class="detail-input" :class="{ 'editable': isEditing }"
-                  :readonly="!isEditing" v-model="userDetails.user.psAddDzongkhag">
+                <input
+                  type="text"
+                  id="psAddDzongkhag"
+                  class="detail-input"
+                  :class="{ editable: isEditing }"
+                  :readonly="!isEditing"
+                  v-model="userDetails.user.psAddDzongkhag"
+                />
               </div>
             </div>
           </div>
@@ -135,8 +225,9 @@
       </div>
       <div class="card-footer">
         <button v-if="isEditing" class="btn btn-secondary" @click="cancelChanges">Cancel</button>
-        <button v-if="isEditing" class="btn btn-primary" type="submit" @click="saveChanges">Save
-          Changes</button>
+        <button v-if="isEditing" class="btn btn-primary" type="submit" @click="saveChanges">
+          Save Changes
+        </button>
         <button v-else class="btn btn-primary" @click="enableEdit">Edit Profile</button>
       </div>
     </div>
@@ -144,92 +235,96 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
-import axios from 'axios';
-import Swal from 'sweetalert2';
-import endpoints from '@/api';
-import { useUserDetailsStore } from '@/stores/userDetails';
+import { ref, watch } from 'vue'
+import apiClient from '@/apiClient'
+import Swal from 'sweetalert2'
+import endpoints from '@/api'
+import { useUserDetailsStore } from '@/stores/userDetails'
 
-const userDetailsStore = useUserDetailsStore();
-const userDetails = ref(userDetailsStore.$state);
-const isEditing = ref(false);
-const originalUserDetails = ref({ ...userDetailsStore.$state });
+const userDetailsStore = useUserDetailsStore()
+const userDetails = ref(userDetailsStore.$state)
+const isEditing = ref(false)
+const originalUserDetails = ref({ ...userDetailsStore.$state })
 
 const notification = ref({
   show: false,
   message: '',
-  type: '',
-});
+  type: ''
+})
 
 const enableEdit = () => {
-  isEditing.value = true;
-};
+  isEditing.value = true
+}
 
 const getEditableFields = () => {
   return {
     user: {
       mob_number: userDetails.value.user.mobNumber,
       father_name: userDetails.value.user.fatherName,
-      mother_name: userDetails.value.user.motherName,
+      mother_name: userDetails.value.user.motherName
     },
     userAgency: {
       parent_occupation: userDetails.value.userAgency.parentOccupation,
       parent_status: userDetails.value.userAgency.parentStatus,
       guardian_name: userDetails.value.userAgency.guardianName,
       guardian_occupation: userDetails.value.userAgency.guardianOccupation,
-      current_living_with: userDetails.value.userAgency.currentLivingWith,
+      current_living_with: userDetails.value.userAgency.currentLivingWith
     }
-  };
-};
+  }
+}
 
 const saveChanges = async () => {
   try {
-    const authToken = localStorage.getItem('authToken');
-    const editableData = getEditableFields();
-    const response = await axios.post(endpoints.updateUserInfo, editableData, {
+    const authToken = localStorage.getItem('authToken')
+    const editableData = getEditableFields()
+    const response = await apiClient.post(endpoints.updateUserInfo, editableData, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${authToken}`,
-      },
-    });
+        Authorization: `Token ${authToken}`
+      }
+    })
 
-    userDetailsStore.setUserDetails(response.data);
-    originalUserDetails.value = { ...response.data };
-    isEditing.value = false;
+    userDetailsStore.setUserDetails(response.data)
+    originalUserDetails.value = { ...response.data }
+    isEditing.value = false
 
-    showNotification('Profile updated successfully!', 'success');
+    showNotification('Profile updated successfully!', 'success')
 
     Swal.fire({
       icon: 'success',
       title: 'Success',
-      text: 'Profile updated successfully!',
-    });
+      text: 'Profile updated successfully!'
+    })
   } catch (error) {
-    showNotification('Failed to update profile. Please try again.', 'error');
+    showNotification('Failed to update profile. Please try again.', 'error')
 
     Swal.fire({
       icon: 'error',
       title: 'Oops...',
-      text: 'Failed to update profile. Please try again.',
-    });
+      text: 'Failed to update profile. Please try again.'
+    })
   }
-};
+}
 
 const cancelChanges = () => {
-  userDetails.value = { ...originalUserDetails.value };
-  isEditing.value = false;
-};
+  userDetails.value = { ...originalUserDetails.value }
+  isEditing.value = false
+}
 
 const showNotification = (message, type) => {
-  notification.value = { show: true, message, type };
+  notification.value = { show: true, message, type }
   setTimeout(() => {
-    notification.value.show = false;
-  }, 3000);
-};
+    notification.value.show = false
+  }, 3000)
+}
 
-watch(() => userDetailsStore.$state, (newState) => {
-  originalUserDetails.value = { ...newState };
-}, { deep: true });
+watch(
+  () => userDetailsStore.$state,
+  (newState) => {
+    originalUserDetails.value = { ...newState }
+  },
+  { deep: true }
+)
 </script>
 
 <style scoped>
@@ -249,7 +344,7 @@ watch(() => userDetailsStore.$state, (newState) => {
 }
 
 .card-header {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   border-bottom: none;
   padding: 1rem;
@@ -275,7 +370,7 @@ watch(() => userDetailsStore.$state, (newState) => {
 }
 
 .section-title {
-  color: #2B656F;
+  color: #2b656f;
   font-weight: bold;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
@@ -290,7 +385,7 @@ watch(() => userDetailsStore.$state, (newState) => {
 }
 
 .detail-row label {
-  color: #2B656F;
+  color: #2b656f;
   font-weight: 600;
   margin-bottom: 0.5rem;
   display: block;
@@ -310,7 +405,7 @@ watch(() => userDetailsStore.$state, (newState) => {
 
 .detail-input:focus {
   outline: none;
-  border-color: #2B656F;
+  border-color: #2b656f;
   box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.2);
 }
 
@@ -333,13 +428,13 @@ watch(() => userDetailsStore.$state, (newState) => {
 }
 
 .btn-primary {
-  background-color: #2B656F;
-  border-color: #2B656F;
+  background-color: #2b656f;
+  border-color: #2b656f;
 }
 
 .btn-primary:hover {
-  background-color: #1D4851;
-  border-color: #1D4851;
+  background-color: #1d4851;
+  border-color: #1d4851;
 }
 
 .btn-secondary {

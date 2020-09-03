@@ -1,7 +1,7 @@
 <template>
   <div class="event-management mt-4">
     <!-- Main Container -->
-    <div class="main-container ">
+    <div class="main-container">
       <!-- Header Section with enhanced gradient effect -->
       <div class="header-section">
         <h2 class="gradient-title">Event Management</h2>
@@ -66,8 +66,12 @@
           <div class="controls-container">
             <div class="search-controls">
               <div class="search-input-container">
-                <input v-model="filters['global'].value" type="text" placeholder="Search events..."
-                  class="search-input" />
+                <input
+                  v-model="filters['global'].value"
+                  type="text"
+                  placeholder="Search events..."
+                  class="search-input"
+                />
                 <i class="fas fa-search search-icon"></i>
               </div>
               <button @click="clearFilter" class="btn-filter">
@@ -83,9 +87,18 @@
         </div>
 
         <!-- Enhanced DataTable -->
-        <DataTable v-model:filters="filters" :value="pendingEvents" :paginator="true" :rows="10"
-          :rowsPerPageOptions="[5, 10, 20]" dataKey="id" :loading="loading" class="custom-table" stripedRows
-          responsiveLayout="scroll">
+        <DataTable
+          v-model:filters="filters"
+          :value="pendingEvents"
+          :paginator="true"
+          :rows="10"
+          :rowsPerPageOptions="[5, 10, 20]"
+          dataKey="id"
+          :loading="loading"
+          class="custom-table"
+          stripedRows
+          responsiveLayout="scroll"
+        >
           <!-- Enhanced Date Column -->
           <Column field="start_date" header="Start Date" :sortable="true">
             <template #body="{ data }">
@@ -104,7 +117,9 @@
                 <div class="event-name">{{ data.event_name }}</div>
                 <div class="status-badges mt-3">
                   <span class="status-badge" :class="'status-' + data.approval_status">
-                    {{ data.approval_status.charAt(0).toUpperCase() + data.approval_status.slice(1) }}
+                    {{
+                      data.approval_status.charAt(0).toUpperCase() + data.approval_status.slice(1)
+                    }}
                   </span>
                 </div>
               </div>
@@ -258,8 +273,12 @@
             <i class="fas fa-comment-dots"></i>
             <label>Detailed Explanation</label>
           </div>
-          <textarea v-model="rejectComment" rows="4" class="form-textarea"
-            placeholder="Please provide detailed feedback for rejection..."></textarea>
+          <textarea
+            v-model="rejectComment"
+            rows="4"
+            class="form-textarea"
+            placeholder="Please provide detailed feedback for rejection..."
+          ></textarea>
         </div>
 
         <div class="dialog-actions">
@@ -267,8 +286,12 @@
             <i class="fas fa-times"></i>
             Cancel
           </button>
-          <button @click="rejectEvent" :disabled="!rejectReason || !rejectComment.trim()" class="btn-reject"
-            :class="{ 'btn-disabled': !rejectReason || !rejectComment.trim() }">
+          <button
+            @click="rejectEvent"
+            :disabled="!rejectReason || !rejectComment.trim()"
+            class="btn-reject"
+            :class="{ 'btn-disabled': !rejectReason || !rejectComment.trim() }"
+          >
             <i class="fas fa-paper-plane"></i>
             Submit Rejection
           </button>
@@ -279,106 +302,105 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { FilterMatchMode } from 'primevue/api';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Dialog from 'primevue/dialog';
-import axios from 'axios';
-import endpoints from '@/api';
-import Swal from "sweetalert2";
+import { ref, computed, onMounted } from 'vue'
+import { FilterMatchMode } from 'primevue/api'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Dialog from 'primevue/dialog'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
+import Swal from 'sweetalert2'
 
-const eventData = ref({});
-const visible = ref(false);
-const showPopup = ref(false);
-const rejectReason = ref('');
-const rejectComment = ref('');
-const monitorData = ref([]);
-const loading = ref(true);
+const eventData = ref({})
+const visible = ref(false)
+const showPopup = ref(false)
+const rejectReason = ref('')
+const rejectComment = ref('')
+const monitorData = ref([])
+const loading = ref(true)
 
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-});
+})
 
-const totalEventsCount = computed(() => monitorData.value.length);
+const totalEventsCount = computed(() => monitorData.value.length)
 
-const pendingEventsCount = computed(() =>
-  monitorData.value.filter(e => e.approval_status === 'pending').length
-);
+const pendingEventsCount = computed(
+  () => monitorData.value.filter((e) => e.approval_status === 'pending').length
+)
 
-const approvedEventsCount = computed(() =>
-  monitorData.value.filter(e => e.approval_status === 'approved').length
-);
+const approvedEventsCount = computed(
+  () => monitorData.value.filter((e) => e.approval_status === 'approved').length
+)
 
-const rejectedEventsCount = computed(() =>
-  monitorData.value.filter(e => e.approval_status === 'rejected').length
-);
-
+const rejectedEventsCount = computed(
+  () => monitorData.value.filter((e) => e.approval_status === 'rejected').length
+)
 
 // Only show pending events
 const pendingEvents = computed(() => {
-  return monitorData.value.filter(event => event.approval_status === 'pending');
-});
+  return monitorData.value.filter((event) => event.approval_status === 'pending')
+})
 
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
-  });
-};
+  })
+}
 
 const formatDuration = (duration) => {
-  return duration === 1 ? '1 day' : `${duration} days`;
-};
+  return duration === 1 ? '1 day' : `${duration} days`
+}
 
 const clearFilter = () => {
-  filters.value.global.value = null;
-};
+  filters.value.global.value = null
+}
 
 const fetchReportData = async () => {
   try {
-    loading.value = true;
-    const response = await axios.get(endpoints.getEventScreeningList);
+    loading.value = true
+    const response = await apiClient.get(endpoints.getEventScreeningList)
     if (response.data && Array.isArray(response.data)) {
-      monitorData.value = response.data;
+      monitorData.value = response.data
     }
   } catch (error) {
-    console.error('Failed to fetch data:', error);
-    monitorData.value = [];
+    console.error('Failed to fetch data:', error)
+    monitorData.value = []
     Swal.fire({
       icon: 'error',
       title: 'Error',
       text: 'Failed to fetch event data. Please try again later.',
       confirmButtonClass: 'bg-gradient-to-r from-[#2B656F] to-[#1D4851]'
-    });
+    })
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const openDialogue = (data) => {
-  eventData.value = data;
-  visible.value = true;
-};
+  eventData.value = data
+  visible.value = true
+}
 
 const showRejectPopup = (data) => {
-  eventData.value = data;
-  showPopup.value = true;
-};
+  eventData.value = data
+  showPopup.value = true
+}
 
 const closePopup = () => {
-  showPopup.value = false;
-  rejectReason.value = '';
-  rejectComment.value = '';
-};
+  showPopup.value = false
+  rejectReason.value = ''
+  rejectComment.value = ''
+}
 
 const acceptEvent = async (data) => {
   try {
-    await axios.post(endpoints.updateEventScreeningList, {
+    await apiClient.post(endpoints.updateEventScreeningList, {
       event_id: data.id,
-      approval_status: "approved"
-    });
+      approval_status: 'approved'
+    })
 
     Swal.fire({
       icon: 'success',
@@ -390,33 +412,33 @@ const acceptEvent = async (data) => {
         popup: 'rounded-xl',
         title: 'text-[#2B656F]'
       }
-    });
+    })
 
-    visible.value = false;
-    fetchReportData();
+    visible.value = false
+    fetchReportData()
   } catch (error) {
-    console.error('Error approving event:', error);
+    console.error('Error approving event:', error)
     Swal.fire({
       icon: 'error',
       title: 'Error',
       text: 'Failed to approve event. Please try again.',
       confirmButtonClass: 'bg-gradient-to-r from-[#2B656F] to-[#1D4851]'
-    });
+    })
   }
-};
+}
 
 const rejectEvent = async () => {
   if (!rejectReason.value || !rejectComment.value.trim()) {
-    return;
+    return
   }
 
   try {
-    await axios.post(endpoints.updateEventScreeningList, {
+    await apiClient.post(endpoints.updateEventScreeningList, {
       event_id: eventData.value.id,
-      approval_status: "rejected",
+      approval_status: 'rejected',
       rejection_reason: rejectComment.value,
       rejection_category: rejectReason.value
-    });
+    })
 
     Swal.fire({
       icon: 'info',
@@ -427,25 +449,25 @@ const rejectEvent = async () => {
       customClass: {
         popup: 'rounded-xl'
       }
-    });
+    })
 
-    closePopup();
-    visible.value = false;
-    fetchReportData();
+    closePopup()
+    visible.value = false
+    fetchReportData()
   } catch (error) {
-    console.error('Error rejecting event:', error);
+    console.error('Error rejecting event:', error)
     Swal.fire({
       icon: 'error',
       title: 'Error',
       text: 'Failed to reject event. Please try again.',
       confirmButtonClass: 'bg-gradient-to-r from-[#2B656F] to-[#1D4851]'
-    });
+    })
   }
-};
+}
 
 onMounted(() => {
-  fetchReportData();
-});
+  fetchReportData()
+})
 </script>
 
 <style scoped>
@@ -467,7 +489,7 @@ onMounted(() => {
 .gradient-title {
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -515,7 +537,7 @@ onMounted(() => {
 .stats-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2B656F;
+  color: #2b656f;
 }
 
 .stats-icon {
@@ -531,7 +553,7 @@ onMounted(() => {
 /* Icon Background Colors */
 .stats-icon-primary {
   background: rgba(43, 101, 111, 0.1);
-  color: #2B656F;
+  color: #2b656f;
 }
 
 .stats-icon-warning {
@@ -590,7 +612,7 @@ onMounted(() => {
 
 .search-input:focus {
   outline: none;
-  border-color: #2B656F;
+  border-color: #2b656f;
   box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
 }
 
@@ -623,7 +645,7 @@ onMounted(() => {
 .btn-export,
 .btn-approve,
 .btn-review {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   border: none;
 }
@@ -696,7 +718,7 @@ onMounted(() => {
 /* Dialog Header */
 .enhanced-dialog :deep(.p-dialog-header),
 .enhanced-reject-dialog :deep(.p-dialog-header) {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   padding: 1.5rem 2rem;
   border-radius: var(--modal-radius) var(--modal-radius) 0 0;
   border: none;
@@ -757,7 +779,7 @@ onMounted(() => {
 
 .info-header i {
   font-size: 1.1rem;
-  color: #2B656F;
+  color: #2b656f;
 }
 
 .info-header label {
@@ -768,7 +790,7 @@ onMounted(() => {
 .info-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #2B656F;
+  color: #2b656f;
   margin: 0 0 0.5rem 0;
 }
 
@@ -810,7 +832,7 @@ onMounted(() => {
 
 .form-select:focus {
   outline: none;
-  border-color: #2B656F;
+  border-color: #2b656f;
   box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
 }
 
@@ -828,7 +850,7 @@ onMounted(() => {
 
 .form-textarea:focus {
   outline: none;
-  border-color: #2B656F;
+  border-color: #2b656f;
   box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
 }
 
@@ -853,7 +875,7 @@ onMounted(() => {
 }
 
 .btn-approve {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   border: none;
 }

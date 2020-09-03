@@ -1,14 +1,33 @@
 <template>
   <div class="card p-4">
-    <DataTable v-model:filters="filters" :value="filteredData" paginator showGridlines :rows="10" dataKey="id"
-      filterDisplay="row" :loading="loading" :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'status']">
+    <DataTable
+      v-model:filters="filters"
+      :value="filteredData"
+      paginator
+      showGridlines
+      :rows="10"
+      dataKey="id"
+      filterDisplay="row"
+      :loading="loading"
+      :globalFilterFields="['eventName', 'toolsUsed', 'duration', 'status']"
+    >
       <template #header>
         <div class="d-flex justify-content-between align-items-center">
-          <Button type="button" icon="fa-solid fa-filter-circle-xmark" class="hwss-btn" label="Clear" outlined
-            @click="clearFilter()" />
+          <Button
+            type="button"
+            icon="fa-solid fa-filter-circle-xmark"
+            class="hwss-btn"
+            label="Clear"
+            outlined
+            @click="clearFilter()"
+          />
           <div class="p-input-icon-left">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <InputText v-model="filters['global'].value" placeholder="Keyword Search" class="p-inputtext-sm ms-2" />
+            <InputText
+              v-model="filters['global'].value"
+              placeholder="Keyword Search"
+              class="p-inputtext-sm ms-2"
+            />
           </div>
         </div>
       </template>
@@ -23,14 +42,22 @@
       <Column header="Status" :sortable="true">
         <template #body="{ data }">
           <Badge
-            :class="{ 'p-badge-success': data.approval_status === 'approved', 'p-badge-danger': data.approval_status === 'rejected', 'p-badge-warning': data.approval_status === 'ended' }"
-            :value="data.approval_status" @click="showStatusPopup(data.status)" style="cursor: pointer" class="w-50" />
+            :class="{
+              'p-badge-success': data.approval_status === 'approved',
+              'p-badge-danger': data.approval_status === 'rejected',
+              'p-badge-warning': data.approval_status === 'ended'
+            }"
+            :value="data.approval_status"
+            @click="showStatusPopup(data.status)"
+            style="cursor: pointer"
+            class="w-50"
+          />
         </template>
       </Column>
     </DataTable>
   </div>
 
-  <Dialog v-model:visible="showPopup" :modal="true" style="max-width: 50%;">
+  <Dialog v-model:visible="showPopup" :modal="true" style="max-width: 50%">
     <div class="card p-4">
       <h4 class="event-details__title">Event Details</h4>
       <section class="event-details__section">
@@ -87,71 +114,73 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { FilterMatchMode } from 'primevue/api';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Badge from 'primevue/badge';
-import Button from 'primevue/button';
-import InputText from 'primevue/inputtext';
-import Dialog from 'primevue/dialog';
-import axios from 'axios';
-import endpoints from '@/api';
-const eventPurpose = ref('Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.');
+import { ref, onMounted, computed } from 'vue'
+import { FilterMatchMode } from 'primevue/api'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Badge from 'primevue/badge'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Dialog from 'primevue/dialog'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
+const eventPurpose = ref(
+  'Mental health screening serves as a proactive measure for early detection and intervention for mental health disorders. It aims to identify individuals who are experiencing symptoms or are at risk of developing mental health conditions. By doing so, it facilitates timely access to treatment.'
+)
 
-const monitorData = ref();
+const monitorData = ref()
 const filters = ref({
   global: { value: [], matchMode: FilterMatchMode.CONTAINS }
-});
-const loading = ref(true);
-const showPopup = ref(false);
-const selectedStatus = ref('');
+})
+const loading = ref(true)
+const showPopup = ref(false)
+const selectedStatus = ref('')
 
 const filteredData = computed(() => {
-  let filtered = monitorData.value;
+  let filtered = monitorData.value
   // Apply filters based on the selected values
   for (const key in filters.value) {
     if (filters.value[key].value.length > 0) {
-      filtered = filtered.filter(item => filters.value[key].value.includes(item[key]));
+      filtered = filtered.filter((item) => filters.value[key].value.includes(item[key]))
     }
   }
-  return filtered;
-});
+  return filtered
+})
 
 const clearFilter = () => {
   // Clear all filters
   for (const key in filters.value) {
-    filters.value[key].value = [];
+    filters.value[key].value = []
   }
-};
+}
 
 const closePopup = () => {
-  showPopup.value = false;
-};
+  showPopup.value = false
+}
 const fetchReportData = async () => {
   try {
-    const response = await axios.get(endpoints.getEventScreeningList);
+    const response = await apiClient.get(endpoints.getEventScreeningList)
     if (response.data && Array.isArray(response.data)) {
-      monitorData.value = response.data; // Use monitorData instead of reportData
+      monitorData.value = response.data // Use monitorData instead of reportData
     } else {
-      handleFetchError();
+      handleFetchError()
     }
   } catch (error) {
-    console.error('Error fetching data:', error); // Log any error
-    handleFetchError();
+    console.error('Error fetching data:', error) // Log any error
+    handleFetchError()
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const handleFetchError = () => {
-  monitorData.value = [];
-  console.error('Failed to fetch data'); // Log fetch error
-};
+  monitorData.value = []
+  console.error('Failed to fetch data') // Log fetch error
+}
 
 onMounted(() => {
-  fetchReportData();
-});
+  fetchReportData()
+})
 
 // onMounted(() => {
 //   // Dummy Data
@@ -201,14 +230,14 @@ onMounted(() => {
 // });
 
 const showStatusPopup = (status) => {
-  selectedStatus.value = status;
-  showPopup.value = true;
+  selectedStatus.value = status
+  showPopup.value = true
   // Update selectedStatus based on the status date in monitorData.value
-  const event = monitorData.value.find(item => item.status === status);
+  const event = monitorData.value.find((item) => item.status === status)
   if (event) {
-    selectedStatus.value = event.status;
+    selectedStatus.value = event.status
   }
-};
+}
 </script>
 
 <style scoped>

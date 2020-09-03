@@ -13,8 +13,12 @@
         <div class="card-content">
           <h3 class="video-title">{{ video.topic }}</h3>
           <div class="video-container">
-            <iframe v-if="video.video_link" :src="getVideoEmbedUrl(video.video_link)" frameborder="0"
-              allowfullscreen></iframe>
+            <iframe
+              v-if="video.video_link"
+              :src="getVideoEmbedUrl(video.video_link)"
+              frameborder="0"
+              allowfullscreen
+            ></iframe>
           </div>
           <button class="toggle-btn" @click="toggleDetails(index)">
             {{ showDetails[index] ? 'Hide Details' : 'Show Details' }}
@@ -31,39 +35,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, onMounted } from 'vue'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
 
-const videos = ref([]);
-const loading = ref(true);
-const showDetails = ref([]);
-const isLightTheme = ref(false); // You can toggle this based on user preference
+const videos = ref([])
+const loading = ref(true)
+const showDetails = ref([])
+const isLightTheme = ref(false) // You can toggle this based on user preference
 
 onMounted(async () => {
   try {
-    const response = await axios.get(endpoints.getVideo);
-    videos.value = response.data.map(video => ({
+    const response = await apiClient.get(endpoints.getVideo)
+    videos.value = response.data.map((video) => ({
       topic: video.topic,
       description: JSON.parse(video.description).html,
       video_link: video.video_link
-    }));
-    showDetails.value = new Array(videos.value.length).fill(false);
+    }))
+    showDetails.value = new Array(videos.value.length).fill(false)
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    console.error('Error fetching videos:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+})
 
 const getVideoEmbedUrl = (videoLink) => {
-  const videoId = videoLink.split('v=')[1];
-  return `https://www.youtube.com/embed/${videoId}`;
-};
+  const videoId = videoLink.split('v=')[1]
+  return `https://www.youtube.com/embed/${videoId}`
+}
 
 const toggleDetails = (index) => {
-  showDetails.value[index] = !showDetails.value[index];
-};
+  showDetails.value[index] = !showDetails.value[index]
+}
 </script>
 
 <style scoped>
@@ -103,7 +107,7 @@ const toggleDetails = (index) => {
 .video-title {
   font-size: 1.25rem;
   margin-bottom: 1rem;
-  color: #2B656F;
+  color: #2b656f;
 }
 
 .video-container {
@@ -123,7 +127,7 @@ const toggleDetails = (index) => {
 }
 
 .toggle-btn {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -147,12 +151,14 @@ const toggleDetails = (index) => {
   height: 50px;
   border: 3px solid rgba(43, 101, 111, 0.3);
   border-radius: 50%;
-  border-top-color: #2B656F;
+  border-top-color: #2b656f;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .fade-enter-active,
@@ -166,7 +172,7 @@ const toggleDetails = (index) => {
 }
 
 .alert {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   color: white;
   padding: 1rem;
   border-radius: 8px;

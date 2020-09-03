@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex justify-content-center align-items-center mt-5" >
+  <div class="d-flex justify-content-center align-items-center mt-5">
     <div class="container">
       <div class="row justify-content-center">
         <div class="col-md-8">
@@ -261,7 +261,9 @@
                           maxlength="15"
                           @input="validateMobileNumber"
                         />
-                        <small v-if="state.mobileError" class="text-danger">{{ state.mobileError }}</small>
+                        <small v-if="state.mobileError" class="text-danger">{{
+                          state.mobileError
+                        }}</small>
                       </div>
                     </div>
 
@@ -400,7 +402,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 import Swal from 'sweetalert2'
 
@@ -448,10 +450,10 @@ const state = reactive({
 
 const cleanMobileNumber = (mobileNumber) => {
   if (!mobileNumber) return ''
-  
+
   // Remove any non-digit characters
   const cleaned = mobileNumber.replace(/\D/g, '')
-  
+
   // Truncate to 15 digits if longer
   return cleaned.length > 15 ? cleaned.substring(0, 15) : cleaned
 }
@@ -475,20 +477,20 @@ const validateCID = () => {
 const validateMobileNumber = () => {
   const mobileNumber = formData.value.mob_number || ''
   const cleanedNumber = cleanMobileNumber(mobileNumber)
-  
+
   // Update the form data with cleaned number
   if (mobileNumber !== cleanedNumber) {
     formData.value.mob_number = cleanedNumber
   }
-  
+
   const mobilePattern = /^[0-9]{10,15}$/
-  
+
   // If mobile number is empty, clear the error
   if (!cleanedNumber.trim()) {
     state.mobileError = ''
     return
   }
-  
+
   if (!mobilePattern.test(cleanedNumber)) {
     state.mobileError = 'Please enter a valid mobile number (10-15 digits).'
   } else {
@@ -507,30 +509,34 @@ const emit = defineEmits(['go-to-next-step'])
 
 const fetchCitizenDetails = async () => {
   if (formData.value.selectedIdentifier === 'cid') {
-            if (
-          !formData.value.selectedMonth ||
-          !formData.value.selectedDate ||
-          !formData.value.selectedYear ||
-          state.cidError !== '' ||
-          (formData.value.mob_number && formData.value.mob_number.trim() && state.mobileError !== '')
-        ) {
-          Swal.fire('Error', 'Please fill in all required fields and fix any validation errors.', 'error')
-          return
-        }
+    if (
+      !formData.value.selectedMonth ||
+      !formData.value.selectedDate ||
+      !formData.value.selectedYear ||
+      state.cidError !== '' ||
+      (formData.value.mob_number && formData.value.mob_number.trim() && state.mobileError !== '')
+    ) {
+      Swal.fire(
+        'Error',
+        'Please fill in all required fields and fix any validation errors.',
+        'error'
+      )
+      return
+    }
     try {
       showLoadingOverlay.value = true
       const csrfToken = getCSRFToken()
       const headers = { 'X-CSRFToken': csrfToken }
-     
-      const response = await axios.get(`${endpoints.getCitizenDetails}${formData.value.cid}/`, {
+
+      const response = await apiClient.get(`${endpoints.getCitizenDetails}${formData.value.cid}/`, {
         headers
-      });
+      })
 
       if (response.data) {
         const citizenDetails = response.data
         localStorage.setItem('userCID', citizenDetails.cid)
-        const formattedMonth = formData.value.selectedMonth.padStart(2, '0');
-        const formattedDate = formData.value.selectedDate.padStart(2, '0');
+        const formattedMonth = formData.value.selectedMonth.padStart(2, '0')
+        const formattedDate = formData.value.selectedDate.padStart(2, '0')
         const enteredDOB = `${formattedDate}/${formattedMonth}/${formData.value.selectedYear}`
         const apiDOB = citizenDetails.dob
         if (enteredDOB === apiDOB) {
@@ -538,8 +544,9 @@ const fetchCitizenDetails = async () => {
             citizenDetails.firstName.toLowerCase() + formattedMonth + formattedDate
           // Validate and truncate mobile number from API
           const mobileNumber = citizenDetails.mobileNumber || ''
-          const validatedMobileNumber = mobileNumber.length > 15 ? mobileNumber.substring(0, 15) : mobileNumber
-          
+          const validatedMobileNumber =
+            mobileNumber.length > 15 ? mobileNumber.substring(0, 15) : mobileNumber
+
           // Show warning if mobile number was truncated
           if (mobileNumber.length > 15) {
             Swal.fire({
@@ -549,7 +556,7 @@ const fetchCitizenDetails = async () => {
               confirmButtonText: 'OK'
             })
           }
-          
+
           const mappedData = {
             identity_number: citizenDetails.cid,
             first_name: citizenDetails.firstName,
@@ -605,14 +612,19 @@ const fetchCitizenDetails = async () => {
         // Validate mobile number before proceeding
         const mobileNumberToValidate = formData.value.mob_number || ''
         if (mobileNumberToValidate.trim() && state.mobileError !== '') {
-          Swal.fire('Error', 'Please fix the mobile number validation error before proceeding.', 'error')
+          Swal.fire(
+            'Error',
+            'Please fix the mobile number validation error before proceeding.',
+            'error'
+          )
           return
         }
-        
+
         // Validate and truncate mobile number
         const mobileNumber = formData.value.mob_number || ''
-        const validatedMobileNumber = mobileNumber.length > 15 ? mobileNumber.substring(0, 15) : mobileNumber
-        
+        const validatedMobileNumber =
+          mobileNumber.length > 15 ? mobileNumber.substring(0, 15) : mobileNumber
+
         const mappedData = {
           identity_number: formData.value.passport,
           first_name: formData.value.first_name,

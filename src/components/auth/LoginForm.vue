@@ -1,315 +1,330 @@
 <template>
-    <div class="vh-100 d-flex justify-content-center align-items-center authbg">
-        <div class="card shadow-card bg-body" style="width: 90%; max-width: 1000px;">
-            <div class="row g-0 h-100">
-                <div class="col-md-7 login-form-section">
-                    <div class="card-body d-flex flex-column justify-content-center h-100">
-                        <div class="auth-form text-center">
-                            <h1 class="text-center mb-4 bold login-title">Sign In</h1>
-                            <form class="row justify-content-center" @submit.prevent="loginUser">
-                                <div class="mb-3 col-md-10">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                        <input v-model="username" type="text" class="form-control"
-                                            placeholder="Username" required />
-                                    </div>
-                                </div>
-                                <div class="mb-4 col-md-10">
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                        <input v-model="password" type="password" class="form-control"
-                                            placeholder="Password" required />
-                                    </div>
-                                </div>
-                                <div class="text-center col-md-10">
-                                    <button type="submit" class="btn col-12 signin-button btnbg">
-                                        Sign In
-                                        <i class="fas fa-sign-in-alt ms-2"></i>
-                                    </button>
-                                </div>
-                            </form>
+  <div class="vh-100 d-flex justify-content-center align-items-center authbg">
+    <div class="card shadow-card bg-body" style="width: 90%; max-width: 1000px">
+      <div class="row g-0 h-100">
+        <div class="col-md-7 login-form-section">
+          <div class="card-body d-flex flex-column justify-content-center h-100">
+            <div class="auth-form text-center">
+              <h1 class="text-center mb-4 bold login-title">Sign In</h1>
+              <form class="row justify-content-center" @submit.prevent="loginUser">
+                <div class="mb-3 col-md-10">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input
+                      v-model="username"
+                      type="text"
+                      class="form-control"
+                      placeholder="Username"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="mb-4 col-md-10">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input
+                      v-model="password"
+                      type="password"
+                      class="form-control"
+                      placeholder="Password"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="text-center col-md-10">
+                  <button type="submit" class="btn col-12 signin-button btnbg">
+                    Sign In
+                    <i class="fas fa-sign-in-alt ms-2"></i>
+                  </button>
+                </div>
+              </form>
 
-                            <div class="mt-4">
-                                <a href="#" class="ndi-link" @click.prevent="showNDILoginAlert">
-                                    <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo me-2" />
-                                    Login with NDI
-                                </a>
-                            </div>
-                            <p class="mt-3 signup-link">
-                                Don't have an account? <router-link to="/register">Sign Up</router-link>
-                            </p>
-                            <p class="mt-2">
-                                <router-link to="/forgot-password" class="forgot-password-link">Forgot
-                                    Password?</router-link>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-5 custombg d-flex flex-column justify-content-center align-items-center">
-                    <img class="position-absolute bottom-0 start-0 shape-img" src="../../assets/images/shape.png"
-                        alt="Shape Image">
-                    <img :src="loginLogo" alt="Logo" class="img-fluid logo-image mb-3">
-                    <h2 class="text-white text-center tag-line-login">Mental Health Matters</h2>
-                </div>
+              <div class="mt-4">
+                <a href="#" class="ndi-link" @click.prevent="showNDILoginAlert">
+                  <img src="@/assets/images/NDILogo.png" alt="NDI Logo" class="ndi-logo me-2" />
+                  Login with NDI
+                </a>
+              </div>
+              <p class="mt-3 signup-link">
+                Don't have an account? <router-link to="/register">Sign Up</router-link>
+              </p>
+              <p class="mt-2">
+                <router-link to="/forgot-password" class="forgot-password-link"
+                  >Forgot Password?</router-link
+                >
+              </p>
             </div>
+          </div>
         </div>
-        <div v-if="loading"
-            class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-light bg-opacity-75">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+        <div class="col-md-5 custombg d-flex flex-column justify-content-center align-items-center">
+          <img
+            class="position-absolute bottom-0 start-0 shape-img"
+            src="../../assets/images/shape.png"
+            alt="Shape Image"
+          />
+          <img :src="loginLogo" alt="Logo" class="img-fluid logo-image mb-3" />
+          <h2 class="text-white text-center tag-line-login">Mental Health Matters</h2>
         </div>
+      </div>
     </div>
+    <div
+      v-if="loading"
+      class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-light bg-opacity-75"
+    >
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import axios from 'axios';
-import endpoints from '@/api';
-import { useUserDetailsStore } from '@/stores/userDetails';
-import Swal from 'sweetalert2';
-import loginLogo from '@/assets/images/seal.png';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
+import { useUserDetailsStore } from '@/stores/userDetails'
+import Swal from 'sweetalert2'
+import loginLogo from '@/assets/images/seal.png'
 
-const router = useRouter();
-const userDetailsStore = useUserDetailsStore();
+const router = useRouter()
+const userDetailsStore = useUserDetailsStore()
 
-const username = ref('');
-const password = ref('');
-const loading = ref(false);
-const tagline = ref('');
+const username = ref('')
+const password = ref('')
+const loading = ref(false)
+const tagline = ref('')
 
 onMounted(async () => {
-    try {
-        const response = await axios.get(endpoints.settings);
-        const settings = response.data[0];
-        tagline.value = settings.tagline;
-    } catch (error) {
-        console.error('Error fetching settings:', error);
-    }
-});
+  try {
+    const response = await apiClient.get(endpoints.settings)
+    const settings = response.data[0]
+    tagline.value = settings.tagline
+  } catch (error) {
+    console.error('Error fetching settings:', error)
+  }
+})
 
 const loginUser = async () => {
-    loading.value = true;
-    try {
-        const loginResponse = await axios.post(endpoints.loginUsers, {
-            username: username.value,
-            password: password.value,
-        });
+  loading.value = true
+  try {
+    const loginResponse = await apiClient.post(endpoints.loginUsers, {
+      username: username.value,
+      password: password.value
+    })
 
-        const authToken = loginResponse.data.token;
+    const authToken = loginResponse.data.token
 
-        // Generate a token expiry time on the frontend (e.g., 1 hour from now)
-        const tokenExpiry = new Date();
-        tokenExpiry.setHours(tokenExpiry.getHours() + 24); // Set expiry to 1 hour from now
+    // Generate a token expiry time on the frontend (e.g., 1 hour from now)
+    const tokenExpiry = new Date()
+    tokenExpiry.setHours(tokenExpiry.getHours() + 24) // Set expiry to 1 hour from now
 
-        // Store the token and expiry time in local storage
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('tokenExpiry', tokenExpiry.toISOString()); // Save in ISO 8601 format for easy parsing
+    // Store the token and expiry time in local storage
+    localStorage.setItem('authToken', authToken)
+    localStorage.setItem('tokenExpiry', tokenExpiry.toISOString()) // Save in ISO 8601 format for easy parsing
 
-        // Fetch minimal user details needed for routing
-        const userDetailsResponse = await axios.get(endpoints.getUserDetails, {
-            headers: { Authorization: `Token ${authToken}` },
-        });
+    // Fetch minimal user details needed for routing
+    const userDetailsResponse = await apiClient.get(endpoints.getUserDetails, {
+      headers: { Authorization: `Token ${authToken}` }
+    })
 
-        const { user } = userDetailsResponse.data;
+    const { user } = userDetailsResponse.data
 
-        // Show success message and redirect
-        Swal.fire({
-            title: 'Login Successful!',
-            text: 'Redirecting to dashboard...',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1000,
-        });
+    // Show success message and redirect
+    Swal.fire({
+      title: 'Login Successful!',
+      text: 'Redirecting to dashboard...',
+      icon: 'success',
+      showConfirmButton: false,
+      timer: 1000
+    })
 
-        // Redirect to dashboard
-        redirectToDashboard(user.role);
+    // Redirect to dashboard
+    redirectToDashboard(user.role)
 
-        // Fetch full user details in the background
-        fetchFullUserDetails(authToken);
-
-    } catch (error) {
-        handleLoginError(error);
-    } finally {
-        loading.value = false;
-    }
-};
+    // Fetch full user details in the background
+    fetchFullUserDetails(authToken)
+  } catch (error) {
+    handleLoginError(error)
+  } finally {
+    loading.value = false
+  }
+}
 
 const fetchFullUserDetails = async (authToken) => {
-    try {
-        const response = await axios.get(endpoints.getUserDetails, {
-            headers: { Authorization: `Token ${authToken}` },
-        });
+  try {
+    const response = await apiClient.get(endpoints.getUserDetails, {
+      headers: { Authorization: `Token ${authToken}` }
+    })
 
-        const { user, agency, userAgency } = response.data;
-        const userAgencyDetails = userAgency.length ? userAgency[0] : {};
+    const { user, agency, userAgency } = response.data
+    const userAgencyDetails = userAgency.length ? userAgency[0] : {}
 
-        await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails });
-    } catch (error) {
-        console.error('Error fetching full user details:', error);
-    }
-};
+    await userDetailsStore.setUserDetails({ user, agency, userAgency: userAgencyDetails })
+  } catch (error) {
+    console.error('Error fetching full user details:', error)
+  }
+}
 
 const redirectToDashboard = (userRole) => {
-    const dashboardRoutes = {
-        student: 'student-dashboard',
-        school_counselor: 'counselor-dashboard',
-        gyalsung_counselor: 'counselor-dashboard',
-        clinical_counselor: 'counselor-dashboard',
-        trained_professional: 'counselor-dashboard',
-        mh_admin: 'admin-dashboard',
-        rd_admin: 'admin-dashboard',
-        sud_admin: 'admin-dashboard',
-        aaa_admin: 'admin-dashboard',
-        cecd_admin: 'admin-dashboard',
-    };
+  const dashboardRoutes = {
+    student: 'student-dashboard',
+    school_counselor: 'counselor-dashboard',
+    gyalsung_counselor: 'counselor-dashboard',
+    clinical_counselor: 'counselor-dashboard',
+    trained_professional: 'counselor-dashboard',
+    mh_admin: 'admin-dashboard',
+    rd_admin: 'admin-dashboard',
+    sud_admin: 'admin-dashboard',
+    aaa_admin: 'admin-dashboard',
+    cecd_admin: 'admin-dashboard'
+  }
 
-    const routeName = dashboardRoutes[userRole] || 'public-dashboard';
-    router.push({ name: routeName });
-};
+  const routeName = dashboardRoutes[userRole] || 'public-dashboard'
+  router.push({ name: routeName })
+}
 
 const handleLoginError = (error) => {
-    let errorMessage = 'Login failed. Please try again.';
-    if (error.response && error.response.data) {
-        const data = error.response.data;
-        if (data.error === 'Wrong password') {
-            errorMessage = 'Invalid password. Please try again.';
-        } else if (data.error === 'User not found') {
-            errorMessage = 'User not found. Please check your username.';
-        }
+  let errorMessage = 'Login failed. Please try again.'
+  if (error.response && error.response.data) {
+    const data = error.response.data
+    if (data.error === 'Wrong password') {
+      errorMessage = 'Invalid password. Please try again.'
+    } else if (data.error === 'User not found') {
+      errorMessage = 'User not found. Please check your username.'
     }
-    Swal.fire('Login Failed', errorMessage, 'error');
-};
+  }
+  Swal.fire('Login Failed', errorMessage, 'error')
+}
 
 const showNDILoginAlert = () => {
-    Swal.fire({
-        title: 'Coming Soon!',
-        text: 'Login with NDI feature is coming soon. Stay tuned!',
-        icon: 'info',
-        confirmButtonColor: '#2B656F'
-    });
-};
+  Swal.fire({
+    title: 'Coming Soon!',
+    text: 'Login with NDI feature is coming soon. Stay tuned!',
+    icon: 'info',
+    confirmButtonColor: '#2B656F'
+  })
+}
 </script>
 
 <style scoped>
 .card {
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .login-form-section {
-    background-image: url('@/assets/images/thePemabg2.png');
-    background-size: cover;
-    background-position: center;
+  background-image: url('@/assets/images/thePemabg2.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .custombg {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    position: relative;
-    overflow: hidden;
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
+  position: relative;
+  overflow: hidden;
 }
 
 .login-title {
-    color: #2B656F;
-    font-weight: 600;
+  color: #2b656f;
+  font-weight: 600;
 }
 
 .input-group-text {
-    background-color: #f8f9fa;
-    border-right: none;
+  background-color: #f8f9fa;
+  border-right: none;
 }
 
 .form-control {
-    border-left: none;
+  border-left: none;
 }
 
 .form-control:focus {
-    box-shadow: none;
-    border-color: #ced4da;
+  box-shadow: none;
+  border-color: #ced4da;
 }
 
 .signin-button {
-    border-radius: 30px;
-    padding: 10px 20px;
-    font-weight: bold;
-    transition: all 0.3s ease;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-weight: bold;
+  transition: all 0.3s ease;
 }
 
 .btnbg {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    color: white;
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
+  color: white;
 }
 
 .btnbg:hover {
-    background-color: #1e4a52;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: #1e4a52;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .ndi-logo {
-    max-height: 30px;
+  max-height: 30px;
 }
 
 .ndi-link,
 .signup-link a,
 .forgot-password-link {
-    color: #2B656F;
-    font-weight: bold;
-    text-decoration: none;
-    transition: color 0.3s ease;
+  color: #2b656f;
+  font-weight: bold;
+  text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .ndi-link:hover,
 .signup-link a:hover,
 .forgot-password-link:hover {
-    color: #1e4a52;
-    text-decoration: underline;
+  color: #1e4a52;
+  text-decoration: underline;
 }
 
 .shape-img {
-    max-width: 100%;
-    opacity: 0.1;
+  max-width: 100%;
+  opacity: 0.1;
 }
 
 .logo-image {
-    max-width: 70%;
-    height: auto;
-    animation: float 6s ease-in-out infinite;
+  max-width: 70%;
+  height: auto;
+  animation: float 6s ease-in-out infinite;
 }
 
 .tag-line-login {
-    font-family: "Boogaloo", sans-serif;
-    font-weight: 200;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+  font-family: 'Boogaloo', sans-serif;
+  font-weight: 200;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes float {
-    0% {
-        transform: translateY(0px);
-    }
+  0% {
+    transform: translateY(0px);
+  }
 
-    50% {
-        transform: translateY(-10px);
-    }
+  50% {
+    transform: translateY(-10px);
+  }
 
-    100% {
-        transform: translateY(0px);
-    }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 @media (max-width: 768px) {
-    .custombg {
-        min-height: 200px;
-    }
+  .custombg {
+    min-height: 200px;
+  }
 
-    .logo-image {
-        max-width: 50%;
-    }
+  .logo-image {
+    max-width: 50%;
+  }
 
-    .tag-line-login {
-        font-size: 1.5rem;
-    }
+  .tag-line-login {
+    font-size: 1.5rem;
+  }
 }
 </style>

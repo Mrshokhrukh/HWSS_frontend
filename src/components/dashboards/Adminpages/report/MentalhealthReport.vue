@@ -5,8 +5,12 @@
       <div class="config-header">
         <h2 class="header-title">Data Configuration</h2>
         <div class="quick-actions">
-          <p-button icon="pi pi-refresh" class="p-button-rounded p-button-text p-button-white" @click="resetFilters"
-            :disabled="!hasFilters" />
+          <p-button
+            icon="pi pi-refresh"
+            class="p-button-rounded p-button-text p-button-white"
+            @click="resetFilters"
+            :disabled="!hasFilters"
+          />
         </div>
       </div>
 
@@ -15,31 +19,55 @@
         <div class="filters-section">
           <div class="filter-group">
             <label>Report Type</label>
-            <p-dropdown v-model="selectedReport" :options="reportTypes" optionLabel="label" class="w-full"
-              placeholder="Select Report Type" />
+            <p-dropdown
+              v-model="selectedReport"
+              :options="reportTypes"
+              optionLabel="label"
+              class="w-full"
+              placeholder="Select Report Type"
+            />
           </div>
 
           <div class="filter-group">
             <label>Agency Type</label>
-            <p-dropdown v-model="filters.agencyType" :options="agencyTypes" class="w-full"
-              placeholder="Select Agency Type" @change="handleAgencyTypeChange" />
+            <p-dropdown
+              v-model="filters.agencyType"
+              :options="agencyTypes"
+              class="w-full"
+              placeholder="Select Agency Type"
+              @change="handleAgencyTypeChange"
+            />
           </div>
 
           <template v-if="filters.agencyType === 'SCHOOL'">
             <div class="filter-group">
               <label>Class Level</label>
-              <p-dropdown v-model="filters.classLevel" :options="classLevels" class="w-full"
-                placeholder="Select Class" />
+              <p-dropdown
+                v-model="filters.classLevel"
+                :options="classLevels"
+                class="w-full"
+                placeholder="Select Class"
+              />
             </div>
           </template>
 
           <div class="location-section">
             <h3 class="section-title">Location</h3>
             <div class="location-inputs">
-              <p-dropdown v-model="filters.region" :options="regions" class="w-full" placeholder="Region"
-                @change="handleRegionChange" />
-              <p-dropdown v-model="filters.dzongkhag" :options="availableDzongkhags" class="w-full"
-                placeholder="Dzongkhag" :disabled="!filters.region" />
+              <p-dropdown
+                v-model="filters.region"
+                :options="regions"
+                class="w-full"
+                placeholder="Region"
+                @change="handleRegionChange"
+              />
+              <p-dropdown
+                v-model="filters.dzongkhag"
+                :options="availableDzongkhags"
+                class="w-full"
+                placeholder="Dzongkhag"
+                :disabled="!filters.region"
+              />
             </div>
           </div>
         </div>
@@ -48,19 +76,34 @@
         <div class="filters-section">
           <div class="filter-group">
             <label>Age Group</label>
-            <p-multi-select v-model="filters.ageGroups" :options="ageGroupOptions" class="w-full"
-              placeholder="Select Age Groups" display="chip" />
+            <p-multi-select
+              v-model="filters.ageGroups"
+              :options="ageGroupOptions"
+              class="w-full"
+              placeholder="Select Age Groups"
+              display="chip"
+            />
           </div>
 
           <div class="filter-group">
             <label>Gender</label>
-            <p-multi-select v-model="filters.gender" :options="genderOptions" class="w-full" placeholder="Select Gender"
-              display="chip" />
+            <p-multi-select
+              v-model="filters.gender"
+              :options="genderOptions"
+              class="w-full"
+              placeholder="Select Gender"
+              display="chip"
+            />
           </div>
 
           <div class="date-range-section">
             <h3 class="section-title">Date Range</h3>
-            <p-calendar v-model="dateRange" selectionMode="range" class="w-full" placeholder="Select Date Range" />
+            <p-calendar
+              v-model="dateRange"
+              selectionMode="range"
+              class="w-full"
+              placeholder="Select Date Range"
+            />
           </div>
         </div>
       </div>
@@ -68,61 +111,81 @@
       <!-- Active Filters -->
       <div v-if="hasFilters" class="active-filters">
         <div class="filter-chips">
-          <p-chip v-for="filter in activeFiltersList" :key="filter.id" :label="filter.label" removable
-            @remove="removeFilter(filter.id)" />
+          <p-chip
+            v-for="filter in activeFiltersList"
+            :key="filter.id"
+            :label="filter.label"
+            removable
+            @remove="removeFilter(filter.id)"
+          />
         </div>
       </div>
 
       <!-- Actions -->
       <div class="filter-actions">
-        <p-button label="Reset" severity="secondary" @click="resetFilters" :disabled="!hasFilters" />
+        <p-button
+          label="Reset"
+          severity="secondary"
+          @click="resetFilters"
+          :disabled="!hasFilters"
+        />
         <p-button label="Apply Filters" @click="applyFilters" :disabled="!canApplyFilters" />
       </div>
     </div>
 
     <!-- Reports Section -->
     <div v-if="showReport" class="report-container">
-      <MHMonitorReport v-if="showMonitorReport" :filteredData="processedData" :activeFiltersList="activeFiltersList" />
-      <MHCaseStatusReport v-if="showCaseStatusReport" :filteredData="processedData"
-        :activeFiltersList="activeFiltersList" />
-      <MHSeverityReport v-if="showSeverityReport" :filteredData="processedData"
-        :activeFiltersList="activeFiltersList" />
+      <MHMonitorReport
+        v-if="showMonitorReport"
+        :filteredData="processedData"
+        :activeFiltersList="activeFiltersList"
+      />
+      <MHCaseStatusReport
+        v-if="showCaseStatusReport"
+        :filteredData="processedData"
+        :activeFiltersList="activeFiltersList"
+      />
+      <MHSeverityReport
+        v-if="showSeverityReport"
+        :filteredData="processedData"
+        :activeFiltersList="activeFiltersList"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import MHMonitorReport from './MHMonitorReport/MHMonitorReport.vue';
-import MHCaseStatusReport from './MHCaseStatusReport/MHCaseStatusReport.vue';
-import MHSeverityReport from './MHSeverityReport/MHSeverityReport.vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, computed, watch } from 'vue'
+import { useToast } from 'primevue/usetoast'
+import MHMonitorReport from './MHMonitorReport/MHMonitorReport.vue'
+import MHCaseStatusReport from './MHCaseStatusReport/MHCaseStatusReport.vue'
+import MHSeverityReport from './MHSeverityReport/MHSeverityReport.vue'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
 
-const toast = useToast();
+const toast = useToast()
 
 // Filter Options
 const reportTypes = [
   { label: 'Monitor Report', value: 'monitor' },
   { label: 'Case Study Report', value: 'case-study' },
   { label: 'Severity Report', value: 'severity' }
-];
-const agencyTypes = ['GYALSUNG', 'SCHOOL', 'RCSC'];
-const classLevels = ['PP', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-const ageGroupOptions = ['5-10', '11-15', '16-20', '21-25', '26-30', '31-35', '36+'];
-const genderOptions = ['Male', 'Female', 'Other'];
-const regions = ['Western', 'Central', 'Eastern'];
+]
+const agencyTypes = ['GYALSUNG', 'SCHOOL', 'RCSC']
+const classLevels = ['PP', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+const ageGroupOptions = ['5-10', '11-15', '16-20', '21-25', '26-30', '31-35', '36+']
+const genderOptions = ['Male', 'Female', 'Other']
+const regions = ['Western', 'Central', 'Eastern']
 const dzongkhagMapping = {
   Western: ['Thimphu', 'Paro', 'Haa', 'Punakha', 'Gasa', 'Chhukha', 'Samtse'],
   Central: ['Bumthang', 'Dagana', 'Sarpang', 'Trongsa', 'Tsirang', 'Wangdue'],
   Eastern: ['Lhuentse', 'Mongar', 'Pemagatshel', 'Samdrup Jongkhar', 'Trashigang']
-};
+}
 
 // State
-const loading = ref(false);
-const selectedReport = ref(null);
-const dateRange = ref(null);
+const loading = ref(false)
+const selectedReport = ref(null)
+const dateRange = ref(null)
 const filters = ref({
   agencyType: null,
   classLevel: null,
@@ -130,89 +193,140 @@ const filters = ref({
   dzongkhag: null,
   ageGroups: [],
   gender: []
-});
-const showReport = ref(false);
-const processedData = ref([]);
+})
+const showReport = ref(false)
+const processedData = ref([])
 
 // Computed properties for conditional rendering
-const showMonitorReport = computed(() => selectedReport.value === 'monitor');
-const showCaseStatusReport = computed(() => selectedReport.value === 'case-study');
-const showSeverityReport = computed(() => selectedReport.value === 'severity');
+const showMonitorReport = computed(() => selectedReport.value === 'monitor')
+const showCaseStatusReport = computed(() => selectedReport.value === 'case-study')
+const showSeverityReport = computed(() => selectedReport.value === 'severity')
 
 // Computed properties
-const availableDzongkhags = computed(() => filters.value.region ? dzongkhagMapping[filters.value.region] : []);
-const hasFilters = computed(() => selectedReport.value || filters.value.region || filters.value.dzongkhag || filters.value.ageGroups.length || filters.value.gender.length || dateRange.value);
-const canApplyFilters = computed(() => selectedReport.value !== null);
+const availableDzongkhags = computed(() =>
+  filters.value.region ? dzongkhagMapping[filters.value.region] : []
+)
+const hasFilters = computed(
+  () =>
+    selectedReport.value ||
+    filters.value.region ||
+    filters.value.dzongkhag ||
+    filters.value.ageGroups.length ||
+    filters.value.gender.length ||
+    dateRange.value
+)
+const canApplyFilters = computed(() => selectedReport.value !== null)
 
 // Computed property for active filters list
 const activeFiltersList = computed(() => {
-  const list = [];
-  if (selectedReport.value) list.push({ id: 'report', label: `Report: ${selectedReport.value}` });
-  if (filters.value.agencyType) list.push({ id: 'agencyType', label: `Agency Type: ${filters.value.agencyType}` });
-  if (filters.value.classLevel) list.push({ id: 'classLevel', label: `Class Level: ${filters.value.classLevel}` });
-  if (filters.value.region) list.push({ id: 'region', label: `Region: ${filters.value.region}` });
-  if (filters.value.dzongkhag) list.push({ id: 'dzongkhag', label: `Dzongkhag: ${filters.value.dzongkhag}` });
-  if (filters.value.ageGroups.length > 0) list.push({ id: 'ageGroups', label: `Age Groups: ${filters.value.ageGroups.join(', ')}` });
-  if (filters.value.gender.length > 0) list.push({ id: 'gender', label: `Gender: ${filters.value.gender.join(', ')}` });
-  if (dateRange.value) list.push({ id: 'dateRange', label: `Date Range: ${dateRange.value[0]} - ${dateRange.value[1]}` });
-  return list;
-});
+  const list = []
+  if (selectedReport.value) list.push({ id: 'report', label: `Report: ${selectedReport.value}` })
+  if (filters.value.agencyType)
+    list.push({ id: 'agencyType', label: `Agency Type: ${filters.value.agencyType}` })
+  if (filters.value.classLevel)
+    list.push({ id: 'classLevel', label: `Class Level: ${filters.value.classLevel}` })
+  if (filters.value.region) list.push({ id: 'region', label: `Region: ${filters.value.region}` })
+  if (filters.value.dzongkhag)
+    list.push({ id: 'dzongkhag', label: `Dzongkhag: ${filters.value.dzongkhag}` })
+  if (filters.value.ageGroups.length > 0)
+    list.push({ id: 'ageGroups', label: `Age Groups: ${filters.value.ageGroups.join(', ')}` })
+  if (filters.value.gender.length > 0)
+    list.push({ id: 'gender', label: `Gender: ${filters.value.gender.join(', ')}` })
+  if (dateRange.value)
+    list.push({
+      id: 'dateRange',
+      label: `Date Range: ${dateRange.value[0]} - ${dateRange.value[1]}`
+    })
+  return list
+})
 
 // Methods
 const fetchData = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    const response = await axios.get(endpoints.newServiceAndTreatment);
-    processedData.value = response.data; // Process data if needed
+    const response = await apiClient.get(endpoints.newServiceAndTreatment)
+    processedData.value = response.data // Process data if needed
   } catch (error) {
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch data', life: 3000 });
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch data', life: 3000 })
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
-let isApplyingFilters = false;
+let isApplyingFilters = false
 
 const applyFilters = async () => {
-  isApplyingFilters = true;
-  showReport.value = false;
-  await fetchData();
-  showReport.value = true;
-  isApplyingFilters = false;
-  toast.add({ severity: 'success', summary: 'Success', detail: 'Filters applied successfully', life: 3000 });
-};
+  isApplyingFilters = true
+  showReport.value = false
+  await fetchData()
+  showReport.value = true
+  isApplyingFilters = false
+  toast.add({
+    severity: 'success',
+    summary: 'Success',
+    detail: 'Filters applied successfully',
+    life: 3000
+  })
+}
 
-watch([selectedReport, filters, dateRange], () => {
-  if (!isApplyingFilters) {
-    showReport.value = false;
-  }
-}, { deep: true });
+watch(
+  [selectedReport, filters, dateRange],
+  () => {
+    if (!isApplyingFilters) {
+      showReport.value = false
+    }
+  },
+  { deep: true }
+)
 
 const resetFilters = () => {
-  selectedReport.value = null;
-  dateRange.value = null;
-  filters.value = { agencyType: null, classLevel: null, region: null, dzongkhag: null, ageGroups: [], gender: [] };
-  showReport.value = false;
-};
+  selectedReport.value = null
+  dateRange.value = null
+  filters.value = {
+    agencyType: null,
+    classLevel: null,
+    region: null,
+    dzongkhag: null,
+    ageGroups: [],
+    gender: []
+  }
+  showReport.value = false
+}
 
 const handleAgencyTypeChange = () => {
-  if (filters.value.agencyType !== 'SCHOOL') filters.value.classLevel = null;
-};
+  if (filters.value.agencyType !== 'SCHOOL') filters.value.classLevel = null
+}
 
-const handleRegionChange = () => filters.value.dzongkhag = '';
+const handleRegionChange = () => (filters.value.dzongkhag = '')
 
 const removeFilter = (filterId) => {
   switch (filterId) {
-    case 'report': selectedReport.value = null; break;
-    case 'agencyType': filters.value.agencyType = null; break;
-    case 'classLevel': filters.value.classLevel = null; break;
-    case 'region': filters.value.region = null; break;
-    case 'dzongkhag': filters.value.dzongkhag = null; break;
-    case 'ageGroups': filters.value.ageGroups = []; break;
-    case 'gender': filters.value.gender = []; break;
-    case 'dateRange': dateRange.value = null; break;
+    case 'report':
+      selectedReport.value = null
+      break
+    case 'agencyType':
+      filters.value.agencyType = null
+      break
+    case 'classLevel':
+      filters.value.classLevel = null
+      break
+    case 'region':
+      filters.value.region = null
+      break
+    case 'dzongkhag':
+      filters.value.dzongkhag = null
+      break
+    case 'ageGroups':
+      filters.value.ageGroups = []
+      break
+    case 'gender':
+      filters.value.gender = []
+      break
+    case 'dateRange':
+      dateRange.value = null
+      break
   }
-};
+}
 
 // Watchers
 // watch([selectedReport, filters, dateRange], () => { showReport.value = false; }, { deep: true });
@@ -234,7 +348,7 @@ const removeFilter = (filterId) => {
 }
 
 .config-header {
-  background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+  background: linear-gradient(135deg, #2b656f 0%, #1d4851 100%);
   padding: 1.25rem 1.5rem;
   display: flex;
   justify-content: space-between;
@@ -276,7 +390,7 @@ const removeFilter = (filterId) => {
 .section-title {
   font-size: 1rem;
   font-weight: 600;
-  color: #2B656F;
+  color: #2b656f;
   margin-bottom: 0.75rem;
 }
 
@@ -329,12 +443,12 @@ const removeFilter = (filterId) => {
 
 :deep(.p-chip) {
   background: #e0f2f1;
-  color: #2B656F;
-  border: 1px solid #2B656F;
+  color: #2b656f;
+  border: 1px solid #2b656f;
 }
 
 :deep(.p-chip .p-chip-remove-icon) {
-  color: #2B656F;
+  color: #2b656f;
 }
 
 :deep(.p-button) {

@@ -209,7 +209,11 @@
                 <label>Assigned Counselor</label>
               </div>
               <h4 class="info-title">
-                {{ eventData.counselor && eventData.counselor !== 'null null' ? eventData.counselor : 'Not Assigned' }}
+                {{
+                  eventData.counselor && eventData.counselor !== 'null null'
+                    ? eventData.counselor
+                    : 'Not Assigned'
+                }}
               </h4>
             </div>
             <div class="info-card">
@@ -333,7 +337,7 @@ import { FilterMatchMode } from 'primevue/api'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
-import axios from 'axios'
+import apiClient from '@/apiClient'
 import endpoints from '@/api'
 import Swal from 'sweetalert2'
 
@@ -390,7 +394,7 @@ const clearFilter = () => {
 const fetchReportData = async () => {
   try {
     loading.value = true
-    const response = await axios.get(endpoints.getEventScreeningList)
+    const response = await apiClient.get(endpoints.getEventScreeningList)
     if (response.data && Array.isArray(response.data)) {
       monitorData.value = response.data
     }
@@ -426,7 +430,7 @@ const closePopup = () => {
 
 const acceptEvent = async (data) => {
   try {
-    await axios.post(endpoints.updateEventScreeningList, {
+    await apiClient.post(endpoints.updateEventScreeningList, {
       event_id: data.id,
       approval_status: 'approved'
     })
@@ -462,7 +466,7 @@ const rejectEvent = async () => {
   }
 
   try {
-    await axios.post(endpoints.updateEventScreeningList, {
+    await apiClient.post(endpoints.updateEventScreeningList, {
       event_id: eventData.value.id,
       approval_status: 'rejected',
       rejection_reason: rejectComment.value,

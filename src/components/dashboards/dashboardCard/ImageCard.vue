@@ -1,108 +1,132 @@
 <template>
   <div class="carousel-container" @mouseenter="pauseAutoScroll" @mouseleave="resumeAutoScroll">
     <div class="carousel" ref="carousel">
-      <div v-for="(image, index) in carouselImages" :key="'carousel-item-' + index"
-        :class="['carousel-item', { 'active': index === activeIndex }]">
-        <img :src="image" :alt="`Slide ${index + 1}`" class="carousel-image">
+      <div
+        v-for="(image, index) in carouselImages"
+        :key="'carousel-item-' + index"
+        :class="['carousel-item', { active: index === activeIndex }]"
+      >
+        <img :src="image" :alt="`Slide ${index + 1}`" class="carousel-image" />
       </div>
     </div>
 
     <div class="carousel-controls">
       <button class="control-button prev" @click="prevSlide" aria-label="Previous slide">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" class="icon">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon"
+        >
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
       <button class="control-button next" @click="nextSlide" aria-label="Next slide">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" class="icon">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon"
+        >
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
       </button>
     </div>
 
     <div class="carousel-indicators d-none">
-      <button v-for="(image, index) in carouselImages" :key="'indicator-' + index"
-        :class="['indicator', { 'active': index === activeIndex }]" @click="setActiveIndex(index)"
-        :aria-label="`Go to slide ${index + 1}`" ></button>
+      <button
+        v-for="(image, index) in carouselImages"
+        :key="'indicator-' + index"
+        :class="['indicator', { active: index === activeIndex }]"
+        @click="setActiveIndex(index)"
+        :aria-label="`Go to slide ${index + 1}`"
+      ></button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import axios from 'axios';
-import endpoints from '@/api';
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
 
-const carouselImages = ref([]);
-const activeIndex = ref(0);
-const intervalDuration = 5000;
-let autoScrollInterval = null;
-const carousel = ref(null);
+const carouselImages = ref([])
+const activeIndex = ref(0)
+const intervalDuration = 5000
+let autoScrollInterval = null
+const carousel = ref(null)
 
 const nextSlide = () => {
-  activeIndex.value = (activeIndex.value + 1) % carouselImages.value.length;
-};
+  activeIndex.value = (activeIndex.value + 1) % carouselImages.value.length
+}
 
 const prevSlide = () => {
-  activeIndex.value = (activeIndex.value - 1 + carouselImages.value.length) % carouselImages.value.length;
-};
+  activeIndex.value =
+    (activeIndex.value - 1 + carouselImages.value.length) % carouselImages.value.length
+}
 
 const setActiveIndex = (index) => {
-  activeIndex.value = index;
-};
+  activeIndex.value = index
+}
 
 const startAutoScroll = () => {
-  autoScrollInterval = setInterval(nextSlide, intervalDuration);
-};
+  autoScrollInterval = setInterval(nextSlide, intervalDuration)
+}
 
 const stopAutoScroll = () => {
   if (autoScrollInterval) {
-    clearInterval(autoScrollInterval);
+    clearInterval(autoScrollInterval)
   }
-};
+}
 
 const pauseAutoScroll = () => {
-  stopAutoScroll();
-};
+  stopAutoScroll()
+}
 
 const resumeAutoScroll = () => {
-  startAutoScroll();
-};
+  startAutoScroll()
+}
 
 onMounted(async () => {
   try {
-    const response = await axios.get(endpoints.settings);
+    const response = await apiClient.get(endpoints.settings)
     if (response && response.data && response.data.length > 0) {
-      const data = response.data[0];
+      const data = response.data[0]
       carouselImages.value = [
         data.carousel_image_1,
         data.carousel_image_2,
         data.carousel_image_3,
-        data.carousel_image_4,
-      ].filter(Boolean); // Remove any undefined or null values
+        data.carousel_image_4
+      ].filter(Boolean) // Remove any undefined or null values
     }
-    startAutoScroll();
+    startAutoScroll()
   } catch (error) {
-    console.error('Error fetching carousel images:', error);
+    console.error('Error fetching carousel images:', error)
   }
-});
+})
 
 watch(activeIndex, (newIndex, oldIndex) => {
-  stopAutoScroll();
-  startAutoScroll();
+  stopAutoScroll()
+  startAutoScroll()
 
   if (carousel.value) {
-    const items = carousel.value.querySelectorAll('.carousel-item');
-    items[oldIndex].classList.remove('active');
-    items[newIndex].classList.add('active');
+    const items = carousel.value.querySelectorAll('.carousel-item')
+    items[oldIndex].classList.remove('active')
+    items[newIndex].classList.add('active')
   }
-});
+})
 
 onUnmounted(() => {
-  stopAutoScroll();
-});
+  stopAutoScroll()
+})
 </script>
 
 <style scoped>
