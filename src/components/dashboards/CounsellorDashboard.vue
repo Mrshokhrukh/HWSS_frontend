@@ -19,6 +19,11 @@
         </div>
       </div>
 
+      <!-- Gyalsung Profiles Card -->
+      <div class="col-md-12 mb-4">
+        <GyalsungProfiles />
+      </div>
+
       <div class="col-md-12 my-4">
         <SeverityCountsCard />
       </div>
@@ -240,6 +245,10 @@ defineExpose({
 </script>
 
 <style scoped>
+.bg-color {
+  background-color: #f8f9fa;
+}
+
 .nav-link {
   color: #2b656f !important;
   border-radius: 20px 50px 0 0;
