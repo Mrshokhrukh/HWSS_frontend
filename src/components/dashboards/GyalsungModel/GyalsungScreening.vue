@@ -142,8 +142,6 @@
   
   const router = useRouter()
   const emit = defineEmits(['goBackToSelectTools', 'goToNext'])
-  
-  // Reactive variables
   const loading = ref(false)
   const error = ref(null)
   const screeningQuestions = ref([])
@@ -156,15 +154,13 @@
   const selectedMenu = ref(null)
   const menus = ref([])
   
-  // Check if this is a Gyalsung flow
   const isGyalsungFlow = computed(() => {
     return localStorage.getItem('isGyalsungFlow') === 'true'
   })
   
-  // Get the CID from Gyalsung registration if available
+  
   const ClientUserIdCaseBase = ref([])
   
-  // Computed properties
   const currentQuestion = computed(() => {
     return screeningQuestions.value[currentQuestionIndex.value] || null
   })
@@ -186,39 +182,44 @@
     return false
   })
   
-  // Method to fetch screening questions from API
+ 
   const fetchScreeningQuestions = async () => {
-    try {
-      loading.value = true
-      error.value = null
+  try {
+    loading.value = true
+    error.value = null
+
+    const endpoint = `${endpoints.screeningPreTests}`
+    console.log('Fetching Gyalsung questions from:', endpoint)
+
+   
+    const params = {}
+    if (isGyalsungFlow.value) {
+      params.is_gyalsung = true
+    }
+
+   
+    const response = await apiClient.get(endpoint, { params: params })
+
+    if (response.data && Array.isArray(response.data)) {
+      screeningQuestions.value = response.data
+      console.log('Loaded Gyalsung questions:', screeningQuestions.value.length)
+    } else {
       
-      // Use the correct API endpoint format
-      const endpoint = `${endpoints.screeningPreTests}`
-      console.log('Fetching Gyalsung questions from:', endpoint)
-      
-      const response = await apiClient.get(endpoint)
-      
-      if (response.data && Array.isArray(response.data)) {
-        screeningQuestions.value = response.data
-        console.log('Loaded Gyalsung questions:', screeningQuestions.value.length)
-      } else if (response.data && response.data.questions) {
-        // Handle case where questions are nested in a questions property
-        screeningQuestions.value = response.data.questions
-        console.log('Loaded Gyalsung questions (nested):', screeningQuestions.value.length)
+      if (response.data.length === 0) {
+        screeningQuestions.value = []
+        console.warn('API returned an empty list of questions.')
       } else {
         throw new Error('Invalid response format')
       }
-      
-    } catch (err) {
-      console.error('Error fetching Gyalsung screening questions:', err)
-      error.value = 'Failed to load screening questions. Please try again.'
-      
-      // Load mock data for testing if API fails
-      screeningQuestions.value = getMockGyalsungQuestions()
-    } finally {
-      loading.value = false
     }
+  } catch (err) {
+    console.error('Error fetching Gyalsung screening questions:', err)
+    error.value = err.response?.data?.detail || 'Failed to load screening questions. Please try again.'
+    
+  } finally {
+    loading.value = false
   }
+}
   
   // Mock data for testing
   const getMockGyalsungQuestions = () => {
