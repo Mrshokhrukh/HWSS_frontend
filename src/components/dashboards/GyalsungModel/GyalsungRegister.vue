@@ -127,8 +127,6 @@
   
   <script setup>
   import { onMounted, ref } from 'vue'
-  import axios from 'axios'
-  import endpoints from '@/api'
   import { useRouter } from 'vue-router'
   
   const submitting = ref(false)
@@ -231,7 +229,7 @@
         form.value.gender = userData.gender || ''
         form.value.mob_number = userData.mob_number || ''
         form.value.dzongkhag = userData.perm_add_dzongkhag || ''
-        userFound.value = true // This was missing in your original code
+        userFound.value = true
       } else {
         alert('User not found with this CID. Please enter details manually.')
         userFound.value = false
@@ -246,64 +244,56 @@
   }
   
   const registerUser = async () => {
-    if (!cid.value || cidError.value || !userFound.value) {
-      alert('Please enter a valid CID and search for a user first')
-      return
-    }
+  if (!cid.value || cidError.value || !userFound.value) {
+    alert('Please enter a valid CID and search for a user first')
+    return
+  }
+
+  submitting.value = true
+  try {
+    // Store the CID for screening
+    localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]))
+    
+    // Show success modal directly without API call
+    const modal = new bootstrap.Modal(successModal.value)
+    modal.show()
+  } catch (error) {
+    console.error('Registration failed:', error)
+    alert('Registration failed. Please try again.')
+  } finally {
+    submitting.value = false
+  }
+}
   
     submitting.value = true
     try {
-      const registrationData = {
-        userData: {
-          CID: cid.value,
-          clientFullName: `${form.value.first_name} ${form.value.middle_name} ${form.value.last_name}`.trim(),
-          DOB: form.value.date_of_birth,
-          gender: form.value.gender,
-          phoneNumber: form.value.mob_number
-        },
-        agencyData: {
-          agency_code: 'GYALSUNG',
-          agency_name: 'Gyalsung Academy',
-          agency_type: 'Educational Institution'
-        },
-        userAgencyData: {
-          user_code: cid.value,
-          user_role_agency: 'student'
-        }
-      }
-  
-      const token = localStorage.getItem('authToken')
-      const response = await axios.post(endpoints.registerGyalsung, registrationData, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Token ${token}` } : {})
-        }
-      })
-  
-      console.log('Registration response:', response)
-  
-      // Show success modal
+      // Show success modal directly without API call
       const modal = new bootstrap.Modal(successModal.value)
       modal.show()
     } catch (error) {
       console.error('Registration failed:', error)
-      if (error.response?.data?.error) {
-        alert(`Registration failed: ${error.response.data.error}`)
-      } else {
-        alert('Registration failed. Please try again.')
-      }
+      alert('Registration failed. Please try again.')
     } finally {
       submitting.value = false
     }
-  }
+  
   
   const startScreening = () => {
-    const modal = bootstrap.Modal.getInstance(successModal.value)
-    modal.hide()
+  const modal = bootstrap.Modal.getInstance(successModal.value)
+  modal.hide()
+
+  // Set flag to indicate we're in Gyalsung flow
+  localStorage.setItem('isGyalsungFlow', 'true')
   
-    // Navigate to screening page
-    router.push('/gyalsung-dashboard/gyalsung-screening')
+  // Store the user data for screening
+  if (cid.value) {
+    localStorage.setItem('gyalsungUserCID', cid.value)
+    localStorage.setItem('gyalsungUserData', JSON.stringify(form.value))
   }
+  
+  // Navigate to gyalsung screening page
+  router.push('/GyalsungModel/GyalsungScreening')
+}
   
   onMounted(() => {})
   </script>

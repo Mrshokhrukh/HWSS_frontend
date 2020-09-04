@@ -30,9 +30,14 @@
       </div>
     </div>
 
-    <!-- Gyalsung Register Route - Multiple condition checks -->
+    <!-- Gyalsung Register Route -->
     <div v-if="showGyalsungRegister" class="gyalsung-register">
       <GyalsungRegister />
+    </div>
+
+    <!-- Gyalsung Screening Route - ADD THIS SECTION -->
+    <div v-if="showGyalsungScreening" class="gyalsung-screening">
+      <GyalsungScreening />
     </div>
 
     <!-- Other Routes -->
@@ -90,6 +95,7 @@ import CounselorHelp from '@/components/dashboards/counselorHelp/CounselorHelp.v
 import CounselorSetting from '@/components/dashboards/counselorSetting/CounselorSetting.vue'
 import CounselorFlagReports from '@/components/dashboards/counselorReporting/CounselorFlagReports.vue'
 import GyalsungRegister from '@/components/dashboards/GyalsungModel/GyalsungRegister.vue'
+import GyalsungScreening from '@/components/dashboards/GyalsungModel/GyalsungScreening.vue' 
 
 const route = useRoute()
 const currentRoute = computed(() => route.path)
@@ -111,6 +117,22 @@ const showGyalsungRegister = computed(() => {
   ]
   
   return gyalsungRoutes.some(routePath => 
+    path === routePath.toLowerCase() || 
+    path.includes(routePath.toLowerCase())
+  )
+})
+
+// ADD THIS: Computed property for Gyalsung Screening visibility
+const showGyalsungScreening = computed(() => {
+  const path = currentRoute.value.toLowerCase()
+  const gyalsungScreeningRoutes = [
+    '/gyalsungmodel/gyalsungscreening',
+    '/GyalsungModel/GyalsungScreening',
+    '/gyalsung/screening',
+    '/counselor-dashboard/gyalsung-screening'
+  ]
+  
+  return gyalsungScreeningRoutes.some(routePath => 
     path === routePath.toLowerCase() || 
     path.includes(routePath.toLowerCase())
   )
@@ -228,6 +250,7 @@ onMounted(() => {
   console.log('=== CounsellorDashboard Mounted ===')
   console.log('Current route on mount:', route.path)
   console.log('Show Gyalsung Register:', showGyalsungRegister.value)
+  console.log('Show Gyalsung Screening:', showGyalsungScreening.value) // ADD THIS
   console.log('Route params:', route.params)
   console.log('Route query:', route.query)
 })
@@ -239,9 +262,10 @@ watch(
     console.log('Route changed from:', oldPath)
     console.log('Route changed to:', newPath)
     console.log('Show Gyalsung Register:', showGyalsungRegister.value)
+    console.log('Show Gyalsung Screening:', showGyalsungScreening.value) // ADD THIS
     
     // Only fetch data for non-Gyalsung routes
-    if (!showGyalsungRegister.value) {
+    if (!showGyalsungRegister.value && !showGyalsungScreening.value) {
       fetchData()
     }
   },
@@ -250,12 +274,21 @@ watch(
   }
 )
 
-// Watch the computed property directly
+// Watch the computed properties directly
 watch(
   showGyalsungRegister,
   (newValue, oldValue) => {
     console.log('=== Gyalsung Register Visibility Changed ===')
     console.log('Show Gyalsung Register changed from:', oldValue, 'to:', newValue)
+  }
+)
+
+// ADD THIS: Watch for Gyalsung Screening changes
+watch(
+  showGyalsungScreening,
+  (newValue, oldValue) => {
+    console.log('=== Gyalsung Screening Visibility Changed ===')
+    console.log('Show Gyalsung Screening changed from:', oldValue, 'to:', newValue)
   }
 )
 
@@ -269,7 +302,8 @@ defineExpose({
   filteredData,
   fetchData,
   getUserDetails,
-  showGyalsungRegister
+  showGyalsungRegister,
+  showGyalsungScreening // ADD THIS
 })
 </script>
 
@@ -301,6 +335,12 @@ defineExpose({
 }
 
 .gyalsung-register {
+  min-height: calc(100vh - 120px);
+  padding: 0;
+  background-color: #e8f6ee;
+}
+
+.gyalsung-screening {
   min-height: calc(100vh - 120px);
   padding: 0;
   background-color: #e8f6ee;
