@@ -74,14 +74,18 @@ const menuConfig = {
 		{ text: "Profile", route: "/student-dashboard/profile", iconClass: "fas fa-user" }
 	],
 	counselor: [
-		{ text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
-		{ text: "Register", route: "/GyalsungModel/GyalsungRegister", iconClass: "fa-solid fa-thumbs-up" },
-		{ text: "Screening", route: "/counselor-dashboard/counselor-screening", iconClass: "fa-solid fa-person-circle-question" },
-		{ text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
-		{ text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
-		{ text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
-		{ text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
-	],
+  { text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
+  { text: "Register", route: "/GyalsungModel/GyalsungRegister", iconClass: "fa-solid fa-thumbs-up" },
+  { 
+    text: "Screening", 
+    route: localStorage.getItem('isGyalsungFlow') ? "/GyalsungModel/GyalsungScreening" : "/counselor-dashboard/counselor-screening", 
+    iconClass: "fa-solid fa-person-circle-question" 
+  },
+  { text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
+  { text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
+  { text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
+  { text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
+],
 	admin: [
 		{ text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
 		{ text: "Approval", route: "/admin-dashboard/admin-approval", iconClass: "fa-regular fa-thumbs-up" },

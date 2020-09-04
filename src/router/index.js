@@ -176,8 +176,18 @@ const createAppRouter = () => {
         meta: { title: 'Gyalsung Register', requiresAuth: true }
       },
       {
+        path: '/GyalsungModel/GyalsungScreening',
+        name: 'gyalsung-screening',
+        component: DashboardView,
+        meta: { title: 'Gyalsung Screening', requiresAuth: true }
+      },
+      {
         path: '/gyalsungmodel/gyalsungregister',
         redirect: '/GyalsungModel/GyalsungRegister'
+      },
+      {
+        path: '/gyalsungmodel/gyalsungscreening',
+        redirect: '/GyalsungModel/GyalsungScreening'
       },
       // ========================================================================================
       
