@@ -1,6 +1,3 @@
-// /src/api.js
-
-// Automatically returns the correct base URL for the core API.
 function getBaseUrl() {
   if (import.meta.env.DEV) {
     return 'http://localhost:8123';
@@ -31,10 +28,10 @@ const apiConfig = {
     }
   },
   screening: {
-    baseUrl: getScreeningBaseUrl(),
-    modules: {
-      screening: 'screening'
-    }
+    baseUrl: getScreeningBaseUrl(), 
+    modules: { 
+      screening: 'screening' 
+    } 
   }
 };
 
@@ -71,7 +68,8 @@ const endpointDefinitions = {
   },
   screening: {
     screeningPreTests: 'screening-questions/',
-    assistTest: 'assist-screening/'
+    assistTest: 'assist-screening/',
+    gyalsungScreenSubmission: 'gyalsung-submission/' 
   },
   measurement: {
     submitCluster: 'submit-screening/',
@@ -114,7 +112,8 @@ const endpointDefinitions = {
     getEventScreeningList: 'get-event-screenings/',
     updateEventScreeningList: 'update-event-screening/',
     getCaseRecords: 'case-records/',
-    getEventRecords: 'event-records/'
+    getEventRecords: 'event-records/',
+    gyalsungScreenSubmission: 'gyalsung-submission/' 
   }
 };
 
