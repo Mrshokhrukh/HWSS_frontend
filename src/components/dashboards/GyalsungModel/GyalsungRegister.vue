@@ -281,11 +281,13 @@ const registerUser = async () => {
     modal.show()
   } catch (error) {
     console.error('Registration failed:', error)
-    alert('Registration failed. Please try again.')
+    alert(`Registration failed: ${error.message}. Please try again.`)
   } finally {
     submitting.value = false
   }
 }
+
+const startScreening = () => {
 
 const startScreening = () => {
   const modal = bootstrap.Modal.getInstance(successModal.value)

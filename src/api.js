@@ -59,7 +59,10 @@ const endpointDefinitions = {
     getCSRFToken: 'get_csrf_token/',
     updateUserInfo: 'update-user-info/',
     changePassword: 'change-password/',
-    fetchReferralCounselors: 'get-referral-counselors/'
+    fetchReferralCounselors: 'get-referral-counselors/',
+    getGyalsungUserData: 'get-gyalsung-user-data/',
+    registerGyalsungCounselorUser: 'gyalsung/counselor-users/',
+    registerGyalsungUser: 'register-gyalsung-user/'
   },
   settings: {
     settings: 'appconfig/',
@@ -114,6 +117,7 @@ const endpointDefinitions = {
     getCaseRecords: 'case-records/',
     getEventRecords: 'event-records/',
     gyalsungScreenSubmission: 'gyalsung-submission/' 
+    
   }
 };
 

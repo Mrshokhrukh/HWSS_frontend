@@ -134,6 +134,27 @@ const generateDashboardRoutes = (userType) => {
       name: `${userType}-admin-chart-maker`,
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Admin chart maker`, ...commonMeta }
+
+    },
+    {
+      path: '/GyalsungModel/GyalsungRegister',
+      name: 'gyalsung-register',
+      component: DashboardView,
+      meta: { title: 'Gyalsung Register', requiresAuth: true }
+    },
+    {
+      path: '/GyalsungModel/GyalsungScreening',
+      name: 'gyalsung-screening',
+      component: DashboardView,
+      meta: { title: 'Gyalsung Screening', requiresAuth: true }
+    },
+    {
+      path: '/gyalsungmodel/gyalsungregister',
+      redirect: '/GyalsungModel/GyalsungRegister'
+    },
+    {
+      path: '/gyalsungmodel/gyalsungscreening',
+      redirect: '/GyalsungModel/GyalsungScreening'
     },
   ];
 
@@ -168,7 +189,6 @@ const createAppRouter = () => {
         component: () => import('@/views/auth/RegisterView.vue'),
         meta: { title: 'Register' }
       },
-      // ========================== GYALSUNG MODEL ROUTES - ADD THIS SECTION ==========================
       {
         path: '/GyalsungModel/GyalsungRegister',
         name: 'gyalsung-register',
@@ -189,18 +209,16 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungscreening',
         redirect: '/GyalsungModel/GyalsungScreening'
       },
-      // ========================================================================================
-      
-      // Use route nesting to dynamically generate user dashboard routes
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
       ...generateDashboardRoutes('admin'),
       ...generateDashboardRoutes('public'),
+      ...generateDashboardRoutes('gyalsung-reassessment'), 
       {
         path: '/:pathMatch(.*)*',
-        name: 'NotFound', // Give a name to the 404 route
+        name: 'NotFound', 
         component: NotFoundPage,
-        meta: { title: 'Page Not Found' } // Add a title for the 404 page
+        meta: { title: 'Page Not Found' } 
       },
     ],
   });
@@ -215,14 +233,14 @@ const createAppRouter = () => {
     localStorage.removeItem('userDetailsStore');
     localStorage.removeItem('userType');
   };
-
-  // Helper function to get user type from user details
   const getUserTypeFromDetails = (userDetailsStore) => {
     const role = userDetailsStore?.user?.role?.toLowerCase() || 'public';
     if (role.includes('admin')) {
       return 'admin';
     } else if (role.includes('_counselor')) {
       return 'counselor';
+    } else if (role.includes('gyalsung_reassessment_team')) { 
+      return 'gyalsung-reassessment';
     } else if (role === 'student') {
       return 'student';
     } else {
@@ -230,14 +248,13 @@ const createAppRouter = () => {
     }
   };
 
-  // Global variable to store authentication status and user type
+  
   let isUserAuthenticated = false;
   let cachedUserType = null;
-  let tokenValidityChecked = false; // Flag to ensure token validity check only runs once per session
+  let tokenValidityChecked = false; 
 
   router.beforeEach(async (to, from, next) => {
-    document.title = to.meta.title ? `${to.meta.title} | Your App Name` : 'Your App Name'; // Dynamic title
-
+    document.title = to.meta.title ? `${to.meta.title} | HWSS` : 'HWSS | Mental Health Matters'; 
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const authToken = localStorage.getItem('authToken');
     const tokenExpiry = localStorage.getItem('tokenExpiry');
@@ -247,14 +264,12 @@ const createAppRouter = () => {
     // If token is expired, clear storage and redirect to login
     if (isAuthenticatedInStorage && isTokenExpired) {
       clearAuthStorage();
-      isUserAuthenticated = false; // Update global state
-      cachedUserType = null; // Clear cached user type
-      tokenValidityChecked = false; // Reset the flag
+      isUserAuthenticated = false; 
+      cachedUserType = null; 
+      tokenValidityChecked = false; 
       return next({ name: ROUTE_LOGIN });
     }
 
-    // Attempt to validate token only if it hasn't been validated in the current session
-    // and a token exists in storage. This avoids repeated API calls.
     if (isAuthenticatedInStorage && !isTokenExpired && !tokenValidityChecked) {
       try {
         const response = await apiClient.post(endpoints.authenticateToken, null, {

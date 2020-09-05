@@ -16,7 +16,8 @@
               v-if="
                 currentComponent === CounsellorDashboard ||
                 currentComponent === AdminDashboard ||
-                currentComponent === AdminDashboard2
+                currentComponent === AdminDashboard2 ||
+                currentComponent === GyalsungReassessmentDashboard // <-- ADD THIS
               "
             >
               <TopNavbarCard :key="topNavbarKey" />
@@ -57,11 +58,12 @@ import AdminDashboard2 from '@/components/dashboards/AdminDashboard.vue'
 import AdminDashboard from '@/components/dashboards/Adminpages/AdminDashboard/AdminDashboardMain.vue'
 import TopNavbarCard from '@/components/navbar/TopNavbarCard.vue'
 import HelplineServices from '@/components/dashboards/screenings/screeningCards/HelplineServices.vue'
+import GyalsungReassessmentDashboard from '@/components/dashboards/ReassessmentTeamDashboard.vue' 
 
 // Refs
 const sidebarOpen = ref(false)
-const topNavbarKey = ref(0) // Reactive key for re-rendering TopNavbarCard
-const route = useRoute() // Current route
+const topNavbarKey = ref(0) 
+const route = useRoute() 
 
 // Store
 const userDetailsStore = useUserDetailsStore()
@@ -80,6 +82,8 @@ const currentComponent = computed(() => {
     case 'gyalsung_counselor':
     case 'trained_professional':
       return CounsellorDashboard
+    case 'gyalsung_reassessment_team': 
+      return GyalsungReassessmentDashboard 
     case 'mh_admin':
     case 'sud_admin':
     case 'aaa_admin':
@@ -97,13 +101,14 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value
 }
 
-// Watch for route changes to refresh the TopNavbarCard
+
 watch(route, () => {
-  topNavbarKey.value += 1 // Increment key to re-render TopNavbarCard
+  topNavbarKey.value += 1 
 })
 
-// Axios call on mounted for dashboards except Student and Public
+
 onMounted(async () => {
+
   if (currentComponent.value !== StudentDashboard && currentComponent.value !== PublicDashboard) {
     try {
       await apiClient.get(endpoints.getClusterRecords)
