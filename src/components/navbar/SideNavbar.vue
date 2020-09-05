@@ -1,6 +1,5 @@
 <template>
 	<div :class="{ sidebar: true, 'sidebar-open': sidebarStore.isOpen }">
-		<!-- User Profile Section -->
 		<div class="user-profile text-center">
 			<div class="profile-image-container">
 				<img :src="profilePictureUrl" alt="User" :class="profilePicClass" />
@@ -14,7 +13,6 @@
 			</transition>
 		</div>
 
-		<!-- Menu Items -->
 		<div class="menu-wrapper">
 			<div class="menu-background"></div>
 			<nav class="menu-items">
@@ -31,7 +29,6 @@
 			</nav>
 		</div>
 
-		<!-- Footer Section -->
 		<div class="sidebar-footer">
 			<router-link to="#" class="menu-link logout-link" @click="logout"
 				v-b-tooltip.hover.right="{ title: 'Log Out', disabled: sidebarStore.isOpen }">
@@ -66,7 +63,6 @@ const router = useRouter();
 const sidebarStore = useSidebarStore();
 const userDetailsStore = useUserDetailsStore();
 
-// Static menu definitions
 const menuConfig = {
 	student: [
 		{ text: "Dashboard", route: "/student-dashboard", iconClass: "fas fa-tachometer-alt" },
@@ -74,18 +70,14 @@ const menuConfig = {
 		{ text: "Profile", route: "/student-dashboard/profile", iconClass: "fas fa-user" }
 	],
 	counselor: [
-  { text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
-  { text: "Register", route: "/GyalsungModel/GyalsungRegister", iconClass: "fa-solid fa-thumbs-up" },
-  { 
-    text: "Screening", 
-    route: localStorage.getItem('isGyalsungFlow') ? "/GyalsungModel/GyalsungScreening" : "/counselor-dashboard/counselor-screening", 
-    iconClass: "fa-solid fa-person-circle-question" 
-  },
-  { text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
-  { text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
-  { text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
-  { text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
-],
+		{ text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
+		{ text: "Register", route: "/GyalsungModel/GyalsungRegister", iconClass: "fa-solid fa-thumbs-up" },
+		{ text: "Screening", route: "/GyalsungModel/GyalsungScreening", iconClass: "fa-solid fa-person-circle-question" },
+		{ text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
+		{ text: "Reports", route: "/counselor-dashboard/counselor-reports", iconClass: "fa-solid fa-file-waveform" },
+		{ text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
+		{ text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
+	],
 	admin: [
 		{ text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
 		{ text: "Approval", route: "/admin-dashboard/admin-approval", iconClass: "fa-regular fa-thumbs-up" },
@@ -103,7 +95,15 @@ const menuConfig = {
 		{ text: "Dashboard", route: "/admin-dashboard", iconClass: "fas fa-tachometer-alt" },
 		{ text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
 		{ text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
-	]
+	],
+    gyalsung_reassessment_team: [
+        { text: "Dashboard", route: "/gyalsung-reassessment-dashboard", iconClass: "fas fa-tachometer-alt" },
+        { text: "Reassessment List", route: "/gyalsung-reassessment-dashboard/list", iconClass: "fas fa-list-ul" },
+		{ text: "Screening Tracking", route: "/gyalsung-reassessment-dashboard/tracking", iconClass: "fas fa-tasks" },
+        { text: "Monitoring", route: "/gyalsung-reassessment-dashboard/monitoring", iconClass: "fas fa-chart-line" },
+        { text: "Transfers & Handover", route: "/gyalsung-reassessment-dashboard/transfers", iconClass: "fas fa-exchange-alt" },
+		{ text: "Reports", route: "/gyalsung-reassessment-dashboard/reports", iconClass: "fas fa-file-alt" },
+    ]
 };
 
 const fullName = computed(() => {
@@ -114,14 +114,13 @@ const fullName = computed(() => {
 const profilePicture = computed(() => userDetailsStore.user.profilePicture);
 
 const userType = computed(() => {
-    const role = userDetailsStore.user.role || 'User'; // Get raw role
-
-    // Optional: Keep the Administrator override if you like it
+    const role = userDetailsStore.user.role || 'User';
     if (role.toLowerCase().includes("admin")) {
         return "Administrator";
     }
-
-    // Apply the same formatting logic as the Topbar
+    if (role === 'gyalsung_reassessment_team') {
+        return 'Reassessment Team';
+    }
     return role
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -131,22 +130,34 @@ const userType = computed(() => {
 const filteredMenus = computed(() => {
 	const role = String(userDetailsStore.user?.role ?? '').toLowerCase();
 
-	// Special handling for CECD_ADMIN
+    if (role === 'gyalsung_reassessment_team') {
+        return menuConfig.gyalsung_reassessment_team;
+    }
 	if (role === 'cecd_admin') {
 		return menuConfig.limited_admin;
 	}
-
-	// Special handling for RD_ADMIN
 	if (role === 'rd_admin') {
 		return menuConfig.rnd_limited_admin;
 	}
+	if (role.includes('admin')) {
+		return menuConfig.admin;
+	}
+	if (role === 'student') {
+		return menuConfig.student;
+	}
+	if (role.includes('counselor') || role.includes('trained')) {
+		const gyalsungAllowedRoles = ['clinical_counselor', 'trained_professional'];
 
-	// Regular role-based menu selection
-	if (role === 'student') return menuConfig.student;
-	if (role.includes('counselor') || role.includes('trained')) return menuConfig.counselor;
-	if (role.includes('admin')) return menuConfig.admin;
+		if (gyalsungAllowedRoles.includes(role)) {
+			return menuConfig.counselor;
+		} else {
+			return menuConfig.counselor.filter(menu =>
+				!menu.route.startsWith('/GyalsungModel')
+			);
+		}
+	}
 
-	return []; // Default empty menu if no role matches
+	return [];
 });
 
 const profilePicClass = computed(() => {
@@ -227,7 +238,6 @@ const logout = async () => {
 	width: 16rem;
 }
 
-/* Profile Section */
 .user-profile {
 	padding: 1.5rem 1rem;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -275,7 +285,6 @@ const logout = async () => {
 	font-size: 0.8rem;
 }
 
-/* Menu Section */
 .menu-wrapper {
 	position: relative;
 	flex: 1;
@@ -336,14 +345,12 @@ const logout = async () => {
 	white-space: nowrap;
 }
 
-/* Active Link Styling */
 .menu-link.active {
 	background-color: #cde0c9;
 	color: #2c6975;
 	border-radius: 10px;
 }
 
-/* Footer Section */
 .sidebar-footer {
 	padding: 1rem;
 	border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -360,7 +367,6 @@ const logout = async () => {
 	cursor: pointer;
 }
 
-/* Scrollbar Styling */
 .menu-wrapper::-webkit-scrollbar {
 	width: 4px;
 }
@@ -375,7 +381,6 @@ const logout = async () => {
 	border-radius: 4px;
 }
 
-/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
 	transition: opacity 0.3s ease;

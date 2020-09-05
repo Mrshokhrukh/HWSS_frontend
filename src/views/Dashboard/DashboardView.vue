@@ -17,7 +17,7 @@
                 currentComponent === CounsellorDashboard ||
                 currentComponent === AdminDashboard ||
                 currentComponent === AdminDashboard2 ||
-                currentComponent === GyalsungReassessmentDashboard // <-- ADD THIS
+                currentComponent === GyalsungReassessmentDashboard
               "
             >
               <TopNavbarCard :key="topNavbarKey" />

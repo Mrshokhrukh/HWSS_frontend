@@ -288,10 +288,10 @@ const registerUser = async () => {
 }
 
 const startScreening = () => {
-
-const startScreening = () => {
   const modal = bootstrap.Modal.getInstance(successModal.value)
-  modal.hide()
+  if (modal) {
+    modal.hide()
+  }
 
   localStorage.setItem('isGyalsungFlow', 'true')
 

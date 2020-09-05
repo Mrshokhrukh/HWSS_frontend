@@ -1,97 +1,83 @@
 <template>
-    <div class="container-fluid bg-color">
-      <!-- Main Dashboard Content -->
-      <!-- This v-if block shows the content only on the main dashboard page -->
-      <div class="row my-2" v-if="currentRoute === '/gyalsung-reassessment-dashboard'">
-        <!-- We can reuse some cards or create new ones specific to this role -->
-        <div class="col-md-4 mb-4">
-          <div class="h-100">
-            <QuickToolCard />
-          </div>
-        </div>
-  
-        <div class="col-md-4 mb-4">
-          <div class="h-100">
-            <ScreeningCurrentYearCard />
-          </div>
-        </div>
-  
-        <div class="col-md-4 mb-4">
-          <div class="h-100">
-            <ScreeningPrevYearCard />
-          </div>
-        </div>
-  
-        <!-- Gyalsung Profiles Card might be very relevant here -->
-        <div class="col-md-12 mb-4">
-          <GyalsungProfiles />
-        </div>
-  
-        <div class="col-md-12 my-4">
-          <SeverityCountsCard />
-        </div>
-      </div>
-  
-      <!-- TODO: Add child components for reassessment-specific routes later -->
-      <!-- 
-        Example of how you would add child pages:
-        <div v-if="currentRoute === '/gyalsung-reassessment-dashboard/some-page'">
-          <SomePageComponent />
-        </div>
-        <div v-if="currentRoute === '/gyalsung-reassessment-dashboard/another-page'">
-          <AnotherPageComponent />
-        </div>
-      -->
-  
-      <footer class="footer">
-        <div class="container text-center my-4">
-          <p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
-        </div>
-      </footer>
+  <div class="container-fluid bg-color page-container">
+    <div class="main-content-area">
+      <transition name="fade" mode="out-in">
+        <component :is="activeComponent" />
+      </transition>
     </div>
-  </template>
-  
-  <script setup>
-  import { computed, onMounted } from 'vue'
-  import { useRoute } from 'vue-router'
-  
-  // Import the same card components for a consistent layout
-  import QuickToolCard from '@/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue'
-  import ScreeningPrevYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningPrevYearCard.vue'
-  import ScreeningCurrentYearCard from '@/components/dashboards/CounsellorDashboardCard/ScreeningCurrentYearCard.vue'
-  import SeverityCountsCard from '@/components/dashboards/CounsellorDashboardCard/SeverityCountsCard.vue'
-  import GyalsungProfiles from '@/components/dashboards/GyalsungModel/GyalsungProfiles.vue'
-  
-  // Setup route and constants
-  const route = useRoute()
-  const currentRoute = computed(() => route.path)
-  const currentYear = new Date().getFullYear()
-  const websiteName = 'The PEMA HWSS'
-  
-  // TODO: Implement data fetching specific to the Gyalsung Reassessment Team
-  const fetchDataForReassessment = async () => {
-    console.log('Fetching data for Gyalsung Reassessment Team...')
-    // try {
-    //   // Example:
-    //   // const response = await apiClient.get(endpoints.getReassessmentData);
-    //   // ...process data
-    // } catch (error) {
-    //   console.error('Error fetching reassessment data:', error);
-    // }
+    <footer class="footer">
+      <div class="container text-center my-4">
+        <p>&copy; {{ currentYear }} {{ websiteName }}. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+</template>
+
+<script setup>
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+
+import ReassessmentDashboard from './GyalsungReassementTeam/ReassessmentDashboard.vue'
+import ReassessmentList from './GyalsungReassementTeam/ReassessmentList.vue'
+import Monitoring from './GyalsungReassementTeam/Monitoring.vue'
+import ReassessmentReports from './GyalsungReassementTeam/ReassessmentReports.vue'
+import ReassessmentScreeningTracking from './GyalsungReassementTeam/ReassessmentScreeningTracking.vue'
+import TransfersAndHandover from './GyalsungReassementTeam/TransfersAndHandover.vue'
+
+const route = useRoute()
+const currentYear = new Date().getFullYear()
+const websiteName = 'The PEMA HWSS'
+const activeComponent = computed(() => {
+  switch (route.name) {
+    case 'reassessment-list':
+      return ReassessmentList
+    case 'reassessment-monitoring':
+      return Monitoring
+    case 'reassessment-reports':
+      return ReassessmentReports
+    case 'reassessment-tracking':
+      return ReassessmentScreeningTracking
+    case 'reassessment-transfers':
+      return TransfersAndHandover
+    case 'reassessment-dashboard': 
+    default:
+      return ReassessmentDashboard
   }
-  
-  onMounted(() => {
-    console.log('Gyalsung Reassessment Dashboard Mounted!')
-    // Call the specific data fetching function for this dashboard
-    fetchDataForReassessment()
-  })
-  </script>
-  
-  <style scoped>
-  .bg-color {
-    background-color: #f8f9fa;
-  }
-  .footer {
-    margin-top: auto;
-  }
-  </style>
+})
+
+onMounted(() => {
+  console.log('Reassessment Team Dashboard Layout Mounted!')
+})
+</script>
+
+<style scoped>
+.bg-color {
+  background-color: #f8f9fa;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 56px); 
+}
+
+.main-content-area {
+  flex-grow: 1; 
+  padding: 1rem;
+}
+
+.footer {
+  margin-top: auto; 
+  flex-shrink: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
