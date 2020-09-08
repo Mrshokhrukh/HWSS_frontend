@@ -70,6 +70,7 @@ const endpointDefinitions = {
     registerCounselorUser: 'counselor-users/',
     registerUser: 'register-gyalsung-user/',
     getReassessmentUsers: 'reassessment-users/',
+    getCounselorUsers: 'counselor-users/',
   },
   settings: {
     settings: 'appconfig/',

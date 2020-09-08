@@ -1,11 +1,9 @@
 <template>
   <div class="container-fluid bg-color py-4">
-    <!-- Main Dashboard Header -->
     <div class="dashboard-header">
       <h1 class="header-title">Reassessment Dashboard</h1>
     </div>
 
-    <!-- Loading State for Initial Data (Stats) -->
     <div v-if="loading" class="state-container">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -13,20 +11,20 @@
       <p class="mt-3">Fetching dashboard statistics...</p>
     </div>
 
-    <!-- Error State for Stats -->
     <div v-else-if="error" class="state-container">
-        <div class="alert alert-danger" role="alert">
-          <h4 class="alert-heading">Failed to Load Statistics</h4>
-          <p>There was an error retrieving dashboard statistics. The user list may still be available below.</p>
-          <hr>
-          <p class="mb-0 small"><strong>Error:</strong> {{ error }}</p>
-        </div>
+      <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Failed to Load Dashboard</h4>
+        <p>There was an error retrieving dashboard data.</p>
+        <hr />
+        <p class="mb-0 small">
+          <strong>Error:</strong> {{ error }}
+        </p>
+      </div>
     </div>
 
-    <!-- Main Content: Stats Cards and User Table -->
     <div v-else>
-      <!-- STATS CARDS SECTION (Restored) -->
       <div v-if="stats" class="row">
+        <!-- Stats Cards -->
         <div class="col-xl-4 col-md-6 mb-4">
           <div class="stat-card h-100">
             <div class="card-body d-flex align-items-center">
@@ -58,13 +56,17 @@
           </div>
         </div>
       </div>
-      
-      <!-- USER LIST TABLE SECTION (Below Stats Cards) -->
+
       <div class="list-container mt-4">
         <div class="list-header">
           <h2 class="list-title">Reassessment Candidate List</h2>
           <div class="d-flex align-items-center">
-            <input type="text" class="form-control search-input" placeholder="Type to Search" v-model="searchQuery">
+            <input
+              type="text"
+              class="form-control search-input"
+              placeholder="Type to Search"
+              v-model="searchQuery"
+            />
           </div>
         </div>
 
@@ -94,16 +96,17 @@
               <tr v-if="filteredUsers.length === 0">
                 <td colspan="8" class="text-center">No matching records found.</td>
               </tr>
-              <tr v-for="(user, index) in filteredUsers" :key="user.cid">
+              <!-- UPDATED a v-for loop with correct property names -->
+              <tr v-else v-for="(user, index) in filteredUsers" :key="user.identity_number">
                 <td>{{ index + 1 }}</td>
-                <td>{{ user.name }}</td>
-                <td>{{ user.cid }}</td>
-                <td>{{ user.dob }}</td>
-                <td>{{ user.contact }}</td>
-                <td>{{ user.appointmentDate }}</td>
-                <td>{{ user.hospital }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>{{ user.identity_number }}</td>
+                <td>{{ user.date_of_birth }}</td>
+                <td>{{ user.mob_number }}</td>
+                <td>{{ user.appointment_date }}</td>
+                <td>{{ user.hospital_name }}</td>
                 <td>
-                  <span :class="getStatusClass(user.status)">{{ user.status }}</span>
+                  <span :class="getStatusClass(user.gyalsung_status)">{{ user.gyalsung_status || 'N/A' }}</span>
                 </td>
               </tr>
             </tbody>
@@ -115,7 +118,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed } from "vue";
+import apiClient from "@/apiClient";
+import endpoints from "@/api";
 
 // State for stats cards
 const stats = ref(null);
@@ -126,116 +131,104 @@ const error = ref(null);
 const users = ref([]);
 const loadingUsers = ref(true);
 const errorUsers = ref(null);
-const searchQuery = ref('');
+const searchQuery = ref("");
 
-// --- DATA FETCHING ---
-
-// Fetch data for the stats cards
-const fetchDashboardStats = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        totalReviewed: 1258,
-        reassessmentNeeded: 112,
-        notNeeded: 1146,
-      });
-    }, 500); // Shorter delay for stats
-  });
-};
-
-// Fetch data for the user list
-const fetchUsers = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        { name: 'Pema Yangden', cid: '10506000020', dob: '11-Apr-06', contact: '+97517629899', appointmentDate: '3-Feb-25', hospital: 'Paro Hospital, Paro', status: 'Registered' },
-        { name: 'Narath Basnet', cid: '7969', dob: '10-Feb-06', contact: '+97517629890', appointmentDate: '1-Feb-25', hospital: 'Central Regional Referral Hospital, Gelephu', status: 'Registered' },
-        { name: 'Pema Yangden', cid: '10506000021', dob: '11-Apr-06', contact: '+97517629899', appointmentDate: '1-Feb-25', hospital: 'Paro Hospital, Paro', status: 'Registered' },
-        { name: 'Narath Basnet', cid: '79691', dob: '10-Feb-06', contact: '+97517629890', appointmentDate: '1-Feb-25', hospital: 'Central Regional Referral Hospital, Gelephu', status: 'Screened' },
-        { name: 'Pema Yangden', cid: '10506000022', dob: '11-Apr-06', contact: '+97517629899', appointmentDate: '10-Jan-25', hospital: 'Paro Hospital, Paro', status: 'Screened' },
-        { name: 'Narath Basnet', cid: '79692', dob: '10-Feb-06', contact: '+97517629890', appointmentDate: '10-Jan-25', hospital: 'Central Regional Referral Hospital, Gelephu', status: 'Screened' },
-      ]);
-    }, 1200); // Longer delay for user list
-  });
-};
-
-// --- DATA LOADING LOGIC ---
-
-// Load stats data
-const loadStats = async () => {
+const fetchDashboardData = async () => {
   loading.value = true;
+  loadingUsers.value = true;
   error.value = null;
+  errorUsers.value = null;
+
   try {
-    stats.value = await fetchDashboardStats();
+    const response = await apiClient.get(endpoints.getCounselorUsers);
+    
+    // THE FIX: Use response.data directly
+    const userList = response.data;
+
+    // And check if IT is an array
+    if (!Array.isArray(userList)) {
+      throw new Error("The data received from the API is not a valid list (array).");
+    }
+
+    users.value = userList;
+
+    // --- Calculate Stats from the fetched user list ---
+    // UPDATED to use the correct 'gyalsung_status' property from your API
+    const totalReviewed = userList.length;
+    const reassessmentNeeded = userList.filter(
+      (u) => u.gyalsung_status?.toLowerCase() === "registered"
+    ).length;
+    const notNeeded = userList.filter(
+      (u) => u.gyalsung_status?.toLowerCase() === "screened"
+    ).length;
+
+    stats.value = {
+      totalReviewed,
+      reassessmentNeeded,
+      notNeeded,
+    };
   } catch (err) {
-    console.error("Failed to fetch dashboard stats:", err);
-    error.value = err.message || "An unknown error occurred.";
+    console.error("Failed to fetch dashboard data:", err);
+    const errorMessage =
+      err.response?.data?.message || err.message || "An unknown error occurred.";
+    error.value = errorMessage;
+    errorUsers.value = errorMessage;
   } finally {
     loading.value = false;
-  }
-};
-
-// Load user data
-const loadUsers = async () => {
-  loadingUsers.value = true;
-  errorUsers.value = null;
-  try {
-    users.value = await fetchUsers();
-  } catch (err) {
-    console.error("Failed to fetch users:", err);
-    errorUsers.value = err.message || "An unknown error occurred.";
-  } finally {
     loadingUsers.value = false;
   }
 };
 
-// --- COMPUTED & HELPERS ---
-
-// Filter users based on search query
 const filteredUsers = computed(() => {
   if (!searchQuery.value) return users.value;
   const lowerCaseQuery = searchQuery.value.toLowerCase();
-  return users.value.filter(user =>
-    Object.values(user).some(val =>
-      String(val).toLowerCase().includes(lowerCaseQuery)
-    )
-  );
+
+  return users.value.filter((user) => {
+    // UPDATED to search on correct properties
+    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
+    
+    return (
+      fullName.includes(lowerCaseQuery) ||
+      (user.identity_number && user.identity_number.toLowerCase().includes(lowerCaseQuery)) ||
+      (user.hospital_name && user.hospital_name.toLowerCase().includes(lowerCaseQuery)) ||
+      (user.gyalsung_status && user.gyalsung_status.toLowerCase().includes(lowerCaseQuery))
+    );
+  });
 });
 
-// Get CSS class for status
 const getStatusClass = (status) => {
-  switch (status.toLowerCase()) {
-    case 'registered': return 'status-registered';
-    case 'screened': return 'status-screened';
-    default: return 'status-default';
+  // UPDATED to match potential API status values
+  switch (status?.toLowerCase()) {
+    case "registered":
+      return "status-registered";
+    case "screened":
+      return "status-screened";
+    default:
+      return "status-default";
   }
 };
 
-// Load all data when component is mounted
 onMounted(() => {
-  loadStats();
-  loadUsers();
+  fetchDashboardData();
 });
 </script>
 
 <style scoped>
+/* Your existing styles are fine */
 .bg-color {
   background-color: #f0f2f5;
   min-height: 100vh;
 }
-
 .dashboard-header {
   padding-bottom: 0.5rem;
   border-bottom: 3px solid #005f73;
   margin-bottom: 2rem;
 }
-
 .header-title {
   color: #1d3557;
   font-weight: 700;
   font-size: 2.25rem;
 }
-
 .state-container {
   display: flex;
   flex-direction: column;
@@ -243,8 +236,6 @@ onMounted(() => {
   align-items: center;
   min-height: 200px;
 }
-
-/* Styles for Stats Cards */
 .stat-card {
   background: #ffffff;
   border-radius: 8px;
@@ -269,11 +260,15 @@ onMounted(() => {
   font-weight: 700;
   color: #212529;
 }
-.text-primary { color: #0d6efd !important; }
-.text-warning { color: #ffc107 !important; }
-.text-success { color: #198754 !important; }
-
-/* Styles for the User List Table Container */
+.text-primary {
+  color: #0d6efd !important;
+}
+.text-warning {
+  color: #ffc107 !important;
+}
+.text-success {
+  color: #198754 !important;
+}
 .list-container {
   background-color: #e9f5e9;
   padding: 1.5rem;
@@ -281,21 +276,18 @@ onMounted(() => {
   border: 1px solid #d4e9d4;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
 }
-
 .list-title {
   color: #008080;
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
 }
-
 .search-input {
   max-width: 300px;
   border-radius: 0.25rem;
@@ -305,32 +297,28 @@ onMounted(() => {
   border-color: #005f73;
   box-shadow: 0 0 0 0.25rem rgba(0, 128, 128, 0.25);
 }
-
 .user-table {
   background-color: #fff;
   border: 1px solid #ddd;
 }
-
 .user-table thead {
   background-color: #008080;
   color: white;
 }
-
-.user-table th, .user-table td {
+.user-table th,
+.user-table td {
   vertical-align: middle;
   padding: 0.9rem 0.75rem;
   border-bottom: 1px solid #e0e0e0;
 }
-
 .user-table tbody tr:hover {
-    background-color: #f8f9fa;
+  background-color: #f8f9fa;
 }
-
-.status-registered, .status-screened {
+.status-registered,
+.status-screened {
   color: #0d6efd;
   font-weight: 600;
 }
-
 .status-default {
   color: #6c757d;
 }
