@@ -97,6 +97,7 @@ declare module 'vue' {
     ForgotPasswordForm: typeof import('./src/components/auth/ForgotPasswordForm.vue')['default']
     GyalsungProfiles: typeof import('./src/components/dashboards/GyalsungModel/GyalsungProfiles.vue')['default']
     GyalsungRegister: typeof import('./src/components/dashboards/GyalsungModel/GyalsungRegister.vue')['default']
+    GyalsungReports: typeof import('./src/components/dashboards/GyalsungModel/GyalsungReports.vue')['default']
     GyalsungScreening: typeof import('./src/components/dashboards/GyalsungModel/GyalsungScreening.vue')['default']
     GyalsungScreeningRegister: typeof import('./src/components/dashboards/GyalsungModel/GyalsungScreeningRegister.vue')['default']
     HelplineServices: typeof import('./src/components/dashboards/screenings/screeningCards/HelplineServices.vue')['default']

@@ -189,6 +189,17 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungscreening',
         redirect: '/GyalsungModel/GyalsungScreening'
       },
+
+      {
+        path: '/GyalsungModel/GyalsungReports',
+        name: 'gyalsung-reports',
+        component: DashboardView,
+        meta: { title: 'Gyalsung Reports', requiresAuth: true, requiresGyalsung: true }
+      },
+      {
+        path: '/gyalsungmodel/gyalsungreports',
+        redirect: '/GyalsungModel/GyalsungReports'
+      },
       // ========================================================================================
       
       // Use route nesting to dynamically generate user dashboard routes
