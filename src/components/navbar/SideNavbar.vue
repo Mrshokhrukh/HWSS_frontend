@@ -101,7 +101,7 @@ const menuConfig = {
         { text: "Reassessment List", route: "/gyalsung-reassessment-dashboard/list", iconClass: "fas fa-list-ul" },
 		{ text: "Screening Tracking", route: "/gyalsung-reassessment-dashboard/tracking", iconClass: "fas fa-tasks" },
         { text: "Monitoring", route: "/gyalsung-reassessment-dashboard/monitoring", iconClass: "fas fa-chart-line" },
-        { text: "Transfers & Handover", route: "/gyalsung-reassessment-dashboard/transfers", iconClass: "fas fa-exchange-alt" },
+        { text: "Transfer & Handover", route: "/gyalsung-reassessment-dashboard/transfers", iconClass: "fas fa-exchange-alt" },
 		{ text: "Reports", route: "/gyalsung-reassessment-dashboard/reports", iconClass: "fas fa-file-alt" },
     ]
 };

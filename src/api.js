@@ -24,7 +24,8 @@ const apiConfig = {
       measurement: 'measurement',
       monitoring: 'monitoring',
       reporting: 'reporting',
-      counselorScreening: 'screening' 
+      counselorScreening: 'screening', 
+      gyalsung: 'gyalsung' 
     }
   },
   screening: {
@@ -63,6 +64,12 @@ const endpointDefinitions = {
     getGyalsungUserData: 'get-gyalsung-user-data/',
     registerGyalsungCounselorUser: 'gyalsung/counselor-users/',
     registerGyalsungUser: 'register-gyalsung-user/'
+  },
+  gyalsung: {
+    getUserData: 'get-gyalsung-user-data/',
+    registerCounselorUser: 'counselor-users/',
+    registerUser: 'register-gyalsung-user/',
+    getReassessmentUsers: 'reassessment-users/',
   },
   settings: {
     settings: 'appconfig/',

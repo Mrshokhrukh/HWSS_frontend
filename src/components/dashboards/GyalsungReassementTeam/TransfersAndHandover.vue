@@ -91,78 +91,87 @@
     </div>
   </template>
   
-  <script setup>
-  import { ref, computed, onMounted, watch } from 'vue';
-  import { Modal } from 'bootstrap';
-  
-  // --- STATE & REFS ---
-  const searchQuery = ref('');
-  const currentPage = ref(1);
-  const itemsPerPage = 5;
-  const selectedCandidateForTransfer = ref(null);
-  const transferModalRef = ref(null);
-  let transferModalInstance = null;
-  
-  // --- DUMMY DATA ---
-  const candidatesToTransfer = ref([
-    { name: 'Dawa Pem', cid: '10203004455', dateDeclaredFit: '29-Apr-25', counselor: 'Ms. Pema Choden', status: 'Ready for Transfer' },
-    { name: 'Tandin Wangmo', cid: '11502008899', dateDeclaredFit: '01-May-25', counselor: 'Dr. Yeshey Dorji', status: 'Ready for Transfer' },
-    { name: 'Sonam Tobgay', cid: '10805001122', dateDeclaredFit: '02-May-25', counselor: 'Mr. Kinley Wangchuk', status: 'Ready for Transfer' },
-    { name: 'Chimi Yangzom', cid: '10103004567', dateDeclaredFit: '05-May-25', counselor: 'Ms. Pema Choden', status: 'Ready for Transfer' },
-    { name: 'Karma Jigme', cid: '11306007890', dateDeclaredFit: '06-May-25', counselor: 'Ms. Dechen Pelzom', status: 'Ready for Transfer' },
-    { name: 'Dorji Gyeltshen', cid: '11909003344', dateDeclaredFit: '10-May-25', counselor: 'Dr. Yeshey Dorji', status: 'Ready for Transfer' }
-  ]);
-  
-  // --- LIFECYCLE HOOKS ---
-  onMounted(() => {
-    if (transferModalRef.value) {
-      transferModalInstance = new Modal(transferModalRef.value);
-    }
-  });
-  
-  // --- COMPUTED PROPERTIES ---
-  const filteredCandidates = computed(() => {
-    if (!searchQuery.value) {
-      return candidatesToTransfer.value;
-    }
-    const lowerCaseQuery = searchQuery.value.toLowerCase();
-    return candidatesToTransfer.value.filter(c =>
-      c.name.toLowerCase().includes(lowerCaseQuery) ||
-      c.cid.toLowerCase().includes(lowerCaseQuery)
-    );
-  });
-  const totalPages = computed(() => Math.ceil(filteredCandidates.value.length / itemsPerPage));
-  const paginatedCandidates = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    return filteredCandidates.value.slice(start, end);
-  });
-  
-  // --- METHODS ---
-  const setPage = (page) => {
-    if (page > 0 && page <= totalPages.value) {
-      currentPage.value = page;
-    }
-  };
-  const openTransferModal = (candidate) => {
-    selectedCandidateForTransfer.value = candidate;
-    transferModalInstance?.show();
-  };
-  const confirmTransfer = () => {
-    if (!selectedCandidateForTransfer.value) return;
-    candidatesToTransfer.value = candidatesToTransfer.value.filter(
-      c => c.cid !== selectedCandidateForTransfer.value.cid
-    );
-    transferModalInstance?.hide();
-    alert(`${selectedCandidateForTransfer.value.name} has been successfully transferred.`);
-    selectedCandidateForTransfer.value = null;
-  };
-  
-  // --- WATCHERS ---
-  watch(searchQuery, () => {
-    currentPage.value = 1;
-  });
-  </script>
+  // TransferAndHandover.vue
+
+<script setup>
+// 1. IMPORT `onUnmounted`
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { Modal } from 'bootstrap';
+
+// --- STATE & REFS ---
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 5;
+const selectedCandidateForTransfer = ref(null);
+const transferModalRef = ref(null);
+let transferModalInstance = null;
+
+// --- DUMMY DATA ---
+const candidatesToTransfer = ref([
+  { name: 'Dawa Pem', cid: '10203004455', dateDeclaredFit: '29-Apr-25', counselor: 'Ms. Pema Choden', status: 'Ready for Transfer' },
+  { name: 'Tandin Wangmo', cid: '11502008899', dateDeclaredFit: '01-May-25', counselor: 'Dr. Yeshey Dorji', status: 'Ready for Transfer' },
+  { name: 'Sonam Tobgay', cid: '10805001122', dateDeclaredFit: '02-May-25', counselor: 'Mr. Kinley Wangchuk', status: 'Ready for Transfer' },
+  { name: 'Chimi Yangzom', cid: '10103004567', dateDeclaredFit: '05-May-25', counselor: 'Ms. Pema Choden', status: 'Ready for Transfer' },
+  { name: 'Karma Jigme', cid: '11306007890', dateDeclaredFit: '06-May-25', counselor: 'Ms. Dechen Pelzom', status: 'Ready for Transfer' },
+  { name: 'Dorji Gyeltshen', cid: '11909003344', dateDeclaredFit: '10-May-25', counselor: 'Dr. Yeshey Dorji', status: 'Ready for Transfer' }
+]);
+
+// --- LIFECYCLE HOOKS ---
+onMounted(() => {
+  if (transferModalRef.value) {
+    transferModalInstance = new Modal(transferModalRef.value);
+  }
+});
+
+// 2. ADD THE onUnmounted HOOK FOR CLEANUP
+onUnmounted(() => {
+  transferModalInstance?.dispose();
+});
+
+
+// --- COMPUTED PROPERTIES ---
+const filteredCandidates = computed(() => {
+  if (!searchQuery.value) {
+    return candidatesToTransfer.value;
+  }
+  const lowerCaseQuery = searchQuery.value.toLowerCase();
+  return candidatesToTransfer.value.filter(c =>
+    c.name.toLowerCase().includes(lowerCaseQuery) ||
+    c.cid.toLowerCase().includes(lowerCaseQuery)
+  );
+});
+const totalPages = computed(() => Math.ceil(filteredCandidates.value.length / itemsPerPage));
+const paginatedCandidates = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredCandidates.value.slice(start, end);
+});
+
+// --- METHODS ---
+const setPage = (page) => {
+  if (page > 0 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+};
+const openTransferModal = (candidate) => {
+  selectedCandidateForTransfer.value = candidate;
+  transferModalInstance?.show();
+};
+const confirmTransfer = () => {
+  if (!selectedCandidateForTransfer.value) return;
+  candidatesToTransfer.value = candidatesToTransfer.value.filter(
+    c => c.cid !== selectedCandidateForTransfer.value.cid
+  );
+  transferModalInstance?.hide();
+  alert(`${selectedCandidateForTransfer.value.name} has been successfully transferred.`);
+  selectedCandidateForTransfer.value = null;
+};
+
+// --- WATCHERS ---
+watch(searchQuery, () => {
+  currentPage.value = 1;
+});
+</script>
   
   <style scoped>
   /* Core Styles */

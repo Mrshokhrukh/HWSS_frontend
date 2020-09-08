@@ -146,76 +146,81 @@
     </div>
   </template>
   
-  <script setup>
-  import { ref, computed, onMounted, watch } from 'vue';
-  import { Modal } from 'bootstrap';
-  
-  // --- STATE MANAGEMENT ---
-  const searchQuery = ref('');
-  const unfitCurrentPage = ref(1);
-  const fitCurrentPage = ref(1);
-  const itemsPerPage = 5;
-  const selectedCandidateForHistory = ref(null);
-  const historyModalRef = ref(null);
-  let historyModalInstance = null;
-  
-  // --- LIFECYCLE HOOKS ---
-  onMounted(() => {
-    if (historyModalRef.value) {
-      historyModalInstance = new Modal(historyModalRef.value);
-    }
-  });
-  
-  // --- MOCK DATA ---
-  const reassessedCandidates = ref([
-    { name: 'Kinley Dorji', cid: '11204009876', dob: '05-Jan-06', lastAssessedDate: '01-Feb-25', finalStatus: 'Unfit', reassessmentCount: 2 },
-    { name: 'Ugyen Tshering', cid: '11808001122', dob: '11-Nov-06', lastAssessedDate: '20-Mar-25', finalStatus: 'Unfit', reassessmentCount: 3 },
-    { name: 'Jigme Singye', cid: '11405005566', dob: '18-Jun-06', lastAssessedDate: '05-Mar-25', finalStatus: 'Unfit', reassessmentCount: 1 },
-    { name: 'Dawa Pem', cid: '10203004455', dob: '25-Sep-06', lastAssessedDate: '10-Apr-25', finalStatus: 'Unfit', reassessmentCount: 2 },
-    { name: 'Tashi Wangchuk', cid: '11501001234', dob: '15-Mar-06', lastAssessedDate: '10-Mar-25', finalStatus: 'Fit', reassessmentCount: 1 },
-    { name: 'Yeshey Lhamo', cid: '10902005678', dob: '20-May-06', lastAssessedDate: '12-Mar-25', finalStatus: 'Fit', reassessmentCount: 1 },
-  ]);
-  
-  // --- COMPUTED PROPERTIES ---
-  const filteredCandidates = computed(() => {
-    if (!searchQuery.value) return reassessedCandidates.value;
-    const lowerCaseQuery = searchQuery.value.toLowerCase();
-    return reassessedCandidates.value.filter(c =>
-      c.name.toLowerCase().includes(lowerCaseQuery) || c.cid.toLowerCase().includes(lowerCaseQuery)
-    );
-  });
-  const filteredFitCandidates = computed(() => filteredCandidates.value.filter(c => c.finalStatus === 'Fit'));
-  const filteredUnfitCandidates = computed(() => filteredCandidates.value.filter(c => c.finalStatus === 'Unfit'));
-  const fitTotalPages = computed(() => Math.ceil(filteredFitCandidates.value.length / itemsPerPage));
-  const unfitTotalPages = computed(() => Math.ceil(filteredUnfitCandidates.value.length / itemsPerPage));
-  const paginatedFitCandidates = computed(() => {
-    const start = (fitCurrentPage.value - 1) * itemsPerPage;
-    return filteredFitCandidates.value.slice(start, start + itemsPerPage);
-  });
-  const paginatedUnfitCandidates = computed(() => {
-    const start = (unfitCurrentPage.value - 1) * itemsPerPage;
-    return filteredUnfitCandidates.value.slice(start, start + itemsPerPage);
-  });
-  
-  // --- METHODS ---
-  const setFitPage = (page) => {
-    if (page > 0 && page <= fitTotalPages.value) fitCurrentPage.value = page;
-  };
-  const setUnfitPage = (page) => {
-    if (page > 0 && page <= unfitTotalPages.value) unfitCurrentPage.value = page;
-  };
-  const viewDetails = (candidate) => alert(`Viewing details for ${candidate.name}.`);
-  const viewHistory = (candidate) => {
-    selectedCandidateForHistory.value = candidate;
-    historyModalInstance?.show();
-  };
-  
-  // --- WATCHERS ---
-  watch(searchQuery, () => {
-    fitCurrentPage.value = 1;
-    unfitCurrentPage.value = 1;
-  });
-  </script>
+  // ReassessmentTracking.vue
+
+<script setup>
+// 1. IMPORT `onUnmounted`
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { Modal } from 'bootstrap';
+
+// --- STATE MANAGEMENT ---
+const searchQuery = ref('');
+const unfitCurrentPage = ref(1);
+const fitCurrentPage = ref(1);
+const itemsPerPage = 5;
+const selectedCandidateForHistory = ref(null);
+const historyModalRef = ref(null);
+let historyModalInstance = null;
+
+// --- LIFECYCLE HOOKS ---
+onMounted(() => {
+  if (historyModalRef.value) {
+    historyModalInstance = new Modal(historyModalRef.value);
+  }
+});
+
+// 2. ADD THE onUnmounted HOOK FOR CLEANUP
+onUnmounted(() => {
+  historyModalInstance?.dispose();
+});
+
+// --- MOCK DATA ---
+const reassessedCandidates = ref([
+  { name: 'Kinley Dorji', cid: '11204009876', dob: '05-Jan-06', lastAssessedDate: '01-Feb-25', finalStatus: 'Unfit', reassessmentCount: 2 },
+  { name: 'Ugyen Tshering', cid: '11808001122', dob: '11-Nov-06', lastAssessedDate: '20-Mar-25', finalStatus: 'Unfit', reassessmentCount: 3 },
+  { name: 'Jigme Singye', cid: '11405005566', dob: '18-Jun-06', lastAssessedDate: '05-Mar-25', finalStatus: 'Unfit', reassessmentCount: 1 },
+  { name: 'Dawa Pem', cid: '10203004455', dob: '25-Sep-06', lastAssessedDate: '10-Apr-25', finalStatus: 'Unfit', reassessmentCount: 2 },
+  { name: 'Tashi Wangchuk', cid: '11501001234', dob: '15-Mar-06', lastAssessedDate: '10-Mar-25', finalStatus: 'Fit', reassessmentCount: 1 },
+  { name: 'Yeshey Lhamo', cid: '10902005678', dob: '20-May-06', lastAssessedDate: '12-Mar-25', finalStatus: 'Fit', reassessmentCount: 1 },
+]);
+
+const filteredCandidates = computed(() => {
+  if (!searchQuery.value) return reassessedCandidates.value;
+  const lowerCaseQuery = searchQuery.value.toLowerCase();
+  return reassessedCandidates.value.filter(c =>
+    c.name.toLowerCase().includes(lowerCaseQuery) || c.cid.toLowerCase().includes(lowerCaseQuery)
+  );
+});
+const filteredFitCandidates = computed(() => filteredCandidates.value.filter(c => c.finalStatus === 'Fit'));
+const filteredUnfitCandidates = computed(() => filteredCandidates.value.filter(c => c.finalStatus === 'Unfit'));
+const fitTotalPages = computed(() => Math.ceil(filteredFitCandidates.value.length / itemsPerPage));
+const unfitTotalPages = computed(() => Math.ceil(filteredUnfitCandidates.value.length / itemsPerPage));
+const paginatedFitCandidates = computed(() => {
+  const start = (fitCurrentPage.value - 1) * itemsPerPage;
+  return filteredFitCandidates.value.slice(start, start + itemsPerPage);
+});
+const paginatedUnfitCandidates = computed(() => {
+  const start = (unfitCurrentPage.value - 1) * itemsPerPage;
+  return filteredUnfitCandidates.value.slice(start, start + itemsPerPage);
+});
+
+const setFitPage = (page) => {
+  if (page > 0 && page <= fitTotalPages.value) fitCurrentPage.value = page;
+};
+const setUnfitPage = (page) => {
+  if (page > 0 && page <= unfitTotalPages.value) unfitCurrentPage.value = page;
+};
+const viewDetails = (candidate) => alert(`Viewing details for ${candidate.name}.`);
+const viewHistory = (candidate) => {
+  selectedCandidateForHistory.value = candidate;
+  historyModalInstance?.show();
+};
+
+watch(searchQuery, () => {
+  fitCurrentPage.value = 1;
+  unfitCurrentPage.value = 1;
+});
+</script>
   
   <style scoped>
   /* Core Styles from Gyalsung Profiles Reference */

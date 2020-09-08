@@ -238,105 +238,80 @@ const createAppRouter = () => {
 
   const ROUTE_LOGIN = 'login';
 
-  const clearAuthStorage = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('tokenExpiry');
-    localStorage.removeItem('userDetailsStore');
-    localStorage.removeItem('userType');
+  const clearAuthAndRedirectToLogin = (next) => {
+    const userDetailsStore = useUserDetailsStore();
+    userDetailsStore.clearUserDetails(); // This will also clear localStorage items via the store action
+    next({ name: ROUTE_LOGIN });
   };
-  const getUserTypeFromDetails = (userDetailsStore) => {
-    const role = userDetailsStore?.user?.role?.toLowerCase() || 'public';
-    if (role.includes('admin')) {
-      return 'admin';
-    } else if (role.includes('counselor')) {
-      return 'counselor';
-    } else if (role.includes('gyalsung_reassessment_team')) {
-      return 'gyalsung-reassessment';
-    } else if (role === 'student') {
-      return 'student';
-    } else {
-      return 'public';
-    }
+  
+  const getUserTypeFromRole = (role) => {
+    role = role?.toLowerCase() || 'public';
+    if (role.includes('admin')) return 'admin';
+    if (role.includes('counselor')) return 'counselor';
+    if (role === 'gyalsung_reassessment_team') return 'gyalsung-reassessment-team';
+    if (role === 'student') return 'student';
+    return 'public';
   };
 
-
-  let isUserAuthenticated = false;
-  let cachedUserType = null;
-  let tokenValidityChecked = false;
-
+  // =========================================================================
+  // NEW, ROBUST NAVIGATION GUARD
+  // =========================================================================
   router.beforeEach(async (to, from, next) => {
     document.title = to.meta.title ? `${to.meta.title} | HWSS` : 'HWSS | Mental Health Matters';
+    
+    const userDetailsStore = useUserDetailsStore();
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const authToken = localStorage.getItem('authToken');
     const tokenExpiry = localStorage.getItem('tokenExpiry');
-    const isAuthenticatedInStorage = authToken !== null;
-    const isTokenExpired = tokenExpiry && new Date(tokenExpiry) < new Date();
-
-    if (isAuthenticatedInStorage && isTokenExpired) {
-      clearAuthStorage();
-      isUserAuthenticated = false;
-      cachedUserType = null;
-      tokenValidityChecked = false;
-      return next({ name: ROUTE_LOGIN });
+    
+    // 1. Check for token expiration
+    if (authToken && tokenExpiry && new Date(tokenExpiry) < new Date()) {
+      console.log('Token expired. Clearing auth and redirecting to login.');
+      return clearAuthAndRedirectToLogin(next);
     }
 
-    if (isAuthenticatedInStorage && !isTokenExpired && !tokenValidityChecked) {
+    // 2. If the user is authenticated (has a token) but the Pinia store is empty, re-populate it.
+    if (authToken && !userDetailsStore.user.role) {
+      console.log('Token exists but user store is empty. Fetching user details...');
       try {
-        const response = await apiClient.post(endpoints.authenticateToken, null, {
-          headers: { 'Authorization': `Token ${authToken}` },
-        });
-
-        if (response.data.valid) {
-          isUserAuthenticated = true;
-          const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
-          cachedUserType = getUserTypeFromDetails(userDetailsStore);
-          localStorage.setItem('userType', cachedUserType);
-        } else {
-          clearAuthStorage();
-          isUserAuthenticated = false;
-          cachedUserType = null;
-        }
-        tokenValidityChecked = true;
+        // This action fetches user data from the API and populates the store.
+        await userDetailsStore.fetchUserDetails();
       } catch (error) {
-        console.error('Error validating token:', error);
-        clearAuthStorage();
-        isUserAuthenticated = false;
-        cachedUserType = null;
-        tokenValidityChecked = true;
-        return next({ name: ROUTE_LOGIN });
+        console.error('Failed to re-validate token and fetch user details during navigation:', error);
+        // If fetching fails, the token is likely invalid.
+        return clearAuthAndRedirectToLogin(next);
       }
-    } else if (!isAuthenticatedInStorage) {
-      isUserAuthenticated = false;
-      cachedUserType = null;
-      tokenValidityChecked = false;
     }
-
+    
+    // 3. Handle protected routes
     if (requiresAuth) {
-      if (!isUserAuthenticated) {
+      if (!authToken) {
+        // If auth is required and there's no token, redirect to login
         return next({ name: ROUTE_LOGIN });
       } else {
+        // Special permission check for Gyalsung routes (your existing logic)
         const gyalsungRoutes = ['gyalsung-register', 'gyalsung-screening'];
         const allowedRolesForGyalsung = ['clinical_counselor', 'trained_professional'];
-
         if (gyalsungRoutes.includes(to.name)) {
-          const userDetailsStore = useUserDetailsStore();
           const userRole = userDetailsStore.user?.role?.toLowerCase();
-
           if (!allowedRolesForGyalsung.includes(userRole)) {
-            console.warn(`Unauthorized access to '${to.name}' by role '${userRole}'. Redirecting.`);
-            const dashboardRoute = localStorage.getItem('userType') || cachedUserType;
-            return next({ name: `${dashboardRoute}-dashboard` });
+            const userType = getUserTypeFromRole(userRole);
+            return next({ name: `${userType}-dashboard` });
           }
         }
+        // If all checks pass, allow access to the protected route
         return next();
       }
-    } else {
-      if (isUserAuthenticated && to.name !== ROUTE_LOGIN && to.name !== 'register' && to.name !== 'forgot-password') {
-        const currentUserType = localStorage.getItem('userType') || cachedUserType;
-        if (currentUserType) {
-          return next({ name: `${currentUserType}-dashboard` });
-        }
+    } 
+    // 4. Handle public routes
+    else {
+      // If the user is already logged in and tries to visit a public page like Login or Home
+      if (authToken && (to.name === ROUTE_LOGIN || to.name === 'register' || to.name === 'home')) {
+        // Redirect them to their appropriate dashboard instead
+        const userType = getUserTypeFromRole(userDetailsStore.user.role);
+        return next({ name: `${userType}-dashboard` });
       }
+      // Otherwise, allow access to the public page
       return next();
     }
   });

@@ -144,10 +144,11 @@
       </div>
     </div>
   </template>
-  
+
+
   <script setup>
-  // Script remains unchanged from your original code, as the logic is sound.
-  import { ref, computed, onMounted, watch } from 'vue';
+  // 1. IMPORT `onUnmounted`
+  import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
   import { Modal } from 'bootstrap';
   
   const searchQuery = ref('');
@@ -175,6 +176,12 @@
   onMounted(() => {
     if (detailsModalRef.value) detailsModalInstance = new Modal(detailsModalRef.value);
     if (referModalRef.value) referModalInstance = new Modal(referModalRef.value);
+  });
+  
+  // 2. ADD THE onUnmounted HOOK FOR CLEANUP
+  onUnmounted(() => {
+    detailsModalInstance?.dispose();
+    referModalInstance?.dispose();
   });
   
   const filteredCandidates = computed(() => {
@@ -225,7 +232,7 @@
       ];
       delete candidateInList.severityDetails;
     }
-    referralModalInstance?.hide();
+    referModalInstance?.hide();
     alert(`Successfully referred ${selectedCandidate.value.name} to ${selectedCounselor.value}.`);
   };
   
