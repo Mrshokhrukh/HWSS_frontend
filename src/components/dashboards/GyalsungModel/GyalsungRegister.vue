@@ -5,6 +5,7 @@
       <div class="warning-badge">*** Please use a valid 11-digit CID# for lookup ***</div>
     </div>
 
+    <!-- CID LOOKUP SECTION -->
     <div class="form-section">
       <div class="section-header">
         <h4>CID Lookup</h4>
@@ -16,12 +17,13 @@
           id="cid-input"
           v-model="cid"
           type="text"
+          class="form-control"
           placeholder="Enter 11-digit CID"
           :class="{ 'is-invalid': cidError }"
           @input="validateCid"
           maxlength="11"
         />
-        <button class="lookup-button" @click="lookup">
+        <button class="lookup-button" @click="lookup" :disabled="loading">
           <span v-if="!loading">Search</span>
           <span v-else>Searching...</span>
         </button>
@@ -32,6 +34,7 @@
       <small class="help-text">Enter CID and click Search to auto-fill details.</small>
     </div>
 
+    <!-- ENTRANT DETAILS SECTION -->
     <div class="form-section">
       <div class="section-header">
         <h4>Entrant Details</h4>
@@ -51,7 +54,6 @@
           <label>Last Name:</label>
           <input v-model="form.last_name" readonly />
         </div>
-
         <div class="form-group">
           <label>Date Of Birth:</label>
           <input v-model="form.date_of_birth" type="date" readonly />
@@ -69,26 +71,34 @@
           <label>Personal Contact#</label>
           <input v-model="form.mob_number" />
         </div>
-
         <div class="form-group">
           <label>Guardian Contact#</label>
-          <input v-model="form.guardian_contact" />
+          <input v-model="form.guardian_contact" readonly />
         </div>
         <div class="form-group">
           <label>Appointment Date</label>
-          <input v-model="form.appointment_date" type="date" />
+          <input v-model="form.appointment_date" type="date" readonly />
         </div>
         <div class="form-group">
           <label>Hospital Name</label>
-          <input v-model="form.hospital" />
+          <input v-model="form.hospital" readonly />
         </div>
         <div class="form-group">
           <label>Dzongkhag</label>
           <input v-model="form.dzongkhag" readonly />
         </div>
+        <div class="form-group">
+          <label>Academy</label>
+          <input v-model="form.academy" readonly />
+        </div>
+        <div class="form-group">
+          <label>Personal Number</label>
+          <input v-model="form.personal_number" readonly />
+        </div>
       </div>
     </div>
 
+    <!-- FORM ACTIONS -->
     <div class="form-actions">
       <button
         type="button"
@@ -102,6 +112,7 @@
       </button>
     </div>
 
+    <!-- SUCCESS MODAL -->
     <div
       class="modal fade"
       id="successModal"
@@ -127,8 +138,9 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import endpoints from '@/api'
 
 const submitting = ref(false)
 const successModal = ref(null)
@@ -149,115 +161,75 @@ const form = ref({
   guardian_contact: '',
   appointment_date: '',
   hospital: '',
-  dzongkhag: ''
+  dzongkhag: '',
+  academy: '',
+  personal_number: ''
 })
-
-// Mock user data based on your JSON
-const mockUsers = ref([
-  {
-    id: 6,
-    username: 'sezylub',
-    is_staff: false,
-    is_active: true,
-    is_gyalsung: true,
-    identity_number: '12203000121',
-    nationality: 'Bhutanese',
-    first_name: 'Rashme',
-    middle_name: null,
-    last_name: 'Gurung',
-    date_of_birth: '1984-05-14',
-    gender: 'Female',
-    email: 'rashmegurung123@druksmart.com',
-    mob_number: '17648107',
-    father_name: null,
-    mother_name: null,
-    perm_add_village: 'Dugphey(Dubey)',
-    perm_add_gewog: 'Norgaygang/Bara',
-    perm_add_dzongkhag: 'Samtse',
-    profile_picture: null,
-    academy_code: null,
-    date_joined: '2024-02-17T12:37:23.854000+06:00',
-    role: 'student',
-    active_agency: null,
-    active_agency_details: {
-      agency_name: null,
-      agency_code: null,
-      agency_parent: null
-    },
-    gyalsung_status: 'registered',
-    registration_method: 'gyalsung_registration'
-  }
-])
 
 const validateCid = () => {
   const cidValue = cid.value.trim()
 
   if (!cidValue) {
     cidError.value = ''
-    userFound.value = false;
     return
   }
 
   if (!/^\d+$/.test(cidValue)) {
     cidError.value = 'CID must contain only numbers'
-    userFound.value = false;
-    return
-  }
-
-  if (cidValue.length !== 11) {
+  } else if (cidValue.length !== 11) {
     cidError.value = 'CID must be exactly 11 digits'
-    userFound.value = false;
-    return
+  } else {
+    cidError.value = ''
   }
-
-  cidError.value = ''
 }
 
-const clearForm = () => {
-  form.value = {
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    date_of_birth: '',
-    gender: '',
-    mob_number: '',
-    guardian_contact: '',
-    appointment_date: '',
-    hospital: '',
-    dzongkhag: ''
-  };
-};
-
 const lookup = async () => {
-  validateCid();
-  if (!cid.value || cidError.value) {
-      clearForm();
-      userFound.value = false;
-      return;
-  }
+  if (!cid.value || cidError.value) return
   loading.value = true
   userFound.value = false
-  clearForm();
 
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const response = await fetch(endpoints.getGyalsungUserData, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ cid: cid.value })
+    })
 
-    const userData = mockUsers.value.find(
-      (user) => user.identity_number === cid.value
-    )
+    if (!response.ok) {
+      throw new Error('Failed to fetch user data')
+    }
+
+    const userData = await response.json()
 
     if (userData) {
+      const formatDate = (dateString) => {
+        if (!dateString) return ''
+        const parts = dateString.split('/')
+        if (parts.length === 3) {
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+        }
+        return dateString
+      }
+
       form.value.first_name = userData.first_name || ''
       form.value.middle_name = userData.middle_name || ''
       form.value.last_name = userData.last_name || ''
-      form.value.date_of_birth = userData.date_of_birth || ''
+      form.value.date_of_birth = formatDate(userData.date_of_birth) || ''
       form.value.gender = userData.gender || ''
       form.value.mob_number = userData.mob_number || ''
-      form.value.dzongkhag = userData.perm_add_dzongkhag || ''
+      form.value.guardian_contact = userData.guard_contact_number || ''
+      form.value.appointment_date = formatDate(userData.appointment_date) || ''
+      form.value.hospital = userData.hospital_name || ''
+      form.value.dzongkhag = userData.hospital_dzongkhag || ''
+      form.value.academy = userData.academy || ''
+      form.value.personal_number = userData.personal_number || ''
+
       userFound.value = true
     } else {
       alert('User not found with this CID. Please enter details manually.')
-      userFound.value = false // Although it enables the form, the register button remains disabled
+      userFound.value = false
     }
   } catch (error) {
     console.error('CID lookup failed', error)
@@ -270,13 +242,51 @@ const lookup = async () => {
 
 const registerUser = async () => {
   if (!cid.value || cidError.value || !userFound.value) {
-    alert('Please enter a valid CID and successfully find a user first.')
+    alert('Please enter a valid CID and search for a user first')
     return
   }
 
   submitting.value = true
   try {
+    const requestData = {
+      cid: cid.value
+    }
+
+    const token = localStorage.getItem('authToken')
+
+    if (!token) {
+      alert('Authentication error. The counselor is not logged in or the session has expired.')
+      submitting.value = false
+      return
+    }
+
+    console.log('Sending registration request:', requestData)
+
+    const response = await fetch(endpoints.registerGyalsungUser, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`
+      },
+      body: JSON.stringify(requestData)
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(
+          'Authentication failed. Your session may have expired. Please log out and log in again.'
+        )
+      }
+      const errorText = await response.text()
+      console.error('Server response:', errorText)
+      throw new Error(`Failed to register user: ${response.status} ${response.statusText}`)
+    }
+
+    const result = await response.json()
+    console.log('Registration successful:', result)
+
     localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]))
+
     const modal = new bootstrap.Modal(successModal.value)
     modal.show()
   } catch (error) {
@@ -289,9 +299,7 @@ const registerUser = async () => {
 
 const startScreening = () => {
   const modal = bootstrap.Modal.getInstance(successModal.value)
-  if (modal) {
-    modal.hide()
-  }
+  modal.hide()
 
   localStorage.setItem('isGyalsungFlow', 'true')
 
@@ -302,10 +310,6 @@ const startScreening = () => {
 
   router.push('/GyalsungModel/GyalsungScreening')
 }
-
-onMounted(() => {
- 
-})
 </script>
 
 <style scoped>
@@ -315,6 +319,8 @@ onMounted(() => {
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(43, 101, 111, 0.08);
   font-family: sans-serif;
+  max-width: 1200px;
+  margin: 2rem auto;
 }
 
 .form-header {
@@ -386,7 +392,8 @@ onMounted(() => {
   position: relative;
 }
 
-label, .form-label {
+label,
+.form-label {
   display: block;
   color: #1d4851;
   margin-bottom: 0.5rem;
@@ -421,7 +428,9 @@ textarea:hover {
   border-color: rgba(43, 101, 111, 0.4);
 }
 
-input:read-only, input:disabled, select:disabled {
+input:read-only,
+input:disabled,
+select:disabled {
   background-color: #f0f3f4;
   cursor: not-allowed;
   opacity: 0.7;
@@ -469,7 +478,7 @@ select {
   display: block;
 }
 input.is-invalid {
-    border-color: #d9534f;
+  border-color: #d9534f;
 }
 
 /* Action Buttons */
