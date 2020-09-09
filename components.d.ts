@@ -99,6 +99,7 @@ declare module 'vue' {
     GyalsungReassessmentDashboard: typeof import('./src/components/dashboards/GyalsungReassementTeam/GyalsungReassessmentDashboard.vue')['default']
     GyalsungReassessmentScreening: typeof import('./src/components/dashboards/GyalsungReassementTeam/ReassessmentScreeningTracking.vue')['default']
     GyalsungRegister: typeof import('./src/components/dashboards/GyalsungModel/GyalsungRegister.vue')['default']
+    GyalsungReports: typeof import('./src/components/dashboards/GyalsungModel/GyalsungReports.vue')['default']
     GyalsungScreening: typeof import('./src/components/dashboards/GyalsungModel/GyalsungScreening.vue')['default']
     GyalsungScreeningRegister: typeof import('./src/components/dashboards/GyalsungModel/GyalsungScreeningRegister.vue')['default']
     HelplineServices: typeof import('./src/components/dashboards/screenings/screeningCards/HelplineServices.vue')['default']
