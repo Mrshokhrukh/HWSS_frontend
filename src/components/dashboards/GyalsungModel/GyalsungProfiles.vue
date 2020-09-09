@@ -72,7 +72,7 @@
   <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import endpoints from '@/api'
+import endpoints from '@/api';
 
 const users = ref([])
 const loading = ref(false)
@@ -95,9 +95,9 @@ const filteredUsers = computed(() => {
       user.status,
       user.identity_number,
       user.mob_number
-    ].filter(Boolean)
+    ].filter(Boolean);
 
-    return searchableFields.some((field) => String(field).toLowerCase().includes(searchTerm))
+    return searchableFields.some((field) => String(field).toLowerCase().includes(searchTerm));
   })
 })
 
@@ -175,10 +175,10 @@ const fetchGyalsungUsers = async () => {
       }
     })
   } catch (err) {
-    console.error('Failed to fetch gyalsung users:', err)
-    error.value = 'Failed to fetch gyalsung users. Please try again.'
+    console.error('Failed to fetch gyalsung users:', err);
+    error.value = 'Failed to fetch gyalsung users. Please try again.';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
@@ -214,7 +214,8 @@ const fetchGyalsungUsers = async () => {
             Oct: '10',
             Nov: '11',
             Dec: '12'
-          }
+          };
+
           const day = parts[0].padStart(2, '0')
           const month = monthMap[parts[1]] || '01'
           let year = parts[2]
@@ -261,7 +262,8 @@ const fetchGyalsungUsers = async () => {
   
   onMounted(() => {
     fetchGyalsungUsers()
-  })
+  });
+  
   </script>
   
   <style scoped>

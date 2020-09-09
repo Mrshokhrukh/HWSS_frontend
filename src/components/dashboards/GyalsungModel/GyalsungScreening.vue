@@ -9,14 +9,14 @@
             <div class="loading-spinner"></div>
             <h4>Loading screening questions...</h4>
           </div>
-          
+
           <!-- Error State -->
           <div v-else-if="error" class="error-state">
             <h4>Error loading questions</h4>
             <p>{{ error }}</p>
             <button @click="fetchScreeningQuestions" class="retry-btn">Retry</button>
           </div>
-          
+
           <!-- Screening Questions -->
           <div v-else-if="screeningQuestions.length > 0" class="screening-questions">
             <div class="question-header">
@@ -25,23 +25,26 @@
                 Question {{ currentQuestionIndex + 1 }} of {{ screeningQuestions.length }}
               </div>
             </div>
-            
+
             <div class="question-container" v-if="currentQuestion">
               <div class="question-card">
                 <h4 class="question-text">{{ currentQuestion.question_text }}</h4>
-                
+
                 <!-- Multiple Choice Questions -->
-                <div v-if="currentQuestion.question_type === 'multiple_choice'" class="answer-options">
-                  <div 
-                    v-for="option in currentQuestion.options" 
+                <div
+                  v-if="currentQuestion.question_type === 'multiple_choice'"
+                  class="answer-options"
+                >
+                  <div
+                    v-for="option in currentQuestion.options"
                     :key="option.id"
                     class="option-item"
                     @click="selectAnswer(option)"
                     :class="{ selected: selectedAnswer?.id === option.id }"
                   >
                     <div class="option-radio">
-                      <input 
-                        type="radio" 
+                      <input
+                        type="radio"
                         :name="`question_${currentQuestion.id}`"
                         :checked="selectedAnswer?.id === option.id"
                         readonly
@@ -50,21 +53,27 @@
                     <span class="option-text">{{ option.option_text }}</span>
                   </div>
                 </div>
-                
+
                 <!-- Text Input Questions -->
-                <div v-else-if="currentQuestion.question_type === 'text'" class="text-input-container">
-                  <textarea 
+                <div
+                  v-else-if="currentQuestion.question_type === 'text'"
+                  class="text-input-container"
+                >
+                  <textarea
                     v-model="textAnswer"
                     :placeholder="currentQuestion.placeholder || 'Enter your answer...'"
                     class="text-input"
                     rows="4"
                   ></textarea>
                 </div>
-                
+
                 <!-- Number Input Questions -->
-                <div v-else-if="currentQuestion.question_type === 'number'" class="number-input-container">
-                  <input 
-                    type="number" 
+                <div
+                  v-else-if="currentQuestion.question_type === 'number'"
+                  class="number-input-container"
+                >
+                  <input
+                    type="number"
                     v-model="numberAnswer"
                     :placeholder="currentQuestion.placeholder || 'Enter a number...'"
                     class="number-input"
@@ -73,28 +82,24 @@
                   />
                 </div>
               </div>
-              
+
               <!-- Navigation Buttons -->
               <div class="navigation-buttons">
-                <button 
+                <button
                   @click="goToPreviousQuestion"
                   class="nav-btn prev-btn"
                   :disabled="currentQuestionIndex === 0"
                 >
                   Previous
                 </button>
-                
-                <button 
-                  @click="goToNextQuestion"
-                  class="nav-btn next-btn"
-                  :disabled="!hasAnswered"
-                >
+
+                <button @click="goToNextQuestion" class="nav-btn next-btn" :disabled="!hasAnswered">
                   {{ isLastQuestion ? 'Complete' : 'Next' }}
                 </button>
               </div>
             </div>
           </div>
-          
+
           <!-- Empty State -->
           <div v-else class="empty-state">
             <h4>No screening questions available</h4>
@@ -111,6 +116,8 @@ import { ref, onMounted, computed, watch } from 'vue'
 import Swal from 'sweetalert2'
 import { useRouter } from 'vue-router'
 import { getUserScreenedData, setUserScreenedData } from '@/indexedDBHelper'
+import apiClient from '@/apiClient'
+import endpoints from '@/api'
 
 const router = useRouter()
 
@@ -143,7 +150,7 @@ const isLastQuestion = computed(() => {
 
 const hasAnswered = computed(() => {
   if (!currentQuestion.value) return false
-  
+
   if (currentQuestion.value.question_type === 'multiple_choice') {
     return selectedAnswer.value !== null
   } else if (currentQuestion.value.question_type === 'text') {
@@ -154,30 +161,60 @@ const hasAnswered = computed(() => {
   return false
 })
 
-// Method to fetch screening questions from ScreeningGyalsung data
+// Method to fetch screening questions from backend API
 const fetchScreeningQuestions = async () => {
   try {
     loading.value = true
     error.value = null
-    
-    // Get questions from ScreeningGyalsung component data
-    const gyalsungQuestions = getGyalsungQuestionsFromScreeningComponent()
-    
-    if (gyalsungQuestions && gyalsungQuestions.length > 0) {
-      screeningQuestions.value = gyalsungQuestions
-      console.log('Loaded Gyalsung questions from Screening component:', screeningQuestions.value.length)
+
+    // Fetch Gyalsung screening questions from the API
+    const response = await apiClient.get(`${endpoints.screeningPreTests}?name=Gyalsung Screening`)
+
+    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      // Process the API response to match our expected format
+      const processedQuestions = []
+
+      response.data.forEach((testData) => {
+        if (testData.question_sets && Array.isArray(testData.question_sets)) {
+          testData.question_sets.forEach((questionSet) => {
+            if (questionSet.questions && Array.isArray(questionSet.questions)) {
+              questionSet.questions.forEach((question) => {
+                processedQuestions.push({
+                  id: question.id,
+                  question_text: question.text,
+                  question_type: 'multiple_choice', // Assuming all are multiple choice for now
+                  options: question.answers
+                    ? question.answers.map((answer) => ({
+                        id: answer.id,
+                        option_text: answer.option,
+                        point: answer.points || 0
+                      }))
+                    : [],
+                  setName: questionSet.name
+                })
+              })
+            }
+          })
+        }
+      })
+
+      screeningQuestions.value = processedQuestions
+      console.log('Loaded Gyalsung questions from API:', screeningQuestions.value.length)
     } else {
       // Fallback to mock data if no questions found
       screeningQuestions.value = getMockGyalsungQuestions()
-      console.log('Using mock Gyalsung questions:', screeningQuestions.value.length)
+      console.log(
+        'No API data found, using mock Gyalsung questions:',
+        screeningQuestions.value.length
+      )
     }
-    
   } catch (err) {
-    console.error('Error loading Gyalsung screening questions:', err)
+    console.error('Error fetching Gyalsung screening questions from API:', err)
     error.value = 'Failed to load screening questions. Please try again.'
-    
-    // Load mock data for testing if anything fails
+
+    // Load mock data for testing if API fails
     screeningQuestions.value = getMockGyalsungQuestions()
+    console.log('API failed, using mock Gyalsung questions:', screeningQuestions.value.length)
   } finally {
     loading.value = false
   }
@@ -189,16 +226,16 @@ const getGyalsungQuestionsFromScreeningComponent = () => {
   const staticQuestions = [
     'Feeling nervous, anxious, or on edge',
     'Not being able to stop or control worrying'
-  ];
-  
+  ]
+
   // Default answers from ScreeningGyalsung
   const defaultAnswers = [
-    { id: 0, option: "Not at all", points: 0 },
-    { id: 1, option: "Several days", points: 1 },
-    { id: 2, option: "More than half the days", points: 2 },
-    { id: 3, option: "Nearly everyday", points: 3 }
-  ];
-  
+    { id: 0, option: 'Not at all', points: 0 },
+    { id: 1, option: 'Several days', points: 1 },
+    { id: 2, option: 'More than half the days', points: 2 },
+    { id: 3, option: 'Nearly everyday', points: 3 }
+  ]
+
   // Fallback questions from ScreeningGyalsung
   const fallbackQuestions = [
     { id: 14, text: 'Worrying too much about different things', answers: defaultAnswers },
@@ -206,40 +243,40 @@ const getGyalsungQuestionsFromScreeningComponent = () => {
     { id: 16, text: 'Being so restless that it is hard to sit still', answers: defaultAnswers },
     { id: 17, text: 'Becoming easily annoyed or irritable', answers: defaultAnswers },
     { id: 18, text: 'Feeling afraid, as if something awful might happen', answers: defaultAnswers }
-  ];
-  
+  ]
+
   // Combine static questions and fallback questions
-  const allQuestions = [];
-  
+  const allQuestions = []
+
   // Add static questions
   staticQuestions.forEach((question, index) => {
     allQuestions.push({
       id: `static_${index}`,
       question_text: question,
       question_type: 'multiple_choice',
-      options: defaultAnswers.map(da => ({
+      options: defaultAnswers.map((da) => ({
         id: da.id,
         option_text: da.option,
         point: da.points
       }))
-    });
-  });
-  
+    })
+  })
+
   // Add fallback questions
   fallbackQuestions.forEach((question, index) => {
     allQuestions.push({
       id: question.id,
       question_text: question.text,
       question_type: 'multiple_choice',
-      options: question.answers.map(a => ({
+      options: question.answers.map((a) => ({
         id: a.id,
         option_text: a.option,
         point: a.points
       }))
-    });
-  });
-  
-  return allQuestions;
+    })
+  })
+
+  return allQuestions
 }
 
 // Mock data for testing
@@ -247,35 +284,35 @@ const getMockGyalsungQuestions = () => {
   return [
     {
       id: 1,
-      question_text: "How often have you felt nervous, anxious, or on edge?",
-      question_type: "multiple_choice",
+      question_text: 'How often have you felt nervous, anxious, or on edge?',
+      question_type: 'multiple_choice',
       options: [
-        { id: 1, option_text: "Not at all", point: 0 },
-        { id: 2, option_text: "Several days", point: 1 },
-        { id: 3, option_text: "More than half the days", point: 2 },
-        { id: 4, option_text: "Nearly every day", point: 3 }
+        { id: 1, option_text: 'Not at all', point: 0 },
+        { id: 2, option_text: 'Several days', point: 1 },
+        { id: 3, option_text: 'More than half the days', point: 2 },
+        { id: 4, option_text: 'Nearly every day', point: 3 }
       ]
     },
     {
       id: 2,
-      question_text: "How often have you been able to stop or control worrying?",
-      question_type: "multiple_choice",
+      question_text: 'How often have you been able to stop or control worrying?',
+      question_type: 'multiple_choice',
       options: [
-        { id: 5, option_text: "Not at all", point: 0 },
-        { id: 6, option_text: "Several days", point: 1 },
-        { id: 7, option_text: "More than half the days", point: 2 },
-        { id: 8, option_text: "Nearly every day", point: 3 }
+        { id: 5, option_text: 'Not at all', point: 0 },
+        { id: 6, option_text: 'Several days', point: 1 },
+        { id: 7, option_text: 'More than half the days', point: 2 },
+        { id: 8, option_text: 'Nearly every day', point: 3 }
       ]
     },
     {
       id: 3,
-      question_text: "How often do you worry about different things?",
-      question_type: "multiple_choice",
+      question_text: 'How often do you worry about different things?',
+      question_type: 'multiple_choice',
       options: [
-        { id: 9, option_text: "Not at all", point: 0 },
-        { id: 10, option_text: "Several days", point: 1 },
-        { id: 11, option_text: "More than half the days", point: 2 },
-        { id: 12, option_text: "Nearly every day", point: 3 }
+        { id: 9, option_text: 'Not at all', point: 0 },
+        { id: 10, option_text: 'Several days', point: 1 },
+        { id: 11, option_text: 'More than half the days', point: 2 },
+        { id: 12, option_text: 'Nearly every day', point: 3 }
       ]
     }
   ]
@@ -296,16 +333,16 @@ const clearCurrentAnswer = () => {
 // Method to save current answer
 const saveCurrentAnswer = () => {
   if (!currentQuestion.value || !hasAnswered.value) return
-  
+
   const questionId = currentQuestion.value.id
-  const existingAnswerIndex = answers.value.findIndex(a => a.question_id === questionId)
-  
+  const existingAnswerIndex = answers.value.findIndex((a) => a.question_id === questionId)
+
   let answerData = {
     question_id: questionId,
     question_text: currentQuestion.value.question_text,
     question_type: currentQuestion.value.question_type
   }
-  
+
   if (currentQuestion.value.question_type === 'multiple_choice') {
     answerData.selected_option_id = selectedAnswer.value.id
     answerData.selected_option_text = selectedAnswer.value.option_text
@@ -315,7 +352,7 @@ const saveCurrentAnswer = () => {
   } else if (currentQuestion.value.question_type === 'number') {
     answerData.number_answer = parseFloat(numberAnswer.value)
   }
-  
+
   if (existingAnswerIndex > -1) {
     answers.value[existingAnswerIndex] = answerData
   } else {
@@ -326,15 +363,17 @@ const saveCurrentAnswer = () => {
 // Method to load saved answer for current question
 const loadSavedAnswer = () => {
   if (!currentQuestion.value) return
-  
-  const savedAnswer = answers.value.find(a => a.question_id === currentQuestion.value.id)
+
+  const savedAnswer = answers.value.find((a) => a.question_id === currentQuestion.value.id)
   if (!savedAnswer) {
     clearCurrentAnswer()
     return
   }
-  
+
   if (currentQuestion.value.question_type === 'multiple_choice') {
-    const option = currentQuestion.value.options?.find(o => o.id === savedAnswer.selected_option_id)
+    const option = currentQuestion.value.options?.find(
+      (o) => o.id === savedAnswer.selected_option_id
+    )
     selectedAnswer.value = option || null
   } else if (currentQuestion.value.question_type === 'text') {
     textAnswer.value = savedAnswer.text_answer || ''
@@ -346,9 +385,9 @@ const loadSavedAnswer = () => {
 // Method to go to next question
 const goToNextQuestion = () => {
   if (!hasAnswered.value) return
-  
+
   saveCurrentAnswer()
-  
+
   if (isLastQuestion.value) {
     completeScreening()
   } else {
@@ -382,67 +421,152 @@ const completeScreening = () => {
   })
 }
 
-// Method to submit assessments (without API)
+// Method to submit assessments to the API
 const submitAssessments = async () => {
   try {
     let userId = ClientUserIdCaseBase.value.length > 0 ? ClientUserIdCaseBase.value[0] : null
-    
+
     if (!userId && isGyalsungFlow.value) {
       userId = localStorage.getItem('gyalsungUserCID')
     }
-    
+
     if (!userId) {
-      // Generate a temporary user ID if none exists
-      userId = 'temp_' + Date.now()
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'User ID not found. Please register first.',
+        confirmButtonText: 'OK'
+      })
+      return
     }
-    
+
     // Calculate total score
     const totalScore = answers.value.reduce((sum, answer) => {
       return sum + (answer.point || 0)
     }, 0)
-    
-    // Store the screening data in localStorage for later use
-    const screeningData = {
-      userId: userId,
-      answers: answers.value,
-      totalScore: totalScore,
-      submittedAt: new Date().toISOString()
+
+    // Prepare submission data in the format expected by the API
+    const submissionData = {
+      user_cid: userId,
+      test_type_name: 'Gyalsung Screening',
+      total_score: totalScore,
+      responses: answers.value.map((answer, index) => ({
+        question_id: answer.question_id,
+        question_text: answer.question_text,
+        answer: answer.selected_option_text || answer.text_answer || answer.number_answer,
+        score: answer.point || 0,
+        question_set_name: answer.setName || 'Gyalsung Screening'
+      }))
     }
-    
-    localStorage.setItem('gyalsungScreeningData', JSON.stringify(screeningData))
-    
-    // Store user data
-    sessionStorage.setItem('ClientUserIdCaseBase', JSON.stringify([userId]))
-    
-    // Clear local storage
-    clearLocalStorageData()
-    await incrementUserScreenedToday()
-    
-    // Show success message
-    Swal.fire({
-      icon: 'success',
-      title: 'Assessment Submitted Successfully',
-      text: 'Assessment submitted successfully for the current user.',
-      confirmButtonText: 'OK'
-    }).then(() => {
-      // Clear the Gyalsung flow flag
-      if (isGyalsungFlow.value) {
-        localStorage.removeItem('isGyalsungFlow')
-        localStorage.removeItem('gyalsungUserCID')
-        localStorage.removeItem('gyalsungUserData')
+
+    console.log('Submitting Gyalsung screening data:', submissionData)
+
+    // Submit to the Gyalsung screening API endpoint
+    const response = await apiClient.post(endpoints.gyalsungScreenSubmission, submissionData)
+
+    console.log('Gyalsung submission response:', response.data)
+
+    // Handle successful submission
+    if (response.data) {
+      // Store the screening data in localStorage for reference
+      const screeningData = {
+        userId: userId,
+        answers: answers.value,
+        totalScore: totalScore,
+        submittedAt: new Date().toISOString(),
+        submissionResponse: response.data
       }
-      
-      window.location.reload()
-    })
-    
+
+      localStorage.setItem('gyalsungScreeningData', JSON.stringify(screeningData))
+
+      // Clear local storage
+      clearLocalStorageData()
+      await incrementUserScreenedToday()
+
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Assessment Submitted Successfully',
+        text: 'Your Gyalsung screening has been submitted successfully.',
+        confirmButtonText: 'OK'
+      }).then(() => {
+        // Clear the Gyalsung flow flag
+        if (isGyalsungFlow.value) {
+          localStorage.removeItem('isGyalsungFlow')
+          localStorage.removeItem('gyalsungUserCID')
+          localStorage.removeItem('gyalsungUserData')
+        }
+
+        // Navigate back to dashboard or reload
+        router.push('/counselor-dashboard')
+      })
+    }
   } catch (error) {
-    console.error('Error submitting assessment:', error)
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Failed to submit assessment. Please try again later.',
-      confirmButtonText: 'OK'
-    })
+    console.error('Error submitting Gyalsung assessment:', error)
+
+    // Handle specific API errors
+    if (error.response && error.response.data) {
+      const errorMessage =
+        error.response.data.error || error.response.data.message || 'Failed to submit assessment'
+
+      if (errorMessage.includes('already submitted')) {
+        const confirmSubmit = await Swal.fire({
+          icon: 'warning',
+          title: 'Already Submitted',
+          text: 'You have already submitted this screening. Do you want to submit again?',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, submit again',
+          cancelButtonText: 'Cancel'
+        })
+
+        if (confirmSubmit.isConfirmed) {
+          // Retry submission with confirmation flag
+          try {
+            const retryData = { ...submissionData, confirmation: true }
+            const retryResponse = await apiClient.post(
+              endpoints.gyalsungScreenSubmission,
+              retryData
+            )
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Assessment Resubmitted Successfully',
+              text: 'Your Gyalsung screening has been resubmitted successfully.',
+              confirmButtonText: 'OK'
+            }).then(() => {
+              if (isGyalsungFlow.value) {
+                localStorage.removeItem('isGyalsungFlow')
+                localStorage.removeItem('gyalsungUserCID')
+                localStorage.removeItem('gyalsungUserData')
+              }
+              router.push('/counselor-dashboard')
+            })
+          } catch (retryError) {
+            console.error('Error resubmitting:', retryError)
+            Swal.fire({
+              icon: 'error',
+              title: 'Submission Failed',
+              text: 'Failed to resubmit assessment. Please try again later.',
+              confirmButtonText: 'OK'
+            })
+          }
+        }
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Submission Failed',
+          text: errorMessage,
+          confirmButtonText: 'OK'
+        })
+      }
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'Failed to submit assessment. Please check your connection and try again.',
+        confirmButtonText: 'OK'
+      })
+    }
   }
 }
 
@@ -485,7 +609,7 @@ onMounted(() => {
   } else {
     ClientUserIdCaseBase.value = JSON.parse(localStorage.getItem('ClientUserIdCaseBase')) || []
   }
-  
+
   // Fetch Gyalsung screening questions from ScreeningGyalsung component data
   fetchScreeningQuestions()
 })
@@ -546,8 +670,12 @@ watch(currentQuestionIndex, () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error State */
@@ -646,7 +774,7 @@ watch(currentQuestionIndex, () => {
   margin-right: 0.75rem;
 }
 
-.option-radio input[type="radio"] {
+.option-radio input[type='radio'] {
   width: 20px;
   height: 20px;
   accent-color: #2b656f;
@@ -658,11 +786,13 @@ watch(currentQuestionIndex, () => {
 }
 
 /* Text Input */
-.text-input-container, .number-input-container {
+.text-input-container,
+.number-input-container {
   margin-top: 1rem;
 }
 
-.text-input, .number-input {
+.text-input,
+.number-input {
   width: 100%;
   padding: 1rem;
   border: 2px solid #e6f3f5;
@@ -672,7 +802,8 @@ watch(currentQuestionIndex, () => {
   resize: vertical;
 }
 
-.text-input:focus, .number-input:focus {
+.text-input:focus,
+.number-input:focus {
   outline: none;
   border-color: #2b656f;
 }
