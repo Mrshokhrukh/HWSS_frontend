@@ -136,7 +136,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import endpoints from '@/api' // Adjust the path as needed
+import endpoints from '@/api'
 
 const submitting = ref(false)
 const successModal = ref(null)
@@ -185,7 +185,6 @@ const lookup = async () => {
   userFound.value = false
   
   try {
-    // API call to get gyalsung user data using POST method
     const response = await fetch(endpoints.getGyalsungUserData, {
       method: 'POST',
       headers: {
@@ -201,7 +200,6 @@ const lookup = async () => {
     const userData = await response.json()
     
     if (userData) {
-      // Format date from DD/MM/YYYY to YYYY-MM-DD for date inputs
       const formatDate = (dateString) => {
         if (!dateString) return ''
         const parts = dateString.split('/')
@@ -246,65 +244,68 @@ const registerUser = async () => {
 
   submitting.value = true
   try {
-    // Prepare the data for API submission - only CID is needed
     const requestData = {
       cid: cid.value
     }
 
-    console.log('Sending registration request:', requestData)
+    const token = localStorage.getItem('authToken');
 
-    // Make API call to register gyalsung user using POST method
+    if (!token) {
+      alert('Authentication error. The counselor is not logged in or the session has expired.');
+      submitting.value = false;
+      return;
+    }
+
+    console.log('Sending registration request:', requestData);
+
     const response = await fetch(endpoints.registerGyalsungUser, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Token ${token}`
       },
       body: JSON.stringify(requestData)
-    })
+    });
     
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Server response:', errorText)
-      throw new Error(`Failed to register user: ${response.status} ${response.statusText}`)
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Your session may have expired. Please log out and log in again.');
+      }
+      const errorText = await response.text();
+      console.error('Server response:', errorText);
+      throw new Error(`Failed to register user: ${response.status} ${response.statusText}`);
     }
     
-    const result = await response.json()
-    console.log('Registration successful:', result)
+    const result = await response.json();
+    console.log('Registration successful:', result);
     
-    // Store the CID for screening
-    localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]))
+    localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]));
     
-    // Show success modal
-    const modal = new bootstrap.Modal(successModal.value)
-    modal.show()
+    const modal = new bootstrap.Modal(successModal.value);
+    modal.show();
   } catch (error) {
-    console.error('Registration failed:', error)
-    alert(`Registration failed: ${error.message}. Please try again.`)
+    console.error('Registration failed:', error);
+    alert(`Registration failed: ${error.message}. Please try again.`);
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
 }
 
 const startScreening = () => {
-  const modal = bootstrap.Modal.getInstance(successModal.value)
-  modal.hide()
+  const modal = bootstrap.Modal.getInstance(successModal.value);
+  modal.hide();
 
-  // Set flag to indicate we're in Gyalsung flow
-  localStorage.setItem('isGyalsungFlow', 'true')
+  localStorage.setItem('isGyalsungFlow', 'true');
   
-  // Store the user data for screening
   if (cid.value) {
-    localStorage.setItem('gyalsungUserCID', cid.value)
-    localStorage.setItem('gyalsungUserData', JSON.stringify(form.value))
+    localStorage.setItem('gyalsungUserCID', cid.value);
+    localStorage.setItem('gyalsungUserData', JSON.stringify(form.value));
   }
   
-  // Navigate to gyalsung screening page
-  router.push('/GyalsungModel/GyalsungScreening')
+  router.push('/GyalsungModel/GyalsungScreening');
 }
 
-
 onMounted(() => {
-  // Initialize Bootstrap components if needed
 })
 </script>
 
