@@ -98,6 +98,7 @@ const endpointDefinitions = {
     getNotifications: 'get-notification/',
     markNotificationAsRead: 'notifications/mark-as-read/',
     getClusterRecords: 'final-submissions/',
+    getGyalsungScreenings: 'final-submissions/', 
     newServiceAndTreatment: 'service-and-treatment/get-service-and-treatment/',
     newReferrals: 'referrals/'
   },
@@ -105,7 +106,8 @@ const endpointDefinitions = {
     generateReport: 'generate-report/',
     getReport: 'get-reporting-model-data/',
     updateUserArchive: 'update-user-archive/',
-    generateCounselorXLSEncryptedReport: 'generate-counselor-report-encrypted-xls/'
+    generateCounselorXLSEncryptedReport: 'generate-counselor-report-encrypted-xls/',
+    generateGyalsungExcelReport: 'generate-gyalsung-excel-report/'
   },
   counselorScreening: {
     createEventScreening: 'create-event-screening/',
@@ -117,7 +119,6 @@ const endpointDefinitions = {
     getCaseRecords: 'case-records/',
     getEventRecords: 'event-records/',
     gyalsungScreenSubmission: 'gyalsung-submission/' 
-    
   }
 };
 
