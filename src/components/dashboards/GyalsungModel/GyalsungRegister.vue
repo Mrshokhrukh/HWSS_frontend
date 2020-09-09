@@ -14,11 +14,7 @@
               @input="validateCid"
               maxlength="11"
             />
-            <button
-              class="btn btn-primary btn-lg"
-              @click="lookup"
-              :disabled="loading"
-            >
+            <button class="btn btn-primary btn-lg" @click="lookup" :disabled="loading">
               <span v-if="!loading">Search</span>
               <span v-else>Searching...</span>
             </button>
@@ -96,9 +92,9 @@
           </div>
 
           <div class="d-flex justify-content-end mt-4">
-            <button 
-              class="btn btn-success btn-lg" 
-              @click="registerUser" 
+            <button
+              class="btn btn-success btn-lg"
+              @click="registerUser"
               :disabled="submitting || !userFound"
             >
               <span v-if="!submitting">REGISTER</span>
@@ -130,22 +126,25 @@
         </div>
       </div>
     </div>
+    
+    <TestScreeningGyalsungScreening/>
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import endpoints from '@/api'
+import endpoints from '@/api' // Adjust the path as needed
+import TestScreeningGyalsungScreening from './TestScreeningGyalsungScreening.vue';
 
-const submitting = ref(false)
-const successModal = ref(null)
-const cidError = ref('')
-const userFound = ref(false)
+const submitting = ref(false);
+const successModal = ref(null);
+const cidError = ref('');
+const userFound = ref(false);
 
-const router = useRouter()
-const cid = ref('')
-const loading = ref(false)
+const router = useRouter();
+const cid = ref('');
+const loading = ref(false);
 
 const form = ref({
   first_name: '',
@@ -183,22 +182,22 @@ const lookup = async () => {
   if (!cid.value || cidError.value) return
   loading.value = true
   userFound.value = false
-  
+
   try {
     const response = await fetch(endpoints.getGyalsungUserData, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ cid: cid.value })
     })
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch user data')
     }
-    
+
     const userData = await response.json()
-    
+
     if (userData) {
       const formatDate = (dateString) => {
         if (!dateString) return ''
@@ -208,7 +207,7 @@ const lookup = async () => {
         }
         return dateString
       }
-      
+
       form.value.first_name = userData.first_name || ''
       form.value.middle_name = userData.middle_name || ''
       form.value.last_name = userData.last_name || ''
@@ -221,7 +220,7 @@ const lookup = async () => {
       form.value.dzongkhag = userData.hospital_dzongkhag || ''
       form.value.academy = userData.academy || ''
       form.value.personal_number = userData.personal_number || ''
-      
+
       userFound.value = true
     } else {
       alert('User not found with this CID. Please enter details manually.')
@@ -262,10 +261,9 @@ const registerUser = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${token}`
       },
       body: JSON.stringify(requestData)
-    });
+    })
     
     if (!response.ok) {
       if (response.status === 401) {
@@ -276,13 +274,15 @@ const registerUser = async () => {
       throw new Error(`Failed to register user: ${response.status} ${response.statusText}`);
     }
     
-    const result = await response.json();
-    console.log('Registration successful:', result);
+    const result = await response.json()
+    console.log('Registration successful:', result)
     
-    localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]));
+    // Store the CID for screening
+    localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]))
     
-    const modal = new bootstrap.Modal(successModal.value);
-    modal.show();
+    // Show success modal
+    const modal = new bootstrap.Modal(successModal.value)
+    modal.show()
   } catch (error) {
     console.error('Registration failed:', error);
     alert(`Registration failed: ${error.message}. Please try again.`);
@@ -295,14 +295,17 @@ const startScreening = () => {
   const modal = bootstrap.Modal.getInstance(successModal.value);
   modal.hide();
 
-  localStorage.setItem('isGyalsungFlow', 'true');
+  // Set flag to indicate we're in Gyalsung flow
+  localStorage.setItem('isGyalsungFlow', 'true')
   
+  // Store the user data for screening
   if (cid.value) {
     localStorage.setItem('gyalsungUserCID', cid.value);
     localStorage.setItem('gyalsungUserData', JSON.stringify(form.value));
   }
   
-  router.push('/GyalsungModel/GyalsungScreening');
+  // Navigate to gyalsung screening page
+  router.push('/GyalsungModel/GyalsungScreening')
 }
 
 onMounted(() => {
