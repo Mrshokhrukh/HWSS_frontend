@@ -114,9 +114,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import VueApexCharts from 'vue3-apexcharts'; // Using ApexCharts
-
-// Renaming the component to avoid conflicts if you use it globally
+import VueApexCharts from 'vue3-apexcharts'; 
 const apexchart = VueApexCharts;
 
 // --- STATE & REFS ---
@@ -169,7 +167,6 @@ const resetFilters = () => {
   filters.value = { startDate: '', endDate: '', status: '', hospital: '' };
   reportGenerated.value = false;
   reportData.value = { kpis: [], tableRows: [] };
-  // Clear chart data
   barChartSeries.value = [];
   pieChartSeries.value = [];
 };
@@ -225,7 +222,6 @@ const exportToCSV = () => {
 </script>
 
 <style scoped>
-/* Core Styles */
 .report-container { background: linear-gradient(135deg, #e6f3f5, #f0f7f8); border-radius: 16px; padding: 2rem; font-family: sans-serif; }
 .form-header { text-align: center; margin-bottom: 2rem; }
 .title { color: #2b656f; font-weight: 600; }

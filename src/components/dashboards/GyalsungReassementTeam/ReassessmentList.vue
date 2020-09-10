@@ -96,11 +96,8 @@
   import { ref, computed, onMounted } from "vue";
   import CounselorRescreening from "@/components/dashboards/counselorRescreenings/CounselorRescreening.vue";
   
-  // 1. Import BOTH apiClient and the endpoints object
   import apiClient from "@/apiClient";
   import endpoints from "@/api";
-  
-  // State for view management
   const isReassessing = ref(false);
   const selectedEntrant = ref(null);
   
@@ -133,10 +130,9 @@
     const lowerCaseQuery = searchQuery.value.toLowerCase();
   
     return entrants.value.filter((e) => {
-      // Create a full name for better searchability
+     
       const fullName = `${e.first_name || ''} ${e.last_name || ''}`.toLowerCase();
       
-      // Check against the correct API fields
       return (
         fullName.includes(lowerCaseQuery) ||
         (e.identity_number && e.identity_number.toLowerCase().includes(lowerCaseQuery)) ||
@@ -146,16 +142,14 @@
   });
   
   const getStatusClass = (status) => {
-    // Add a fallback for empty or null status
+   
     const currentStatus = status?.toLowerCase() || '';
     switch (currentStatus) {
       case "completed":
         return "status-completed";
       case "pending":
         return "status-pending";
-      // Add more statuses from your API if needed
-      // case "registered":
-      //   return "status-registered-class";
+      
       default:
         return "status-default";
     }
@@ -164,8 +158,8 @@
   const startReassessment = (entrant) => {
     console.log(`Navigating to screening for ${entrant.first_name} (CID: ${entrant.identity_number})`);
     selectedEntrant.value = entrant;
-    sessionStorage.setItem("RescreeningUserID", JSON.stringify(entrant.identity_number)); // Using correct ID
-    const userAgeData = { ageGroup: "15 to 17" }; // Placeholder
+    sessionStorage.setItem("RescreeningUserID", JSON.stringify(entrant.identity_number)); 
+    const userAgeData = { ageGroup: "15 to 17" }; 
     sessionStorage.setItem("userAgeData", JSON.stringify(userAgeData));
     isReassessing.value = true;
   };
@@ -175,7 +169,7 @@
     selectedEntrant.value = null;
     sessionStorage.removeItem("RescreeningUserID");
     sessionStorage.removeItem("userAgeData");
-    // Optionally re-fetch the list to see updated statuses
+  
     fetchReassessmentList();
   };
   
@@ -185,7 +179,7 @@
   </script>
   
   <style scoped>
-  /* Your existing styles are fine and do not need changes */
+ 
   .reassessment-container {
     background: linear-gradient(135deg, #e6f3f5, #f0f7f8);
     border-radius: 16px;

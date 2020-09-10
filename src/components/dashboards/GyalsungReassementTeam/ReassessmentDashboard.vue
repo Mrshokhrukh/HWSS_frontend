@@ -142,18 +142,17 @@ const fetchDashboardData = async () => {
   try {
     const response = await apiClient.get(endpoints.getCounselorUsers);
     
-    // THE FIX: Use response.data directly
+  
     const userList = response.data;
 
-    // And check if IT is an array
+    
     if (!Array.isArray(userList)) {
       throw new Error("The data received from the API is not a valid list (array).");
     }
 
     users.value = userList;
 
-    // --- Calculate Stats from the fetched user list ---
-    // UPDATED to use the correct 'gyalsung_status' property from your API
+  
     const totalReviewed = userList.length;
     const reassessmentNeeded = userList.filter(
       (u) => u.gyalsung_status?.toLowerCase() === "registered"
@@ -184,7 +183,6 @@ const filteredUsers = computed(() => {
   const lowerCaseQuery = searchQuery.value.toLowerCase();
 
   return users.value.filter((user) => {
-    // UPDATED to search on correct properties
     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase();
     
     return (
@@ -197,7 +195,6 @@ const filteredUsers = computed(() => {
 });
 
 const getStatusClass = (status) => {
-  // UPDATED to match potential API status values
   switch (status?.toLowerCase()) {
     case "registered":
       return "status-registered";
@@ -214,7 +211,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Your existing styles are fine */
 .bg-color {
   background-color: #f0f2f5;
   min-height: 100vh;

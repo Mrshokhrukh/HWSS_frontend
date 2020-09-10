@@ -168,8 +168,8 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
 import endpoints from '@/api';
-// Import your configured, authenticated API client
-import apiClient from '@/apiClient'; // Make sure this path is correct
+
+import apiClient from '@/apiClient'; 
 
 // --- STATE MANAGEMENT ---
 const unfitCandidates = ref([]);
@@ -191,13 +191,12 @@ const fetchUnfitCandidates = async () => {
 isLoading.value = true;
 error.value = null;
 try {
-  // This now correctly uses the client that attaches the auth token
+ 
   const response = await apiClient.get(endpoints.getReassessmentMonitoringUsers);
   unfitCandidates.value = response.data.map(mapApiDataToCandidate);
 } catch (err) {
   console.error("Failed to fetch unfit candidates:", err);
-  // The interceptor in apiClient.js will handle redirecting.
-  // We can show a user-friendly message here.
+
   if (err.response && (err.response.status === 401 || err.response.status === 403)) {
       error.value = "Your session may have expired. Please refresh the page.";
   } else {
@@ -209,7 +208,7 @@ try {
 };
 
 const fetchCounselors = async () => {
-  // This would also use apiClient if counselors list were protected
+
   counselors.value = [
     { id: 1, name: 'Dr. Yeshey Dorji', agency: 'JDWNRH, Thimphu' },
     { id: 2, name: 'Ms. Pema Choden', agency: 'Mongar RRH, Mongar' },
@@ -285,8 +284,6 @@ referModalInstance?.show();
 };
 
 const handleReferral = () => {
-// This is an optimistic UI update. A real implementation would make an
-// API call here using apiClient to persist the referral on the backend.
 if (!selectedCandidate.value || !selectedCounselor.value) return;
 const candidateInList = unfitCandidates.value.find(c => c.cid === selectedCandidate.value.cid);
 if (candidateInList) {
