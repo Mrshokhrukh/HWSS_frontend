@@ -1,157 +1,178 @@
 <template>
-    <div class="tracking-container">
-      <div class="form-header">
-        <h3 class="title">Reassessment Screening Tracking</h3>
+  <div class="tracking-container">
+    <div class="form-header">
+      <h3 class="title">Reassessment Screening Tracking</h3>
+    </div>
+
+    <div class="content-section">
+      <div class="search-bar-container">
+        <i class="fas fa-search search-icon"></i>
+        <input v-model="searchQuery" type="text" class="search-input" placeholder="Search by Name or CID..." />
       </div>
-  
-      <div class="content-section">
-        <div class="search-bar-container">
-          <i class="fas fa-search search-icon"></i>
-          <input v-model="searchQuery" type="text" class="search-input" placeholder="Search by Name or CID..." />
-        </div>
-  
-        <div class="table-section">
-          <h2 class="section-title text-unfit">
-            <i class="fas fa-times-circle me-2"></i>Unfit Candidates
-          </h2>
-          <div class="table-wrapper">
-            <table class="profiles-table">
-              <thead>
-                <tr>
-                  <th>Sl. No.</th>
-                  <th>Name</th>
-                  <th>CID</th>
-                  <th>DOB</th>
-                  <th>Reassessments</th>
-                  <th>Final Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="paginatedUnfitCandidates.length === 0">
-                  <td :colspan="7" class="state-cell">No matching unfit candidates found.</td>
-                </tr>
-                <tr v-for="(candidate, index) in paginatedUnfitCandidates" :key="candidate.cid">
-                  <td>{{ (unfitCurrentPage - 1) * itemsPerPage + index + 1 }}</td>
-                  <td>{{ candidate.name }}</td>
-                  <td>{{ candidate.cid }}</td>
-                  <td>{{ candidate.dob }}</td>
-                  <td class="reassessment-count">{{ candidate.reassessmentCount }}</td>
-                  <td>
-                    <span class="status-badge status-unfit">{{ candidate.finalStatus }}</span>
-                  </td>
-                  <td>
-                    <button @click="viewHistory(candidate)" class="action-btn">
-                      View History
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <nav v-if="unfitTotalPages > 1" class="pagination-nav">
-            <ul class="pagination-list">
-              <li class="page-item" :class="{ 'disabled': unfitCurrentPage === 1 }">
-                <a class="page-link" href="#" @click.prevent="setUnfitPage(unfitCurrentPage - 1)">Previous</a>
-              </li>
-              <li class="page-item" v-for="page in unfitTotalPages" :key="page" :class="{ 'active': page === unfitCurrentPage }">
-                <a class="page-link" href="#" @click.prevent="setUnfitPage(page)">{{ page }}</a>
-              </li>
-              <li class="page-item" :class="{ 'disabled': unfitCurrentPage === unfitTotalPages }">
-                <a class="page-link" href="#" @click.prevent="setUnfitPage(unfitCurrentPage + 1)">Next</a>
-              </li>
-            </ul>
-          </nav>
-        </div>
-  
-        <div class="table-section">
-          <h2 class="section-title text-fit">
-            <i class="fas fa-check-circle me-2"></i>Fit Candidates
-          </h2>
-          <div class="table-wrapper">
-            <table class="profiles-table">
-              <thead>
-                <tr>
-                  <th>Sl. No.</th>
-                  <th>Name</th>
-                  <th>CID</th>
-                  <th>DOB</th>
-                  <th>Last Assessed</th>
-                  <th>Final Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="paginatedFitCandidates.length === 0">
-                  <td :colspan="7" class="state-cell">No matching fit candidates found.</td>
-                </tr>
-                <tr v-for="(candidate, index) in paginatedFitCandidates" :key="candidate.cid">
-                  <td>{{ (fitCurrentPage - 1) * itemsPerPage + index + 1 }}</td>
-                  <td>{{ candidate.name }}</td>
-                  <td>{{ candidate.cid }}</td>
-                  <td>{{ candidate.dob }}</td>
-                  <td>{{ candidate.lastAssessedDate }}</td>
-                  <td>
-                    <span class="status-badge status-fit">{{ candidate.finalStatus }}</span>
-                  </td>
-                  <td>
-                    <button @click="viewDetails(candidate)" class="action-btn">
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <nav v-if="fitTotalPages > 1" class="pagination-nav">
-            <ul class="pagination-list">
-              <li class="page-item" :class="{ 'disabled': fitCurrentPage === 1 }">
-                <a class="page-link" href="#" @click.prevent="setFitPage(fitCurrentPage - 1)">Previous</a>
-              </li>
-              <li class="page-item" v-for="page in fitTotalPages" :key="page" :class="{ 'active': page === fitCurrentPage }">
-                <a class="page-link" href="#" @click.prevent="setFitPage(page)">{{ page }}</a>
-              </li>
-              <li class="page-item" :class="{ 'disabled': fitCurrentPage === fitTotalPages }">
-                <a class="page-link" href="#" @click.prevent="setFitPage(fitCurrentPage + 1)">Next</a>
-              </li>
-            </ul>
-          </nav>
-        </div>
+
+      <!-- Global Error Message -->
+      <div v-if="error" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
       </div>
-  
-      <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true" ref="historyModalRef">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content" v-if="selectedCandidateForHistory">
-            <div class="modal-header">
-              <h5 class="modal-title" id="historyModalLabel">
-                History for {{ selectedCandidateForHistory.name }}
-              </h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <p><strong>Name:</strong> {{ selectedCandidateForHistory.name }}</p>
-              <p><strong>CID:</strong> {{ selectedCandidateForHistory.cid }}</p>
-              <p><strong>Date of Birth:</strong> {{ selectedCandidateForHistory.dob }}</p>
-              <hr>
-              <p class="fw-bold">Total Reassessments: {{ selectedCandidateForHistory.reassessmentCount }}</p>
-              <p><strong>Final Status:</strong> <span class="status-badge status-unfit">{{ selectedCandidateForHistory.finalStatus }}</span></p>
-              <p><small>This is a placeholder for detailed history records.</small></p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
+
+      <div class="table-section">
+        <h2 class="section-title text-unfit">
+          <i class="fas fa-times-circle me-2"></i>Unfit Candidates
+        </h2>
+        <div class="table-wrapper">
+          <table class="profiles-table">
+            <thead>
+              <tr>
+                <th>Sl. No.</th>
+                <th>Name</th>
+                <th>CID</th>
+                <th>DOB</th>
+                <th>Reassessments</th>
+                <th>Final Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loading State -->
+              <tr v-if="isLoading">
+                <td :colspan="7" class="state-cell">
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  Loading candidates...
+                </td>
+              </tr>
+              <!-- No Data State -->
+              <tr v-else-if="paginatedUnfitCandidates.length === 0">
+                <td :colspan="7" class="state-cell">No matching unfit candidates found.</td>
+              </tr>
+              <!-- Data Display -->
+              <tr v-else v-for="(candidate, index) in paginatedUnfitCandidates" :key="candidate.cid">
+                <td>{{ (unfitCurrentPage - 1) * itemsPerPage + index + 1 }}</td>
+                <td>{{ candidate.name }}</td>
+                <td>{{ candidate.cid }}</td>
+                <td>{{ candidate.dob }}</td>
+                <td class="reassessment-count">{{ candidate.reassessmentCount }}</td>
+                <td>
+                  <span class="status-badge status-unfit">{{ candidate.finalStatus }}</span>
+                </td>
+                <td>
+                  <button @click="viewHistory(candidate)" class="action-btn">
+                    View History
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <nav v-if="!isLoading && unfitTotalPages > 1" class="pagination-nav">
+          <ul class="pagination-list">
+            <li class="page-item" :class="{ 'disabled': unfitCurrentPage === 1 }">
+              <a class="page-link" href="#" @click.prevent="setUnfitPage(unfitCurrentPage - 1)">Previous</a>
+            </li>
+            <li class="page-item" v-for="page in unfitTotalPages" :key="page" :class="{ 'active': page === unfitCurrentPage }">
+              <a class="page-link" href="#" @click.prevent="setUnfitPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" :class="{ 'disabled': unfitCurrentPage === unfitTotalPages }">
+              <a class="page-link" href="#" @click.prevent="setUnfitPage(unfitCurrentPage + 1)">Next</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="table-section">
+        <h2 class="section-title text-fit">
+          <i class="fas fa-check-circle me-2"></i>Fit Candidates
+        </h2>
+        <div class="table-wrapper">
+          <table class="profiles-table">
+            <thead>
+              <tr>
+                <th>Sl. No.</th>
+                <th>Name</th>
+                <th>CID</th>
+                <th>DOB</th>
+                <th>Last Assessed</th>
+                <th>Final Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loading State -->
+              <tr v-if="isLoading">
+                <td :colspan="7" class="state-cell">
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  Loading candidates...
+                </td>
+              </tr>
+               <!-- No Data State -->
+              <tr v-else-if="paginatedFitCandidates.length === 0">
+                <td :colspan="7" class="state-cell">No matching fit candidates found.</td>
+              </tr>
+               <!-- Data Display -->
+              <tr v-else v-for="(candidate, index) in paginatedFitCandidates" :key="candidate.cid">
+                <td>{{ (fitCurrentPage - 1) * itemsPerPage + index + 1 }}</td>
+                <td>{{ candidate.name }}</td>
+                <td>{{ candidate.cid }}</td>
+                <td>{{ candidate.dob }}</td>
+                <td>{{ candidate.lastAssessedDate }}</td>
+                <td>
+                  <span class="status-badge status-fit">{{ candidate.finalStatus }}</span>
+                </td>
+                <td>
+                  <button @click="viewDetails(candidate)" class="action-btn">
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <nav v-if="!isLoading && fitTotalPages > 1" class="pagination-nav">
+          <ul class="pagination-list">
+            <li class="page-item" :class="{ 'disabled': fitCurrentPage === 1 }">
+              <a class="page-link" href="#" @click.prevent="setFitPage(fitCurrentPage - 1)">Previous</a>
+            </li>
+            <li class="page-item" v-for="page in fitTotalPages" :key="page" :class="{ 'active': page === fitCurrentPage }">
+              <a class="page-link" href="#" @click.prevent="setFitPage(page)">{{ page }}</a>
+            </li>
+            <li class="page-item" :class="{ 'disabled': fitCurrentPage === fitTotalPages }">
+              <a class="page-link" href="#" @click.prevent="setFitPage(fitCurrentPage + 1)">Next</a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true" ref="historyModalRef">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" v-if="selectedCandidateForHistory">
+          <div class="modal-header">
+            <h5 class="modal-title" id="historyModalLabel">
+              History for {{ selectedCandidateForHistory.name }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Name:</strong> {{ selectedCandidateForHistory.name }}</p>
+            <p><strong>CID:</strong> {{ selectedCandidateForHistory.cid }}</p>
+            <p><strong>Date of Birth:</strong> {{ selectedCandidateForHistory.dob }}</p>
+            <hr>
+            <p class="fw-bold">Total Reassessments: {{ selectedCandidateForHistory.reassessmentCount }}</p>
+            <p><strong>Final Status:</strong> <span class="status-badge status-unfit">{{ selectedCandidateForHistory.finalStatus }}</span></p>
+            <p><small>This is a placeholder for detailed history records.</small></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
     </div>
-  </template>
-  
-  // ReassessmentTracking.vue
+  </div>
+</template>
 
 <script setup>
-// 1. IMPORT `onUnmounted`
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
+import endpoints from '@/api'; 
 
 // --- STATE MANAGEMENT ---
 const searchQuery = ref('');
@@ -162,63 +183,112 @@ const selectedCandidateForHistory = ref(null);
 const historyModalRef = ref(null);
 let historyModalInstance = null;
 
-// --- LIFECYCLE HOOKS ---
-onMounted(() => {
-  if (historyModalRef.value) {
-    historyModalInstance = new Modal(historyModalRef.value);
+// --- DYNAMIC DATA STATE ---
+const unfitCandidates = ref([]); 
+const fitCandidates = ref([]);   
+const isLoading = ref(true);     
+const error = ref(null);        
+
+// --- API FETCHING LOGIC ---
+const fetchData = async () => {
+isLoading.value = true;
+error.value = null;
+try {
+ 
+  const [unfitResponse, fitResponse] = await Promise.all([
+    fetch(endpoints.getUnfitCandidates),
+    fetch(endpoints.getFitCandidates)
+  ]);
+
+  if (!unfitResponse.ok || !fitResponse.ok) {
+    throw new Error('Failed to fetch candidate data from the server.');
   }
+
+
+  const unfitData = await unfitResponse.json();
+  const fitData = await fitResponse.json();
+
+
+  unfitCandidates.value = unfitData;
+  fitCandidates.value = fitData;
+
+} catch (e) {
+  console.error('API Error:', e);
+  error.value = e.message || 'An unexpected error occurred. Please try again later.';
+} finally {
+  isLoading.value = false; 
+}
+};
+
+
+onMounted(() => {
+fetchData(); 
+
+if (historyModalRef.value) {
+  historyModalInstance = new Modal(historyModalRef.value);
+}
 });
 
-// 2. ADD THE onUnmounted HOOK FOR CLEANUP
 onUnmounted(() => {
-  historyModalInstance?.dispose();
+historyModalInstance?.dispose();
 });
 
-// --- MOCK DATA ---
-const reassessedCandidates = ref([
-  { name: 'Kinley Dorji', cid: '11204009876', dob: '05-Jan-06', lastAssessedDate: '01-Feb-25', finalStatus: 'Unfit', reassessmentCount: 2 },
-  { name: 'Ugyen Tshering', cid: '11808001122', dob: '11-Nov-06', lastAssessedDate: '20-Mar-25', finalStatus: 'Unfit', reassessmentCount: 3 },
-  { name: 'Jigme Singye', cid: '11405005566', dob: '18-Jun-06', lastAssessedDate: '05-Mar-25', finalStatus: 'Unfit', reassessmentCount: 1 },
-  { name: 'Dawa Pem', cid: '10203004455', dob: '25-Sep-06', lastAssessedDate: '10-Apr-25', finalStatus: 'Unfit', reassessmentCount: 2 },
-  { name: 'Tashi Wangchuk', cid: '11501001234', dob: '15-Mar-06', lastAssessedDate: '10-Mar-25', finalStatus: 'Fit', reassessmentCount: 1 },
-  { name: 'Yeshey Lhamo', cid: '10902005678', dob: '20-May-06', lastAssessedDate: '12-Mar-25', finalStatus: 'Fit', reassessmentCount: 1 },
-]);
 
-const filteredCandidates = computed(() => {
-  if (!searchQuery.value) return reassessedCandidates.value;
-  const lowerCaseQuery = searchQuery.value.toLowerCase();
-  return reassessedCandidates.value.filter(c =>
-    c.name.toLowerCase().includes(lowerCaseQuery) || c.cid.toLowerCase().includes(lowerCaseQuery)
-  );
+
+const filteredUnfitCandidates = computed(() => {
+if (!searchQuery.value) return unfitCandidates.value;
+const lowerCaseQuery = searchQuery.value.toLowerCase();
+return unfitCandidates.value.filter(c =>
+  c.name.toLowerCase().includes(lowerCaseQuery) || c.cid.toLowerCase().includes(lowerCaseQuery)
+);
 });
-const filteredFitCandidates = computed(() => filteredCandidates.value.filter(c => c.finalStatus === 'Fit'));
-const filteredUnfitCandidates = computed(() => filteredCandidates.value.filter(c => c.finalStatus === 'Unfit'));
+
+const filteredFitCandidates = computed(() => {
+if (!searchQuery.value) return fitCandidates.value;
+const lowerCaseQuery = searchQuery.value.toLowerCase();
+return fitCandidates.value.filter(c =>
+  c.name.toLowerCase().includes(lowerCaseQuery) || c.cid.toLowerCase().includes(lowerCaseQuery)
+);
+});
+
+
 const fitTotalPages = computed(() => Math.ceil(filteredFitCandidates.value.length / itemsPerPage));
 const unfitTotalPages = computed(() => Math.ceil(filteredUnfitCandidates.value.length / itemsPerPage));
+
 const paginatedFitCandidates = computed(() => {
-  const start = (fitCurrentPage.value - 1) * itemsPerPage;
-  return filteredFitCandidates.value.slice(start, start + itemsPerPage);
-});
-const paginatedUnfitCandidates = computed(() => {
-  const start = (unfitCurrentPage.value - 1) * itemsPerPage;
-  return filteredUnfitCandidates.value.slice(start, start + itemsPerPage);
+const start = (fitCurrentPage.value - 1) * itemsPerPage;
+return filteredFitCandidates.value.slice(start, start + itemsPerPage);
 });
 
+const paginatedUnfitCandidates = computed(() => {
+const start = (unfitCurrentPage.value - 1) * itemsPerPage;
+return filteredUnfitCandidates.value.slice(start, start + itemsPerPage);
+});
+
+
+// --- METHODS ---
 const setFitPage = (page) => {
-  if (page > 0 && page <= fitTotalPages.value) fitCurrentPage.value = page;
+if (page > 0 && page <= fitTotalPages.value) fitCurrentPage.value = page;
 };
+
 const setUnfitPage = (page) => {
-  if (page > 0 && page <= unfitTotalPages.value) unfitCurrentPage.value = page;
+if (page > 0 && page <= unfitTotalPages.value) unfitCurrentPage.value = page;
 };
-const viewDetails = (candidate) => alert(`Viewing details for ${candidate.name}.`);
+
+const viewDetails = (candidate) => {
+
+alert(`Viewing details for ${candidate.name} (CID: ${candidate.cid}).`);
+};
+
 const viewHistory = (candidate) => {
-  selectedCandidateForHistory.value = candidate;
-  historyModalInstance?.show();
+selectedCandidateForHistory.value = candidate;
+historyModalInstance?.show();
 };
+
 
 watch(searchQuery, () => {
-  fitCurrentPage.value = 1;
-  unfitCurrentPage.value = 1;
+fitCurrentPage.value = 1;
+unfitCurrentPage.value = 1;
 });
 </script>
   

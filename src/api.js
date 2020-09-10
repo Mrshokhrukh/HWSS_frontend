@@ -71,6 +71,9 @@ const endpointDefinitions = {
     registerUser: 'register-gyalsung-user/',
     getReassessmentUsers: 'reassessment-users/',
     getCounselorUsers: 'counselor-users/',
+    getUnfitCandidates: 'reassessment-unfit-candidates/',
+    getFitCandidates: 'reassessment-fit-candidates/',
+    getReassessmentMonitoringUsers: 'reassessment-monitoring/', 
   },
   settings: {
     settings: 'appconfig/',

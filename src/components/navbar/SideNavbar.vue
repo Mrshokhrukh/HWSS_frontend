@@ -18,7 +18,7 @@
 			<nav class="menu-items">
 				<template v-for="(menu, index) in filteredMenus" :key="index">
 					<router-link :to="menu.route" class="menu-link" :class="{ active: $route.path === menu.route }"
-						v-b-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
+						v-tooltip.hover.right="{ title: menu.text, disabled: sidebarStore.isOpen }">
 						<span class="link-content">
 							<i :class="menu.iconClass" class="link-icon"></i>
 							<span class="link-text" v-if="sidebarStore.isOpen">{{ menu.text }}</span>
@@ -31,7 +31,7 @@
 
 		<div class="sidebar-footer">
 			<router-link to="#" class="menu-link logout-link" @click="logout"
-				v-b-tooltip.hover.right="{ title: 'Log Out', disabled: sidebarStore.isOpen }">
+				v-tooltip.hover.right="{ title: 'Log Out', disabled: sidebarStore.isOpen }">
 				<span class="link-content">
 					<i class="fas fa-sign-out-alt link-icon"></i>
 					<span class="link-text" v-if="sidebarStore.isOpen">Log Out</span>
@@ -39,7 +39,7 @@
 			</router-link>
 
 			<button class="menu-link toggle-btn d-none" @click="toggle"
-				v-b-tooltip.hover.right="{ title: sidebarStore.isOpen ? 'Collapse' : 'Expand', disabled: sidebarStore.isOpen }">
+				v-tooltip.hover.right="{ title: sidebarStore.isOpen ? 'Collapse' : 'Expand', disabled: sidebarStore.isOpen }">
 				<span class="link-content">
 					<i :class="[sidebarStore.isOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right']"
 						class="link-icon"></i>
@@ -71,7 +71,7 @@ const menuConfig = {
 	],
 	counselor: [
   { text: "Dashboard", route: "/counselor-dashboard", iconClass: "fas fa-tachometer-alt" },
-  { text: "Register", route: "/GyalsungModel/GyalsungRegister", iconClass: "fa-solid fa-thumbs-up" },
+  
   { 
     text: "Screening", 
     route: localStorage.getItem('isGyalsungFlow') ? "/GyalsungModel/GyalsungScreening" : "/counselor-dashboard/counselor-screening", 
@@ -83,6 +83,7 @@ const menuConfig = {
     iconClass: "fa-solid fa-file-waveform" 
   },
   { text: "Monitor", route: "/counselor-dashboard/counselor-monitor", iconClass: "fa-solid fa-clipboard-list" },
+  { text: "Gyalsung Screening", route: "/GyalsungModel/GyalsungRegister", iconClass: "fa-solid fa-thumbs-up" },
   { text: "Help", route: "/counselor-dashboard/counselor-help", iconClass: "fa-solid fa-circle-question" },
   { text: "Settings", route: "/counselor-dashboard/counselor-settings", iconClass: "fa-solid fa-gear" }
 ],

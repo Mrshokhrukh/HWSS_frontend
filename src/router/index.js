@@ -1,3 +1,5 @@
+// src/router/index.js
+
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import apiClient from '@/apiClient';
@@ -222,7 +224,6 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungscreening',
         redirect: '/GyalsungModel/GyalsungScreening'
       },
-
       {
         path: '/GyalsungModel/GyalsungReports',
         name: 'gyalsung-reports',
@@ -233,9 +234,8 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungreports',
         redirect: '/GyalsungModel/GyalsungReports'
       },
-      // ========================================================================================
       
-      // Use route nesting to dynamically generate user dashboard routes
+    
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
       ...generateDashboardRoutes('admin'),
@@ -254,7 +254,7 @@ const createAppRouter = () => {
 
   const clearAuthAndRedirectToLogin = (next) => {
     const userDetailsStore = useUserDetailsStore();
-    userDetailsStore.clearUserDetails(); // This will also clear localStorage items via the store action
+    userDetailsStore.clearUserDetails();
     next({ name: ROUTE_LOGIN });
   };
   
@@ -267,9 +267,15 @@ const createAppRouter = () => {
     return 'public';
   };
 
-  // =========================================================================
-  // NEW, ROBUST NAVIGATION GUARD
-  // =========================================================================
+  
+  const getDashboardRouteNameForRole = (role) => {
+    const userType = getUserTypeFromRole(role);
+    if (userType === 'gyalsung-reassessment-team') {
+      return 'reassessment-dashboard'; 
+    }
+    return `${userType}-dashboard`; 
+  };
+
   router.beforeEach(async (to, from, next) => {
     document.title = to.meta.title ? `${to.meta.title} | HWSS` : 'HWSS | Mental Health Matters';
     
@@ -278,32 +284,25 @@ const createAppRouter = () => {
     const authToken = localStorage.getItem('authToken');
     const tokenExpiry = localStorage.getItem('tokenExpiry');
     
-    // 1. Check for token expiration
     if (authToken && tokenExpiry && new Date(tokenExpiry) < new Date()) {
       console.log('Token expired. Clearing auth and redirecting to login.');
       return clearAuthAndRedirectToLogin(next);
     }
 
-    // 2. If the user is authenticated (has a token) but the Pinia store is empty, re-populate it.
     if (authToken && !userDetailsStore.user.role) {
       console.log('Token exists but user store is empty. Fetching user details...');
       try {
-        // This action fetches user data from the API and populates the store.
         await userDetailsStore.fetchUserDetails();
       } catch (error) {
         console.error('Failed to re-validate token and fetch user details during navigation:', error);
-        // If fetching fails, the token is likely invalid.
         return clearAuthAndRedirectToLogin(next);
       }
     }
     
-    // 3. Handle protected routes
     if (requiresAuth) {
       if (!authToken) {
-        // If auth is required and there's no token, redirect to login
         return next({ name: ROUTE_LOGIN });
       } else {
-        // Special permission check for Gyalsung routes (your existing logic)
         const gyalsungRoutes = ['gyalsung-register', 'gyalsung-screening'];
         const allowedRolesForGyalsung = ['clinical_counselor', 'trained_professional'];
         if (gyalsungRoutes.includes(to.name)) {
@@ -313,19 +312,15 @@ const createAppRouter = () => {
             return next({ name: `${userType}-dashboard` });
           }
         }
-        // If all checks pass, allow access to the protected route
         return next();
       }
     } 
-    // 4. Handle public routes
     else {
-      // If the user is already logged in and tries to visit a public page like Login or Home
       if (authToken && (to.name === ROUTE_LOGIN || to.name === 'register' || to.name === 'home')) {
-        // Redirect them to their appropriate dashboard instead
-        const userType = getUserTypeFromRole(userDetailsStore.user.role);
-        return next({ name: `${userType}-dashboard` });
+        // This now uses the corrected helper function
+        const dashboardRouteName = getDashboardRouteNameForRole(userDetailsStore.user.role);
+        return next({ name: dashboardRouteName });
       }
-      // Otherwise, allow access to the public page
       return next();
     }
   });
