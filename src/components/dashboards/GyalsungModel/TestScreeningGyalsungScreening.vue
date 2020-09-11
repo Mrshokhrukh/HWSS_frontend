@@ -152,6 +152,199 @@ const entrantCid = ref('')
 const entrantName = ref('')
 const entrantGender = ref('')
 
+const currentQuestion = computed(() => {
+  return questions.value[currentQuestionIndex.value] || {}
+})
+
+const isCurrentQuestionAnswered = computed(() => {
+  return (
+    answers.value[currentQuestion.value.id] !== undefined &&
+    answers.value[currentQuestion.value.id] !== null
+  )
+})
+
+const progressPercentage = computed(() => {
+  if (questions.value.length === 0) return 0
+  return ((currentQuestionIndex.value + 1) / questions.value.length) * 100
+})
+
+const initializeAnswers = () => {
+  answers.value = {}
+  questions.value.forEach((question) => {
+    answers.value[question.id] = null
+  })
+}
+
+const fetchQuestions = async () => {
+  loading.value = true
+  error.value = ''
+
+  try {
+    const token = localStorage.getItem('authToken')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    const response = await axios.get(`http://0.0.0.0:8123/api/v1/gyalsung/assessments/`, {
+      headers,
+      timeout: 8000
+    })
+
+    let questionData = []
+
+    if (Array.isArray(response.data)) {
+      const tests = response.data
+      questionData = tests.flatMap((test) =>
+        (test.question_sets || []).flatMap((set) =>
+          (set.questions || [])
+            .sort((a, b) => a.id - b.id)
+            .map((q) => ({ ...q, setName: set.name }))
+        )
+      )
+    } else if (response.data?.question_sets) {
+      questionData = response.data.question_sets.flatMap((set) =>
+        (set.questions || []).sort((a, b) => a.id - b.id).map((q) => ({ ...q, setName: set.name }))
+      )
+    }
+
+    questions.value = questionData
+    initializeAnswers()
+  } catch (err) {
+    console.error('Failed to fetch questions from API:', err)
+    error.value = `Failed to load screening questions.`
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleAnswerSelection = (option) => {
+  answers.value[currentQuestion.value.id] = option
+}
+
+const isSelectedAnswer = (option) => {
+  const selected = answers.value[currentQuestion.value.id]
+  return selected && selected.id === option.id && selected.option === option.option
+}
+
+const goNext = () => {
+  if (currentQuestionIndex.value < questions.value.length - 1) {
+    currentQuestionIndex.value++
+  }
+}
+
+const goBack = () => {
+  if (currentQuestionIndex.value > 0) {
+    currentQuestionIndex.value--
+  }
+}
+
+const resetAnswers = () => {
+  if (confirm('Are you sure you want to reset all answers?')) {
+    Object.keys(answers.value).forEach((key) => {
+      answers.value[key] = null
+    })
+    currentQuestionIndex.value = 0
+  }
+}
+
+// Helper: build dataset (data + score + interpretation)
+const buildDataset = (setName) => {
+  const setQuestions = questions.value.filter((q) => q.setName === setName)
+  const data = {}
+  let score = 0
+
+  setQuestions.forEach((q, index) => {
+    const ans = answers.value[q.id]
+    if (ans) {
+      data[`question${index + 1}`] = ans.id
+      score += ans.id
+    }
+  })
+
+  // Simple placeholder interpretation rules
+  let interpretation = 'Normal'
+  if (score >= 10) interpretation = 'Severe'
+  else if (score >= 5) interpretation = 'Mild'
+
+  return { data, score, interpretation }
+}
+
+const submitScreening = async () => {
+  try {
+    const unanswered = Object.entries(answers.value).filter(([, v]) => v === null)
+    if (unanswered.length) {
+      alert('Please answer all questions before submitting.')
+      return
+    }
+
+    // Build payload
+    const gad = buildDataset('GYALSUNG BASELINE')
+    const phq = buildDataset('GYALSUNG WELLBEING')
+    const ace = buildDataset('GYALSUNG ACE')
+    const psy = buildDataset('GYALSUNG PSY')
+
+    const payload = {
+      user: 2, // TODO: replace with real user ID
+      gad_data: gad.data,
+      gad_score: gad.score,
+      gad_interpretation: gad.interpretation,
+      phq_data: phq.data,
+      phq_score: phq.score,
+      phq_interpretation: phq.interpretation,
+      ace_data: ace.data,
+      ace_score: ace.score,
+      ace_interpretation: ace.interpretation,
+      psy_data: psy.data,
+      psy_score: psy.score,
+      psy_interpretation: psy.interpretation,
+      final_screening_status: 'high',
+      is_reassessment_screening: true,
+      counselor_user: 2,
+      reassessment_user: '',
+      counselor_remarks: 'Initial screening completed',
+      reassessment_remarks: 'No reassessment needed'
+    }
+
+    const token = localStorage.getItem('authToken')
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+
+    const response = await axios.post(`http://0.0.0.0:8123/api/v1/gyalsung/assessments/`, payload, {
+      headers
+    })
+
+    console.log('Screening submission response:', response)
+    alert('Screening completed successfully!')
+    router.push('/gyalsung-dashboard')
+  } catch (err) {
+    console.error('Failed to submit screening:', err)
+    alert('Failed to submit screening. Please try again.')
+  }
+}
+
+onMounted(() => {
+  fetchQuestions()
+})
+</script>
+
+<!-- <script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import endpoints from '@/api'
+
+const router = useRouter()
+
+const questions = ref([])
+const currentQuestionIndex = ref(0)
+const answers = ref({})
+const loading = ref(false)
+const error = ref('')
+
+const entrantCid = ref('')
+const entrantName = ref('')
+const entrantGender = ref('')
+
 const getDummyQuestionsFlat = () => {
   const dummySets = [
     {
@@ -256,13 +449,10 @@ const fetchQuestions = async () => {
     const headers = token ? { Authorization: `Bearer  ${token} ` } : {}
 
     // const response = await axios.get(`${endpoints.screeningPreTests}?name=Gyalsung Screening`, {
-    const response = await axios.get(
-      `http://localhost:8686/api/v1/screening/screening-questions/?name=Gyalsung%20Screening`,
-      {
-        headers,
-        timeout: 8000
-      }
-    )
+    const response = await axios.get(`http://0.0.0.0:8123/api/v1/gyalsung/assessments/`, {
+      headers,
+      timeout: 8000
+    })
 
     let questionData = []
 
@@ -284,7 +474,7 @@ const fetchQuestions = async () => {
     if (!questionData.length) {
       questions.value = getDummyQuestionsFlat()
     } else {
-      questions.value = questionData.slice(0, 5)
+      questions.value = questionData
     }
 
     initializeAnswers()
@@ -374,7 +564,7 @@ onMounted(() => {
   // loadEntrantDetails()
   fetchQuestions()
 })
-</script>
+</script> -->
 
 <style scoped>
 .bg-color {

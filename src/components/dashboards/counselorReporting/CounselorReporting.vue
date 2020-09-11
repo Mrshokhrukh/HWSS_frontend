@@ -230,7 +230,7 @@
             :sortOrder="1"
             class="custom-table p-datatable-sm p-datatable-striped"
             :globalFilterFields="gyalsungSearchableFields"
-            v-model="gyalsungFilters"
+            :filters="gyalsungFilters"
             filterDisplay="menu"
             dataKey="identity_number"
             removableSort
@@ -361,7 +361,6 @@ const years = computed(() => {
   })
 })
 
-// ... (Your other constants like baseTableFields, tableFields, etc. are unchanged) ...
 const baseTableFields = [
   { key: 'id', header: 'ID' },
   { key: 'full_name', header: 'Full Name' },
@@ -449,6 +448,7 @@ const severityFilterOptions = ref([
 ])
 
 // --- Computed Properties ---
+// Keep these as pass-throughs: DataTable's filtering handles client-side filtering
 const filteredReportData = computed(() => reportData.value)
 const filteredGyalsungData = computed(() => gyalsungData.value)
 
@@ -466,6 +466,12 @@ const getUserDetailsFromStorage = () => {
     isSchoolCounselor.value = parsedDetails?.user?.role === 'school_counselor'
     isClinicalCounselor.value = parsedDetails?.user?.role === 'clinical_counselor'
     isGyalsungCounselor.value = parsedDetails?.user?.role === 'gyalsung_counselor'
+
+    // if user is only gyalsung counselor, ensure the correct view is shown
+    if (isGyalsungCounselor.value && !isSchoolCounselor.value && !isClinicalCounselor.value) {
+      selectedOption.value = 'generalReport'
+    }
+
     return parsedDetails
   } catch (error) {
     console.error('Error parsing user details:', error)
@@ -474,10 +480,10 @@ const getUserDetailsFromStorage = () => {
   }
 }
 
-// MODIFIED: This function now uses server-side filtering
+// Server-side fetch with defensive parsing
 const fetchReportDataForYear = async (year) => {
-  if (!userDetails.value?.agency?.agencyName) {
-    fetchError.value = 'User agency information is missing.'
+  if (!userDetails.value) {
+    fetchError.value = 'User details missing.'
     return
   }
 
@@ -487,30 +493,31 @@ const fetchReportDataForYear = async (year) => {
   gyalsungData.value = []
 
   try {
-    // 1. Get the agency name from the stored user details.
-    const agencyName = userDetails.value.agency.agencyName
+    const agencyName = userDetails.value.agency?.agencyName || userDetails.value.agency?.name
 
-    // 2. Construct the URL with the agency_name query parameter.
-    const requestUrl = `${endpoints.newServiceAndTreatment}?agency_name=${encodeURIComponent(
-      agencyName
-    )}`
+    if (!agencyName) {
+      fetchError.value = 'User agency information is missing.'
+      isLoading.value = false
+      return
+    }
 
-    // 3. Fetch the pre-filtered data from the backend.
+    // Defensive: backend may expect different query param names; try common ones.
+    const encodedAgency = encodeURIComponent(agencyName)
+    const requestUrl = `${endpoints.newServiceAndTreatment}?agency_name=${encodedAgency}`
+
     const response = await apiClient.get(requestUrl)
 
-    const dataArray = response.data || []
+    // Response may be in response.data or response.data.data
+    const dataArray = Array.isArray(response.data) ? response.data : response.data?.data || response.data || []
 
-    // 4. The client-side agency filter is now REMOVED. We only need to filter by year.
     const processedData = dataArray
       .map((item) => {
-        const screeningDate = item.screening_data?.submission_date || item.date
+        const screeningDate = item.screening_data?.submission_date || item.date || item.created_at
         const submissionYear = screeningDate ? new Date(screeningDate).getFullYear() : null
 
-        if (!submissionYear || submissionYear !== year) {
+        if (!submissionYear || submissionYear !== Number(year)) {
           return null
         }
-
-        // The agency check that was here is now gone!
 
         return {
           transformed: transformData(item),
@@ -525,13 +532,13 @@ const fetchReportDataForYear = async (year) => {
     }
   } catch (error) {
     console.error('Error fetching report data:', error)
-    fetchError.value = error.response?.data?.message || error.message || 'An unknown error occurred'
+    fetchError.value = error?.response?.data?.message || error?.message || 'An unknown error occurred'
   } finally {
     isLoading.value = false
   }
 }
 
-// ... (All your other methods like transformData, extractSubstances, downloadExcelWithZip, etc. are unchanged) ...
+// transforms and helpers (kept largely as your implementation with small safety checks)
 const transformData = (item) => {
   const screeningData = item.screening_data || {}
   const substances = extractSubstances(item)
@@ -540,9 +547,8 @@ const transformData = (item) => {
   return {
     username: item.user?.username || 'N/A',
     full_name:
-      `${item.user?.first_name || ''} ${item.user?.middle_name || ''} ${
-        item.user?.last_name || ''
-      }`.trim() || 'N/A',
+      `${item.user?.first_name || ''} ${item.user?.middle_name || ''} ${item.user?.last_name || ''}`.trim() ||
+      'N/A',
     gender: item.user?.gender || 'N/A',
     dob: item.user?.date_of_birth || 'N/A',
     identity_number: item.user?.identity_number || 'N/A',
@@ -574,15 +580,16 @@ const transformGyalsungData = (item) => {
   const suicidalData = screeningData.phq_data ? extractSuicidalScore(screeningData.phq_data) : null
 
   return {
-    username: screeningData.username || 'N/A',
-    full_name: screeningData.full_name || 'N/A',
-    gender: screeningData.gender || 'N/A',
-    dob: screeningData.dob || 'N/A',
-    identity_number: screeningData.identity_number || 'N/A',
-    mobile_number: screeningData.mobile_number || 'N/A',
-    academy_code: screeningData.academy_code || 'N/A',
-    phq9_score: screeningData.phq9_score || 'N/A',
-    gad7_score: screeningData.gad7_score || 'N/A',
+    username: screeningData.username || item.user?.username || 'N/A',
+    full_name:
+      screeningData.full_name || `${item.user?.first_name || ''} ${item.user?.last_name || ''}` || 'N/A',
+    gender: screeningData.gender || item.user?.gender || 'N/A',
+    dob: screeningData.dob || item.user?.date_of_birth || 'N/A',
+    identity_number: screeningData.identity_number || item.user?.identity_number || 'N/A',
+    mobile_number: screeningData.mobile_number || item.user?.mob_number || 'N/A',
+    academy_code: screeningData.academy_code || item.user?.academy_code || 'N/A',
+    phq9_score: screeningData.phq9_score || screeningData.phq_interpretation || 'N/A',
+    gad7_score: screeningData.gad7_score || screeningData.gad_interpretation || 'N/A',
     suicidal_score: suicidalData ? `${suicidalData.severity} (${suicidalData.score})` : 'N/A',
     ...substances
   }
@@ -608,19 +615,19 @@ const extractSubstances = (item) => {
   const processSubstanceArray = (substances) => {
     if (!Array.isArray(substances)) return
     substances.forEach((substance) => {
-      // ✅ Note: Changed key from substance.substance_name to substance.substance__name to match API response
-      const mappedKey = substanceMapping[substance.substance__name]
+      // handle either substance.substance__name or substance.substance_name
+      const name = substance?.substance__name || substance?.substance_name || substance?.name
+      const mappedKey = substanceMapping[name]
       if (mappedKey) {
-        result[mappedKey] = mapSeverity(substance.risk_flag)
+        result[mappedKey] = mapSeverity(substance?.risk_flag)
       }
     })
   }
 
-  // ✨ FIX: Use Array.isArray to safely handle assist_data
   const assistData = item.screening_data?.assist_data
   const allSubstances = [
-    ...(item.case_substance_risks || []),
-    ...(item.event_substance_risks || []),
+    ...(Array.isArray(item.case_substance_risks) ? item.case_substance_risks : []),
+    ...(Array.isArray(item.event_substance_risks) ? item.event_substance_risks : []),
     ...(Array.isArray(assistData) ? assistData : [])
   ]
 
@@ -630,7 +637,7 @@ const extractSubstances = (item) => {
 }
 
 const mapSeverity = (riskFlag) => {
-  if (!riskFlag) return 'grey'
+  if (!riskFlag && riskFlag !== 0) return 'grey'
   const riskLevel = String(riskFlag).toLowerCase()
   if (riskLevel.includes('severe')) return 'red'
   if (riskLevel.includes('moderate')) return 'yellow'
@@ -733,7 +740,7 @@ const getDataType = (key) => {
 }
 
 const generateExcelReportUsingBackendApi = async () => {
-  const searchTerm = globalFilter.value.toLowerCase().trim()
+  const searchTerm = (globalFilter.value || '').toLowerCase().trim()
   let sourceData = []
   let columnsToExport = []
 
@@ -826,7 +833,7 @@ const downloadExcelWithZip = async () => {
     await generateExcelReportUsingBackendApi()
   } catch (error) {
     console.error('Error generating or downloading zipped Excel file:', error)
-    alert(`Error creating report: ${error.message}`)
+    alert(`Error creating report: ${error.message || error}`)
   } finally {
     isDownloading.value = false
   }
@@ -835,7 +842,8 @@ const downloadExcelWithZip = async () => {
 // --- Lifecycle Hooks ---
 onMounted(() => {
   if (getUserDetailsFromStorage()) {
-    fetchReportDataForYear(selectedYear.value)
+    // ensure selectedYear is number
+    fetchReportDataForYear(Number(selectedYear.value))
   } else {
     isLoading.value = false
     fetchError.value = fetchError.value || 'User details not found. Cannot load reports.'
@@ -845,13 +853,15 @@ onMounted(() => {
 // --- Watchers ---
 watch(selectedYear, (newYear, oldYear) => {
   if (newYear !== oldYear && userDetails.value) {
-    fetchReportDataForYear(newYear)
+    fetchReportDataForYear(Number(newYear))
   }
 })
 
 watch(globalFilter, (newSearchTerm) => {
-  filters.value.global.value = newSearchTerm
-  gyalsungFilters.value.global.value = newSearchTerm
+  // primevue expects null or the string value
+  const valueToSet = newSearchTerm && String(newSearchTerm).length ? String(newSearchTerm) : null
+  filters.value.global.value = valueToSet
+  gyalsungFilters.value.global.value = valueToSet
 })
 </script>
 
