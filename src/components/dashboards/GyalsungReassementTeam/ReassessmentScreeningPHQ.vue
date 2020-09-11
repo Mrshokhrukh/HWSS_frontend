@@ -1,65 +1,84 @@
 <template>
-    <div class="phq-container">
-        <div class="question-header p-4 mb-4 rounded-lg">
-            <h4 class="text-white mb-0">{{ PHQQuestion }}</h4>
+    <div class="questionnaire-container">
+        <div class="question-header">
+            <h2 class="question-text">{{ PHQQuestion }}</h2>
         </div>
 
         <div class="questions-container">
             <!-- First two static questions from PHQ2 set -->
             <div v-for="(question, index) in staticQuestions" :key="'static-' + question.id"
-                class="question-card mb-4 p-4 rounded-lg shadow-sm">
+                class="question-card">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ question.text }}</h6>
-                    <div class="options-grid">
-                        <div v-for="option in question.answers" :key="option.id"
-                            class="option-item text-center">
-                            <label class="radio-label">
-                                <input type="radio" :value="option" v-model="staticAnswers[index]" required
-                                    class="radio-input" :name="'static_question_' + index" />
-                                <span class="option-text">{{ option.option }}</span>
-                            </label>
-                        </div>
+                    <h3 class="question-title">{{ question.text }}</h3>
+                    <div class="options-group">
+                        <label v-for="option in question.answers" :key="option.id" class="radio-label">
+                            <input 
+                                type="radio" 
+                                :value="option" 
+                                v-model="staticAnswers[index]" 
+                                required
+                                class="radio-input" 
+                                :name="'static_question_' + index" 
+                            />
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">{{ option.option }}</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
             <!-- Dynamic questions from PHQ9 set -->
-            <div v-for="text in dynamicQuestions" :key="text.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+            <div v-for="text in dynamicQuestions" :key="text.id" class="question-card">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ text.text }}</h6>
-                    <div class="options-grid">
-                        <div v-for="option in text.answers" :key="option.id"
-                            class="option-item text-center">
-                            <label class="radio-label">
-                                <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
-                                    :name="'question_' + text.id" required class="radio-input" />
-                                <span class="option-text">{{ option.option }}</span>
-                            </label>
-                        </div>
+                    <h3 class="question-title">{{ text.text }}</h3>
+                    <div class="options-group">
+                        <label v-for="option in text.answers" :key="option.id" class="radio-label">
+                            <input 
+                                type="radio" 
+                                :value="option" 
+                                @change="handleAnswerSelection(option, text)"
+                                :name="'question_' + text.id" 
+                                required 
+                                class="radio-input" 
+                            />
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">{{ option.option }}</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
             <!-- Results card -->
-            <div class="results-card p-4 rounded-lg shadow-sm">
-                <div class="result-row mb-2">
-                    <strong>Total:</strong>
-                    <span class="result-value-1">{{ totalScore }}</span>
+            <div class="results-card">
+                <div class="results-header">
+                    <h3>Assessment Results</h3>
                 </div>
-                <div class="result-row">
-                    <strong>Interpretation:</strong>
-                    <span class="result-value" :class="interpretationClass">
-                        {{ interpretation }}
-                    </span>
+                <div class="results-content">
+                    <div class="result-item">
+                        <span class="result-label">Total Score:</span>
+                        <span class="result-value score-badge">{{ totalScore }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Interpretation:</span>
+                        <span class="result-value interpretation-badge" :class="interpretationClass">
+                            {{ interpretation }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Navigation buttons -->
-        <div class="footer d-flex mt-4">
-            <button class="nav-button" @click="goBack">Back</button>
+        <div class="footer">
+            <button class="nav-btn back-btn" @click="goBack">
+                <i class="fas fa-arrow-left"></i>
+                Back
+            </button>
             <div class="flex-grow-1"></div>
-            <button class="nav-button" @click="proceed">Next</button>
+            <button class="nav-btn next-btn" @click="proceed">
+                Next
+                <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
     </div>
 </template>
@@ -91,7 +110,7 @@ const handleAnswerSelection = (option, question) => {
     question.selectedOption = option;
 };
 
-const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
+const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems:');
 
 const totalScore = computed(() => {
     let score = 0;
@@ -122,11 +141,11 @@ const interpretation = computed(() => {
 
 const interpretationClass = computed(() => {
     const score = totalScore.value;
-    if (score >= 0 && score <= 4) return 'bg-primary';
-    if (score >= 5 && score <= 9) return 'bg-success';
-    if (score >= 10 && score <= 14) return 'bg-warning';
-    if (score >= 15 && score <= 19) return 'bg-m-severe';
-    return 'bg-danger';
+    if (score >= 0 && score <= 4) return 'none-minimal';
+    if (score >= 5 && score <= 9) return 'mild';
+    if (score >= 10 && score <= 14) return 'moderate';
+    if (score >= 15 && score <= 19) return 'moderately-severe';
+    return 'severe';
 });
 
 const goBack = () => {
@@ -166,136 +185,381 @@ const proceed = () => {
 };
 </script>
 
-
 <style scoped>
-.phq-container {
-    max-width: 800px;
+.questionnaire-container {
+    max-width: 1000px;
     margin: 0 auto;
+    padding: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .question-header {
+    margin-bottom: 2rem;
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    border-radius: 10px;
+    padding: 2rem;
+    border-radius: 1rem;
+    color: white;
+    box-shadow: 0 8px 32px rgba(43, 101, 111, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.question-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.question-text {
+    font-size: 1.4rem;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
+}
+
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .question-card {
     background: white;
-    border-radius: 10px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .question-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border-color: rgba(43, 101, 111, 0.2);
 }
 
-.question-text {
+.question-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.question-title {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #2B656F;
-    font-weight: 500;
+    margin: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    line-height: 1.4;
 }
 
-.options-grid {
+.options-group {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
 }
 
 .radio-label {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
     cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.radio-label:hover {
+    background: #e8f4f6;
+    border-color: rgba(43, 101, 111, 0.2);
+}
+
+.radio-label:has(input[type="radio"]:checked) {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border-color: #2B656F;
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.3);
 }
 
 .radio-input {
-    cursor: pointer;
-    width: 1.5rem;
-    height: 1.5rem;
-    margin: 0;
-    transition: transform 0.2s ease;
+    display: none;
 }
 
-.radio-input:hover {
-    transform: scale(1.1);
+.radio-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #d0d0d0;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+    background: white;
+    flex-shrink: 0;
 }
 
-.option-text {
-    font-size: 0.9rem;
-    color: #4a5568;
+.radio-label:hover .radio-custom {
+    border-color: #2B656F;
+}
+
+.radio-label:has(input[type="radio"]:checked) .radio-custom {
+    border-color: white;
+    background: white;
+}
+
+.radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2B656F;
+    transition: transform 0.3s ease;
+}
+
+.radio-label:has(input[type="radio"]:checked) .radio-custom::after {
+    transform: translate(-50%, -50%) scale(1);
+    background: #2B656F;
+}
+
+.radio-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.3;
+    flex: 1;
 }
 
 .results-card {
-    background: #f8fafc;
-    border-radius: 10px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 2px solid rgba(43, 101, 111, 0.1);
 }
 
-.result-row {
+.results-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.results-header h3 {
+    margin: 0;
+    color: #2B656F;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.results-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.result-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.result-value-1 {
-    font-size: 1.2rem;
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.result-value {
     font-weight: 500;
 }
 
-.nav-button {
+.score-badge {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+.interpretation-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    min-width: 120px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+.interpretation-badge.none-minimal {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.interpretation-badge.mild {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.interpretation-badge.moderate {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.interpretation-badge.moderately-severe {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55100 100%);
+}
+
+.interpretation-badge.severe {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 0;
+    border-top: 2px solid #f0f0f0;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.nav-btn {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.next-btn {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.2s ease;
 }
 
-.nav-button:hover {
-    opacity: 0.9;
+.next-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.4);
 }
 
-/* Interpretation classes with gradient backgrounds */
-.bg-primary {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .questionnaire-container {
+        padding: 0.5rem;
+    }
+    
+    .question-header {
+        padding: 1.5rem;
+    }
+    
+    .question-text {
+        font-size: 1.2rem;
+    }
+    
+    .question-card {
+        padding: 1rem;
+    }
+    
+    .question-title {
+        font-size: 1rem;
+    }
+    
+    .options-group {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .radio-label {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .radio-text {
+        font-size: 0.85rem;
+    }
+    
+    .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        text-align: left;
+    }
+    
+    .interpretation-badge,
+    .score-badge {
+        align-self: flex-end;
+    }
+    
+    .nav-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
 }
 
-.bg-success {
-    background: linear-gradient(135deg, #34D399 0%, #059669 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-}
-
-.bg-warning {
-    background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-}
-
-.bg-m-severe {
-    background: linear-gradient(135deg, #FF6347 0%, #DC2626 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-}
-
-.bg-danger {
-    background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-}
-
-@media (max-width: 640px) {
-    .options-grid {
-        grid-template-columns: repeat(2, 1fr);
+@media (max-width: 480px) {
+    .footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-btn {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .options-group {
+        grid-template-columns: 1fr;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .results-content {
+        padding: 1rem;
+    }
+    
+    .results-header {
+        padding: 1rem;
     }
 }
 </style>

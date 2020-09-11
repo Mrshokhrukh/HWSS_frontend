@@ -1,56 +1,69 @@
 <template>
-    <div class="psychometric-container">
-        <div class="question-header p-4 mb-4 rounded-lg">
-            <h4 class="text-white mb-0">{{ mainQuestion }}</h4>
+    <div class="questionnaire-container">
+        <div class="question-header">
+            <h2 class="question-text">{{ mainQuestion }}</h2>
         </div>
 
         <div v-if="currentQuestions.length > 0" class="questions-container">
             <!-- Questions -->
-            <div v-for="question in currentQuestions" :key="question.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+            <div v-for="question in currentQuestions" :key="question.id" class="question-card">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ question.text }}</h6>
-                    <div class="options-grid">
-                        <div v-for="option in question.answers" :key="option.id" class="option-item text-center">
-                            <label class="radio-label">
-                                <input 
-                                    type="radio" 
-                                    :value="option" 
-                                    @change="handleAnswerSelection(option, question)"
-                                    :name="'question_' + question.id" 
-                                    required 
-                                    class="radio-input" 
-                                />
-                                <span class="option-text">{{ option.option }}</span>
-                            </label>
-                        </div>
+                    <h3 class="question-title">{{ question.text }}</h3>
+                    <div class="options-group">
+                        <label v-for="option in question.answers" :key="option.id" class="radio-label">
+                            <input 
+                                type="radio" 
+                                :value="option" 
+                                @change="handleAnswerSelection(option, question)"
+                                :name="'question_' + question.id" 
+                                required 
+                                class="radio-input" 
+                            />
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">{{ option.option }}</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
             <!-- Results card -->
-            <div class="results-card p-4 rounded-lg shadow-sm">
-                <div class="result-row mb-2">
-                    <strong>Total Score (Number of "Yes" answers):</strong>
-                    <span class="result-value">{{ totalScore }}</span>
+            <div class="results-card">
+                <div class="results-header">
+                    <h3>Assessment Results</h3>
                 </div>
-                <div class="result-row">
-                    <strong>Interpretation:</strong>
-                    <span class="result-value" :class="interpretationClass">
-                        {{ interpretation }}
-                    </span>
+                <div class="results-content">
+                    <div class="result-item">
+                        <span class="result-label">Total Score (Number of "Yes" answers):</span>
+                        <span class="result-value score-badge">{{ totalScore }}</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Interpretation:</span>
+                        <span class="result-value interpretation-badge" :class="interpretationClass">
+                            {{ interpretation }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div v-else class="text-center p-5">
-            <h4 class="text-muted">Psychometric questions are not available.</h4>
-            <p class="text-muted">Please ensure the 'Psychometric' question set is included in the screening data.</p>
+        <div v-else class="no-questions">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <p>Psychometric questions are not available or loading...</p>
         </div>
 
-        <div class="footer d-flex mt-4">
-            <button class="nav-button" @click="$emit('goBack')">Back</button>
+        <!-- Navigation buttons -->
+        <div class="footer">
+            <button class="nav-btn back-btn" @click="$emit('goBack')">
+                <i class="fas fa-arrow-left"></i>
+                Back
+            </button>
             <div class="flex-grow-1"></div>
-            <button class="nav-button" @click="proceed">Next</button>
+            <button class="nav-btn next-btn" @click="proceed">
+                Next
+                <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
     </div>
 </template>
@@ -107,11 +120,11 @@ const interpretation = computed(() => {
 const interpretationClass = computed(() => {
     const score = totalScore.value;
     if (score === 0) {
-        return 'bg-success';
+        return 'success';
     } else if (score >= 1 && score <= 2) {
-        return 'bg-warning';
+        return 'warning';
     } else {
-        return 'bg-danger';
+        return 'danger';
     }
 });
 
@@ -138,118 +151,396 @@ const proceed = () => {
 </script>
 
 <style scoped>
-.psychometric-container {
-    max-width: 800px;
+.questionnaire-container {
+    max-width: 1000px;
     margin: 0 auto;
+    padding: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .question-header {
+    margin-bottom: 2rem;
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    border-radius: 10px;
+    padding: 2rem;
+    border-radius: 1rem;
+    color: white;
+    box-shadow: 0 8px 32px rgba(43, 101, 111, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.question-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    pointer-events: none;
+}
+
+.question-text {
+    font-size: 1.4rem;
+    margin: 0;
+    font-weight: 600;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
+}
+
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .question-card {
     background: white;
-    border-radius: 10px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .question-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border-color: rgba(43, 101, 111, 0.2);
 }
 
-.question-text {
+.question-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.question-title {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: #2B656F;
-    font-weight: 500;
+    margin: 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+    line-height: 1.4;
 }
 
-/* Adjusted for Yes/No options */
-.options-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-    max-width: 300px; /* Constrain width for better layout */
+.options-group {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-start;
+    max-width: 300px;
 }
 
 .radio-label {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
     cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    position: relative;
+    flex: 1;
+    justify-content: center;
+    min-width: 80px;
+}
+
+.radio-label:hover {
+    background: #e8f4f6;
+    border-color: rgba(43, 101, 111, 0.2);
+}
+
+.radio-label:has(input[type="radio"]:checked) {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border-color: #2B656F;
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.3);
 }
 
 .radio-input {
-    cursor: pointer;
-    width: 1.5rem;
-    height: 1.5rem;
-    margin: 0;
-    transition: transform 0.2s ease;
+    display: none;
 }
 
-.radio-input:hover {
-    transform: scale(1.1);
+.radio-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #d0d0d0;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.3s ease;
+    background: white;
+    flex-shrink: 0;
 }
 
-.option-text {
-    font-size: 0.9rem;
-    color: #4a5568;
+.radio-label:hover .radio-custom {
+    border-color: #2B656F;
+}
+
+.radio-label:has(input[type="radio"]:checked) .radio-custom {
+    border-color: white;
+    background: white;
+}
+
+.radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2B656F;
+    transition: transform 0.3s ease;
+}
+
+.radio-label:has(input[type="radio"]:checked) .radio-custom::after {
+    transform: translate(-50%, -50%) scale(1);
+    background: #2B656F;
+}
+
+.radio-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.3;
 }
 
 .results-card {
-    background: #f8fafc;
-    border-radius: 10px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: 2px solid rgba(43, 101, 111, 0.1);
 }
 
-.result-row {
+.results-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.results-header h3 {
+    margin: 0;
+    color: #2B656F;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.results-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.result-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.nav-button {
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.result-value {
+    font-weight: 500;
+}
+
+.score-badge {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+.interpretation-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    min-width: 120px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+.interpretation-badge.success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.interpretation-badge.warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.interpretation-badge.danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 0;
+    border-top: 2px solid #f0f0f0;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.nav-btn {
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.next-btn {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: opacity 0.2s ease;
 }
 
-.nav-button:hover {
-    opacity: 0.9;
+.next-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.4);
 }
 
-/* Interpretation classes with gradient backgrounds */
-.bg-success {
-    background: linear-gradient(135deg, #34D399 0%, #059669 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
+.no-questions {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6c757d;
 }
 
-.bg-warning {
-    background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
 }
 
-.bg-danger {
-    background: linear-gradient(135deg, #EF4444 0%, #991B1B 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2B656F;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-@media (max-width: 640px) {
-    .options-grid {
-        grid-template-columns: repeat(2, 1fr);
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .questionnaire-container {
+        padding: 0.5rem;
+    }
+    
+    .question-header {
+        padding: 1.5rem;
+    }
+    
+    .question-text {
+        font-size: 1.2rem;
+    }
+    
+    .question-card {
+        padding: 1rem;
+    }
+    
+    .question-title {
+        font-size: 1rem;
+    }
+    
+    .options-group {
         max-width: none;
+        justify-content: center;
+    }
+    
+    .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        text-align: left;
+    }
+    
+    .interpretation-badge,
+    .score-badge {
+        align-self: flex-end;
+    }
+    
+    .nav-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .nav-btn {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .options-group {
+        flex-direction: column;
+        max-width: 200px;
+        margin: 0 auto;
+    }
+    
+    .radio-label {
+        justify-content: flex-start;
+    }
+    
+    .results-content {
+        padding: 1rem;
+    }
+    
+    .results-header {
+        padding: 1rem;
     }
 }
 </style>
