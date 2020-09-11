@@ -1,37 +1,39 @@
 <template>
-    <div >
+    <div class="ace-container">
         <div class="question-header p-4 mb-4 rounded-lg">
             <h4 class="text-white mb-0">{{ GADQuestion }}</h4>
         </div>
 
         <div class="questions-container">
-            <!-- Static questions -->
-            <div v-for="(question, index) in staticQuestions" :key="index"
+            <!-- Static questions from GAD-2 -->
+            <div v-for="(question, index) in staticQuestions" :key="'static-' + index"
                 class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ question }}</h6>
+                    <h3 class="question-text mb-3">{{ question.text }}</h3>
                     <div class="options-grid">
-                        <div v-for="option in defaultAnswers" :key="option.id" class="option-item text-center">
+                        <div v-for="option in question.answers" :key="option.id" class="option-item text-center">
                             <label class="radio-label">
-                                <input type="radio" :value="option.points" v-model="staticAnswers[index]" required
-                                    class="radio-input" />
+                                <input type="radio" :value="option" v-model="staticAnswers[index]" 
+                                    :name="'static_question_' + index" required class="radio-input" />
                                 <span class="option-text">{{ option.option }}</span>
+                                <span class="d-none">{{ option.points }}</span>
                             </label>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Dynamic questions -->
-            <div v-for="text in currentQuestion" :key="text.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+            <!-- Dynamic questions from GAD-7 -->
+            <div v-for="text in dynamicQuestions" :key="text.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ text.text }}</h6>
+                    <h3 class="question-text mb-3">{{ text.text }}</h3>
                     <div class="options-grid">
-                        <div v-for="option in defaultAnswers" :key="option.id" class="option-item text-center">
+                        <div v-for="option in text.answers" :key="option.id" class="option-item text-center">
                             <label class="radio-label">
                                 <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
                                     :name="'question_' + text.id" required class="radio-input" />
                                 <span class="option-text">{{ option.option }}</span>
+                                <span class="d-none">{{ option.points }}</span>
                             </label>
                         </div>
                     </div>
@@ -53,8 +55,9 @@
             </div>
         </div>
 
+        <!-- Navigation buttons -->
         <div class="footer d-flex mt-4">
-            <button class="nav-button" @click="$emit('goBack')">Back</button>
+            <button class="nav-button" @click="goBack">Back</button>
             <div class="flex-grow-1"></div>
             <button class="nav-button" @click="proceed">Next</button>
         </div>
@@ -66,120 +69,87 @@ import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 
-// Initialize static questions with default data to prevent blank screen
-const staticQuestions = [
-    'Feeling nervous, anxious, or on edge',
-    'Not being able to stop or control worrying'
-];
-
-const defaultAnswers = [
-    { id: 0, option: "Not at all", points: 0 },
-    { id: 1, option: "Several days", points: 1 },
-    { id: 2, option: "More than half the days", points: 2 },
-    { id: 3, option: "Nearly everyday", points: 3 }
-];
-
-// Define fallback questions in case injection fails
-const fallbackQuestions = [
-    { id: 14, text: 'Worrying too much about different things', answers: defaultAnswers },
-    { id: 15, text: 'Trouble relaxing', answers: defaultAnswers },
-    { id: 16, text: 'Being so restless that it is hard to sit still', answers: defaultAnswers },
-    { id: 17, text: 'Becoming easily annoyed or irritable', answers: defaultAnswers },
-    { id: 18, text: 'Feeling afraid, as if something awful might happen', answers: defaultAnswers }
-];
-
 const staticAnswers = ref([null, null]);
 const counselorScreeningQuestions = inject('counselorScreeningQuestions', ref(null));
 
-// Computed property with fallback
-const currentQuestion = computed(() => {
-    if (!counselorScreeningQuestions?.value) {
-        return fallbackQuestions;
-    }
-    
-    const caseScreening = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
-    if (!caseScreening) {
-        return fallbackQuestions;
-    }
-    
-    const gad7Set = caseScreening.question_sets.find(set => set.name === 'GAD7');
-    if (!gad7Set?.questions) {
-        return fallbackQuestions;
-    }
-    
-    return gad7Set.questions;
-});
+const getQuestionSet = (setName) => {
+    if (!counselorScreeningQuestions?.value) return [];
+    const screeningSet = counselorScreeningQuestions.value.find(set => set.name === 'Gyalsung Screening');
+    if (!screeningSet) return [];
+    const questionSet = screeningSet.question_sets.find(set => set.name === setName);
+    return questionSet ? questionSet.questions : [];
+};
+
+// *** FIXED DATA PATH ***
+// Get the first 2 questions from GAD2 set
+const staticQuestions = computed(() => getQuestionSet('GAD2'));
+// Get the remaining 5 questions from GAD7 set
+const dynamicQuestions = computed(() => getQuestionSet('GAD7'));
+
 
 const GADQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
 
-// Compute total score with null check
 const totalScore = computed(() => {
     let score = 0;
     
-    // Add static answers
-    score += parseInt(staticAnswers.value[0] || 0);
-    score += parseInt(staticAnswers.value[1] || 0);
+    // Add static answers score
+    staticAnswers.value.forEach(answer => {
+        if (answer) score += answer.points;
+    });
     
-    // Add dynamic answers
-    for (const text of currentQuestion.value) {
-        if (text.selectedOption) {
-            score += parseInt(text.selectedOption.points || 0);
+    // Add dynamic answers score
+    dynamicQuestions.value.forEach(question => {
+        if (question.selectedOption) {
+            score += question.selectedOption.points;
         }
-    }
+    });
     
     return score;
 });
 
 const interpretation = computed(() => {
     const score = totalScore.value;
-    if (score >= 0 && score <= 4 || score === null || isNaN(score)) {
-        return 'Minimal';
-    } else if (score >= 5 && score <= 9) {
-        return 'Mild';
-    } else if (score >= 10 && score <= 14) {
-        return 'Moderate';
-    } else {
-        return 'Severe';
-    }
+    if (score >= 0 && score <= 4) return 'Minimal';
+    if (score >= 5 && score <= 9) return 'Mild';
+    if (score >= 10 && score <= 14) return 'Moderate';
+    return 'Severe';
 });
 
 const interpretationClass = computed(() => {
     const score = totalScore.value;
-    if (score >= 0 && score <= 4 || score === null || isNaN(score)) {
-        return 'bg-primary bg-opacity-50 text-primary';
-    } else if (score >= 5 && score <= 9) {
-        return 'bg-success bg-opacity-50 text-success';
-    } else if (score >= 10 && score <= 14) {
-        return 'bg-warning bg-opacity-50 text-warning';
-    } else {
-        return 'bg-danger bg-opacity-50 text-danger';
-    }
+    if (score >= 0 && score <= 4) return 'bg-primary';
+    if (score >= 5 && score <= 9) return 'bg-success';
+    if (score >= 10 && score <= 14) return 'bg-warning';
+    return 'bg-danger';
 });
 
-const handleAnswerSelection = (option, text) => {
-    if (text) {
-        text.selectedOption = option;
-    }
+const handleAnswerSelection = (option, question) => {
+    question.selectedOption = option;
+};
+
+const goBack = () => {
+    emit('goBack');
 };
 
 const proceed = () => {
     const responses = [];
     
     // Include static questions
-    staticQuestions.forEach((question, index) => {
+    staticQuestions.value.forEach((question, index) => {
+        const selectedOption = staticAnswers.value[index];
         responses.push({
-            question,
-            selectedOption: staticAnswers.value[index],
-            score: parseInt(staticAnswers.value[index] || 0)
+            question: question.text,
+            selectedOption: selectedOption ? selectedOption.option : null,
+            score: selectedOption ? selectedOption.points : 0
         });
     });
     
     // Include dynamic questions
-    currentQuestion.value.forEach(text => {
+    dynamicQuestions.value.forEach(question => {
         responses.push({
-            question: text.text,
-            selectedOption: text.selectedOption ? text.selectedOption.option : null,
-            score: text.selectedOption ? text.selectedOption.points : 0
+            question: question.text,
+            selectedOption: question.selectedOption ? question.selectedOption.option : null,
+            score: question.selectedOption ? question.selectedOption.points : 0
         });
     });
     
@@ -195,6 +165,11 @@ const proceed = () => {
 </script>
 
 <style scoped>
+.ace-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 .question-header {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     border-radius: 10px;
@@ -202,8 +177,8 @@ const proceed = () => {
 
 .question-card {
     background: white;
-    border-radius: 10px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 10px;
 }
 
 .question-card:hover {
@@ -213,12 +188,14 @@ const proceed = () => {
 
 .question-text {
     color: #2B656F;
+    font-size: 1.1rem;
     font-weight: 500;
+    line-height: 1.5;
 }
 
 .options-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1rem;
     margin-top: 1rem;
 }
@@ -303,9 +280,24 @@ const proceed = () => {
     border-radius: 0.25rem;
 }
 
+/* Additional styles for GAD7-specific needs */
+.question-card {
+    background: white;
+    border-color: rgba(43, 101, 111, 0.1);
+}
+
+.question-text {
+    color: #2B656F;
+    font-weight: 500;
+}
+
 @media (max-width: 640px) {
     .options-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .question-text {
+        font-size: 1rem;
     }
 }
 </style>

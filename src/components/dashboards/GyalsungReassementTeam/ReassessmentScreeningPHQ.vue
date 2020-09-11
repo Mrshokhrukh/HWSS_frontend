@@ -5,17 +5,17 @@
         </div>
 
         <div class="questions-container">
-            <!-- First two static questions -->
-            <div v-for="(question, index) in staticQuestions" :key="index"
+            <!-- First two static questions from PHQ2 set -->
+            <div v-for="(question, index) in staticQuestions" :key="'static-' + question.id"
                 class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ question }}</h6>
+                    <h6 class="question-text mb-3">{{ question.text }}</h6>
                     <div class="options-grid">
-                        <div v-for="option in currentQuestion[0]?.answers || []" :key="option.id"
+                        <div v-for="option in question.answers" :key="option.id"
                             class="option-item text-center">
                             <label class="radio-label">
-                                <input type="radio" :value="option.points" v-model="staticAnswers[index]" required
-                                    class="radio-input" />
+                                <input type="radio" :value="option" v-model="staticAnswers[index]" required
+                                    class="radio-input" :name="'static_question_' + index" />
                                 <span class="option-text">{{ option.option }}</span>
                             </label>
                         </div>
@@ -23,12 +23,12 @@
                 </div>
             </div>
 
-            <!-- Dynamic questions -->
-            <div v-for="text in currentQuestion" :key="text" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+            <!-- Dynamic questions from PHQ9 set -->
+            <div v-for="text in dynamicQuestions" :key="text.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
                     <h6 class="question-text mb-3">{{ text.text }}</h6>
                     <div class="options-grid">
-                        <div v-for="option in currentQuestion[0]?.answers || []" :key="option.id"
+                        <div v-for="option in text.answers" :key="option.id"
                             class="option-item text-center">
                             <label class="radio-label">
                                 <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
@@ -44,7 +44,7 @@
             <div class="results-card p-4 rounded-lg shadow-sm">
                 <div class="result-row mb-2">
                     <strong>Total:</strong>
-                    <span class="result-value-1">{{ !totalScore ? '0' : totalScore }}</span>
+                    <span class="result-value-1">{{ totalScore }}</span>
                 </div>
                 <div class="result-row">
                     <strong>Interpretation:</strong>
@@ -68,120 +68,100 @@
 import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
-
-// Static questions and their answers
-const staticQuestions = [
-    'Little interest or pleasure in doing things',
-    'Feeling down, depressed or hopeless'
-];
+const counselorScreeningQuestions = inject('counselorScreeningQuestions');
 
 // Store answers for static questions
 const staticAnswers = ref([null, null]);
 
-// Handle answer selection for dynamic questions
-const handleAnswerSelection = (option, text) => {
-    text.selectedOption = option;
+const getQuestionSet = (setName) => {
+    if (!counselorScreeningQuestions?.value) return [];
+    const screeningSet = counselorScreeningQuestions.value.find(set => set.name === 'Gyalsung Screening');
+    if (!screeningSet) return [];
+    const questionSet = screeningSet.question_sets.find(set => set.name === setName);
+    return questionSet ? questionSet.questions : [];
 };
 
-// Retrieve PHQ questions
-const counselorScreeningQuestions = inject('counselorScreeningQuestions');
+// *** FIXED DATA PATH ***
+// Get the first 2 questions from PHQ2 set
+const staticQuestions = computed(() => getQuestionSet('PHQ2'));
+// Get the remaining 7 questions from PHQ9 set
+const dynamicQuestions = computed(() => getQuestionSet('PHQ9'));
 
-const currentQuestion = computed(() => {
-    if (!counselorScreeningQuestions || !counselorScreeningQuestions.value) {
-        return [];
-    }
-    const caseScreening = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
-    if (!caseScreening) {
-        return [];
-    }
-    const phq9Set = caseScreening.question_sets.find(set => set.name === 'PHQ9');
-    if (!phq9Set) {
-        return [];
-    }
-    return phq9Set.questions;
-});
+const handleAnswerSelection = (option, question) => {
+    question.selectedOption = option;
+};
 
-// Define PHQ question text
 const PHQQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
 
-// Compute total score
 const totalScore = computed(() => {
     let score = 0;
 
     // Sum static answers
-    score += parseInt(staticAnswers.value[0] || 0);
-    score += parseInt(staticAnswers.value[1] || 0);
+    staticAnswers.value.forEach(answer => {
+      if (answer) score += answer.points;
+    });
 
     // Sum dynamic question scores
-    for (const text of currentQuestion.value) {
-        const selectedOption = text.selectedOption;
-        if (selectedOption) {
-            score += selectedOption.points;
+    dynamicQuestions.value.forEach(question => {
+        if (question.selectedOption) {
+            score += question.selectedOption.points;
         }
-    }
+    });
 
     return score;
 });
 
-// Compute interpretation based on total score
 const interpretation = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
-        return 'None or Minimal';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
-        return 'Mild';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'Moderate';
-    } else if (totalScore.value >= 15 && totalScore.value <= 19) {
-        return 'Moderately Severe';
-    } else {
-        return 'Severe';
-    }
+    const score = totalScore.value;
+    if (score >= 0 && score <= 4) return 'None or Minimal';
+    if (score >= 5 && score <= 9) return 'Mild';
+    if (score >= 10 && score <= 14) return 'Moderate';
+    if (score >= 15 && score <= 19) return 'Moderately Severe';
+    return 'Severe';
 });
 
-// Compute interpretation class
 const interpretationClass = computed(() => {
-    if (totalScore.value >= 0 && totalScore.value <= 4 || totalScore.value === null || isNaN(totalScore.value)) {
-        return 'bg-primary bg-opacity-50 text-primary';
-    } else if (totalScore.value >= 5 && totalScore.value <= 9) {
-        return 'bg-success bg-opacity-50 text-success';
-    } else if (totalScore.value >= 10 && totalScore.value <= 14) {
-        return 'bg-warning bg-opacity-50 text-warning';
-    } else if (totalScore.value >= 15 && totalScore.value <= 19) {
-        return 'bg-m-severe text-m-severe';
-    } else {
-        return 'bg-danger bg-opacity-50 text-danger';
-    }
+    const score = totalScore.value;
+    if (score >= 0 && score <= 4) return 'bg-primary';
+    if (score >= 5 && score <= 9) return 'bg-success';
+    if (score >= 10 && score <= 14) return 'bg-warning';
+    if (score >= 15 && score <= 19) return 'bg-m-severe';
+    return 'bg-danger';
 });
 
-// Proceed to the next step
+const goBack = () => {
+  emit('goBack');
+};
+
 const proceed = () => {
     const responses = [];
 
     // Collect static question responses
-    staticQuestions.forEach((question, index) => {
+    staticQuestions.value.forEach((question, index) => {
+        const selectedOption = staticAnswers.value[index];
         responses.push({
-            question,
-            selectedOption: staticAnswers.value[index],
-            score: parseInt(staticAnswers.value[index] || 0)
+            question: question.text,
+            selectedOption: selectedOption ? selectedOption.option : null,
+            score: selectedOption ? selectedOption.points : 0
         });
     });
 
     // Collect dynamic question responses
-    currentQuestion.value.forEach(text => {
+    dynamicQuestions.value.forEach(question => {
         responses.push({
-            question: text.text,
-            selectedOption: text.selectedOption ? text.selectedOption.option : null,
-            score: text.selectedOption ? text.selectedOption.points : 0
+            question: question.text,
+            selectedOption: question.selectedOption ? question.selectedOption.option : null,
+            score: question.selectedOption ? question.selectedOption.points : 0
         });
     });
 
-    // Save responses, total score, and interpretation
-    const totalScoreValue = totalScore.value;
-    const interpretationValue = interpretation.value;
-
-    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
+    const data = { 
+        responses, 
+        totalScore: totalScore.value, 
+        interpretation: interpretation.value 
+    };
+    
     localStorage.setItem('PHQ_set_counselor_screening', JSON.stringify(data));
-
     emit('goToNext', 'PHQ9');
 };
 </script>

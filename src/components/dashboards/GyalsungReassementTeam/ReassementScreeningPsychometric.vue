@@ -1,36 +1,25 @@
 <template>
-    <div >
+    <div class="psychometric-container">
         <div class="question-header p-4 mb-4 rounded-lg">
-            <h4 class="text-white mb-0">{{ GADQuestion }}</h4>
+            <h4 class="text-white mb-0">{{ mainQuestion }}</h4>
         </div>
 
-        <div class="questions-container">
-            <!-- Static questions -->
-            <div v-for="(question, index) in staticQuestions" :key="index"
-                class="question-card mb-4 p-4 rounded-lg shadow-sm">
+        <div v-if="currentQuestions.length > 0" class="questions-container">
+            <!-- Questions -->
+            <div v-for="question in currentQuestions" :key="question.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
-                    <h6 class="question-text mb-3">{{ question }}</h6>
+                    <h6 class="question-text mb-3">{{ question.text }}</h6>
                     <div class="options-grid">
-                        <div v-for="option in defaultAnswers" :key="option.id" class="option-item text-center">
+                        <div v-for="option in question.answers" :key="option.id" class="option-item text-center">
                             <label class="radio-label">
-                                <input type="radio" :value="option.points" v-model="staticAnswers[index]" required
-                                    class="radio-input" />
-                                <span class="option-text">{{ option.option }}</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dynamic questions -->
-            <div v-for="text in currentQuestion" :key="text.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
-                <div class="question-content">
-                    <h6 class="question-text mb-3">{{ text.text }}</h6>
-                    <div class="options-grid">
-                        <div v-for="option in defaultAnswers" :key="option.id" class="option-item text-center">
-                            <label class="radio-label">
-                                <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
-                                    :name="'question_' + text.id" required class="radio-input" />
+                                <input 
+                                    type="radio" 
+                                    :value="option" 
+                                    @change="handleAnswerSelection(option, question)"
+                                    :name="'question_' + question.id" 
+                                    required 
+                                    class="radio-input" 
+                                />
                                 <span class="option-text">{{ option.option }}</span>
                             </label>
                         </div>
@@ -41,7 +30,7 @@
             <!-- Results card -->
             <div class="results-card p-4 rounded-lg shadow-sm">
                 <div class="result-row mb-2">
-                    <strong>Total:</strong>
+                    <strong>Total Score (Number of "Yes" answers):</strong>
                     <span class="result-value">{{ totalScore }}</span>
                 </div>
                 <div class="result-row">
@@ -51,6 +40,11 @@
                     </span>
                 </div>
             </div>
+        </div>
+
+        <div v-else class="text-center p-5">
+            <h4 class="text-muted">Psychometric questions are not available.</h4>
+            <p class="text-muted">Please ensure the 'Psychometric' question set is included in the screening data.</p>
         </div>
 
         <div class="footer d-flex mt-4">
@@ -66,122 +60,71 @@ import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
 
-// Initialize static questions with default data to prevent blank screen
-const staticQuestions = [
-    'Feeling nervous, anxious, or on edge',
-    'Not being able to stop or control worrying'
-];
-
-const defaultAnswers = [
-    { id: 0, option: "Not at all", points: 0 },
-    { id: 1, option: "Several days", points: 1 },
-    { id: 2, option: "More than half the days", points: 2 },
-    { id: 3, option: "Nearly everyday", points: 3 }
-];
-
-// Define fallback questions in case injection fails
-const fallbackQuestions = [
-    { id: 14, text: 'Worrying too much about different things', answers: defaultAnswers },
-    { id: 15, text: 'Trouble relaxing', answers: defaultAnswers },
-    { id: 16, text: 'Being so restless that it is hard to sit still', answers: defaultAnswers },
-    { id: 17, text: 'Becoming easily annoyed or irritable', answers: defaultAnswers },
-    { id: 18, text: 'Feeling afraid, as if something awful might happen', answers: defaultAnswers }
-];
-
-const staticAnswers = ref([null, null]);
 const counselorScreeningQuestions = inject('counselorScreeningQuestions', ref(null));
+const mainQuestion = ref('Please answer the following questions:');
 
-// Computed property with fallback
-const currentQuestion = computed(() => {
+// *** CORRECTED DATA FETCHING FOR PSYCHOMETRIC ***
+const currentQuestions = computed(() => {
     if (!counselorScreeningQuestions?.value) {
-        return fallbackQuestions;
+        return [];
     }
     
-    const caseScreening = counselorScreeningQuestions.value.find(set => set.name === 'Case Screening');
-    if (!caseScreening) {
-        return fallbackQuestions;
+    // 1. Find the main "Gyalsung Screening" set
+    const screeningSet = counselorScreeningQuestions.value.find(set => set.name === 'Gyalsung Screening');
+    if (!screeningSet) {
+        return [];
     }
     
-    const gad7Set = caseScreening.question_sets.find(set => set.name === 'GAD7');
-    if (!gad7Set?.questions) {
-        return fallbackQuestions;
+    // 2. Find the "Psychometric" question set within it
+    const psychometricSet = screeningSet.question_sets.find(set => set.name === 'Psychometric');
+    if (!psychometricSet?.questions) {
+        return [];
     }
     
-    return gad7Set.questions;
+    // 3. Return the questions, ensuring each has a placeholder for the selected answer
+    return psychometricSet.questions.map(q => ({ ...q, selectedOption: null }));
 });
 
-const GADQuestion = ref('Over the last 2 weeks, how often have you been bothered by any of the following problems: ');
-
-// Compute total score with null check
+// Calculate the total score by summing points from selected options
 const totalScore = computed(() => {
-    let score = 0;
-    
-    // Add static answers
-    score += parseInt(staticAnswers.value[0] || 0);
-    score += parseInt(staticAnswers.value[1] || 0);
-    
-    // Add dynamic answers
-    for (const text of currentQuestion.value) {
-        if (text.selectedOption) {
-            score += parseInt(text.selectedOption.points || 0);
-        }
-    }
-    
-    return score;
+    return currentQuestions.value.reduce((score, question) => {
+        return score + (question.selectedOption ? question.selectedOption.points : 0);
+    }, 0);
 });
 
+// *** CUSTOM INTERPRETATION FOR PSYCHOMETRIC ***
 const interpretation = computed(() => {
     const score = totalScore.value;
-    if (score >= 0 && score <= 4 || score === null || isNaN(score)) {
-        return 'Minimal';
-    } else if (score >= 5 && score <= 9) {
-        return 'Mild';
-    } else if (score >= 10 && score <= 14) {
-        return 'Moderate';
+    if (score === 0) {
+        return 'No psychotic symptoms indicated';
+    } else if (score >= 1 && score <= 2) {
+        return 'Some symptoms indicated, further evaluation may be needed';
     } else {
-        return 'Severe';
+        return 'Significant symptoms indicated, further evaluation is recommended';
     }
 });
 
 const interpretationClass = computed(() => {
     const score = totalScore.value;
-    if (score >= 0 && score <= 4 || score === null || isNaN(score)) {
-        return 'bg-primary bg-opacity-50 text-primary';
-    } else if (score >= 5 && score <= 9) {
-        return 'bg-success bg-opacity-50 text-success';
-    } else if (score >= 10 && score <= 14) {
-        return 'bg-warning bg-opacity-50 text-warning';
+    if (score === 0) {
+        return 'bg-success';
+    } else if (score >= 1 && score <= 2) {
+        return 'bg-warning';
     } else {
-        return 'bg-danger bg-opacity-50 text-danger';
+        return 'bg-danger';
     }
 });
 
-const handleAnswerSelection = (option, text) => {
-    if (text) {
-        text.selectedOption = option;
-    }
+const handleAnswerSelection = (option, question) => {
+    question.selectedOption = option;
 };
 
 const proceed = () => {
-    const responses = [];
-    
-    // Include static questions
-    staticQuestions.forEach((question, index) => {
-        responses.push({
-            question,
-            selectedOption: staticAnswers.value[index],
-            score: parseInt(staticAnswers.value[index] || 0)
-        });
-    });
-    
-    // Include dynamic questions
-    currentQuestion.value.forEach(text => {
-        responses.push({
-            question: text.text,
-            selectedOption: text.selectedOption ? text.selectedOption.option : null,
-            score: text.selectedOption ? text.selectedOption.points : 0
-        });
-    });
+    const responses = currentQuestions.value.map(question => ({
+        question: question.text,
+        selectedOption: question.selectedOption ? question.selectedOption.option : null,
+        score: question.selectedOption ? question.selectedOption.points : 0
+    }));
     
     const data = {
         responses,
@@ -189,12 +132,17 @@ const proceed = () => {
         interpretation: interpretation.value
     };
     
-    localStorage.setItem('GAD_set_counselor_screening', JSON.stringify(data));
-    emit('goToNext', 'GAD7');
+    localStorage.setItem('Psychometric_set_counselor_screening', JSON.stringify(data));
+    emit('goToNext', 'Psychometric');
 };
 </script>
 
 <style scoped>
+.psychometric-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
 .question-header {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
     border-radius: 10px;
@@ -216,11 +164,13 @@ const proceed = () => {
     font-weight: 500;
 }
 
+/* Adjusted for Yes/No options */
 .options-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 1rem;
     margin-top: 1rem;
+    max-width: 300px; /* Constrain width for better layout */
 }
 
 .radio-label {
@@ -275,13 +225,6 @@ const proceed = () => {
 }
 
 /* Interpretation classes with gradient backgrounds */
-.bg-primary {
-    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%) !important;
-    color: white !important;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-}
-
 .bg-success {
     background: linear-gradient(135deg, #34D399 0%, #059669 100%) !important;
     color: white !important;
@@ -306,6 +249,7 @@ const proceed = () => {
 @media (max-width: 640px) {
     .options-grid {
         grid-template-columns: repeat(2, 1fr);
+        max-width: none;
     }
 }
 </style>

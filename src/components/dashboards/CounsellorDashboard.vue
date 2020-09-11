@@ -101,7 +101,7 @@ import CounselorSetting from '@/components/dashboards/counselorSetting/Counselor
 import CounselorFlagReports from '@/components/dashboards/counselorReporting/CounselorFlagReports.vue'
 import GyalsungRegister from '@/components/dashboards/GyalsungModel/GyalsungRegister.vue'
 import GyalsungScreening from '@/components/dashboards/GyalsungModel/GyalsungScreening.vue' 
-import GyalsungReports from '@/components/dashboards/GyalsungModel/GyalsungReports.vue'
+
 
 const route = useRoute()
 const currentRoute = computed(() => route.path)

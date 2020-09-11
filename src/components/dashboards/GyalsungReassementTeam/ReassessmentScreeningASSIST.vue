@@ -11,550 +11,459 @@
 
         <div class="substances-grid">
             <div v-for="(substance, index) in currentQuestion.substances" :key="index" class="substance-card"
-                :class="{ 'disabled': shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance) }">
+                :class="{ 'disabled': isSubstanceDisabled(substance) }">
 
                 <div class="substance-name">
+                    <div class="substance-icon">
+                        <i class="fas fa-pills" v-if="substance.includes('Tobacco') || substance.includes('Cannabis')"></i>
+                        <i class="fas fa-wine-bottle" v-else-if="substance.includes('Alcohol')"></i>
+                        <i class="fas fa-capsules" v-else-if="substance.includes('Cocaine') || substance.includes('Amphetamine')"></i>
+                        <i class="fas fa-syringe" v-else-if="substance.includes('Opioids') || substance.includes('Inhalants')"></i>
+                        <i class="fas fa-prescription-bottle" v-else-if="substance.includes('Sedatives')"></i>
+                        <i class="fas fa-question-circle" v-else></i>
+                    </div>
                     <template v-if="substance !== 'Other - specify'">
                         {{ substance }}
                     </template>
                     <template v-else>
                         <input type="text" class="other-input" placeholder="Other - specify" v-model="otherSubstance"
-                            :readonly="isOtherSubstanceLocked"
-                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
+                            :readonly="isOtherSubstanceLocked" :disabled="isSubstanceDisabled(substance)" />
                     </template>
                 </div>
 
                 <div class="options-group">
                     <label v-for="option in currentQuestion.answers" :key="option.id" class="radio-label">
-                        <input type="radio" :value="option" @change="handleAnswerSelection(option, substance)"
-                            :name="'question_' + index"
-                            :disabled="shouldDisableSubstance(substance) || disabledSubstancesQ345.includes(substance)" />
+                        <input 
+                            type="radio"
+                            :name="'substance_' + substance"
+                            :value="option"
+                            v-model="currentQuestion.answersBySubstance[substance]"
+                            @change="handleAnswerSelection(option, substance)"
+                            :disabled="isSubstanceDisabled(substance)" 
+                        />
                         <span class="radio-custom"></span>
+                        <span class="radio-text">{{ option.option }}</span>
                     </label>
                 </div>
             </div>
         </div>
 
         <div class="footer">
-            <button class="nav-btn back-btn d-none" @click="goBack">Back</button>
+            <button class="nav-btn back-btn" @click="goBack" :class="{'d-none': currentQuestionIndex === 0}">
+                <i class="fas fa-arrow-left"></i>
+                Back
+            </button>
             <div class="flex-grow-1"></div>
-            <button v-if="isLastQuestion" class="nav-btn next-btn" @click="proceed">Next</button>
-            <button v-else class="nav-btn next-btn" @click="jumpToNextQuestion">Next</button>
+            <button v-if="isLastQuestion" class="nav-btn next-btn finish-btn" @click="proceed">
+                <i class="fas fa-check"></i>
+                Finish
+            </button>
+            <button v-else class="nav-btn next-btn" @click="jumpToNextQuestion">
+                Next
+                <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
     </div>
     <div v-else class="no-questions">
-        <p>No more questions for the selected age group.</p>
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+        <p>Loading questions or no more questions for this screening...</p>
     </div>
 </template>
 
-
 <script setup>
-import { ref, computed, inject, reactive } from 'vue';
+import { ref, computed, inject, reactive, watchEffect } from 'vue';
 import Swal from 'sweetalert2';
 
 const emit = defineEmits(['goToNext', 'goBack']);
-const substanceAnswered = reactive({});
-const answers = reactive({});
-const showAnswerAllPrompt = ref(false);
-const currentQuestionIndex = ref(1);
-const showConfetti = ref(false);
-const answeredSubstances = ref({});
-const testResponses = reactive({
-    responses: [],
-    logs: []
-});
 
+// Injected reactive data source
+const counselorScreeningQuestions = inject('counselorScreeningQuestions');
+
+// Component-specific state
+const allAssistQuestions = ref([]);
+const currentQuestionIndex = ref(0);
 const otherSubstance = ref('');
+const finalResponses = reactive([]); 
 
-const isOtherSubstanceLocked = computed(() => {
-    return currentQuestionIndex.value > 1;
-});
+// State for skip/disable logic based on answers
+const lifetimeUseResponses = reactive({}); // For Q1 (ID 54)
+const recentUseResponses = reactive({});   // For Q2 (ID 55)
 
-const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
-
-const disabledSubstances = computed(() => {
-    const question1Responses = testResponses.question1Responses || {};
-
-    if (currentQuestionIndex.value > 1) {
-        return currentQuestion.value.substances.filter(substance => {
-            return question1Responses[substance] === 'No';
-        });
-    }
-    return [];
-});
-
-const disabledSubstancesQ345 = computed(() => {
-    const question2Responses = testResponses.question2Responses || {};
-    const currentQuestion = filteredQuestions.value[currentQuestionIndex.value - 1];
-
-    // Get the index of question 68 in our filtered questions
-    const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
-
-    if (q68Index === -1) return []; // Question 68 not found
-
-    // Only apply this disable logic for question 68 and the next 3 questions
-    const currentPosition = currentQuestionIndex.value - 1; // 0-based index
-    const isInRange = currentPosition >= q68Index && currentPosition <= q68Index + 3;
-
-    if (isInRange) {
-        return currentQuestion.substances.filter(substance => {
-            return question2Responses[substance]?.id === 242;
-        });
-    }
-    return [];
-});
-
-// Function to check if a substance should be disabled
-const shouldDisableSubstance = (substance) => {
-    // Question 67's disable logic applies throughout
-    const isDisabledFromQ67 = disabledSubstances.value.includes(substance);
-    
-    // Question 68's disable logic applies to next 3 questions based on position
-    const q68Index = filteredQuestions.value.findIndex(q => q.id === 68);
-    const currentPosition = currentQuestionIndex.value - 1;
-    const isInQ68Range = q68Index !== -1 && 
-                        currentPosition >= q68Index && 
-                        currentPosition <= q68Index + 3;
-    
-    const isDisabledFromQ68 = isInQ68Range && disabledSubstancesQ345.value.includes(substance);
-    
-    return isDisabledFromQ67 || isDisabledFromQ68;
-};
-
-const currentQuestionSetName = computed(() => {
-    return 'ASSIST';
-});
-
-const handleAnswerSelection = (option, substance) => {
-    if (!option || !substance) return;
-
-    if (!testResponses.question2Responses) {
-        testResponses.question2Responses = {};
-    }
-
-    if (currentQuestion.value.id === 68) {  // Check for specific question ID
-        testResponses.question2Responses[substance] = {
-            id: option.id,
-            option: option.option
-        };
-        watchQuestion68Responses();
-    }
-
-    if (currentQuestion.value.id === 67) {
-        if (!testResponses.question1Responses) {
-            testResponses.question1Responses = {};
-        }
-
-        testResponses.question1Responses[substance] = {
-            id: option.id,
-            option: option.option
-        };
-    }
-
-    if (!substance && currentQuestionSetName.value === 'ASSIST') {
-        console.error('ASSIST: Null pointer exception in handleAnswerSelection. substance is null');
+// --- DATA PREPARATION ---
+watchEffect(() => {
+    // Guard clause: wait for data to be loaded
+    if (!counselorScreeningQuestions || !counselorScreeningQuestions.value || counselorScreeningQuestions.value.length === 0) {
         return;
     }
-    logQuestionAndResponse(option, substance);
-    updateSubstanceAnswered(option, substance);
-}
 
-const currentQuestion = computed(() => {
-    const questions = filteredQuestions.value;
-    if (!questions.length) return null;
-
-    const currentIndex = currentQuestionIndex.value - 1;
-    if (currentIndex < 0 || currentIndex >= questions.length) {
-        console.error('Invalid question index:', currentIndex);
-        return null;
+    // 1. Find the main "Gyalsung Screening" set from the top-level array
+    const gyalsungScreening = counselorScreeningQuestions.value.find(set => set.name === 'Gyalsung Screening');
+    if (!gyalsungScreening) {
+        console.error('"Gyalsung Screening" set not found in the provided data.');
+        return;
     }
 
-    return questions[currentIndex];
+    // 2. Find the "CNE ASSIST" question set within it
+    const assistSet = gyalsungScreening.question_sets.find(set => set.name === 'CNE ASSIST');
+    if (!assistSet || !assistSet.questions) {
+        console.error('"CNE ASSIST" question set not found or is empty.');
+        return;
+    }
+    
+    // 3. Filter questions by age group and sort them
+    const clientAgeGroup = sessionStorage.getItem('clientAgeGroup') || 'Above 18';
+    const filtered = assistSet.questions
+        .filter(q => q.age_group_tags.length === 0 || q.age_group_tags.includes(clientAgeGroup))
+        .sort((a, b) => a.id - b.id);
+
+    // 4. Prepare each question object to hold its own state for answers
+    allAssistQuestions.value = filtered.map(q => ({
+        ...q,
+        answersBySubstance: q.substances.reduce((acc, sub) => {
+            acc[sub] = null; // Initialize answer for each substance
+            return acc;
+        }, {})
+    }));
+});
+
+
+// --- COMPUTED PROPERTIES ---
+const currentQuestion = computed(() => {
+    if (allAssistQuestions.value.length === 0) return null;
+    return allAssistQuestions.value[currentQuestionIndex.value];
 });
 
 const isLastQuestion = computed(() => {
-    return currentQuestionIndex.value >= filteredQuestions.value.length;
+    return currentQuestionIndex.value >= allAssistQuestions.value.length - 1;
+});
+
+const isOtherSubstanceLocked = computed(() => {
+    // Lock the "Other" substance name after the first question
+    return currentQuestionIndex.value > 0;
 });
 
 
-let assistAnswer = [];
+// --- METHODS ---
+function handleAnswerSelection(option, substance) {
+    if (!currentQuestion.value) return;
 
-function logQuestionAndResponse(option, substance) {
-    const questionText = currentQuestionText.value;
-    if (!questionText) {
-        console.error('ASSIST: Null pointer exception in logQuestionAndResponse. currentQuestionText.value is null');
-        return;
+    // Store responses specifically for skip/disable logic
+    const questionId = currentQuestion.value.id;
+    if (questionId === 54) { // "In your life, have you ever tried..."
+        lifetimeUseResponses[substance] = option;
     }
-    const questionSetName = currentQuestionSetName.value;
-    if (!questionSetName) {
-        console.error('ASSIST: Null pointer exception in logQuestionAndResponse. currentQuestionSetName.value is null');
-        return;
-    }
-    const response = option.option;
-    if (!response) {
-        console.error('ASSIST: Null pointer exception in logQuestionAndResponse. option.option is null');
-        return;
-    }
-    const point = option.points;
-    if (isNaN(point)) {
-        console.error('ASSIST: NaN value in logQuestionAndResponse. option.points is', point);
-        return;
-    }
-
-    const logEntry = {
-        question: questionText,
-        setName: questionSetName,
-        response: response,
-        point: point,
-        substance: substance || null,
-        diagnosis: null,
-    };
-
-    assistAnswer.push(logEntry);
-
-    const answer = response.trim();
-
-    // Check if the question is from the ASSIST set
-    if (questionSetName === 'ASSIST') {
-        if (currentQuestionIndex.value === 1) {
-            if (!testResponses.question1Responses) {
-                testResponses.question1Responses = {};
-            }
-            testResponses.question1Responses[substance] = answer;
-        }
-
-        // Update substanceAnswered based on the response
-        if (answer) {
-            logEntry.substance = substance;
-            if (!substance) {
-                console.error('ASSIST: Null pointer exception in logQuestionAndResponse. substance is null');
-                return;
-            }
-            answers.substanceName = substance;
-            if (!substanceAnswered) {
-                console.error('ASSIST: Null pointer exception in logQuestionAndResponse. substanceAnswered is null');
-                return;
-            }
-            substanceAnswered[substance] = answer === 'Yes';
-        }
-    }
-
-    // Update or add the log entry to testResponses.responses array
-    const index = findLoggedQuestionIndex(questionText, substance);
-    if (index !== -1 && logEntry.substance === testResponses.responses[index].substance) {
-        testResponses.responses[index] = logEntry;
-    } else {
-        if (!testResponses.responses) {
-            console.error('ASSIST: Null pointer exception in logQuestionAndResponse. testResponses.responses is null');
-            return;
-        }
-        testResponses.responses.push(logEntry);
+    if (questionId === 55) { // "In the past three months, how often have you used..."
+        recentUseResponses[substance] = option;
     }
 }
 
-const proceed = () => {
-    localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(assistAnswer));
-    emit('goToNext', 'ASSIST');
-};
-
-const currentQuestionText = computed(() => {
-    return currentQuestion.value ? currentQuestion.value.text : '';
-});
-
-function findLoggedQuestionIndex(question, substance) {
-    return testResponses.responses.findIndex(entry =>
-        entry.question === question &&
-        (entry.substance === undefined || entry.substance === substance)
-    );
-}
-
-function saveSubstanceAnswersToLocalStorage() {
-    localStorage.setItem('answeredSubstances', JSON.stringify(substanceAnswered));
-    handleStorageChange();
-}
-
-function updateSubstanceCount() {
-    const countYes = Object.values(substanceAnswered).filter(answer => answer).length;
-    checkAllSubstancesAnswered(countYes);
-}
-
-
-const handleStorageChange = () => {
-    const updatedAnsweredSubstances = JSON.parse(localStorage.getItem('answeredSubstances'));
-
-    answeredSubstances.value = updatedAnsweredSubstances;
-
-    if (Object.values(updatedAnsweredSubstances).every(state => state === false)) {
-        showConfetti.value = true;
-    }
-};
-
-function checkAllSubstancesAnswered(countYes) {
-    const totalSubstances = Object.keys(substanceAnswered).length;
-    if (countYes < totalSubstances) {
-        showAnswerAllPrompt.value = false;
-    }
-}
-
-const jumpToNextQuestion = () => {
-    try {
-        if (!checkInvalidInputs()) return;
-
-        // Special handling for question 67
-        if (currentQuestion.value?.id === 67) {
-            Object.entries(testResponses.question1Responses || {}).forEach(([substance, response]) => {
-                if (response.id === 241) {
-                    substanceAnswered[substance] = false;
-                }
-            });
-            saveSubstanceAnswersToLocalStorage();
-        }
-        
-        if (currentQuestionIndex.value < filteredQuestions.value.length) {
-            currentQuestionIndex.value++;
-        } 
-    } catch (e) {
-        console.error('jumpToNextQuestion threw an error', e);
-        throw e;
-    }
-};
-
-const goBack = () => {
-    if (currentQuestionIndex.value > 1) {
-        currentQuestionIndex.value -= 1;
-    }
-};
-
-const checkInvalidInputs = () => {
-    try {
-        const invalidInputs = document.querySelectorAll('input:required:invalid');
-        if (invalidInputs && invalidInputs.length > 0) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Incomplete Form',
-                text: 'Please fill in all required fields before proceeding.',
-            });
-            return false;
-        }
+function isSubstanceDisabled(substance) {
+    // Rule 1: Disable substance if user answered "No" to ever using it in the first question.
+    if (currentQuestion.value?.id > 54 && lifetimeUseResponses[substance]?.option === 'No') {
         return true;
-    } catch (error) {
-        console.error('Error in checkInvalidInputs', error);
+    }
+
+    // Rule 2: Disable for specific questions if user answered "Never" to recent use.
+    const qIdsForRecentUseCheck = [56, 57, 58];
+    if (qIdsForRecentUseCheck.includes(currentQuestion.value?.id) && recentUseResponses[substance]?.option.startsWith('Never')) {
+        return true;
+    }
+    
+    return false;
+}
+
+function validateCurrentQuestion() {
+    if (!currentQuestion.value) return false;
+
+    // Check if every *non-disabled* substance has an answer selected.
+    const allAnswered = currentQuestion.value.substances.every(substance => {
+        if (isSubstanceDisabled(substance)) {
+            return true; // A disabled substance is considered "answered".
+        }
+        return currentQuestion.value.answersBySubstance[substance] !== null;
+    });
+
+    if (!allAnswered) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Incomplete',
+            text: 'Please provide an answer for each substance before proceeding.',
+        });
         return false;
     }
-};
+    return true;
+}
 
-function updateSubstanceAnswered(option, substance) {
-    let answer = option.option;
-    if (!answer) {
-        return;
-    }
-    answer = answer.trim();
-    if (answer === 'Yes' || answer === 'No') {
-        substanceAnswered[substance] = answer === 'Yes';
-        if (answer === 'Yes' && substance === 'Other - specify') {
+function logCurrentAnswers() {
+    if (!currentQuestion.value) return;
+    
+    currentQuestion.value.substances.forEach(substance => {
+        const selectedOption = currentQuestion.value.answersBySubstance[substance];
+        
+        if (selectedOption) {
+            // Use the user-typed name for "Other" substance
+            const substanceName = substance === 'Other - specify' ? (otherSubstance.value || 'Other - unspecified') : substance;
+
             const logEntry = {
-                question: currentQuestionText.value,
-                setName: currentQuestionSetName.value,
-                response: answer,
-                substance: localStorage.getItem('otherSubstanceName')
+                question: currentQuestion.value.text,
+                setName: 'CNE ASSIST',
+                response: selectedOption.option,
+                point: selectedOption.points,
+                substance: substanceName,
+                diagnosis: null,
             };
-            if (testResponses.responses) {
-                testResponses.responses.push(logEntry);
-            }
-            if (answers) {
-                answers.substanceName = localStorage.getItem('otherSubstanceName');
+
+            const existingIndex = finalResponses.findIndex(r => r.question === logEntry.question && r.substance === logEntry.substance);
+            if (existingIndex > -1) {
+                finalResponses[existingIndex] = logEntry; // Update existing
+            } else {
+                finalResponses.push(logEntry); // Add new
             }
         }
-        saveSubstanceAnswersToLocalStorage();
-        updateSubstanceCount();
+    });
+}
+
+function jumpToNextQuestion() {
+    if (!validateCurrentQuestion()) return;
+    logCurrentAnswers();
+
+    let nextIndex = currentQuestionIndex.value + 1;
+
+    // Skip Logic: If on question #2 (ID 55), check if all active substances were answered "Never".
+    if (currentQuestion.value.id === 55) {
+        const activeSubstances = currentQuestion.value.substances.filter(sub => !isSubstanceDisabled(sub));
+        const allNever = activeSubstances.every(sub => recentUseResponses[sub]?.option.startsWith('Never'));
+
+        if (allNever && activeSubstances.length > 0) {
+             Swal.fire({
+                title: 'No Recent Substance Use',
+                text: 'Skipping questions about recent use patterns.',
+                icon: 'info',
+                timer: 2000,
+                showConfirmButton: false,
+            });
+            // Skip next 3 questions (IDs 56, 57, 58)
+            nextIndex += 3;
+        }
+    }
+
+    if (nextIndex < allAssistQuestions.value.length) {
+        currentQuestionIndex.value = nextIndex;
     }
 }
 
-const filteredQuestions = computed(() => {
-    // Get Case Screening set
-    const caseScreeningSet = counselorScreeningQuestions.value.find(set =>
-        set.name === 'Case Screening'
-    );
-
-    if (!caseScreeningSet) {
-        console.error('Case Screening set not found');
-        return [];
+function goBack() {
+   
+    if (currentQuestionIndex.value > 0) {
+        currentQuestionIndex.value--;
     }
+}
 
-    // Get CNE ASSIST set
-    const cneAssistSet = caseScreeningSet.question_sets.find(set =>
-        set.name === 'CNE ASSIST'
-    );
+function proceed() {
+    if (!validateCurrentQuestion()) return;
+    logCurrentAnswers();
 
-    if (!cneAssistSet) {
-        console.error('CNE ASSIST question set not found');
-        return [];
-    }
-
-    // Get client age group, with validation
-    const validAgeGroups = ['Below 14', '15 to 17', 'Above 18'];
-    const clientAgeGroup = sessionStorage.getItem('clientAgeGroup');
-
-    if (!validAgeGroups.includes(clientAgeGroup)) {
-        console.error('Invalid age group:', clientAgeGroup);
-        return [];
-    }
-
-    // First sort questions by ID
-    const sortedQuestions = [...cneAssistSet.questions].sort((a, b) => {
-        return Number(a.id) - Number(b.id);
-    });
-
-    // Then filter by age group
-    const ageFilteredQuestions = sortedQuestions.filter(question => {
-        if (!question.age_group_tags || question.age_group_tags.length === 0) {
-            return true;
-        }
-        return question.age_group_tags.includes(clientAgeGroup);
-    });
-
-    const indexedQuestions = ageFilteredQuestions.map((question, index) => ({
-        ...question,
-        sequentialIndex: index + 1,
-        originalIndex: sortedQuestions.indexOf(question) + 1
-    }));
-
-    return indexedQuestions;
-});
-
-const watchQuestion68Responses = () => {
-    // Only proceed if we're on question 68
-    if (currentQuestion.value?.id !== 68) return;
-
-    const activeSubstances = currentQuestion.value.substances.filter(substance =>
-        !disabledSubstances.value.includes(substance)
-    );
-
-    const question2Responses = testResponses.question2Responses || {};
-
-    // Check if all active substances have been answered
-    const allSubstancesAnswered = activeSubstances.every(substance =>
-        question2Responses[substance]?.id !== undefined
-    );
-
-    if (!allSubstancesAnswered) return;
-
-    // Check if ALL active substances are answered with 242
-    const allNeverUsed = activeSubstances.every(substance =>
-        question2Responses[substance]?.id === 242
-    );
-
-    if (allNeverUsed) {
-        Swal.fire({
-            title: 'No Recent Substance Use',
-            text: 'The user has not used any substances in the past 3 months, skipping the next irrelevant questions.',
-            icon: 'info',
-            confirmButtonText: 'Proceed',
-            allowOutsideClick: false,
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Skip next 3 questions regardless of their IDs
-                currentQuestionIndex.value += 4; // Current + 4 means skipping 3 questions
-            }
-        });
-    }
-};
+    localStorage.setItem('ASSIST_set_counselor_screening', JSON.stringify(finalResponses));
+    emit('goToNext', 'ASSIST');
+}
 </script>
 
 <style scoped>
 .questionnaire-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0.5rem;
+    padding: 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .question-header {
     margin-bottom: 2rem;
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
-    padding: 1.5rem;
-    border-radius: 0.75rem;
+    padding: 2rem;
+    border-radius: 1rem;
     color: white;
+    box-shadow: 0 8px 32px rgba(43, 101, 111, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.question-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 .question-text {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    line-height: 1.4;
+    position: relative;
+    z-index: 1;
 }
 
 .options-legend {
     display: flex;
-    justify-content: space-around;
-    gap: 1rem;
-    margin-top: 0.5rem;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
 }
 
 .option-label {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 0.75rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+    transition: all 0.3s ease;
+}
+
+.option-label:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
 }
 
 .substances-grid {
     display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .substance-card {
     background: white;
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .substance-card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border-color: rgba(43, 101, 111, 0.2);
 }
 
 .substance-card.disabled {
-    opacity: 0.2;
-    background: #f5f5f5;
+    opacity: 0.5;
+    background: #f8f9fa;
+    pointer-events: none;
+    transform: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .substance-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    color: #2B656F;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.substance-icon {
+    font-size: 1.2rem;
+    color: #2B656F;
+    width: 24px;
+    text-align: center;
+}
+
+.other-input {
+    border: 2px solid #e0e0e0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
     font-weight: 500;
     color: #2B656F;
+    background: white;
     flex: 1;
+    transition: border-color 0.3s ease;
+}
+
+.other-input:focus {
+    outline: none;
+    border-color: #2B656F;
+    box-shadow: 0 0 0 3px rgba(43, 101, 111, 0.1);
+}
+
+.other-input:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
 }
 
 .options-group {
     display: flex;
-    gap: 2rem;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .radio-label {
-    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.75rem;
     cursor: pointer;
-    padding: 0.5rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.radio-label:hover {
+    background: #e8f4f6;
+    border-color: rgba(43, 101, 111, 0.2);
+}
+
+.radio-label:has(input[type="radio"]:checked) {
+    background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%);
+    color: white;
+    border-color: #2B656F;
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.3);
 }
 
 .radio-label input[type="radio"] {
-    opacity: 0;
-    position: absolute;
+    display: none;
 }
 
 .radio-custom {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border: 2px solid #2B656F;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d0d0d0;
     border-radius: 50%;
     position: relative;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    background: white;
+    flex-shrink: 0;
+}
+
+.radio-label:hover .radio-custom {
+    border-color: #2B656F;
+}
+
+.radio-label:has(input[type="radio"]:checked) .radio-custom {
+    border-color: white;
+    background: white;
 }
 
 .radio-custom::after {
@@ -563,52 +472,61 @@ const watchQuestion68Responses = () => {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0);
-    width: 12px;
-    height: 12px;
-    background: #2B656F;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    transition: all 0.2s ease;
+    background: #2B656F;
+    transition: transform 0.3s ease;
 }
 
-.radio-label input[type="radio"]:checked+.radio-custom::after {
+.radio-label:has(input[type="radio"]:checked) .radio-custom::after {
     transform: translate(-50%, -50%) scale(1);
+    background: #2B656F;
 }
 
-.radio-label:hover .radio-custom {
-    border-color: #1D4851;
-    box-shadow: 0 0 0 4px rgba(43, 101, 111, 0.1);
-}
-
-.other-input {
-    width: 100%;
-    max-width: 300px;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.other-input:focus {
-    outline: none;
-    border-color: #2B656F;
-    box-shadow: 0 0 0 2px rgba(43, 101, 111, 0.1);
+.radio-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.3;
+    flex: 1;
 }
 
 .footer {
     display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #eee;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 0;
+    border-top: 2px solid #f0f0f0;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
 }
 
 .nav-btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.875rem 2rem;
     border: none;
-    border-radius: 0.5rem;
-    font-weight: 500;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
 }
 
 .next-btn {
@@ -618,38 +536,102 @@ const watchQuestion68Responses = () => {
 
 .next-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(43, 101, 111, 0.2);
+    box-shadow: 0 4px 15px rgba(43, 101, 111, 0.4);
 }
 
-.back-btn {
-    background: transparent;
-    border: 2px solid #2B656F;
-    color: #2B656F;
+.finish-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
 }
 
-.back-btn:hover {
-    background: rgba(43, 101, 111, 0.1);
+.finish-btn:hover {
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.d-none {
+    display: none;
 }
 
 .no-questions {
     text-align: center;
-    padding: 3rem;
-    color: #666;
+    padding: 4rem 2rem;
+    color: #6c757d;
 }
 
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2B656F;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .questionnaire-container {
+        padding: 0.5rem;
+    }
+    
+    .substances-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .options-legend {
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .option-label {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        min-width: 80px;
+    }
+    
+    .substance-card {
         padding: 1rem;
     }
+    
+    .question-text {
+        font-size: 1.2rem;
+    }
+    
+    .nav-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+}
 
-    .substance-card {
+@media (max-width: 480px) {
+    .options-legend {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .option-label {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .footer {
         flex-direction: column;
         gap: 1rem;
-        text-align: center;
     }
-
-    .options-group {
-        justify-content: center;
+    
+    .nav-btn {
+        width: 100%;
+        max-width: 200px;
     }
 }
 </style>

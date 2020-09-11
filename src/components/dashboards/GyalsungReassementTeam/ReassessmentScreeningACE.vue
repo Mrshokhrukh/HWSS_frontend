@@ -1,22 +1,28 @@
 <template>
     <div class="ace-container">
         <div class="question-header p-4 mb-4 rounded-lg">
-            <h4 class="text-white mb-0">{{ GADQuestion }}</h4>
+            <h4 class="text-white mb-0">{{ mainQuestion }}</h4>
         </div>
 
-        <div class="questions-container">
+        <div v-if="currentQuestions.length > 0" class="questions-container">
             <!-- Questions -->
-            <div v-for="text in currentQuestion" :key="text" class="question-card mb-4 p-4 rounded-lg shadow-sm">
+            <div v-for="question in currentQuestions" :key="question.id" class="question-card mb-4 p-4 rounded-lg shadow-sm">
                 <div class="question-content">
-                    <h3 class="question-text mb-3">{{ text.text }}</h3>
+                    <h3 class="question-text mb-3">{{ question.text }}</h3>
                     <div class="options-grid">
-                        <div v-for="option in currentQuestion[0].answers" :key="option.id"
-                            class="option-item text-center">
+                        <!-- *** CRITICAL FIX WAS HERE *** -->
+                        <!-- Now correctly loops through each question's own answers -->
+                        <div v-for="option in question.answers" :key="option.id" class="option-item text-center">
                             <label class="radio-label">
-                                <input type="radio" :value="option" @change="handleAnswerSelection(option, text)"
-                                    :name="'question_' + text.id" required class="radio-input" />
+                                <input 
+                                    type="radio" 
+                                    :value="option" 
+                                    @change="handleAnswerSelection(option, question)"
+                                    :name="'question_' + question.id" 
+                                    required 
+                                    class="radio-input" 
+                                />
                                 <span class="option-text">{{ option.option }}</span>
-                                <span class="d-none">{{ option.points }}</span>
                             </label>
                         </div>
                     </div>
@@ -26,7 +32,7 @@
             <!-- Results card -->
             <div class="results-card p-4 rounded-lg shadow-sm">
                 <div class="result-row mb-2">
-                    <strong>Total:</strong>
+                    <strong>Total Score (Number of "Yes" answers):</strong>
                     <span class="result-value">{{ totalScore }}</span>
                 </div>
                 <div class="result-row">
@@ -37,10 +43,15 @@
                 </div>
             </div>
         </div>
+        
+        <div v-else class="text-center p-5">
+          <h4 class="text-muted">ACE questions are not available.</h4>
+          <p class="text-muted">Please ensure the 'ACE' question set is included in the screening data.</p>
+        </div>
 
         <!-- Navigation buttons -->
         <div class="footer d-flex mt-4">
-            <button class="nav-button" @click="goBack">Back</button>
+            <button class="nav-button" @click="$emit('goBack')">Back</button>
             <div class="flex-grow-1"></div>
             <button class="nav-button" @click="proceed">Next</button>
         </div>
@@ -51,72 +62,64 @@
 import { ref, computed, inject } from 'vue';
 
 const emit = defineEmits(['goToNext', 'goBack']);
-
-const totalScore = computed(() => {
-    let score = 0;
-    for (const text of currentQuestion.value) {
-        const selectedOption = text.selectedOption;
-        if (selectedOption !== undefined) {
-            score += selectedOption.points;
-        }
-    }
-    return score;
-});
-
-const handleAnswerSelection = (option, text) => {
-    text.selectedOption = option;
-}
-
 const counselorScreeningQuestions = ref(inject('counselorScreeningQuestions'));
 
-const currentQuestion = ref(counselorScreeningQuestions.value?.find(set => set.name === 'Case Screening').question_sets.find(set => set.name === 'ACE').questions);
+const mainQuestion = ref('While you were growing up:');
 
-const GADQuestion = ref('While you were growing up: ')
+// Correctly finds the ACE question set from the provided JSON
+const currentQuestions = computed(() => {
+    if (!counselorScreeningQuestions.value) return [];
+    
+    const screeningSet = counselorScreeningQuestions.value.find(set => set.name === 'Gyalsung Screening');
+    if (!screeningSet) return [];
+    
+    const aceSet = screeningSet.question_sets.find(set => set.name === 'ACE');
+    if (!aceSet || !aceSet.questions) return [];
+    
+    // Initialize each question with a property to hold its answer
+    return aceSet.questions.map(q => ({ ...q, selectedOption: null }));
+});
 
+const handleAnswerSelection = (option, question) => {
+    question.selectedOption = option;
+};
+
+// ACE scoring is the count of "Yes" answers
+const totalScore = computed(() => {
+    return currentQuestions.value.reduce((score, question) => {
+        return score + (question.selectedOption ? question.selectedOption.points : 0);
+    }, 0);
+});
 
 const interpretation = computed(() => {
-    if (totalScore.value === 0) {
-        return 'Mild';
-    } else if (totalScore.value >= 1 && totalScore.value <= 3) {
-        return 'Intermediate';
-    } else {
-        return 'Severe';
-    }
+    const score = totalScore.value;
+    if (score === 0) return 'Mild';
+    if (score >= 1 && score <= 3) return 'Intermediate';
+    return 'Severe';
 });
 
 const interpretationClass = computed(() => {
-    if (totalScore.value === 0) {
-        return 'bg-primary bg-opacity-50 text-primary';
-    } else if (totalScore.value >= 1 && totalScore.value <= 3) {
-        return 'bg-success bg-opacity-50 text-success';
-    } else {
-        return 'bg-danger bg-opacity-50 text-danger';
-    }
+    if (totalScore.value === 0) return 'bg-primary';
+    if (totalScore.value >= 1 && totalScore.value <= 3) return 'bg-success';
+    return 'bg-danger';
 });
 
 const proceed = () => {
-    const responses = [];
-    for (const text of currentQuestion.value) {
-        const response = {
-            question: text.text,
-            selectedOption: text.selectedOption ? text.selectedOption.option : null,
-            score: text.selectedOption ? text.selectedOption.points : 0
-        };
-        responses.push(response);
-    }
+    const responses = currentQuestions.value.map(question => ({
+        question: question.text,
+        selectedOption: question.selectedOption ? question.selectedOption.option : null,
+        score: question.selectedOption ? question.selectedOption.points : 0
+    }));
 
-    // Get total score and interpretation from computed properties
-    const totalScoreValue = totalScore.value;
-    const interpretationValue = interpretation.value;
-
-    // Save responses, total score, and interpretation to local storage
-    const data = { responses, totalScore: totalScoreValue, interpretation: interpretationValue };
+    const data = { 
+        responses, 
+        totalScore: totalScore.value, 
+        interpretation: interpretation.value 
+    };
+    
     localStorage.setItem('ACE_set_counselor_screening', JSON.stringify(data));
-
-    // Emit the goToNext event
     emit('goToNext', 'ACE');
 };
-
 </script>
 
 <style scoped>
@@ -206,7 +209,6 @@ const proceed = () => {
     opacity: 0.9;
 }
 
-/* Interpretation classes with gradient backgrounds */
 .bg-primary {
     background: linear-gradient(135deg, #2B656F 0%, #1D4851 100%) !important;
     color: white !important;
@@ -226,17 +228,6 @@ const proceed = () => {
     color: white !important;
     padding: 0.25rem 0.75rem;
     border-radius: 0.25rem;
-}
-
-/* Additional styles for ACE-specific needs */
-.question-card {
-    background: white;
-    border-color: rgba(43, 101, 111, 0.1);
-}
-
-.question-text {
-    color: #2B656F;
-    font-weight: 500;
 }
 
 @media (max-width: 640px) {
