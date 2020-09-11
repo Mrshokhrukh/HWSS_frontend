@@ -127,15 +127,14 @@
       </div>
     </div>
     
-    <TestScreeningGyalsungScreening/>
   </div>
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import endpoints from '@/api' // Adjust the path as needed
-import TestScreeningGyalsungScreening from './TestScreeningGyalsungScreening.vue';
+import endpoints from '@/api'
+import { Modal } from 'bootstrap' // Import Bootstrap Modal
 
 const submitting = ref(false);
 const successModal = ref(null);
@@ -280,8 +279,8 @@ const registerUser = async () => {
     // Store the CID for screening
     localStorage.setItem('ClientUserIdCaseBase', JSON.stringify([cid.value]))
     
-    // Show success modal
-    const modal = new bootstrap.Modal(successModal.value)
+    // Show success modal using imported Modal
+    const modal = new Modal(successModal.value)
     modal.show()
   } catch (error) {
     console.error('Registration failed:', error);
@@ -292,7 +291,7 @@ const registerUser = async () => {
 }
 
 const startScreening = () => {
-  const modal = bootstrap.Modal.getInstance(successModal.value);
+  const modal = Modal.getInstance(successModal.value);
   modal.hide();
 
   // Set flag to indicate we're in Gyalsung flow

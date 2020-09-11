@@ -1,6 +1,6 @@
 function getBaseUrl() {
   if (import.meta.env.DEV) {
-    return 'http://localhost:8123';
+    return 'http://0.0.0.0:8123'; 
   } else {
     return 'https://thepemasystem.gov.bt/api/core';
   }
@@ -24,7 +24,8 @@ const apiConfig = {
       measurement: 'measurement',
       monitoring: 'monitoring',
       reporting: 'reporting',
-      counselorScreening: 'screening' 
+      counselorScreening: 'screening',
+      gyalsung: 'gyalsung' 
     }
   },
   screening: {
@@ -72,7 +73,7 @@ const endpointDefinitions = {
   screening: {
     screeningPreTests: 'screening-questions/',
     assistTest: 'assist-screening/',
-    gyalsungScreenSubmission: 'gyalsung-submission/' 
+    gyalsungScreeningQuestions: 'screening-questions/',
   },
   measurement: {
     submitCluster: 'submit-screening/',
@@ -117,8 +118,11 @@ const endpointDefinitions = {
     getEventScreeningList: 'get-event-screenings/',
     updateEventScreeningList: 'update-event-screening/',
     getCaseRecords: 'case-records/',
-    getEventRecords: 'event-records/',
-    gyalsungScreenSubmission: 'gyalsung-submission/' 
+    getEventRecords: 'event-records/'
+  },
+  // Added new gyalsung module
+  gyalsung: {
+    gyalsungScreenSubmission: 'assessments/' // Moved from counselorScreening to gyalsung
   }
 };
 
