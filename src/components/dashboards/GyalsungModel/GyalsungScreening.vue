@@ -551,8 +551,7 @@ const submitScreeningData = async () => {
     
     // Show success message and redirect
     alert('Screening submitted successfully!')
-    router.push('/gyalsung-dashboard') // Adjust route as needed
-    
+    router.push('/gyalsung-reports') 
   } catch (error) {
     console.error("Error submitting screening data:", error.response?.data || error.message)
     let errorMessage = 'Error submitting screening'

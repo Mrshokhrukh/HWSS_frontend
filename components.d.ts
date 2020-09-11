@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ' GyalsungReportContent': typeof import('./src/components/dashboards/GyalsungModel/ GyalsungReportContent.vue')['default']
     AaaAdminDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/AaaAdminDetailsCard.vue')['default']
     AAACasereportTable: typeof import('./src/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/AAACasereportTable.vue')['default']
     AAAChartComponent: typeof import('./src/components/dashboards/Adminpages/AAA/report/AAACasestatusReport/AAAChartComponent.vue')['default']
@@ -34,6 +35,7 @@ declare module 'vue' {
     AssessmentResultsTab: typeof import('./src/components/dashboards/Adminpages/R&D/AssessmentResultsTab.vue')['default']
     AssistSeverityAndGraph: typeof import('./src/components/dashboards/CounsellorDashboardCard/AssistSeverityAndGraph.vue')['default']
     Button: typeof import('primevue/button')['default']
+    Calendar: typeof import('primevue/calendar')['default']
     CaseScreeningRegister: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningRegister.vue')['default']
     CaseScreeningScreening: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningScreening.vue')['default']
     CaseScreeningSelectTools: typeof import('./src/components/dashboards/counselorScreenings/counselorScreeningStages/CaseScreeningSelectTools.vue')['default']
@@ -97,6 +99,7 @@ declare module 'vue' {
     ForgotPasswordForm: typeof import('./src/components/auth/ForgotPasswordForm.vue')['default']
     GyalsungProfiles: typeof import('./src/components/dashboards/GyalsungModel/GyalsungProfiles.vue')['default']
     GyalsungRegister: typeof import('./src/components/dashboards/GyalsungModel/GyalsungRegister.vue')['default']
+    GyalsungReportContent: typeof import('./src/components/dashboards/GyalsungModel/ GyalsungReportContent.vue')['default']
     GyalsungReports: typeof import('./src/components/dashboards/GyalsungModel/GyalsungReports.vue')['default']
     GyalsungScreening: typeof import('./src/components/dashboards/GyalsungModel/GyalsungScreening.vue')['default']
     GyalsungScreeningRegister: typeof import('./src/components/dashboards/GyalsungModel/GyalsungScreeningRegister.vue')['default']
@@ -118,6 +121,7 @@ declare module 'vue' {
     MentalhealthHelp: typeof import('./src/components/dashboards/Adminpages/MentalhealthHelp/MentalhealthHelp.vue')['default']
     MentalhealthPersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/MentalhealthcardProfile/MentalhealthPersonalDetailsCard.vue')['default']
     MentalhealthReport: typeof import('./src/components/dashboards/Adminpages/report/MentalhealthReport.vue')['default']
+    Message: typeof import('primevue/message')['default']
     MHCaseStatusReport: typeof import('./src/components/dashboards/Adminpages/report/MHCaseStatusReport/MHCaseStatusReport.vue')['default']
     MHCaseTableReport: typeof import('./src/components/dashboards/Adminpages/report/MHCaseStatusReport/MHCaseTableReport.vue')['default']
     MHDAASeverityTable: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/ReportComponent/SeverityReport/MHDAASeverityTable.vue')['default']
@@ -138,6 +142,7 @@ declare module 'vue' {
     PendingRequest: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/approval/PendingRequest.vue')['default']
     PersonalDetailsCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/PersonalDetailsCard.vue')['default']
     ProfileCard: typeof import('./src/components/dashboards/dashboardCard/ProfileCard.vue')['default']
+    ProgressSpinner: typeof import('primevue/progressspinner')['default']
     PublicDashboard: typeof import('./src/components/dashboards/PublicDashboard.vue')['default']
     QuickToolCard: typeof import('./src/components/dashboards/CounsellorDashboardCard/QuickToolCard.vue')['default']
     RecordsOfApproval: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/approval/RecordsOfApproval.vue')['default']
