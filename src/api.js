@@ -65,6 +65,16 @@ const endpointDefinitions = {
     registerGyalsungCounselorUser: 'gyalsung/counselor-users/',
     registerGyalsungUser: 'register-gyalsung-user/'
   },
+  gyalsung: {
+    getUserData: 'get-gyalsung-user-data/',
+    registerCounselorUser: 'counselor-users/',
+    registerUser: 'register-gyalsung-user/',
+    getReassessmentUsers: 'reassessment-users/',
+    getCounselorUsers: 'counselor-users/',
+    getUnfitCandidates: 'reassessment-unfit-candidates/',
+    getFitCandidates: 'reassessment-fit-candidates/',
+    getReassessmentMonitoringUsers: 'reassessment-monitoring/', 
+  },
   settings: {
     settings: 'appconfig/',
     menuItem: 'menuItem/',
