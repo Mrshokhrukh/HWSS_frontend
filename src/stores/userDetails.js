@@ -1,10 +1,7 @@
 import { defineStore } from 'pinia';
 
-import apiClient from '@/apiClient';
-
 export const useUserDetailsStore = defineStore('userDetails', {
   state: () => {
-    
     const savedState = localStorage.getItem('userDetailsStore');
     return savedState ? JSON.parse(savedState) : {
       user: {
@@ -62,27 +59,6 @@ export const useUserDetailsStore = defineStore('userDetails', {
     };
   },
   actions: {
-    
-    async fetchUserDetails() {
-      try {
-        
-        const response = await apiClient.get('/api/users/me');
-
-        
-        if (response.data) {
-          
-          this.setUserDetails(response.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user details:", error);
-        
-        this.clearUserDetails();
-        
-        throw error;
-      }
-    },
-
-    
     setUserDetails({ user, agency, userAgency }) {
       try {
         const camelCaseUser = Object.keys(user).reduce((acc, key) => {
@@ -118,18 +94,11 @@ export const useUserDetailsStore = defineStore('userDetails', {
         return Promise.resolve({ status: 'error', message: 'Failed to save user details.' });
       }
     },
-
-    // 3. IMPROVED clearUserDetails ACTION
     clearUserDetails() {
-      this.$reset(); // Resets the store state to its initial definition
+      this.$reset();
       localStorage.removeItem('userDetailsStore');
       sessionStorage.removeItem('userAgeData');
-      // Also clear the tokens themselves, as they are likely invalid
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('tokenExpiry');
     },
-
-    // Your existing saveState action is fine.
     saveState() {
       const state = {
         user: this.user,
@@ -142,9 +111,7 @@ export const useUserDetailsStore = defineStore('userDetails', {
   },
 });
 
-// These helper functions are fine as they are.
 function calculateAge(dateOfBirth) {
-  if (!dateOfBirth) return null;
   const dobDate = new Date(dateOfBirth);
   const today = new Date();
   let age = today.getFullYear() - dobDate.getFullYear();
@@ -156,7 +123,6 @@ function calculateAge(dateOfBirth) {
 }
 
 function calculateAgeGroup(age) {
-  if (age === null || age === undefined) return null;
   if (age < 14) {
     return 'Below 14';
   } else if (age >= 14 && age <= 17) {

@@ -1,56 +1,11 @@
 <template>
-  <div class="report-container">
-    <div class="form-header">
-      <h3 class="title">Gyalsung Screening Reports</h3>
-    </div>
-
-    <div class="content-section">
-      <div class="content-header">
-        <h5 class="content-title">Screening Overview</h5>
-        <p class="content-subtitle">A summary of screenings based on the current filters.</p>
-      </div>
-
-      <div v-if="isLoading" class="text-center my-5">
-        <ProgressSpinner strokeWidth="4" style="width: 50px; height: 50px" />
-        <p class="mt-2 text-gray-600">Loading Gyalsung screenings...</p>
-      </div>
-      <div v-if="!isLoading && filteredScreeningData.length" class="row g-3 mb-4">
-        <div class="col-sm-6 col-lg-3">
-          <div class="kpi-card kpi-card-total">
-            <div class="kpi-icon"><i class="pi pi-users"></i></div>
-            <div class="kpi-value">{{ filteredScreeningData.length }}</div>
-            <div class="kpi-label">Total Screenings</div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="kpi-card kpi-card-high">
-            <div class="kpi-icon"><i class="pi pi-exclamation-triangle"></i></div>
-            <div class="kpi-value">{{ highRiskCount }}</div>
-            <div class="kpi-label">High Risk Cases</div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="kpi-card kpi-card-moderate">
-            <div class="kpi-icon"><i class="pi pi-chart-line"></i></div>
-            <div class="kpi-value">{{ moderateRiskCount }}</div>
-            <div class="kpi-label">Moderate Risk</div>
-          </div>
-        </div>
-        <div class="col-sm-6 col-lg-3">
-          <div class="kpi-card kpi-card-low">
-            <div class="kpi-icon"><i class="pi pi-check-circle"></i></div>
-            <div class="kpi-value">{{ lowRiskCount }}</div>
-            <div class="kpi-label">Low Risk</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="filter-section">
-        <div class="row g-3 align-items-end">
-          <div class="col-12 col-md-6 col-lg-2">
-            <label for="startDate" class="form-label">Start Date</label>
+    <div class="card-container">
+      <div class="card p-4">
+        <!-- Filters -->
+        <div class="p-field p-grid row mb-4">
+          <div class="col-12 col-md-2 mb-2 mb-md-0">
+            <label class="block text-sm font-medium mb-1">Start Date</label>
             <Calendar
-              id="startDate"
               v-model="startDate"
               placeholder="Select Start Date"
               class="w-100"
@@ -60,10 +15,9 @@
               showIcon
             />
           </div>
-          <div class="col-12 col-md-6 col-lg-2">
-            <label for="endDate" class="form-label">End Date</label>
+          <div class="col-12 col-md-2 mb-2 mb-md-0">
+            <label class="block text-sm font-medium mb-1">End Date</label>
             <Calendar
-              id="endDate"
               v-model="endDate"
               placeholder="Select End Date"
               class="w-100"
@@ -74,41 +28,40 @@
               showIcon
             />
           </div>
-          <div class="col-12 col-md-6 col-lg-2">
-            <label for="academyFilter" class="form-label">Academy</label>
+          <div class="col-12 col-md-3 mb-2 mb-md-0">
+            <label class="block text-sm font-medium mb-1">Search</label>
+            <span class="p-input-icon-left w-100">
+              <i class="pi pi-search" />
+              <InputText
+                v-model="globalFilterInput"
+                placeholder="Search Reports..."
+                class="w-100"
+                :disabled="isLoading || !filteredScreeningData.length"
+              />
+            </span>
+          </div>
+          <div class="col-12 col-md-2 mb-2 mb-md-0">
+            <label class="block text-sm font-medium mb-1">Academy</label>
             <Dropdown
-              id="academyFilter"
               v-model="selectedAcademy"
               :options="academyOptions"
               optionLabel="label"
               optionValue="value"
-              placeholder="All"
+              placeholder="All Academies"
               class="w-100"
               :disabled="isLoading"
               showClear
             />
           </div>
-          <div class="col-12 col-md-6 col-lg-3">
-            <label for="search" class="form-label">Global Search</label>
-            <span class="p-input-icon-left w-100">
-              <i class="pi pi-search" />
-              <InputText
-                id="search"
-                v-model="globalFilterInput"
-                placeholder="Search all fields..."
-                class="w-100"
-                :disabled="isLoading || !screeningData.length"
-              />
-            </span>
-          </div>
-          <div class="col-12 col-lg-3">
-             <div class="filter-actions">
+          <div class="col-12 col-md-3">
+            <label class="block text-sm font-medium mb-1">Actions</label>
+            <div class="flex gap-2">
               <Button
-                label="Reset"
-                @click="resetFilters"
-                class="action-btn action-btn-secondary"
-                icon="pi pi-refresh"
-                :disabled="isLoading"
+                label="Apply Filter"
+                @click="applyDateFilter"
+                class="btn hwss-btn flex-1"
+                icon="pi pi-filter"
+                :disabled="isLoading || (!startDate && !endDate)"
               />
               <Button
                 label="Clear Filters"
@@ -120,34 +73,100 @@
               <Button
                 label="Download Excel"
                 @click="downloadExcel"
-                class="action-btn action-btn-success"
+                class="btn hwss-btn flex-1"
                 icon="pi pi-download"
-                :disabled="isDownloading || !filteredScreeningData.length"
+                :disabled="isLoading || isDownloading || !filteredScreeningData.length"
                 :loading="isDownloading"
-            />
+              />
+            </div>
+          </div>
         </div>
-
-        <div v-if="!screeningData.length" class="initial-state">
-          <i class="pi pi-info-circle initial-icon"></i>
-          <p class="lead">No Gyalsung screenings found. Data might still be loading or none exists.</p>
+  
+        <!-- Stats Cards -->
+        <div class="row mb-4" v-if="!isLoading && filteredScreeningData.length">
+          <div class="col-12 col-md-3 mb-2">
+            <div class="stats-card p-3 border rounded">
+              <div class="flex align-items-center">
+                <i class="pi pi-users text-blue-500 text-2xl mr-3"></i>
+                <div>
+                  <div class="text-2xl font-bold">{{ filteredScreeningData.length }}</div>
+                  <div class="text-sm text-gray-600">Total Screenings</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 mb-2">
+            <div class="stats-card p-3 border rounded">
+              <div class="flex align-items-center">
+                <i class="pi pi-exclamation-triangle text-red-500 text-2xl mr-3"></i>
+                <div>
+                  <div class="text-2xl font-bold">{{ highRiskCount }}</div>
+                  <div class="text-sm text-gray-600">High Risk Cases</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 mb-2">
+            <div class="stats-card p-3 border rounded">
+              <div class="flex align-items-center">
+                <i class="pi pi-chart-line text-yellow-500 text-2xl mr-3"></i>
+                <div>
+                  <div class="text-2xl font-bold">{{ moderateRiskCount }}</div>
+                  <div class="text-sm text-gray-600">Moderate Risk</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-3 mb-2">
+            <div class="stats-card p-3 border rounded">
+              <div class="flex align-items-center">
+                <i class="pi pi-check-circle text-green-500 text-2xl mr-3"></i>
+                <div>
+                  <div class="text-2xl font-bold">{{ lowRiskCount }}</div>
+                  <div class="text-sm text-gray-600">Low Risk</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <div v-else-if="!filteredScreeningData.length" class="initial-state">
-            <i class="pi pi-search initial-icon"></i>
-            <p class="lead">No screenings match your current search or filter criteria.</p>
+  
+        <!-- Loading Indicator -->
+        <div v-if="isLoading" class="text-center my-5">
+          <ProgressSpinner strokeWidth="4" style="width: 50px; height: 50px" />
+          <p>Loading Gyalsung screenings...</p>
         </div>
-
-        <div v-else class="table-wrapper">
+  
+        <!-- Fetch Error Message -->
+        <div v-if="fetchError && !isLoading" class="text-center my-5">
+          <Message severity="error" :closable="false">
+            Failed to load screenings: {{ fetchError }}. Please try again later.
+          </Message>
+        </div>
+  
+        <!-- Screening Data Table -->
+        <div v-if="!isLoading && !fetchError">
+          <div v-if="!filteredScreeningData.length && !globalFilterInput" class="text-center my-3">
+            <Message severity="info" :closable="false">
+              No Gyalsung screenings found for the selected criteria. Try adjusting your filters.
+            </Message>
+          </div>
+          <div v-else-if="!filteredScreeningData.length && globalFilterInput" class="text-center my-3">
+            <Message severity="warn" :closable="false">
+              No screenings match your search criteria. Try different search terms.
+            </Message>
+          </div>
           <DataTable
+            v-else
             :value="filteredScreeningData"
             :paginator="true"
             :rows="15"
             :rowsPerPageOptions="[10, 15, 25, 50]"
             paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+            :resizableColumns="true"
             sortField="screening_date"
             :sortOrder="-1"
-            class="profiles-table"
+            class="custom-table p-datatable-sm p-datatable-striped"
             :globalFilterFields="searchableFields"
             :filters="filters"
             filterDisplay="menu"
@@ -157,13 +176,14 @@
             stateKey="dt-gyalsung-screening-state"
             responsiveLayout="scroll"
           >
+            <!-- Basic Info Columns -->
             <Column
               v-for="field in basicFields"
               :key="field.key"
               :field="field.key"
               :header="field.header"
               :sortable="true"
-              :style="field.width ? { width: field.width, minWidth: field.width } : {}"
+              :style="field.width ? { width: field.width } : {}"
               :filterField="field.key"
               :showFilterMatchModes="true"
               :dataType="getDataType(field.key)"
@@ -174,7 +194,11 @@
                   <span>{{ formatDate(data[field.key]) }}</span>
                 </template>
                 <template v-else-if="field.key === 'overall_risk'">
-                  <Tag :value="data[field.key]" :severity="getRiskSeverityClass(data[field.key])" />
+                  <Tag
+                    class="w-100"
+                    :value="data[field.key]"
+                    :severity="getRiskSeverityClass(data[field.key])"
+                  />
                 </template>
                 <template v-else>
                   <span>{{ data[field.key] || 'N/A' }}</span>
@@ -198,34 +222,52 @@
                   </Dropdown>
                 </template>
                 <template v-else>
-                  <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" :placeholder="`Search by ${field.header}`"/>
+                  <InputText
+                    type="text"
+                    v-model="filterModel.value"
+                    @keydown.enter="filterCallback()"
+                    class="p-column-filter"
+                    :placeholder="`Search by ${field.header}`"
+                  />
                 </template>
               </template>
             </Column>
   
+            <!-- Mental Health Scores -->
             <Column
               v-for="field in mentalHealthFields"
               :key="field.key"
               :field="field.key"
               :header="field.header"
               :sortable="true"
-              :style="field.width ? { width: field.width, minWidth: field.width } : {}"
+              :style="field.width ? { width: field.width } : {}"
               :filterField="field.key"
               :showFilterMatchModes="true"
             >
               <template #body="{ data }">
                 <template v-if="field.key === 'suicidal_risk'">
-                  <Tag :value="data[field.key]" :severity="getSuicideSeverityClass(data[field.key])" />
+                  <Tag
+                    class="w-100"
+                    :value="data[field.key]"
+                    :severity="getSuicideSeverityClass(data[field.key])"
+                  />
                 </template>
                 <template v-else>
                   <span>{{ data[field.key] || 'N/A' }}</span>
                 </template>
               </template>
               <template #filter="{ filterModel, filterCallback }">
-                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" :placeholder="`Search by ${field.header}`"/>
+                <InputText
+                  type="text"
+                  v-model="filterModel.value"
+                  @keydown.enter="filterCallback()"
+                  class="p-column-filter"
+                  :placeholder="`Search by ${field.header}`"
+                />
               </template>
             </Column>
   
+            <!-- Substance Use Columns -->
             <Column
               v-for="substance in substanceColumns"
               :key="substance.field"
@@ -234,27 +276,45 @@
               :sortable="true"
               :filterField="substance.field"
               :showFilterMatchModes="false"
-              style="min-width: 140px;"
             >
               <template #body="{ data }">
-                <Tag :value="severityText(data[substance.field] || 'none')" :severity="severityClass(data[substance.field])" />
+                <Tag
+                  class="w-100"
+                  :value="severityText(data[substance.field] || 'none')"
+                  :severity="severityClass(data[substance.field])"
+                />
               </template>
               <template #filter="{ filterModel, filterCallback }">
-                <Dropdown v-model="filterModel.value" :options="severityFilterOptions" optionLabel="label" optionValue="value" placeholder="Any" class="p-column-filter" :showClear="true" @change="filterCallback()">
+                <Dropdown
+                  v-model="filterModel.value"
+                  :options="severityFilterOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  placeholder="Any"
+                  class="p-column-filter"
+                  :showClear="true"
+                  @change="filterCallback()"
+                >
                   <template #option="slotProps">
                     <Tag :value="slotProps.option.label" :severity="slotProps.option.severity" />
                   </template>
                 </Dropdown>
               </template>
             </Column>
+  
+            <template #empty>
+              <div class="text-center p-4">
+                <i class="pi pi-search text-4xl text-gray-400 mb-3"></i>
+                <p class="text-gray-600">No screenings match your current filter settings.</p>
+              </div>
+            </template>
           </DataTable>
         </div>
       </div>
     </div>
-  </div>
-</template>
-
-<script setup>
+  </template>
+  
+  <script setup>
   import { ref, onMounted, computed, watch } from 'vue'
   import { saveAs } from 'file-saver'
   import * as XLSX from 'xlsx'
@@ -291,63 +351,114 @@
   
   // --- Constants & Configuration ---
   const basicFields = [
-    { key: 'id', header: 'ID', width: '80px', frozen: true }, { key: 'username', header: 'Username', width: '120px' }, { key: 'full_name', header: 'Full Name', width: '180px' },
-    { key: 'gender', header: 'Gender', width: '100px' }, { key: 'dob', header: 'Date of Birth', width: '130px' }, { key: 'identity_number', header: 'Identity Number', width: '150px' },
-    { key: 'mobile_number', header: 'Mobile Number', width: '140px' }, { key: 'academy_code', header: 'Academy', width: '130px' }, { key: 'village', header: 'Village', width: '120px' },
-    { key: 'screening_date', header: 'Screening Date', width: '140px' }, { key: 'overall_risk', header: 'Overall Risk', width: '120px' }
+    { key: 'id', header: 'ID', width: '80px', frozen: true },
+    { key: 'username', header: 'Username', width: '120px' },
+    { key: 'full_name', header: 'Full Name', width: '180px' },
+    { key: 'gender', header: 'Gender', width: '100px' },
+    { key: 'dob', header: 'Date of Birth', width: '130px' },
+    { key: 'identity_number', header: 'Identity Number', width: '150px' },
+    { key: 'mobile_number', header: 'Mobile Number', width: '140px' },
+    { key: 'academy_code', header: 'Academy Code', width: '130px' },
+    { key: 'village', header: 'Village', width: '120px' },
+    { key: 'screening_date', header: 'Screening Date', width: '140px' },
+    { key: 'overall_risk', header: 'Overall Risk', width: '120px' }
   ]
+  
   const mentalHealthFields = [
-    { key: 'phq9_score', header: 'PHQ-9', width: '100px' }, { key: 'phq9_interpretation', header: 'PHQ-9 Level', width: '140px' }, { key: 'gad7_score', header: 'GAD-7', width: '100px' },
-    { key: 'gad7_interpretation', header: 'GAD-7 Level', width: '140px' }, { key: 'ace_score', header: 'ACE', width: '100px' }, { key: 'suicidal_risk', header: 'Suicidal Risk', width: '130px' }
+    { key: 'phq9_score', header: 'PHQ-9 Score', width: '120px' },
+    { key: 'phq9_interpretation', header: 'PHQ-9 Level', width: '140px' },
+    { key: 'gad7_score', header: 'GAD-7 Score', width: '120px' },
+    { key: 'gad7_interpretation', header: 'GAD-7 Level', width: '140px' },
+    { key: 'ace_score', header: 'ACE Score', width: '100px' },
+    { key: 'suicidal_risk', header: 'Suicidal Risk', width: '130px' }
   ]
+  
   const substanceColumns = [
-    { field: 'tobacco_flag', header: 'Tobacco' }, { field: 'alcohol_flag', header: 'Alcohol' }, { field: 'cannabis_flag', header: 'Cannabis' }, { field: 'cocaine_flag', header: 'Cocaine' },
-    { field: 'amphetamine_flag', header: 'Amphetamines' }, { field: 'inhalants_flag', header: 'Inhalants' }, { field: 'sedatives_flag', header: 'Sedatives' },
-    { field: 'hallucinogens_flag', header: 'Hallucinogens' }, { field: 'opioids_flag', header: 'Opioids' }
+    { field: 'tobacco_flag', header: 'Tobacco' },
+    { field: 'alcohol_flag', header: 'Alcohol' },
+    { field: 'cannabis_flag', header: 'Cannabis' },
+    { field: 'cocaine_flag', header: 'Cocaine' },
+    { field: 'amphetamine_flag', header: 'Amphetamines' },
+    { field: 'inhalants_flag', header: 'Inhalants' },
+    { field: 'sedatives_flag', header: 'Sedatives' },
+    { field: 'hallucinogens_flag', header: 'Hallucinogens' },
+    { field: 'opioids_flag', header: 'Opioids' }
   ]
-  const searchableFields = computed(() => [...basicFields.map(f => f.key), ...mentalHealthFields.map(f => f.key)])
+  
+  const searchableFields = computed(() => [
+    ...basicFields.map(f => f.key),
+    ...mentalHealthFields.map(f => f.key)
+  ])
+  
   const academyOptions = computed(() => {
     const academies = [...new Set(screeningData.value.map(item => item.academy_code))].sort()
     return academies.map(academy => ({ label: academy, value: academy }))
   })
+  
   const riskFilterOptions = ref([
-    { label: 'High', value: 'High', severity: 'danger' }, { label: 'Moderate', value: 'Moderate', severity: 'warning' }, { label: 'Low', value: 'Low', severity: 'success' }
+    { label: 'High', value: 'High', severity: 'danger' },
+    { label: 'Moderate', value: 'Moderate', severity: 'warning' },
+    { label: 'Low', value: 'Low', severity: 'success' }
   ])
+  
   const severityFilterOptions = ref([
-    { label: 'Severe', value: 'severe', severity: 'danger' }, { label: 'Moderate', value: 'moderate', severity: 'warning' },
-    { label: 'Mild', value: 'mild', severity: 'info' }, { label: 'None', value: 'none', severity: 'success' }
+    { label: 'Severe', value: 'severe', severity: 'danger' },
+    { label: 'Moderate', value: 'moderate', severity: 'warning' },
+    { label: 'Mild', value: 'mild', severity: 'info' },
+    { label: 'None', value: 'none', severity: 'success' }
   ])
+  
   const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    ...Object.fromEntries([...basicFields, ...mentalHealthFields].map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])),
-    ...Object.fromEntries(substanceColumns.map(f => [f.field, { value: null, matchMode: FilterMatchMode.EQUALS }]))
+    ...Object.fromEntries(
+      [...basicFields, ...mentalHealthFields].map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])
+    ),
+    ...Object.fromEntries(
+      substanceColumns.map(f => [f.field, { value: null, matchMode: FilterMatchMode.EQUALS }])
+    )
   })
   
   // --- Computed Properties ---
-  const filteredDataByDateAndAcademy = computed(() => {
+  const filteredScreeningData = computed(() => {
     let filtered = screeningData.value
+  
+    // Apply date range filter
     if (startDate.value || endDate.value) {
       filtered = filtered.filter(item => {
         const itemDate = new Date(item.screening_date)
         const start = startDate.value ? new Date(startDate.value) : null
         const end = endDate.value ? new Date(endDate.value) : null
-        if (start && end) return itemDate >= start && itemDate <= end
-        if (start) return itemDate >= start
-        if (end) return itemDate <= end
+        
+        if (start && end) {
+          return itemDate >= start && itemDate <= end
+        } else if (start) {
+          return itemDate >= start
+        } else if (end) {
+          return itemDate <= end
+        }
         return true
       })
     }
+  
+    // Apply academy filter
     if (selectedAcademy.value) {
       filtered = filtered.filter(item => item.academy_code === selectedAcademy.value)
     }
+  
     return filtered
   })
   
-  const filteredScreeningData = computed(() => filteredDataByDateAndAcademy.value);
-
-  const highRiskCount = computed(() => filteredScreeningData.value.filter(item => item.overall_risk === 'High').length)
-  const moderateRiskCount = computed(() => filteredScreeningData.value.filter(item => item.overall_risk === 'Moderate').length)
-  const lowRiskCount = computed(() => filteredScreeningData.value.filter(item => item.overall_risk === 'Low').length)
+  const highRiskCount = computed(() => 
+    filteredScreeningData.value.filter(item => item.overall_risk === 'High').length
+  )
+  
+  const moderateRiskCount = computed(() => 
+    filteredScreeningData.value.filter(item => item.overall_risk === 'Moderate').length
+  )
+  
+  const lowRiskCount = computed(() => 
+    filteredScreeningData.value.filter(item => item.overall_risk === 'Low').length
+  )
   
   // --- Methods ---
   const fetchScreenings = async () => {
@@ -377,6 +488,7 @@
         const today = new Date()
         const thirtyDaysAgo = new Date()
         thirtyDaysAgo.setDate(today.getDate() - 30)
+        
         endDate.value = today
         startDate.value = thirtyDaysAgo
       } else {
@@ -498,22 +610,53 @@
   }
   
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A'; return new Date(dateString).toLocaleDateString('en-GB')
+    if (!dateString) return 'N/A'
+    return new Date(dateString).toLocaleDateString('en-GB')
   }
+  
   const getRiskSeverityClass = (risk) => {
     switch (risk?.toLowerCase()) {
-      case 'high': return 'danger'; case 'moderate': return 'warning'; case 'low': return 'success'; default: return 'secondary'
+      case 'high': return 'danger'
+      case 'moderate': return 'warning'
+      case 'low': return 'success'
+      default: return 'secondary'
     }
   }
+  
   const getSuicideSeverityClass = (value) => {
-    const lowerValue = value?.toLowerCase() || ''
-    if (lowerValue.includes('severe')) return 'danger'; if (lowerValue.includes('moderate')) return 'warning';
-    if (lowerValue.includes('mild')) return 'info'; if (lowerValue.includes('none')) return 'success'; return 'secondary'
+    if (!value || typeof value !== 'string') return 'secondary'
+    const lowerValue = value.toLowerCase()
+    if (lowerValue.includes('severe')) return 'danger'
+    if (lowerValue.includes('moderate')) return 'warning'
+    if (lowerValue.includes('mild')) return 'info'
+    if (lowerValue.includes('none')) return 'success'
+    return 'secondary'
   }
-  const severityText = (value) => ({ severe: 'Severe', moderate: 'Moderate', mild: 'Mild', none: 'None' })[value] || 'N/A'
-  const severityClass = (value) => ({ severe: 'danger', moderate: 'warning', mild: 'info', none: 'success' })[value] || 'secondary'
+  
+  const severityText = (value) => {
+    const textMapping = {
+      severe: 'Severe',
+      moderate: 'Moderate',
+      mild: 'Mild',
+      none: 'None'
+    }
+    return textMapping[value] || 'N/A'
+  }
+  
+  const severityClass = (value) => {
+    const severityMapping = {
+      severe: 'danger',
+      moderate: 'warning',
+      mild: 'info',
+      none: 'success'
+    }
+    return severityMapping[value] || 'secondary'
+  }
+  
   const getDataType = (key) => {
-    if (key === 'dob' || key === 'screening_date') return 'date'; if (key.includes('score')) return 'numeric'; return 'text'
+    if (key === 'dob' || key === 'screening_date') return 'date'
+    if (key.includes('score')) return 'numeric'
+    return 'text'
   }
   
   const downloadExcel = async () => {
@@ -574,13 +717,9 @@
     }
   }
   
-  const resetFilters = () => {
-    const today = new Date()
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(today.getDate() - 30)
-    startDate.value = thirtyDaysAgo
-    endDate.value = today
-    
+  const clearFilters = () => {
+    startDate.value = null
+    endDate.value = null
     selectedAcademy.value = null
     globalFilterInput.value = ''
     filters.value.global.value = null

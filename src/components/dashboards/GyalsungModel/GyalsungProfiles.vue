@@ -1,69 +1,75 @@
 <template>
-  <div class="profiles-container">
-    <div class="form-header">
-      <h3 class="title">Gyalsung Profiles</h3>
+    <div class="card h-100">
+      <div class="card-header bg-teal text-white">
+        <h5 class="card-title mb-0">Gyalsung Profiles</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <input
+            v-model="search"
+            type="text"
+            class="form-control form-control-lg rounded"
+            placeholder="Type to Search..."
+          />
+        </div>
+  
+        <div v-if="error" class="alert alert-danger mb-3" role="alert">
+          <strong>Error:</strong> {{ error }}
+        </div>
+  
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead class="table-teal text-white">
+              <tr>
+                <th scope="col" class="text-nowrap">Sl. No.</th>
+                <th scope="col">Name</th>
+                <th scope="col">CID</th>
+                <th scope="col">DOB</th>
+                <th scope="col" class="text-nowrap">Personal Contact No.</th>
+                <th scope="col">Appointment Date</th>
+                <th scope="col">Hospital</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="8" class="text-center text-muted py-4">
+                  <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                  Loading users...
+                </td>
+              </tr>
+  
+              <tr
+                v-for="(user, index) in filteredUsers"
+                :key="user.id || user.identity_number || index"
+              >
+                <td>{{ index + 1 }}</td>
+                <td>{{ formatName(user) }}</td>
+                <td>{{ user.identity_number || user.cid || '-' }}</td>
+                <td>{{ formatDate(user.date_of_birth || user.dob) }}</td>
+                <td>{{ user.mob_number || user.contact || '-' }}</td>
+                <td>{{ formatDate(user.date_joined || user.appointmentDate) || '-' }}</td>
+                <td class="text-wrap">{{ user.hospital || '-' }}</td>
+                <td>
+                  <span :class="getStatusClass(user.status)" class="badge">
+                    {{ user.status || 'Registered' }}
+                  </span>
+                </td>
+              </tr>
+  
+              <tr v-if="!loading && filteredUsers.length === 0 && !error">
+                <td colspan="8" class="text-center text-muted py-4">
+                  {{ search ? 'No users found matching your search' : 'No gyalsung users found' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-
-    <div class="content-section">
-      <div class="search-bar-container">
-        <i class="fas fa-search search-icon"></i>
-        <input v-model="search" type="text" class="search-input" placeholder="Search by Name, CID, Hospital..." />
-      </div>
-
-      <div v-if="error" class="error-alert" role="alert">
-        <strong>Error:</strong> {{ error }}
-      </div>
-
-      <div class="table-wrapper">
-        <table class="profiles-table">
-          <thead>
-            <tr>
-              <th>Sl. No.</th>
-              <th>Name</th>
-              <th>CID</th>
-              <th>DOB</th>
-              <th>Personal Contact No.</th>
-              <th>Appointment Date</th>
-              <th>Hospital</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="loading">
-              <td colspan="8" class="state-cell">
-                <div class="loader"></div>
-                Loading users...
-              </td>
-            </tr>
-
-            <tr v-for="(user, index) in filteredUsers" :key="user.id || user.identity_number || index">
-              <td>{{ index + 1 }}</td>
-              <td>{{ formatName(user) }}</td>
-              <td>{{ user.identity_number || user.cid || '-' }}</td>
-              <td>{{ formatDate(user.date_of_birth || user.dob) }}</td>
-              <td>{{ user.mob_number || user.contact || '-' }}</td>
-              <td>{{ formatDate(user.date_joined || user.appointmentDate) || '-' }}</td>
-              <td>{{ user.hospital || '-' }}</td>
-              <td>
-                <span :class="getStatusClass(user.status)" class="status-badge">
-                  {{ user.status || 'Registered' }}
-                </span>
-              </td>
-            </tr>
-
-            <tr v-if="!loading && filteredUsers.length === 0 && !error">
-              <td colspan="8" class="state-cell">
-                {{ search ? 'No users found matching your search' : 'No Gyalsung users found' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup>
+  </template>
+  
+  <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import endpoints from '@/api';
@@ -75,16 +81,17 @@ const search = ref('')
 
 const filteredUsers = computed(() => {
   const searchTerm = search.value.trim().toLowerCase()
+
   if (!searchTerm) {
     return users.value
   }
+
   return users.value.filter((user) => {
-    const fullName = formatName(user).toLowerCase()
     const searchableFields = [
-      fullName,
-      user.cid,
-      user.contact,
-      user.hospital,
+      user.name, 
+      user.cid, 
+      user.contact, 
+      user.hospital, 
       user.status,
       user.identity_number,
       user.mob_number
@@ -97,9 +104,10 @@ const filteredUsers = computed(() => {
 const fetchGyalsungUsers = async () => {
   loading.value = true
   error.value = ''
+
   try {
     const token = localStorage.getItem('authToken')
-    const response = await axios.get('http://127.0.0.1:8123/api/v1/gyalsung/counselor-users/', {
+    const response = await axios.get('http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/', {
       headers: token ? { Authorization: `Token ${token}` } : {},
       timeout: 10000
     })
@@ -115,43 +123,57 @@ const fetchGyalsungUsers = async () => {
       userData = response.data.users
     }
 
-    users.value = userData.map((user) => ({
-      ...user,
-      id: user.id || user.user_id || user.userId,
-      name:
-        user.name ||
-        user.full_name ||
-        user.fullName ||
-        `${user.first_name || user.firstName || ''} ${user.middle_name || user.middleName || ''} ${
-          user.last_name || user.lastName || ''
-        }`.trim() ||
-        user.username ||
-        '-',
-      cid: user.cid || user.identity_number || user.identityNumber || user.citizen_id || user.citizenId || '-',
-      dob: user.dob || user.date_of_birth || user.dateOfBirth || user.birth_date || user.birthDate,
-      contact:
-        user.contact ||
-        user.mobile_number ||
-        user.mobileNumber ||
-        user.phone_number ||
-        user.phoneNumber ||
-        user.personal_contact ||
-        user.personalContact ||
-        user.phone ||
-        user.mobile ||
-        user.mob_number ||
-        '-',
-      appointmentDate:
-        user.appointmentDate ||
-        user.appointment_date ||
-        user.scheduled_date ||
-        user.scheduledDate ||
-        user.booking_date ||
-        user.bookingDate ||
-        user.date_joined,
-      hospital: user.hospital || user.hospital_name || user.hospitalName || user.clinic || user.facility || '-',
-      status: user.status || user.appointment_status || user.appointmentStatus || 'Registered'
-    }))
+    users.value = userData.map((user) => {
+      return {
+        ...user,
+        id: user.id || user.user_id || user.userId,
+        name:
+          user.name ||
+          user.full_name ||
+          user.fullName ||
+          `${user.first_name || user.firstName || ''} ${user.middle_name || user.middleName || ''} ${user.last_name || user.lastName || ''}`.trim() ||
+          user.username ||
+          '-',
+        cid:
+          user.cid ||
+          user.identity_number ||
+          user.identityNumber ||
+          user.citizen_id ||
+          user.citizenId ||
+          '-',
+        dob:
+          user.dob || user.date_of_birth || user.dateOfBirth || user.birth_date || user.birthDate,
+        contact:
+          user.contact ||
+          user.mobile_number ||
+          user.mobileNumber ||
+          user.phone_number ||
+          user.phoneNumber ||
+          user.personal_contact ||
+          user.personalContact ||
+          user.phone ||
+          user.mobile ||
+          user.mob_number ||
+          '-',
+        appointmentDate:
+          user.appointmentDate ||
+          user.appointment_date ||
+          user.appointmentDate ||
+          user.scheduled_date ||
+          user.scheduledDate ||
+          user.booking_date ||
+          user.bookingDate ||
+          user.date_joined,
+        hospital:
+          user.hospital ||
+          user.hospital_name ||
+          user.hospitalName ||
+          user.clinic ||
+          user.facility ||
+          '-',
+        status: user.status || user.appointment_status || user.appointmentStatus || 'Registered'
+      }
+    })
   } catch (err) {
     console.error('Failed to fetch gyalsung users:', err);
     error.value = 'Failed to fetch gyalsung users. Please try again.';
@@ -212,26 +234,16 @@ const fetchGyalsungUsers = async () => {
     }
   
     if (isNaN(date.getTime())) {
-        const parts = dateString.split('-');
-        if (parts.length === 3 && isNaN(parseInt(parts[1], 10))) {
-            const day = parts[0];
-            const monthStr = parts[1];
-            let year = parts[2];
-            if (year.length === 2) {
-                year = parseInt(year, 10) > 30 ? '19' + year : '20' + year;
-            }
-            const monthDate = new Date(`${day} ${monthStr} ${year}`);
-            if (!isNaN(monthDate.getTime())) {
-                return monthDate.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-            }
-        }
-        return dateString; // Return original string if parsing fails
+      return dateString // Return original if can't parse
     }
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-};
-
-
-
+  
+    // Format as MM/DD/YYYY
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    const year = date.getFullYear()
+  
+    return `${month}/${day}/${year}`
+  }
   
   const getStatusClass = (status) => {
     switch (status?.toLowerCase()) {
