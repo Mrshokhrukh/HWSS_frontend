@@ -224,18 +224,6 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungscreening',
         redirect: '/GyalsungModel/GyalsungScreening'
       },
-      {
-        path: '/GyalsungModel/GyalsungReports',
-        name: 'gyalsung-reports',
-        component: DashboardView,
-        meta: { title: 'Gyalsung Reports', requiresAuth: true, requiresGyalsung: true }
-      },
-      {
-        path: '/gyalsungmodel/gyalsungreports',
-        redirect: '/GyalsungModel/GyalsungReports'
-      },
-      
-    
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
       ...generateDashboardRoutes('admin'),
