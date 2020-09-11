@@ -262,10 +262,12 @@ const registerUser = async () => {
 
     console.log('Sending registration request:', requestData)
 
+
     const response = await fetch(endpoints.registerGyalsungUser, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+
         Authorization: `Token ${token}`
       },
       body: JSON.stringify(requestData)
@@ -290,22 +292,22 @@ const registerUser = async () => {
     const modal = new bootstrap.Modal(successModal.value)
     modal.show()
   } catch (error) {
-    console.error('Registration failed:', error)
-    alert(`Registration failed: ${error.message}. Please try again.`)
+    console.error('Registration failed:', error);
+    alert(`Registration failed: ${error.message}. Please try again.`);
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
 }
 
 const startScreening = () => {
-  const modal = bootstrap.Modal.getInstance(successModal.value)
-  modal.hide()
+  const modal = bootstrap.Modal.getInstance(successModal.value);
+  modal.hide();
 
   localStorage.setItem('isGyalsungFlow', 'true')
 
   if (cid.value) {
-    localStorage.setItem('gyalsungUserCID', cid.value)
-    localStorage.setItem('gyalsungUserData', JSON.stringify(form.value))
+    localStorage.setItem('gyalsungUserCID', cid.value);
+    localStorage.setItem('gyalsungUserData', JSON.stringify(form.value));
   }
 
   router.push('/GyalsungModel/GyalsungScreening')
