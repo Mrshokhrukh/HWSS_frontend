@@ -94,7 +94,7 @@
   
   <script setup>
   import { ref, computed, onMounted } from "vue";
-  import CounselorRescreening from "@/components/dashboards/counselorRescreenings/CounselorRescreening.vue";
+  import CounselorRescreening from "./ReassessmentScreening.vue";
   
   import apiClient from "@/apiClient";
   import endpoints from "@/api";
