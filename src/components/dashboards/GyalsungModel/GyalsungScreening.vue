@@ -262,7 +262,10 @@ const fetchQuestions = async () => {
     const token = localStorage.getItem('authToken')
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
-    const response = await axios.get(endpoints.gyalsungScreeningQuestions, {
+    // Use the parameterized endpoint with "Gyalsung Screening" as the name
+    const endpoint = endpoints.gyalsungScreeningQuestions('Gyalsung Screening')
+    
+    const response = await axios.get(endpoint, {
       headers,
       timeout: 8000
     })

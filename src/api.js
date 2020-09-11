@@ -73,7 +73,8 @@ const endpointDefinitions = {
   screening: {
     screeningPreTests: 'screening-questions/',
     assistTest: 'assist-screening/',
-    gyalsungScreeningQuestions: 'screening-questions/',
+
+    gyalsungScreeningQuestions: (name) => `screening-questions/?name=${encodeURIComponent(name)}`,
   },
   measurement: {
     submitCluster: 'submit-screening/',
