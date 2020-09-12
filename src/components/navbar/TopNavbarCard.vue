@@ -24,7 +24,7 @@
         <ul class="navbar-nav align-items-center">
           <!-- Home icon -->
           <li class="nav-item">
-            <router-link class="nav-link nav-icon" :to="homePath" v-tooltip.hover title="Home">
+            <router-link class="nav-link nav-icon" :to="homePath" v-b-tooltip.hover title="Home">
               <i class="fas fa-home"></i>
             </router-link>
           </li>
@@ -37,7 +37,7 @@
               role="button"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-              v-tooltip.hover
+              v-b-tooltip.hover
               title="Notifications"
               @click="handleDropdownToggle(true)"
             >
@@ -66,7 +66,7 @@
                     v-if="notification.notification_status === 'unread'"
                     class="mark-read-btn"
                     @click.stop="markAsRead(notification.id)"
-                    v-tooltip.hover
+                    v-b-tooltip.hover
                     title="Mark as read"
                   >
                     <i class="fas fa-check"></i>

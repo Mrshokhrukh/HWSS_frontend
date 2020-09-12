@@ -1,16 +1,16 @@
-// src/router/index.js
-
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import apiClient from '@/apiClient';
 import endpoints from '@/api';
 import NotFoundPage from '@/views/errorpages/pagenotfound404.vue';
-import { useUserDetailsStore } from '@/stores/userDetails';
 
+// Define a reusable dashboard component
 const DashboardView = () => import('@/views/Dashboard/DashboardView.vue');
 
+// Helper function to capitalize the first letter of a string
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// Define a function to generate routes for user dashboards
 const generateDashboardRoutes = (userType) => {
   const commonMeta = { requiresAuth: true };
   const capitalizedUserType = capitalize(userType);
@@ -22,6 +22,7 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Dashboard`, ...commonMeta }
     },
+    // -------------------------- Student specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/screening`,
       name: `${userType}-screening`,
@@ -40,6 +41,7 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Profile`, ...commonMeta }
     },
+    // -------------------------- Public specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/public-screening`,
       name: `${userType}-public-screening`,
@@ -58,6 +60,7 @@ const generateDashboardRoutes = (userType) => {
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Public Profile`, ...commonMeta }
     },
+    // -------------------------- Counselor specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/counselor-screening`,
       name: `${userType}-counselor-screening`,
@@ -99,8 +102,9 @@ const generateDashboardRoutes = (userType) => {
       name: `${userType}-flagged-reports`,
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Flagged Reports`, ...commonMeta },
-      props: (route) => ({ flag: route.query.flag })
+      props: (route) => ({ flag: route.query.flag }) // Pass query parameter as prop to the component
     },
+    // -------------------------- Admin specific routes ---------------------------------------------------
     {
       path: `/${userType}-dashboard/admin-approval`,
       name: `${userType}-admin-approval`,
@@ -130,51 +134,11 @@ const generateDashboardRoutes = (userType) => {
       name: `${userType}-admin-chart-maker`,
       component: DashboardView,
       meta: { title: `${capitalizedUserType} Admin chart maker`, ...commonMeta }
-
     },
   ];
 
   return dashboardRoutes;
 };
-
-const gyalsungReassessmentRoutes = [
-  {
-    path: '/gyalsung-reassessment-dashboard',
-    name: 'reassessment-dashboard',
-    component: DashboardView,
-    meta: { title: 'Reassessment Dashboard', requiresAuth: true }
-  },
-  {
-    path: '/gyalsung-reassessment-dashboard/list',
-    name: 'reassessment-list',
-    component: DashboardView,
-    meta: { title: 'Reassessment List', requiresAuth: true }
-  },
-  {
-    path: '/gyalsung-reassessment-dashboard/monitoring',
-    name: 'reassessment-monitoring',
-    component: DashboardView,
-    meta: { title: 'Monitoring', requiresAuth: true }
-  },
-  {
-    path: '/gyalsung-reassessment-dashboard/reports',
-    name: 'reassessment-reports',
-    component: DashboardView,
-    meta: { title: 'Reassessment Reports', requiresAuth: true }
-  },
-  {
-    path: '/gyalsung-reassessment-dashboard/tracking',
-    name: 'reassessment-tracking',
-    component: DashboardView,
-    meta: { title: 'Screening Tracking', requiresAuth: true }
-  },
-  {
-    path: '/gyalsung-reassessment-dashboard/transfers',
-    name: 'reassessment-transfers',
-    component: DashboardView,
-    meta: { title: 'Transfers & Handover', requiresAuth: true }
-  },
-];
 
 const createAppRouter = () => {
   const router = createRouter({
@@ -204,6 +168,7 @@ const createAppRouter = () => {
         component: () => import('@/views/auth/RegisterView.vue'),
         meta: { title: 'Register' }
       },
+      // ========================== GYALSUNG MODEL ROUTES - ADD THIS SECTION ==========================
       {
         path: '/GyalsungModel/GyalsungRegister',
         name: 'gyalsung-register',
@@ -224,6 +189,7 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungscreening',
         redirect: '/GyalsungModel/GyalsungScreening'
       },
+
       {
         path: '/GyalsungModel/GyalsungReports',
         name: 'gyalsung-reports',
@@ -234,93 +200,124 @@ const createAppRouter = () => {
         path: '/gyalsungmodel/gyalsungreports',
         redirect: '/GyalsungModel/GyalsungReports'
       },
+      // ========================================================================================
       
-    
+      // Use route nesting to dynamically generate user dashboard routes
       ...generateDashboardRoutes('student'),
       ...generateDashboardRoutes('counselor'),
       ...generateDashboardRoutes('admin'),
       ...generateDashboardRoutes('public'),
-      ...gyalsungReassessmentRoutes,
       {
         path: '/:pathMatch(.*)*',
-        name: 'NotFound',
+        name: 'NotFound', // Give a name to the 404 route
         component: NotFoundPage,
-        meta: { title: 'Page Not Found' }
+        meta: { title: 'Page Not Found' } // Add a title for the 404 page
       },
     ],
   });
 
+  // Define constants for route names
   const ROUTE_LOGIN = 'login';
 
-  const clearAuthAndRedirectToLogin = (next) => {
-    const userDetailsStore = useUserDetailsStore();
-    userDetailsStore.clearUserDetails();
-    next({ name: ROUTE_LOGIN });
-  };
-  
-  const getUserTypeFromRole = (role) => {
-    role = role?.toLowerCase() || 'public';
-    if (role.includes('admin')) return 'admin';
-    if (role.includes('counselor')) return 'counselor';
-    if (role === 'gyalsung_reassessment_team') return 'gyalsung-reassessment-team';
-    if (role === 'student') return 'student';
-    return 'public';
+  // Helper function to clear authentication related local storage
+  const clearAuthStorage = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenExpiry');
+    localStorage.removeItem('userDetailsStore');
+    localStorage.removeItem('userType');
   };
 
-  
-  const getDashboardRouteNameForRole = (role) => {
-    const userType = getUserTypeFromRole(role);
-    if (userType === 'gyalsung-reassessment-team') {
-      return 'reassessment-dashboard'; 
+  // Helper function to get user type from user details
+  const getUserTypeFromDetails = (userDetailsStore) => {
+    const role = userDetailsStore?.user?.role?.toLowerCase() || 'public';
+    if (role.includes('admin')) {
+      return 'admin';
+    } else if (role.includes('_counselor')) {
+      return 'counselor';
+    } else if (role === 'student') {
+      return 'student';
+    } else {
+      return 'public';
     }
-    return `${userType}-dashboard`; 
   };
+
+  // Global variable to store authentication status and user type
+  let isUserAuthenticated = false;
+  let cachedUserType = null;
+  let tokenValidityChecked = false; // Flag to ensure token validity check only runs once per session
 
   router.beforeEach(async (to, from, next) => {
-    document.title = to.meta.title ? `${to.meta.title} | HWSS` : 'HWSS | Mental Health Matters';
-    
-    const userDetailsStore = useUserDetailsStore();
+    document.title = to.meta.title ? `${to.meta.title} | Your App Name` : 'Your App Name'; // Dynamic title
+
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
     const authToken = localStorage.getItem('authToken');
     const tokenExpiry = localStorage.getItem('tokenExpiry');
-    
-    if (authToken && tokenExpiry && new Date(tokenExpiry) < new Date()) {
-      console.log('Token expired. Clearing auth and redirecting to login.');
-      return clearAuthAndRedirectToLogin(next);
+    const isAuthenticatedInStorage = authToken !== null;
+    const isTokenExpired = tokenExpiry && new Date(tokenExpiry) < new Date();
+
+    // If token is expired, clear storage and redirect to login
+    if (isAuthenticatedInStorage && isTokenExpired) {
+      clearAuthStorage();
+      isUserAuthenticated = false; // Update global state
+      cachedUserType = null; // Clear cached user type
+      tokenValidityChecked = false; // Reset the flag
+      return next({ name: ROUTE_LOGIN });
     }
 
-    if (authToken && !userDetailsStore.user.role) {
-      console.log('Token exists but user store is empty. Fetching user details...');
+    // Attempt to validate token only if it hasn't been validated in the current session
+    // and a token exists in storage. This avoids repeated API calls.
+    if (isAuthenticatedInStorage && !isTokenExpired && !tokenValidityChecked) {
       try {
-        await userDetailsStore.fetchUserDetails();
+        const response = await apiClient.post(endpoints.authenticateToken, null, {
+          headers: { 'Authorization': `Token ${authToken}` },
+        });
+
+        if (response.data.valid) {
+          isUserAuthenticated = true;
+          const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'));
+          cachedUserType = getUserTypeFromDetails(userDetailsStore);
+          localStorage.setItem('userType', cachedUserType); // Ensure userType is always set
+        } else {
+          clearAuthStorage();
+          isUserAuthenticated = false;
+          cachedUserType = null;
+        }
+        tokenValidityChecked = true; // Mark as checked for this session
       } catch (error) {
-        console.error('Failed to re-validate token and fetch user details during navigation:', error);
-        return clearAuthAndRedirectToLogin(next);
+        console.error('Error validating token:', error);
+        clearAuthStorage();
+        isUserAuthenticated = false;
+        cachedUserType = null;
+        tokenValidityChecked = true; // Mark as checked even on error to prevent retry loops
+        return next({ name: ROUTE_LOGIN });
       }
+    } else if (!isAuthenticatedInStorage) {
+      // If no token, ensure global state reflects unauthenticated
+      isUserAuthenticated = false;
+      cachedUserType = null;
+      tokenValidityChecked = false; // Reset if user logs out or token is removed
     }
-    
+
+    // Redirection logic based on authentication status and route requirements
     if (requiresAuth) {
-      if (!authToken) {
+      if (!isUserAuthenticated) {
+        // Redirect to login if authentication is required but user is not authenticated
         return next({ name: ROUTE_LOGIN });
       } else {
-        const gyalsungRoutes = ['gyalsung-register', 'gyalsung-screening'];
-        const allowedRolesForGyalsung = ['clinical_counselor', 'trained_professional'];
-        if (gyalsungRoutes.includes(to.name)) {
-          const userRole = userDetailsStore.user?.role?.toLowerCase();
-          if (!allowedRolesForGyalsung.includes(userRole)) {
-            const userType = getUserTypeFromRole(userRole);
-            return next({ name: `${userType}-dashboard` });
-          }
-        }
+        // If authenticated and trying to access an authenticated route, proceed
         return next();
       }
-    } 
-    else {
-      if (authToken && (to.name === ROUTE_LOGIN || to.name === 'register' || to.name === 'home')) {
-        // This now uses the corrected helper function
-        const dashboardRouteName = getDashboardRouteNameForRole(userDetailsStore.user.role);
-        return next({ name: dashboardRouteName });
+    } else {
+      // If the route does NOT require authentication
+      if (isUserAuthenticated && to.name !== ROUTE_LOGIN && to.name !== 'register' && to.name !== 'forgot-password') {
+        // If authenticated and trying to access a public page (but not login/register/forgot-password)
+        // Redirect to their respective dashboard
+        const currentUserType = localStorage.getItem('userType') || cachedUserType; // Prefer current if set
+        if (currentUserType) {
+          return next({ name: `${currentUserType}-dashboard` });
+        }
       }
+      // Allow access to other public routes or if not authenticated
       return next();
     }
   });
