@@ -249,8 +249,20 @@ const registerUser = async () => {
   submitting.value = true
   try {
     const requestData = {
-      cid: cid.value
-    }
+      cid: cid.value,
+      date_of_birth: form.value.date_of_birth || '',
+      first_name: form.value.first_name || '',
+      middle_name: form.value.middle_name || null,
+      last_name: form.value.last_name || '',
+      gender: form.value.gender || '',
+      mob_number: form.value.mob_number || null,
+      guard_contact_number: form.value.guardian_contact || '',
+      hospital_name: form.value.hospital || '',
+      hospital_dzongkhag: form.value.dzongkhag || '',
+      appointment_date: form.value.appointment_date || '',
+      academy: form.value.academy || '',
+      personal_number: form.value.personal_number || ''
+    };
 
     const token = localStorage.getItem('authToken')
 
@@ -259,10 +271,6 @@ const registerUser = async () => {
       submitting.value = false
       return
     }
-
-    console.log('Sending registration request:', requestData)
-
-
     const response = await fetch(endpoints.registerGyalsungUser, {
       method: 'POST',
       headers: {
