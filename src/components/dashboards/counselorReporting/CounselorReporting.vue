@@ -1,4 +1,16 @@
 <template>
+  <div>
+    <!-- Add toggle button to CounselorReports -->
+    <div class="report-toggle mb-4" v-if="showToggle">
+      <div class="toggle-buttons">
+        <Button
+          label="Switch to Gyalsung Reports"
+          class="toggle-btn"
+          @click="switchToGyalsung"
+          icon="pi pi-shield"
+        />
+      </div>
+    </div>
   <div class="card-container">
     <div class="card p-4">
       <!-- Filters -->
@@ -304,6 +316,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -855,47 +868,54 @@ watch(globalFilter, (newSearchTerm) => {
 })
 </script>
 
+<script>
+import { useRouter } from 'vue-router';
+
+export default {
+  name: 'CounselorReports',
+  props: {
+    showToggle: {
+      type: Boolean,
+      default: false
+    }
+  },
+  setup() {
+    const router = useRouter();
+    
+    const switchToGyalsung = () => {
+      router.push('/GyalsungModel/GyalsungReports');
+    };
+
+    return {
+      switchToGyalsung
+    };
+  }
+};
+</script>
+
 <style scoped>
-/* Add or refine styles as needed */
-.card-container {
-  margin: 1rem;
+.report-toggle {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 1rem;
 }
 
-.table-container {
-  margin-top: 1rem;
+.toggle-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
-/* Smaller text and padding for dense tables */
-.custom-table :deep(.p-datatable-tbody > tr > td),
-.custom-table :deep(.p-datatable-thead > tr > th) {
-  padding: 0.5rem 0.5rem;
-  font-size: 0.875rem;
+.toggle-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 2px solid #dee2e6;
+  background: #f8f9fa;
+  color: #6c757d;
 }
 
-/* Ensure tags fit well */
-.custom-table :deep(.p-tag) {
-  max-width: 100%;
-  /* Prevent overflow */
-  white-space: normal;
-  /* Allow wrapping */
-  text-align: center;
-  display: block;
-  /* Make tag take full cell width if needed */
-}
-
-/* Adjust filter input sizes */
-.p-column-filter {
-  width: 100%;
-}
-
-/* Style for loading spinner container */
-.text-center.my-5 {
-  padding: 2rem;
-}
-
-/* Consistent button width */
-.hwss-btn {
-  min-width: 150px;
-  /* Adjust as needed */
+.toggle-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
 }
 </style>

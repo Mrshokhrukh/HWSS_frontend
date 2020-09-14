@@ -323,13 +323,111 @@ const saveCurrentAnswer = () => {
   }
 }
 
-// Method to load saved answer for current question
-const loadSavedAnswer = () => {
-  if (!currentQuestion.value) return
-  
-  const savedAnswer = answers.value.find(a => a.question_id === currentQuestion.value.id)
-  if (!savedAnswer) {
-    clearCurrentAnswer()
+const clearGyalsungScreeningData = () => {
+  localStorage.removeItem('gyalsungEntrant')
+  localStorage.removeItem('gyalsungUserCID')
+  localStorage.removeItem('gyalsungUserData')
+  localStorage.removeItem('reassessmentUserId')
+}
+
+const isAllQuestionsAnswered = () => {
+  return questions.value.every(question => 
+    answers.value[question.id] !== null && answers.value[question.id] !== undefined
+  )
+}
+
+const submitScreeningData = async () => {
+  try {
+    // Get user details from localStorage (similar to CaseScreening pattern)
+    const userDetailsStore = JSON.parse(localStorage.getItem('userDetailsStore'))
+    const counselorId = userDetailsStore ? userDetailsStore.user.id : null
+    
+    // Get entrant CID from localStorage or component state
+    const selectedUserId = entrantCid.value || localStorage.getItem('gyalsungUserCID')
+    
+    // Optional: Get reassessment user if needed
+    const reassessmentUserId = localStorage.getItem('reassessmentUserId') || null
+    
+    if (!selectedUserId) {
+      throw new Error('User CID is required for screening submission')
+    }
+    
+    if (!counselorId) {
+      throw new Error('Counselor ID is required for screening submission')
+    }
+
+    // Process answers to calculate scores and interpretations
+    const { gadData, gadScore, gadInterpretation } = processGADAnswers()
+    const { phqData, phqScore, phqInterpretation } = processPHQAnswers()
+    const { aceData, aceScore, aceInterpretation } = processACEAnswers()
+    const { psyData, psyScore, psyInterpretation } = processPSYAnswers()
+    
+    // Determine final screening status based on scores
+    const finalScreeningStatus = determineFinalStatus(gadScore, phqScore, aceScore, psyScore)
+    
+    const payload = {
+      identity_number: selectedUserId,
+      gad_data: gadData,
+      gad_score: gadScore,
+      gad_interpretation: gadInterpretation,
+      phq_data: phqData,
+      phq_score: phqScore,
+      phq_interpretation: phqInterpretation,
+      ace_data: aceData,
+      ace_score: aceScore,
+      ace_interpretation: aceInterpretation,
+      psy_data: psyData,
+      psy_score: psyScore,
+      psy_interpretation: psyInterpretation,
+      final_screening_status: finalScreeningStatus,
+      is_reassessment_screening: reassessmentUserId ? true : false,
+      counselor_user: counselorId,
+      reassessment_user: reassessmentUserId || "",
+      counselor_remarks: "Gyalsung screening completed",
+      reassessment_remarks: reassessmentUserId ? "Reassessment completed" : ""
+    }
+
+    const token = localStorage.getItem('authToken')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    console.log('Submitting payload:', payload)
+
+    const submissionEndpoint = endpoints.gyalsungScreenSubmission
+
+    console.log('Using endpoint:', submissionEndpoint)
+
+    const response = await axios.post(
+      submissionEndpoint,
+      payload,
+      { headers }
+    )
+
+    console.log("Screening data submitted successfully:", response.data)
+    
+    // Clear localStorage and redirect
+    clearGyalsungScreeningData()
+    
+    // Show success message and redirect
+    alert('Screening submitted successfully!')
+    router.push('/gyalsung-reports') 
+  } catch (error) {
+    console.error("Error submitting screening data:", error.response?.data || error.message)
+    let errorMessage = 'Error submitting screening'
+    
+    if (error.response?.data?.message) {
+      errorMessage += `: ${error.response.data.message}`
+    } else if (error.message) {
+      errorMessage += `: ${error.message}`
+    }
+    
+    alert(errorMessage)
+  }
+}
+
+// Update the submitScreening function to call submitScreeningData
+const submitScreening = async () => {
+  if (!isAllQuestionsAnswered()) {
+    alert('Please answer all questions before submitting.')
     return
   }
   
