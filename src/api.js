@@ -65,16 +65,6 @@ const endpointDefinitions = {
     registerGyalsungCounselorUser: 'gyalsung/counselor-users/',
     registerGyalsungUser: 'register-gyalsung-user/'
   },
-  gyalsung: {
-    getUserData: 'get-gyalsung-user-data/',
-    registerCounselorUser: 'counselor-users/',
-    registerUser: 'register-gyalsung-user/',
-    getReassessmentUsers: 'reassessment-users/',
-    getCounselorUsers: 'counselor-users/',
-    getUnfitCandidates: 'reassessment-unfit-candidates/',
-    getFitCandidates: 'reassessment-fit-candidates/',
-    getReassessmentMonitoringUsers: 'reassessment-monitoring/', 
-  },
   settings: {
     settings: 'appconfig/',
     menuItem: 'menuItem/',
@@ -83,7 +73,8 @@ const endpointDefinitions = {
   screening: {
     screeningPreTests: 'screening-questions/',
     assistTest: 'assist-screening/',
-    gyalsungScreenSubmission: 'gyalsung-submission/' 
+
+    gyalsungScreeningQuestions: (name) => `screening-questions/?name=${encodeURIComponent(name)}`,
   },
   measurement: {
     submitCluster: 'submit-screening/',
@@ -109,6 +100,7 @@ const endpointDefinitions = {
     getNotifications: 'get-notification/',
     markNotificationAsRead: 'notifications/mark-as-read/',
     getClusterRecords: 'final-submissions/',
+    getGyalsungScreenings: 'final-submissions/', 
     newServiceAndTreatment: 'service-and-treatment/get-service-and-treatment/',
     newReferrals: 'referrals/'
   },
@@ -116,7 +108,8 @@ const endpointDefinitions = {
     generateReport: 'generate-report/',
     getReport: 'get-reporting-model-data/',
     updateUserArchive: 'update-user-archive/',
-    generateCounselorXLSEncryptedReport: 'generate-counselor-report-encrypted-xls/'
+    generateCounselorXLSEncryptedReport: 'generate-counselor-report-encrypted-xls/',
+    generateGyalsungExcelReport: 'generate-gyalsung-excel-report/'
   },
   counselorScreening: {
     createEventScreening: 'create-event-screening/',
@@ -126,11 +119,14 @@ const endpointDefinitions = {
     getEventScreeningList: 'get-event-screenings/',
     updateEventScreeningList: 'update-event-screening/',
     getCaseRecords: 'case-records/',
-    getEventRecords: 'event-records/',
-    gyalsungScreenSubmission: 'gyalsung-submission/' 
-    
+    getEventRecords: 'event-records/'
+  },
+  // Added new gyalsung module
+  gyalsung: {
+    gyalsungScreenSubmission: 'assessments/' 
   }
 };
+
 
 // --- 4. ENDPOINT BUILDER ---
 function buildEndpoints() {
