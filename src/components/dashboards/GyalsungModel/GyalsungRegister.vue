@@ -242,8 +242,30 @@ const registerUser = async () => {
 
   submitting.value = true
   try {
+    // Format dates back to dd/MM/yyyy format for the API
+    const formatDateForAPI = (dateString) => {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      const day = date.getDate().toString().padStart(2, '0')
+      const month = (date.getMonth() + 1).toString().padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}/${month}/${year}`
+    }
+
     const requestData = {
-      cid: cid.value
+      cid: cid.value,
+      date_of_birth: formatDateForAPI(form.value.date_of_birth),
+      first_name: form.value.first_name,
+      middle_name: form.value.middle_name,
+      last_name: form.value.last_name,
+      gender: form.value.gender,
+      mob_number: form.value.mob_number,
+      guard_contact_number: form.value.guardian_contact,
+      hospital_name: form.value.hospital,
+      hospital_dzongkhag: form.value.dzongkhag,
+      appointment_date: formatDateForAPI(form.value.appointment_date),
+      academy: form.value.academy,
+      personal_number: form.value.personal_number
     }
 
     const token = localStorage.getItem('authToken');
@@ -260,6 +282,7 @@ const registerUser = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Token ${token}`
       },
       body: JSON.stringify(requestData)
     })
