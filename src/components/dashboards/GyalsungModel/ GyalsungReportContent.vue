@@ -1,9 +1,10 @@
 <template>
-    <div>
-      <!-- Gyalsung Filters -->
-      <div class="p-field p-grid row mb-4">
-        <div class="col-12 col-md-2 mb-2 mb-md-0">
-          <label class="block text-sm font-medium mb-1">Start Date</label>
+  <div>
+    <!-- Gyalsung Filters -->
+    <div class="filters-section mb-4">
+      <div class="row g-3">
+        <div class="col-12 col-md-2">
+          <label class="form-label">Start Date</label>
           <Calendar
             v-model="startDate"
             placeholder="Select Start Date"
@@ -14,8 +15,8 @@
             showIcon
           />
         </div>
-        <div class="col-12 col-md-2 mb-2 mb-md-0">
-          <label class="block text-sm font-medium mb-1">End Date</label>
+        <div class="col-12 col-md-2">
+          <label class="form-label">End Date</label>
           <Calendar
             v-model="endDate"
             placeholder="Select End Date"
@@ -27,8 +28,8 @@
             showIcon
           />
         </div>
-        <div class="col-12 col-md-3 mb-2 mb-md-0">
-          <label class="block text-sm font-medium mb-1">Search</label>
+        <div class="col-12 col-md-3">
+          <label class="form-label">Search</label>
           <span class="p-input-icon-left w-100">
             <i class="pi pi-search" />
             <InputText
@@ -39,8 +40,8 @@
             />
           </span>
         </div>
-        <div class="col-12 col-md-2 mb-2 mb-md-0">
-          <label class="block text-sm font-medium mb-1">Academy</label>
+        <div class="col-12 col-md-2">
+          <label class="form-label">Academy</label>
           <Dropdown
             v-model="selectedAcademy"
             :options="academyOptions"
@@ -53,26 +54,26 @@
           />
         </div>
         <div class="col-12 col-md-3">
-          <label class="block text-sm font-medium mb-1">Actions</label>
-          <div class="flex gap-2">
+          <label class="form-label">Actions</label>
+          <div class="action-buttons">
             <Button
               label="Apply Filter"
               @click="applyDateFilter"
-              class="btn hwss-btn flex-1"
+              class="action-btn primary-btn"
               icon="pi pi-filter"
               :disabled="isLoading || (!startDate && !endDate)"
             />
             <Button
-              label="Clear Filters"
+              label="Clear"
               @click="clearFilters"
-              class="btn p-button-outlined flex-1"
+              class="action-btn secondary-btn"
               icon="pi pi-refresh"
               :disabled="isLoading"
             />
             <Button
-              label="Download Excel"
+              label="Download"
               @click="downloadGyalsungExcel"
-              class="btn hwss-btn flex-1"
+              class="action-btn success-btn"
               icon="pi pi-download"
               :disabled="isLoading || isDownloading || !filteredScreeningData.length"
               :loading="isDownloading"
@@ -80,68 +81,81 @@
           </div>
         </div>
       </div>
-  
-      <!-- Stats Cards for Gyalsung -->
-      <div class="row mb-4" v-if="!isLoading && filteredScreeningData.length">
-        <div class="col-12 col-md-3 mb-2">
-          <div class="stats-card p-3 border rounded">
-            <div class="flex align-items-center">
-              <i class="pi pi-users text-blue-500 text-2xl mr-3"></i>
-              <div>
-                <div class="text-2xl font-bold">{{ filteredScreeningData.length }}</div>
-                <div class="text-sm text-gray-600">Total Screenings</div>
-              </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-section mb-4" v-if="!isLoading && filteredScreeningData.length">
+      <div class="row g-3">
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="stat-card total-screenings">
+            <div class="stat-icon">
+              <i class="pi pi-users"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ filteredScreeningData.length }}</div>
+              <div class="stat-label">Total Screenings</div>
             </div>
           </div>
         </div>
-        <div class="col-12 col-md-3 mb-2">
-          <div class="stats-card p-3 border rounded">
-            <div class="flex align-items-center">
-              <i class="pi pi-exclamation-triangle text-red-500 text-2xl mr-3"></i>
-              <div>
-                <div class="text-2xl font-bold">{{ highRiskCount }}</div>
-                <div class="text-sm text-gray-600">High Risk Cases</div>
-              </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="stat-card registered-count">
+            <div class="stat-icon">
+              <i class="pi pi-user-plus"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ registeredCount }}</div>
+              <div class="stat-label">Registered</div>
             </div>
           </div>
         </div>
-        <div class="col-12 col-md-3 mb-2">
-          <div class="stats-card p-3 border rounded">
-            <div class="flex align-items-center">
-              <i class="pi pi-chart-line text-yellow-500 text-2xl mr-3"></i>
-              <div>
-                <div class="text-2xl font-bold">{{ moderateRiskCount }}</div>
-                <div class="text-sm text-gray-600">Moderate Risk</div>
-              </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="stat-card screened-count">
+            <div class="stat-icon">
+              <i class="pi pi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ screenedCount }}</div>
+              <div class="stat-label">Screened</div>
             </div>
           </div>
         </div>
-        <div class="col-12 col-md-3 mb-2">
-          <div class="stats-card p-3 border rounded">
-            <div class="flex align-items-center">
-              <i class="pi pi-check-circle text-green-500 text-2xl mr-3"></i>
-              <div>
-                <div class="text-2xl font-bold">{{ lowRiskCount }}</div>
-                <div class="text-sm text-gray-600">Low Risk</div>
-              </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <div class="stat-card pending-count">
+            <div class="stat-icon">
+              <i class="pi pi-clock"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ pendingCount }}</div>
+              <div class="stat-label">Pending</div>
             </div>
           </div>
         </div>
       </div>
-  
-      <!-- Gyalsung Report Table -->
-      <div v-if="!isLoading && !fetchError">
-        <div v-if="!filteredScreeningData.length && !gyalsungGlobalFilterInput" class="text-center my-3">
-          <Message severity="info" :closable="false">
-            No Gyalsung screenings found for the selected criteria. Try adjusting your filters.
-          </Message>
+    </div>
+
+    <!-- Gyalsung Report Table -->
+    <div class="table-section" v-if="!isLoading && !fetchError">
+      <div v-if="!filteredScreeningData.length && !gyalsungGlobalFilterInput" class="empty-state">
+        <div class="empty-icon">
+          <i class="pi pi-info-circle"></i>
         </div>
-        <div v-else-if="!filteredScreeningData.length && gyalsungGlobalFilterInput" class="text-center my-3">
-          <Message severity="warn" :closable="false">
-            No screenings match your search criteria. Try different search terms.
-          </Message>
+        <div class="empty-message">
+          <h5>No Data Found</h5>
+          <p>No Gyalsung screenings found for the selected criteria. Try adjusting your filters.</p>
         </div>
-       <DataTable
+      </div>
+      
+      <div v-else-if="!filteredScreeningData.length && gyalsungGlobalFilterInput" class="empty-state">
+        <div class="empty-icon">
+          <i class="pi pi-search"></i>
+        </div>
+        <div class="empty-message">
+          <h5>No Results Found</h5>
+          <p>No screenings match your search criteria. Try different search terms.</p>
+        </div>
+      </div>
+      
+      <DataTable
         v-else
         :value="filteredScreeningData"
         :paginator="true"
@@ -152,7 +166,7 @@
         :resizableColumns="true"
         sortField="appointment_date"
         :sortOrder="-1"
-        class="custom-table p-datatable-sm p-datatable-striped"
+        class="modern-table"
         :globalFilterFields="['name', 'cid', 'hospital', 'status']"
         :filters="gyalsungFilters"
         filterDisplay="menu"
@@ -162,7 +176,7 @@
         stateKey="dt-gyalsung-screening-state"
         responsiveLayout="scroll"
       >
-        <!-- Basic Info Columns Only -->
+        <!-- Table Columns -->
         <Column
           v-for="field in gyalsungBasicFields"
           :key="field.key"
@@ -177,13 +191,13 @@
         >
           <template #body="{ data }">
             <template v-if="field.key === 'dob' || field.key === 'appointment_date'">
-              <span>{{ formatDate(data[field.key]) }}</span>
+              <span class="date-cell">{{ formatDate(data[field.key]) }}</span>
             </template>
             <template v-else-if="field.key === 'status'">
               <Tag
-                class="w-100"
                 :value="data[field.key]"
                 :severity="getStatusSeverityClass(data[field.key])"
+                class="status-tag"
               />
             </template>
             <template v-else>
@@ -209,14 +223,14 @@
                 v-model="filterModel.value"
                 @keydown.enter="filterCallback()"
                 class="p-column-filter"
-                :placeholder="`Search by ${field.header}`"
+                :placeholder="`Search ${field.header}`"
               />
             </template>
           </template>
         </Column>
 
         <template #empty>
-          <div class="text-center p-4">
+          <div class="table-empty-state">
             <i class="pi pi-search text-4xl text-gray-400 mb-3"></i>
             <p class="text-gray-600">No screenings match your current filter settings.</p>
           </div>
@@ -224,73 +238,76 @@
       </DataTable>
     </div>
 
+    <!-- Loading Indicator -->
+    <div v-if="isLoading" class="loading-state">
+      <ProgressSpinner strokeWidth="4" style="width: 50px; height: 50px" />
+      <p>Loading Gyalsung reports...</p>
+    </div>
+
+    <!-- Fetch Error Message -->
+    <div v-if="fetchError && !isLoading" class="error-state">
+      <div class="error-icon">
+        <i class="pi pi-exclamation-triangle"></i>
       </div>
-  
-      <!-- Loading Indicator -->
-      <div v-if="isLoading" class="text-center my-5">
-        <ProgressSpinner strokeWidth="4" style="width: 50px; height: 50px" />
-        <p>Loading Gyalsung reports...</p>
+      <div class="error-message">
+        <h5>Error Loading Reports</h5>
+        <p>{{ fetchError }}. Please try again later.</p>
       </div>
-  
-      <!-- Fetch Error Message -->
-      <div v-if="fetchError && !isLoading" class="text-center my-5">
-        <Message severity="error" :closable="false">
-          Failed to load reports: {{ fetchError }}. Please try again later.
-        </Message>
-      </div>
-  </template>
-  
-  <script>
-  import { ref, onMounted, computed, watch } from 'vue'
-  import { saveAs } from 'file-saver'
-  import * as XLSX from 'xlsx'
-  import { FilterMatchMode } from 'primevue/api'
-  import { useDebounce } from '@vueuse/core'
-  import endpoints from '@/api.js'
-  import apiClient from '@/apiClient'
-  import axios from 'axios'
-  
-  // PrimeVue Components
-  import DataTable from 'primevue/datatable'
-  import Column from 'primevue/column'
-  import Button from 'primevue/button'
-  import InputText from 'primevue/inputtext'
-  import Dropdown from 'primevue/dropdown'
-  import Tag from 'primevue/tag'
-  import Calendar from 'primevue/calendar'
-  import ProgressSpinner from 'primevue/progressspinner'
-  import Message from 'primevue/message'
-  
-  export default {
-    name: 'GyalsungReportContent',
-    components: {
-      DataTable,
-      Column,
-      Button,
-      InputText,
-      Dropdown,
-      Tag,
-      Calendar,
-      ProgressSpinner,
-      Message
-    },
-    setup() {
-      // Gyalsung Data
-      const screeningData = ref([])
-      const gyalsungGlobalFilterInput = ref('')
-      const gyalsungGlobalFilter = useDebounce(gyalsungGlobalFilterInput, 300)
-      const startDate = ref(null)
-      const endDate = ref(null)
-      const selectedAcademy = ref(null)
-  
-      // Common State
-      const isLoading = ref(false)
-      const isDownloading = ref(false)
-      const fetchError = ref(null)
-      const userDetails = ref(null)
-  
-      // Gyalsung Table Fields
-      const gyalsungBasicFields = [
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted, computed, watch } from 'vue'
+import { saveAs } from 'file-saver'
+import * as XLSX from 'xlsx'
+import { FilterMatchMode } from 'primevue/api'
+import { useDebounce } from '@vueuse/core'
+import endpoints from '@/api.js'
+import apiClient from '@/apiClient'
+import axios from 'axios'
+
+// PrimeVue Components
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Dropdown from 'primevue/dropdown'
+import Tag from 'primevue/tag'
+import Calendar from 'primevue/calendar'
+import ProgressSpinner from 'primevue/progressspinner'
+import Message from 'primevue/message'
+
+export default {
+  name: 'GyalsungReportContent',
+  components: {
+    DataTable,
+    Column,
+    Button,
+    InputText,
+    Dropdown,
+    Tag,
+    Calendar,
+    ProgressSpinner,
+    Message
+  },
+  setup() {
+    // Gyalsung Data
+    const screeningData = ref([])
+    const gyalsungGlobalFilterInput = ref('')
+    const gyalsungGlobalFilter = useDebounce(gyalsungGlobalFilterInput, 300)
+    const startDate = ref(null)
+    const endDate = ref(null)
+    const selectedAcademy = ref(null)
+
+    // Common State
+    const isLoading = ref(false)
+    const isDownloading = ref(false)
+    const fetchError = ref(null)
+    const userDetails = ref(null)
+
+    // Gyalsung Table Fields
+    const gyalsungBasicFields = [
       { key: 'sl_no', header: 'Sl.No', width: '80px', frozen: true },
       { key: 'name', header: 'Name', width: '180px' },
       { key: 'cid', header: 'CID', width: '150px' },
@@ -303,161 +320,141 @@
       { key: 'status', header: 'Status', width: '120px' }
     ]
 
-    // Remove unnecessary fields
-    const mentalHealthFields = [] 
-    const substanceColumns = [] 
-  
-      const gyalsungSearchableFields = computed(() => [
-        ...gyalsungBasicFields.map(f => f.key),
-        ...mentalHealthFields.map(f => f.key)
-      ])
-  
-      const academyOptions = computed(() => {
-        const academies = [...new Set(screeningData.value.map(item => item.academy_code))].sort()
-        return academies.map(academy => ({ label: academy, value: academy }))
-      })
-  
-      const riskFilterOptions = ref([
-        { label: 'High', value: 'High', severity: 'danger' },
-        { label: 'Moderate', value: 'Moderate', severity: 'warning' },
-        { label: 'Low', value: 'Low', severity: 'success' }
-      ])
-      
-      const statusFilterOptions = ref([
-        { label: 'Registered', value: 'Registered', severity: 'info' },
-        { label: 'Screened', value: 'Screened', severity: 'success' },
-        { label: 'Pending', value: 'Pending', severity: 'warning' },
-        { label: 'Cancelled', value: 'Cancelled', severity: 'danger' }
-      ])
-  
-      const severityFilterOptions = ref([
-        { label: 'Severe', value: 'severe', severity: 'danger' },
-        { label: 'Moderate', value: 'moderate', severity: 'warning' },
-        { label: 'Mild', value: 'mild', severity: 'info' },
-        { label: 'None', value: 'none', severity: 'success' }
-      ])
-  
-      // Filters
-      const gyalsungFilters = ref({
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        ...Object.fromEntries(
-          [...gyalsungBasicFields, ...mentalHealthFields].map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])
-        ),
-        ...Object.fromEntries(
-          substanceColumns.map(f => [f.field, { value: null, matchMode: FilterMatchMode.EQUALS }])
-        )
-      })
-  
-      // --- Computed Properties ---
-      const filteredScreeningData = computed(() => {
-        let filtered = screeningData.value
-  
-        // Apply date range filter
-        if (startDate.value || endDate.value) {
-          filtered = filtered.filter(item => {
-            const itemDate = new Date(item.screening_date)
-            const start = startDate.value ? new Date(startDate.value) : null
-            const end = endDate.value ? new Date(endDate.value) : null
-            
-            if (start && end) {
-              return itemDate >= start && itemDate <= end
-            } else if (start) {
-              return itemDate >= start
-            } else if (end) {
-              return itemDate <= end
-            }
-            return true
-          })
-        }
-  
-        // Apply academy filter
-        if (selectedAcademy.value) {
-          filtered = filtered.filter(item => item.academy_code === selectedAcademy.value)
-        }
-  
-        return filtered
-      })
-  
-      const highRiskCount = computed(() => 
-        filteredScreeningData.value.filter(item => item.overall_risk === 'High').length
+    const gyalsungSearchableFields = computed(() => 
+      gyalsungBasicFields.map(f => f.key)
+    )
+
+    const academyOptions = computed(() => {
+      const academies = [...new Set(screeningData.value.map(item => item.academy_code))].sort()
+      return academies.map(academy => ({ label: academy, value: academy }))
+    })
+    
+    const statusFilterOptions = ref([
+      { label: 'Registered', value: 'Registered', severity: 'info' },
+      { label: 'Screened', value: 'Screened', severity: 'success' },
+      { label: 'Pending', value: 'Pending', severity: 'warning' },
+      { label: 'Cancelled', value: 'Cancelled', severity: 'danger' }
+    ])
+
+    // Filters
+    const gyalsungFilters = ref({
+      global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+      ...Object.fromEntries(
+        gyalsungBasicFields.map(f => [f.key, { value: null, matchMode: FilterMatchMode.CONTAINS }])
       )
-  
-      const moderateRiskCount = computed(() => 
-        filteredScreeningData.value.filter(item => item.overall_risk === 'Moderate').length
-      )
-  
-      const lowRiskCount = computed(() => 
-        filteredScreeningData.value.filter(item => item.overall_risk === 'Low').length
-      )
-  
-      // --- Methods ---
-      const getUserDetailsFromStorage = () => {
-        const userDetailsString = localStorage.getItem('userDetailsStore')
-        if (!userDetailsString) {
-          console.error('No userDetailsStore found in localStorage')
-          return null
-        }
-        try {
-          const parsedDetails = JSON.parse(userDetailsString)
-          userDetails.value = parsedDetails
-          return parsedDetails
-        } catch (error) {
-          console.error('Error parsing user details:', error)
-          fetchError.value = 'Could not load user details.'
-          return null
-        }
+    })
+
+    // --- Computed Properties ---
+    const filteredScreeningData = computed(() => {
+      let filtered = screeningData.value
+
+      // Apply date range filter
+      if (startDate.value || endDate.value) {
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.screening_date)
+          const start = startDate.value ? new Date(startDate.value) : null
+          const end = endDate.value ? new Date(endDate.value) : null
+          
+          if (start && end) {
+            return itemDate >= start && itemDate <= end
+          } else if (start) {
+            return itemDate >= start
+          } else if (end) {
+            return itemDate <= end
+          }
+          return true
+        })
       }
-  
-      const fetchGyalsungScreenings = async () => {
-        isLoading.value = true
-        fetchError.value = null
+
+      // Apply academy filter
+      if (selectedAcademy.value) {
+        filtered = filtered.filter(item => item.academy_code === selectedAcademy.value)
+      }
+
+      return filtered
+    })
+
+    // Status-based counts instead of risk-based
+    const registeredCount = computed(() => 
+      filteredScreeningData.value.filter(item => item.status === 'Registered').length
+    )
+
+    const screenedCount = computed(() => 
+      filteredScreeningData.value.filter(item => item.status === 'Screened').length
+    )
+
+    const pendingCount = computed(() => 
+      filteredScreeningData.value.filter(item => item.status === 'Pending').length
+    )
+
+    // --- Methods ---
+    const getUserDetailsFromStorage = () => {
+      const userDetailsString = localStorage.getItem('userDetailsStore')
+      if (!userDetailsString) {
+        console.error('No userDetailsStore found in localStorage')
+        return null
+      }
+      try {
+        const parsedDetails = JSON.parse(userDetailsString)
+        userDetails.value = parsedDetails
+        return parsedDetails
+      } catch (error) {
+        console.error('Error parsing user details:', error)
+        fetchError.value = 'Could not load user details.'
+        return null
+      }
+    }
+
+    const fetchGyalsungScreenings = async () => {
+      isLoading.value = true
+      fetchError.value = null
+      
+      try {
+        // Get CSRF token first
+        const csrfResponse = await axios.get(endpoints.getCSRFToken, {
+          withCredentials: true
+        })
         
-        try {
-          // Get CSRF token first
-          const csrfResponse = await axios.get(endpoints.getCSRFToken, {
-            withCredentials: true
-          })
+        const csrfToken = csrfResponse.data.csrfToken
+        
+        // Use the Gyalsung API endpoint instead of monitoring
+        const response = await axios.get('http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/', {
+          headers: {
+            'X-CSRFToken': csrfToken
+          },
+          withCredentials: true
+        })
+        
+        if (response.data) {
+          // Transform the API response to match our expected format
+          screeningData.value = transformGyalsungData(response.data)
           
-          const csrfToken = csrfResponse.data.csrfToken
+          // Set default date range to last 30 days
+          const today = new Date()
+          const thirtyDaysAgo = new Date()
+          thirtyDaysAgo.setDate(today.getDate() - 30)
           
-          // Use the Gyalsung API endpoint instead of monitoring
-          const response = await axios.get('http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/', {
-            headers: {
-              'X-CSRFToken': csrfToken
-            },
-            withCredentials: true
-          })
-          
-          if (response.data) {
-            // Transform the API response to match our expected format
-            screeningData.value = transformGyalsungData(response.data)
-            
-            // Set default date range to last 30 days
-            const today = new Date()
-            const thirtyDaysAgo = new Date()
-            thirtyDaysAgo.setDate(today.getDate() - 30)
-            
-            endDate.value = today
-            startDate.value = thirtyDaysAgo
-          } else {
-            throw new Error('Failed to fetch screening data')
-          }
-        } catch (error) {
-          console.error('Error fetching screening data:', error)
-          fetchError.value = error.response?.data?.message || error.message || 'Failed to load screening data'
-          
-          // Fallback to mock data in development if API fails
-          if (import.meta.env.DEV) {
-            console.warn('API failed, using mock data as fallback')
-            loadMockData()
-          }
-        } finally {
-          isLoading.value = false
+          endDate.value = today
+          startDate.value = thirtyDaysAgo
+        } else {
+          throw new Error('Failed to fetch screening data')
         }
+      } catch (error) {
+        console.error('Error fetching screening data:', error)
+        fetchError.value = error.response?.data?.message || error.message || 'Failed to load screening data'
+        
+        // Fallback to mock data in development if API fails
+        if (import.meta.env.DEV) {
+          console.warn('API failed, using mock data as fallback')
+          loadMockData()
+        }
+      } finally {
+        isLoading.value = false
       }
-      
-      // Add this function to transform Gyalsung API data to our format
-      const transformGyalsungData = (apiData) => {
+    }
+    
+    // Transform Gyalsung API data to our format
+    const transformGyalsungData = (apiData) => {
       let userData = []
       
       // Handle different response formats
@@ -488,199 +485,98 @@
       })
     }
 
-  
-      const loadMockData = () => {
-        // Mock data generation function (kept as fallback)
-        const academies = ['GYACS-001', 'GYACS-002', 'GYACS-003', 'GYACS-004', 'GYACS-005']
-        const firstNames = ['Tenzin', 'Karma', 'Pema', 'Sonam', 'Dorji', 'Choden', 'Tashi', 'Norbu', 'Yangchen', 'Phurba']
-        const lastNames = ['Wangchuk', 'Dorji', 'Tshering', 'Namgay', 'Choden', 'Penjor', 'Gyeltshen', 'Norbu', 'Lhamo', 'Zangmo']
-        const villages = ['Thimphu', 'Paro', 'Punakha', 'Wangdue', 'Bumthang', 'Trongsa', 'Mongar', 'Trashigang', 'Samtse', 'Chhukha']
-        const hospitals = ['Paro Hospital, Paro', 'Central Regional Referral Hospital, Gelephu', 'JDWNRH, Thimphu', 'Mongar Hospital, Mongar']
+    const loadMockData = () => {
+      // Mock data for development
+      const academies = ['GYACS-001', 'GYACS-002', 'GYACS-003', 'GYACS-004', 'GYACS-005']
+      const firstNames = ['Tenzin', 'Karma', 'Pema', 'Sonam', 'Dorji', 'Choden', 'Tashi', 'Norbu', 'Yangchen', 'Phurba']
+      const lastNames = ['Wangchuk', 'Dorji', 'Tshering', 'Namgay', 'Choden', 'Penjor', 'Gyeltshen', 'Norbu', 'Lhamo', 'Zangmo']
+      const hospitals = ['Paro Hospital, Paro', 'Central Regional Referral Hospital, Gelephu', 'JDWNRH, Thimphu', 'Mongar Hospital, Mongar']
+      const statusOptions = ['Registered', 'Screened', 'Pending', 'Cancelled']
+
+      const mockData = []
+      
+      for (let i = 1; i <= 50; i++) {
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
+        const academy = academies[Math.floor(Math.random() * academies.length)]
+        const hospital = hospitals[Math.floor(Math.random() * hospitals.length)]
+        const status = statusOptions[Math.floor(Math.random() * statusOptions.length)]
         
-        const riskLevels = ['Low', 'Moderate', 'High']
-        const statusOptions = ['Registered', 'Screened', 'Pending', 'Cancelled']
-        const severityLevels = ['none', 'mild', 'moderate', 'severe']
-        const suicidalRisks = ['None', 'Mild', 'Moderate', 'Severe']
-  
-        const mockData = []
+        const randomDate = new Date()
+        randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 730))
         
-        for (let i = 1; i <= 50; i++) {
-          const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
-          const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
-          const academy = academies[Math.floor(Math.random() * academies.length)]
-          const village = villages[Math.floor(Math.random() * villages.length)]
-          const hospital = hospitals[Math.floor(Math.random() * hospitals.length)]
-          const status = statusOptions[Math.floor(Math.random() * statusOptions.length)]
-          
-          const randomDate = new Date()
-          randomDate.setDate(randomDate.getDate() - Math.floor(Math.random() * 730))
-          
-          const identityNumber = `${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 900000000) + 100000000}`
-          const mobileNumber = `${Math.random() > 0.5 ? '17' : '77'}${Math.floor(Math.random() * 900000) + 100000}`
-          
-          const phq9Score = Math.floor(Math.random() * 24)
-          const gad7Score = Math.floor(Math.random() * 21)
-          const aceScore = Math.floor(Math.random() * 10)
-          
-          const getPhq9Interpretation = (score) => {
-            if (score <= 4) return 'Minimal'
-            if (score <= 9) return 'Mild'
-            if (score <= 14) return 'Moderate'
-            if (score <= 19) return 'Moderately Severe'
-            return 'Severe'
-          }
-          
-          const getGad7Interpretation = (score) => {
-            if (score <= 4) return 'Minimal'
-            if (score <= 9) return 'Mild'
-            if (score <= 14) return 'Moderate'
-            return 'Severe'
-          }
-          
-          const generateSubstanceFlags = () => {
-            const flags = {}
-            substanceColumns.forEach(substance => {
-              flags[substance.field] = severityLevels[Math.floor(Math.random() * severityLevels.length)]
-            })
-            return flags
-          }
-          
-          const determineOverallRisk = (phq9, gad7, suicidal) => {
-            if (phq9 >= 15 || gad7 >= 15 || suicidal === 'Severe') return 'High'
-            if (phq9 >= 10 || gad7 >= 10 || suicidal === 'Moderate') return 'Moderate'
-            return 'Low'
-          }
-          
-          const suicidalRisk = suicidalRisks[Math.floor(Math.random() * suicidalRisks.length)]
-          const overallRisk = determineOverallRisk(phq9Score, gad7Score, suicidalRisk)
-          
-          mockData.push({
-            id: i,
-            username: `user${i.toString().padStart(3, '0')}`,
-            full_name: `${firstName} ${lastName}`,
-            gender: Math.random() > 0.5 ? 'Male' : 'Female',
-            dob: new Date(1995 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-            identity_number: identityNumber,
-            mobile_number: mobileNumber,
-            academy_code: academy,
-            village: village,
-            hospital: hospital,
-            screening_date: randomDate.toISOString().split('T')[0],
-            status: status,
-            phq9_score: phq9Score,
-            phq9_interpretation: getPhq9Interpretation(phq9Score),
-            gad7_score: gad7Score,
-            gad7_interpretation: getGad7Interpretation(gad7Score),
-            ace_score: aceScore,
-            suicidal_risk: suicidalRisk,
-            overall_risk: overallRisk,
-            ...generateSubstanceFlags(),
-            screened_by: `Counselor ${Math.floor(Math.random() * 5) + 1}`
-          })
-        }
+        const identityNumber = `${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 900000000) + 100000000}`
+        const mobileNumber = `${Math.random() > 0.5 ? '17' : '77'}${Math.floor(Math.random() * 900000) + 100000}`
         
-        screeningData.value = mockData.sort((a, b) => new Date(b.screening_date) - new Date(a.screening_date))
-        
-        // Set default date range to last 30 days
-        const today = new Date()
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(today.getDate() - 30)
-        
-        endDate.value = today
-        startDate.value = thirtyDaysAgo
-      }
-  
-      const applyDateFilter = () => {
-        // Filter is automatically applied through computed property
-        console.log('Filter applied:', { startDate: startDate.value, endDate: endDate.value })
-      }
-  
-      const clearFilters = () => {
-        startDate.value = null
-        endDate.value = null
-        selectedAcademy.value = null
-        gyalsungGlobalFilterInput.value = ''
-        gyalsungFilters.value.global.value = null
-        
-        // Clear individual column filters
-        Object.keys(gyalsungFilters.value).forEach(key => {
-          if (key !== 'global') {
-            gyalsungFilters.value[key].value = null
-          }
+        mockData.push({
+          sl_no: i,
+          name: `${firstName} ${lastName}`,
+          cid: identityNumber,
+          dob: new Date(1995 + Math.floor(Math.random() * 8), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
+          gender: Math.random() > 0.5 ? 'Male' : 'Female',
+          mobile_personal: mobileNumber,
+          mobile_guardian: `${Math.random() > 0.5 ? '17' : '77'}${Math.floor(Math.random() * 900000) + 100000}`,
+          hospital: hospital,
+          appointment_date: randomDate.toISOString().split('T')[0],
+          status: status,
+          academy_code: academy,
+          screening_date: randomDate.toISOString().split('T')[0]
         })
       }
-  
-      const formatDate = (dateString) => {
-        if (!dateString) return 'N/A'
-        return new Date(dateString).toLocaleDateString('en-GB')
-      }
-  
-      const getRiskSeverityClass = (risk) => {
-        switch (risk?.toLowerCase()) {
-          case 'high': return 'danger'
-          case 'moderate': return 'warning'
-          case 'low': return 'success'
-          default: return 'secondary'
-        }
-      }
       
-      const getStatusSeverityClass = (status) => {
-        switch (status?.toLowerCase()) {
-          case 'registered': return 'info'
-          case 'screened': return 'success'
-          case 'pending': return 'warning'
-          case 'cancelled': return 'danger'
-          default: return 'secondary'
+      screeningData.value = mockData.sort((a, b) => new Date(b.screening_date) - new Date(a.screening_date))
+      
+      // Set default date range to last 30 days
+      const today = new Date()
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(today.getDate() - 30)
+      
+      endDate.value = today
+      startDate.value = thirtyDaysAgo
+    }
+
+    const applyDateFilter = () => {
+      // Filter is automatically applied through computed property
+      console.log('Filter applied:', { startDate: startDate.value, endDate: endDate.value })
+    }
+
+    const clearFilters = () => {
+      startDate.value = null
+      endDate.value = null
+      selectedAcademy.value = null
+      gyalsungGlobalFilterInput.value = ''
+      gyalsungFilters.value.global.value = null
+      
+      // Clear individual column filters
+      Object.keys(gyalsungFilters.value).forEach(key => {
+        if (key !== 'global') {
+          gyalsungFilters.value[key].value = null
         }
+      })
+    }
+
+    const formatDate = (dateString) => {
+      if (!dateString) return 'N/A'
+      return new Date(dateString).toLocaleDateString('en-GB')
+    }
+    
+    const getStatusSeverityClass = (status) => {
+      switch (status?.toLowerCase()) {
+        case 'registered': return 'info'
+        case 'screened': return 'success'
+        case 'pending': return 'warning'
+        case 'cancelled': return 'danger'
+        default: return 'secondary'
       }
-  
-      const getSuicideSeverityClass = (value) => {
-        if (!value || typeof value !== 'string') return 'secondary'
-        const lowerValue = value.toLowerCase()
-        if (lowerValue.includes('severe')) return 'danger'
-        if (lowerValue.includes('moderate')) return 'warning'
-        if (lowerValue.includes('mild')) return 'info'
-        if (lowerValue.includes('none')) return 'success'
-        return 'secondary'
-      }
-  
-      const severityText = (value) => {
-        const textMapping = {
-          severe: 'Severe',
-          red: 'Severe',
-          moderate: 'Moderate',
-          yellow: 'Moderate',
-          mild: 'Mild',
-          blue: 'Mild',
-          none: 'None',
-          green: 'None',
-          grey: 'N/A'
-        }
-        return textMapping[value] || 'N/A'
-      }
-  
-      const severityClass = (value) => {
-        const severityMapping = {
-          severe: 'danger',
-          red: 'danger',
-          moderate: 'warning',
-          yellow: 'warning',
-          mild: 'info',
-          blue: 'info',
-          none: 'success',
-          green: 'success',
-          grey: 'secondary'
-        }
-        return severityMapping[value] || 'secondary'
-      }
-  
-      const getDataType = (key) => {
-        if (key === 'dob' || key === 'screening_date') return 'date'
-        if (key.includes('score')) return 'numeric'
-        return 'text'
-      }
-  
-      const downloadGyalsungExcel = async () => {
+    }
+
+    const getDataType = (key) => {
+      if (key === 'dob' || key === 'screening_date' || key === 'appointment_date') return 'date'
+      if (key.includes('score')) return 'numeric'
+      return 'text'
+    }
+
+    const downloadGyalsungExcel = async () => {
       isDownloading.value = true
       try {
         // Get CSRF token first
@@ -751,122 +647,399 @@
         isDownloading.value = false
       }
     }
-  
-      const formatDateForAPI = (date) => {
-        if (!date) return ''
-        return new Date(date).toISOString().split('T')[0]
+
+    const formatDateForAPI = (date) => {
+      if (!date) return ''
+      return new Date(date).toISOString().split('T')[0]
+    }
+
+    // --- Lifecycle Hooks ---
+    onMounted(() => {
+      if (getUserDetailsFromStorage()) {
+        fetchGyalsungScreenings()
+      } else {
+        isLoading.value = false
+        fetchError.value = 'User details not found. Cannot load reports.'
       }
-  
-      // --- Lifecycle Hooks ---
-      onMounted(() => {
-        if (getUserDetailsFromStorage()) {
-          fetchGyalsungScreenings()
-        } else {
-          isLoading.value = false
-          fetchError.value = 'User details not found. Cannot load reports.'
-        }
-      })
-  
-      // --- Watchers ---
-      watch(gyalsungGlobalFilter, (newValue) => {
-        gyalsungFilters.value.global.value = newValue
-      })
-  
-      return {
-        // State
-        screeningData,
-        gyalsungGlobalFilterInput,
-        startDate,
-        endDate,
-        selectedAcademy,
-        isLoading,
-        isDownloading,
-        fetchError,
-        
-        // Computed
-        filteredScreeningData,
-        highRiskCount,
-        moderateRiskCount,
-        lowRiskCount,
-        academyOptions,
-        
-        // Constants
-        gyalsungBasicFields,
-        mentalHealthFields,
-        substanceColumns,
-        gyalsungSearchableFields,
-        riskFilterOptions,
-        statusFilterOptions,
-        severityFilterOptions,
-        gyalsungFilters,
-        
-        // Methods
-        applyDateFilter,
-        clearFilters,
-        downloadGyalsungExcel,
-        formatDate,
-        getRiskSeverityClass,
-        getStatusSeverityClass,
-        getSuicideSeverityClass,
-        severityText,
-        severityClass,
-        getDataType
-      }
+    })
+
+    // --- Watchers ---
+    watch(gyalsungGlobalFilter, (newValue) => {
+      gyalsungFilters.value.global.value = newValue
+    })
+
+    return {
+      // State
+      screeningData,
+      gyalsungGlobalFilterInput,
+      startDate,
+      endDate,
+      selectedAcademy,
+      isLoading,
+      isDownloading,
+      fetchError,
+      
+      // Computed
+      filteredScreeningData,
+      registeredCount,
+      screenedCount,
+      pendingCount,
+      academyOptions,
+      
+      // Constants
+      gyalsungBasicFields,
+      gyalsungSearchableFields,
+      statusFilterOptions,
+      gyalsungFilters,
+      
+      // Methods
+      applyDateFilter,
+      clearFilters,
+      downloadGyalsungExcel,
+      formatDate,
+      getStatusSeverityClass,
+      getDataType
     }
   }
-  </script>
-  
-  <style scoped>
-  .stats-card {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+}
+</script>
+
+<style scoped>
+/* Filters Section */
+.filters-section {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  flex: 1;
+  min-width: 80px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.primary-btn {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.secondary-btn {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+  color: #4b5563;
+}
+
+.success-btn {
+  background-color: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.success-btn:hover:not(:disabled) {
+  background-color: #059669;
+  border-color: #059669;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.total-screenings .stat-icon {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.registered-count .stat-icon {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: white;
+}
+
+.screened-count .stat-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.pending-count .stat-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Table Section */
+.table-section {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.modern-table {
+  font-size: 0.875rem;
+}
+
+.modern-table :deep(.p-datatable-header) {
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem;
+}
+
+.modern-table :deep(.p-datatable-thead > tr > th) {
+  background: #f8fafc;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+  padding: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.modern-table :deep(.p-datatable-tbody > tr > td) {
+  padding: 0.875rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.modern-table :deep(.p-datatable-tbody > tr:hover) {
+  background-color: #f9fafb !important;
+}
+
+.modern-table :deep(.p-datatable-tbody > tr:nth-child(even)) {
+  background-color: #fafafa;
+}
+
+.modern-table :deep(.p-datatable-tbody > tr:nth-child(even):hover) {
+  background-color: #f9fafb !important;
+}
+
+.date-cell {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.status-tag {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+}
+
+/* Empty States */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: #d1d5db;
+  margin-bottom: 1rem;
+}
+
+.empty-message h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.empty-message p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.table-empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+}
+
+.loading-state p {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.error-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #ef4444;
+}
+
+.error-icon {
+  font-size: 3rem;
+  color: #fca5a5;
+  margin-bottom: 1rem;
+}
+
+.error-message h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 0.5rem;
+}
+
+.error-message p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filters-section {
+    padding: 1rem;
   }
-  
-  .stats-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  .action-buttons {
+    flex-direction: column;
   }
-  
-  .hwss-btn {
-    background-color: #2563eb;
-    border-color: #2563eb;
-    color: white;
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
   }
-  
-  .hwss-btn:hover {
-    background-color: #1d4ed8;
-    border-color: #1d4ed8;
+
+  .stat-card {
+    padding: 1rem;
   }
-  
-  .custom-table {
-    font-size: 0.875rem;
+
+  .stat-number {
+    font-size: 1.5rem;
   }
-  
-  .custom-table :deep(.p-datatable-thead > tr > th) {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    color: #374151;
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
   }
-  
-  .custom-table :deep(.p-datatable-tbody > tr:hover) {
-    background-color: #f1f5f9 !important;
+}
+
+@media (max-width: 576px) {
+  .modern-table :deep(.p-datatable-thead > tr > th),
+  .modern-table :deep(.p-datatable-tbody > tr > td) {
+    padding: 0.5rem;
+    font-size: 0.75rem;
   }
-  
-  .p-field label {
-    display: block;
-    margin-bottom: 0.5rem;
+
+  .empty-state,
+  .loading-state,
+  .error-state {
+    padding: 2rem 1rem;
   }
-  
-  @media (max-width: 768px) {
-    .flex.gap-2 {
-      flex-direction: column;
-      gap: 0.5rem !important;
-    }
-    
-    .flex.gap-2 button {
-      width: 100%;
-    }
-  }
-  </style>
+}
+
+/* Custom PrimeVue overrides */
+:deep(.p-calendar .p-inputtext) {
+  border-radius: 8px;
+  border-color: #d1d5db;
+}
+
+:deep(.p-dropdown) {
+  border-radius: 8px;
+  border-color: #d1d5db;
+}
+
+:deep(.p-inputtext) {
+  border-radius: 8px;
+  border-color: #d1d5db;
+}
+
+:deep(.p-button) {
+  border-radius: 8px;
+}
+
+:deep(.p-paginator) {
+  background: #f8fafc;
+  border-top: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+}
+
+:deep(.p-tag) {
+  font-weight: 500;
+}
+</style>

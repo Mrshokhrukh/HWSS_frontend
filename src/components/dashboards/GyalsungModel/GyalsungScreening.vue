@@ -151,6 +151,21 @@ const entrantCid = ref('')
 const entrantName = ref('')
 const entrantGender = ref('')
 
+// Map answer options to their point values
+const optionPointsMap = {
+  'Not at all': 0,
+  'Several days': 1,
+  'More than half the days': 2,
+  'Nearly every day': 3,
+  'Never': 0,
+  'Rarely': 1,
+  'Sometimes': 2,
+  'Often': 3,
+  'Very often': 4,
+  'Yes': 1,
+  'No': 0
+}
+
 const getDummyQuestionsFlat = () => {
   const dummySets = [
     {
@@ -336,6 +351,11 @@ const resetAnswers = () => {
   }
 }
 
+// Get point value for an answer option
+const getPointsForOption = (optionText) => {
+  return optionPointsMap[optionText] !== undefined ? optionPointsMap[optionText] : 0
+}
+
 // Helper functions to process answers and calculate scores
 const processGADAnswers = () => {
   const gadQuestions = questions.value.filter(q => 
@@ -343,15 +363,20 @@ const processGADAnswers = () => {
     q.text.toLowerCase().includes('anxious') || 
     q.text.toLowerCase().includes('worry')
   )
+  
   const gadData = {}
   let gadScore = 0
   
   gadQuestions.forEach((question, index) => {
     const answer = answers.value[question.id]
     if (answer) {
-      const scoreValue = answer.id - 1 // Convert to 0-3 scale
-      gadData[`question${index + 1}`] = scoreValue
-      gadScore += scoreValue
+      const points = getPointsForOption(answer.option)
+      gadData[`question_${question.id}`] = {
+        question: question.text,
+        answer: answer.option,
+        points: points
+      }
+      gadScore += points
     }
   })
   
@@ -365,15 +390,20 @@ const processPHQAnswers = () => {
     q.text.toLowerCase().includes('interest') || 
     q.text.toLowerCase().includes('pleasure')
   )
+  
   const phqData = {}
   let phqScore = 0
   
   phqQuestions.forEach((question, index) => {
     const answer = answers.value[question.id]
     if (answer) {
-      const scoreValue = answer.id - 1
-      phqData[`question${index + 1}`] = scoreValue
-      phqScore += scoreValue
+      const points = getPointsForOption(answer.option)
+      phqData[`question_${question.id}`] = {
+        question: question.text,
+        answer: answer.option,
+        points: points
+      }
+      phqScore += points
     }
   })
   
@@ -386,15 +416,20 @@ const processACEAnswers = () => {
   const aceQuestions = questions.value.filter(q => 
     q.setName && q.setName.toLowerCase().includes('ace')
   )
+  
   const aceData = {}
   let aceScore = 0
   
   aceQuestions.forEach((question, index) => {
     const answer = answers.value[question.id]
     if (answer) {
-      const scoreValue = answer.id - 1
-      aceData[`question${index + 1}`] = scoreValue
-      aceScore += scoreValue
+      const points = getPointsForOption(answer.option)
+      aceData[`question_${question.id}`] = {
+        question: question.text,
+        answer: answer.option,
+        points: points
+      }
+      aceScore += points
     }
   })
   
@@ -407,15 +442,20 @@ const processPSYAnswers = () => {
   const psyQuestions = questions.value.filter(q => 
     q.setName && (q.setName.toLowerCase().includes('psy') || q.setName.toLowerCase().includes('psychosis'))
   )
+  
   const psyData = {}
   let psyScore = 0
   
   psyQuestions.forEach((question, index) => {
     const answer = answers.value[question.id]
     if (answer) {
-      const scoreValue = answer.id - 1
-      psyData[`question${index + 1}`] = scoreValue
-      psyScore += scoreValue
+      const points = getPointsForOption(answer.option)
+      psyData[`question_${question.id}`] = {
+        question: question.text,
+        answer: answer.option,
+        points: points
+      }
+      psyScore += points
     }
   })
   
@@ -551,7 +591,7 @@ const submitScreeningData = async () => {
     
     // Show success message and redirect
     alert('Screening submitted successfully!')
-    router.push('/gyalsung-reports') 
+    router.push('/GyalsungModel/GyalsungReports') 
   } catch (error) {
     console.error("Error submitting screening data:", error.response?.data || error.message)
     let errorMessage = 'Error submitting screening'
