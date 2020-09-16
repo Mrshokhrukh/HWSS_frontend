@@ -151,7 +151,7 @@ const showGyalsungReports = computed(() => {
     '/gyalsungmodel/gyalsungreports',
     '/GyalsungModel/GyalsungReports',
     '/gyalsung/reports',
-    '/counselor-dashboard/gyalsung-reports'
+    '/GyalsungModel/gyalsung-reports'
   ]
   
   return gyalsungReportsRoutes.some(routePath => 
