@@ -178,7 +178,7 @@ const redirectToDashboard = (userRole) => {
     sud_admin: 'admin-dashboard',
     aaa_admin: 'admin-dashboard',
     cecd_admin: 'admin-dashboard',
-    reassessment_team: 'gyalsung-reassessment-dashboard' }
+    reassessment_team: 'reassessment-dashboard' }
 
   const routeName = dashboardRoutes[userRole] || 'public-dashboard'
   router.push({ name: routeName })

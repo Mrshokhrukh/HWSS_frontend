@@ -105,7 +105,7 @@ const menuConfig = {
 		{ text: "Help", route: "/admin-dashboard/admin-help", iconClass: "fa-regular fa-circle-question" },
 		{ text: "Settings", route: "/admin-dashboard/admin-settings", iconClass: "fa-solid fa-screwdriver-wrench" }
 	],
-    gyalsung_reassessment_team: [
+    reassessment_team: [
         { text: "Dashboard", route: "/gyalsung-reassessment-dashboard", iconClass: "fas fa-tachometer-alt" },
         { text: "Reassessment List", route: "/gyalsung-reassessment-dashboard/list", iconClass: "fas fa-list-ul" },
 		{ text: "Screening Tracking", route: "/gyalsung-reassessment-dashboard/tracking", iconClass: "fas fa-tasks" },
@@ -127,7 +127,7 @@ const userType = computed(() => {
     if (role.toLowerCase().includes("admin")) {
         return "Administrator";
     }
-    if (role === 'gyalsung_reassessment_team') {
+    if (role === 'reassessment_team') {
         return 'Reassessment Team';
     }
     return role
@@ -139,8 +139,8 @@ const userType = computed(() => {
 const filteredMenus = computed(() => {
 	const role = String(userDetailsStore.user?.role ?? '').toLowerCase();
 
-    if (role === 'gyalsung_reassessment_team') {
-        return menuConfig.gyalsung_reassessment_team;
+    if (role === 'reassessment_team') {
+        return menuConfig.reassessment_team;
     }
 	if (role === 'cecd_admin') {
 		return menuConfig.limited_admin;

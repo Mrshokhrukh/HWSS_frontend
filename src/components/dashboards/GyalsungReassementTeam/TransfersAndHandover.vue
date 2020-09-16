@@ -96,7 +96,7 @@
 <script setup>
 // 1. IMPORT `onUnmounted`
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { Modal } from 'bootstrap';
+// import { Modal } from 'bootstrap';
 
 // --- STATE & REFS ---
 const searchQuery = ref('');
