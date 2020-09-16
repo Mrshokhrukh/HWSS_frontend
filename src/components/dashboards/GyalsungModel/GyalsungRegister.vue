@@ -181,12 +181,14 @@ const lookup = async () => {
   if (!cid.value || cidError.value) return
   loading.value = true
   userFound.value = false
+  const token = localStorage.getItem('authToken')
 
   try {
     const response = await fetch(endpoints.getGyalsungUserData, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Token ${token}`
       },
       body: JSON.stringify({ cid: cid.value })
     })
@@ -282,7 +284,7 @@ const registerUser = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Token ${token}`
+        Authorization: `Token ${token}`
       },
       body: JSON.stringify(requestData)
     })
