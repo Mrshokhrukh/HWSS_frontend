@@ -62,7 +62,7 @@ declare module 'vue' {
     CecdTestTypeScreening: typeof import('./src/components/dashboards/Adminpages/cecd/dashboardcard/cecdTestTypeScreening.vue')['default']
     ChangePasswordCard: typeof import('./src/components/dashboards/Adminpages/AAA/AAAProfile/ChangePasswordCard.vue')['default']
     ChartCard: typeof import('./src/components/dashboards/Adminpages/Mentalhealthcard/ChartCard.vue')['default']
-    ChartComponent: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/dashboardcomponents/ChartComponent.vue')['default']
+    ChartComponent: typeof import('./src/components/dashboards/Adminpages/AdminDashboard/ReportComponent/MonitorReport/ChartComponent.vue')['default']
     ChatWidget: typeof import('./src/components/common/ChatWidget.vue')['default']
     Chip: typeof import('primevue/chip')['default']
     Column: typeof import('primevue/column')['default']

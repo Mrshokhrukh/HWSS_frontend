@@ -180,7 +180,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { Modal } from 'bootstrap';
+// import { Modal } from 'bootstrap';
 import endpoints from '@/api';
 import apiClient from '@/apiClient';
 
