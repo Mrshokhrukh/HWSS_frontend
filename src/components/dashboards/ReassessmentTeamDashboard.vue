@@ -2,10 +2,7 @@
   <div class="container-fluid bg-color page-container">
     <div class="main-content-area">
       <transition name="fade" mode="out-in">
-        <!-- 
-          THIS IS THE LINE TO CHANGE. 
-          Add :key="$route.fullPath" to force a re-render on navigation.
-        -->
+
         <component :is="activeComponent" :key="$route.fullPath" />
       </transition>
     </div>

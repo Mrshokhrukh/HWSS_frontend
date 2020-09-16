@@ -262,7 +262,7 @@ const createAppRouter = () => {
     role = role?.toLowerCase() || 'public';
     if (role.includes('admin')) return 'admin';
     if (role.includes('counselor')) return 'counselor';
-    if (role === 'gyalsung_reassessment_team') return 'gyalsung-reassessment-team';
+    if (role === 'reassessment_team') return 'reassessment-team';
     if (role === 'student') return 'student';
     return 'public';
   };
@@ -270,7 +270,7 @@ const createAppRouter = () => {
   
   const getDashboardRouteNameForRole = (role) => {
     const userType = getUserTypeFromRole(role);
-    if (userType === 'gyalsung-reassessment-team') {
+    if (userType === 'reassessment-team') {
       return 'reassessment-dashboard'; 
     }
     return `${userType}-dashboard`; 

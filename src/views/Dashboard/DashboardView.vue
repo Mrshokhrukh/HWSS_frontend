@@ -82,7 +82,7 @@ const currentComponent = computed(() => {
     case 'gyalsung_counselor':
     case 'trained_professional':
       return CounsellorDashboard
-    case 'gyalsung_reassessment_team': 
+    case 'reassessment_team': 
       return GyalsungReassessmentDashboard 
     case 'mh_admin':
     case 'sud_admin':
