@@ -58,6 +58,7 @@
         const userData = JSON.parse(userDataJSON)
         if (userData.ageGroup !== undefined) {
           userAgeGroup.value = userData.ageGroup
+          sessionStorage.setItem('clientAgeGroup', userData.ageGroup)
         } else {
           console.error('Error: ageGroup not found in userAgeData')
         }
