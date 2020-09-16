@@ -1,3 +1,4 @@
+// --- 1. BASE URLS ---
 function getBaseUrl() {
   if (import.meta.env.DEV) {
     return 'http://localhost:8123';
@@ -24,15 +25,15 @@ const apiConfig = {
       measurement: 'measurement',
       monitoring: 'monitoring',
       reporting: 'reporting',
-      counselorScreening: 'screening', 
-      gyalsung: 'gyalsung' 
+      counselorScreening: 'screening',
+      gyalsung: 'gyalsung'
     }
   },
   screening: {
-    baseUrl: getScreeningBaseUrl(), 
-    modules: { 
-      screening: 'screening' 
-    } 
+    baseUrl: getScreeningBaseUrl(),
+    modules: {
+      screening: 'screening'
+    }
   }
 };
 
@@ -73,7 +74,6 @@ const endpointDefinitions = {
   screening: {
     screeningPreTests: 'screening-questions/',
     assistTest: 'assist-screening/',
-
     gyalsungScreeningQuestions: (name) => `screening-questions/?name=${encodeURIComponent(name)}`,
   },
   measurement: {
@@ -100,7 +100,7 @@ const endpointDefinitions = {
     getNotifications: 'get-notification/',
     markNotificationAsRead: 'notifications/mark-as-read/',
     getClusterRecords: 'final-submissions/',
-    getGyalsungScreenings: 'final-submissions/', 
+    getGyalsungScreenings: 'final-submissions/',
     newServiceAndTreatment: 'service-and-treatment/get-service-and-treatment/',
     newReferrals: 'referrals/'
   },
@@ -121,14 +121,21 @@ const endpointDefinitions = {
     getCaseRecords: 'case-records/',
     getEventRecords: 'event-records/'
   },
-  // Added new gyalsung module
+  // START: ===== UPDATED SECTION =====
   gyalsung: {
-    gyalsungScreenSubmission: 'assessments/' 
+    // Assessment endpoints
+    gyalsungScreenSubmission: 'assessments/',
+    getAssessments: 'assessments/',
+    getCounselorUsers: 'counselor-users/',
+    getReassessmentUsers: 'reassessment-users/',
+    getReassessmentMonitoringUsers: 'reassessment-monitoring/',
+    getReassessmentFitUsers: 'reassessment-fit-candidates/',
+    getReassessmentUnfitUsers: 'reassessment-unfit-candidates/'
   }
+ 
 };
 
 
-// --- 4. ENDPOINT BUILDER ---
 function buildEndpoints() {
   const builtEndpoints = {};
 
