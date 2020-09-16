@@ -1,21 +1,10 @@
 import { defineStore } from 'pinia';
-import apiClient from '@/apiClient';
 
-// Helper function to avoid repeating the camelCase logic
-const keysToCamelCase = (obj) => {
-  // If obj is not a valid object, return an empty object to prevent crashes
-  if (!obj || typeof obj !== 'object') {
-    return {};
-  }
-  return Object.keys(obj).reduce((acc, key) => {
-    const camelKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase());
-    acc[camelKey] = obj[key];
-    return acc;
-  }, {});
-};
+import apiClient from '@/apiClient';
 
 export const useUserDetailsStore = defineStore('userDetails', {
   state: () => {
+    
     const savedState = localStorage.getItem('userDetailsStore');
     return savedState ? JSON.parse(savedState) : {
       user: {
@@ -73,67 +62,74 @@ export const useUserDetailsStore = defineStore('userDetails', {
     };
   },
   actions: {
+    
     async fetchUserDetails() {
       try {
+        
         const response = await apiClient.get('/api/users/me');
-        // The check remains the same, but the action it calls is now safe
+
+        
         if (response.data) {
+          
           this.setUserDetails(response.data);
-        } else {
-          // If API returns no data, clear everything
-          this.clearUserDetails();
         }
       } catch (error) {
-        console.error("Failed to fetch user details (likely not logged in):", error.message);
+        console.error("Failed to fetch user details:", error);
+        
         this.clearUserDetails();
-        // Don't re-throw the error unless something downstream needs to catch it
-        // throw error; 
+        
+        throw error;
       }
     },
 
-    // ***** THIS IS THE CORRECTED ACTION *****
-    setUserDetails(data) {
-      // 1. ADD A GUARD CLAUSE: Check if the data is valid before doing anything.
-      // We check for `data` and the essential `data.user` property.
-      if (!data || !data.user) {
-        console.error('Error setting user details in store: Invalid or empty data received.', data);
-        this.clearUserDetails(); // Clear state if bad data is received
-        return; // Stop execution
-      }
-
+    
+    setUserDetails({ user, agency, userAgency }) {
       try {
-        // 2. DESTRUCTURE SAFELY: Destructure *after* the guard clause.
-        const { user, agency, userAgency } = data;
+        const camelCaseUser = Object.keys(user).reduce((acc, key) => {
+          const camelKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase());
+          acc[camelKey] = user[key];
+          return acc;
+        }, {});
 
-        // 3. PROCESS SAFELY: Use the helper function which handles null/undefined inputs.
-        const camelCaseUser = keysToCamelCase(user);
-        const camelCaseAgency = keysToCamelCase(agency);
-        const camelCaseUserAgency = keysToCamelCase(userAgency);
+        const camelCaseAgency = Object.keys(agency).reduce((acc, key) => {
+          const camelKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase());
+          acc[camelKey] = agency[key];
+          return acc;
+        }, {});
 
-        // 4. UPDATE STATE: Update state with the processed data.
-        // Use the initial state as a base to avoid missing properties if the API response changes.
-        this.user = { ...this.$state.user, ...camelCaseUser, age: calculateAge(camelCaseUser.dateOfBirth) };
-        this.agency = { ...this.$state.agency, ...camelCaseAgency };
-        this.userAgency = { ...this.$state.userAgency, ...camelCaseUserAgency };
+        const camelCaseUserAgency = Object.keys(userAgency).reduce((acc, key) => {
+          const camelKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase());
+          acc[camelKey] = userAgency[key];
+          return acc;
+        }, {});
+
+        this.user = { ...camelCaseUser, age: calculateAge(camelCaseUser.dateOfBirth) };
+        this.agency = { ...camelCaseAgency };
+        this.userAgency = { ...camelCaseUserAgency };
         this.isAuthenticated = true;
         this.saveState();
 
         const ageGroup = calculateAgeGroup(this.user.age);
         sessionStorage.setItem('userAgeData', JSON.stringify({ age: this.user.age, ageGroup }));
+
+        return Promise.resolve({ status: 'success', message: 'User details saved successfully.' });
       } catch (error) {
-        console.error('Error processing user details in store:', error);
-        this.clearUserDetails();
+        console.error('Error setting user details in store:', error);
+        return Promise.resolve({ status: 'error', message: 'Failed to save user details.' });
       }
     },
 
+    // 3. IMPROVED clearUserDetails ACTION
     clearUserDetails() {
-      this.$reset();
+      this.$reset(); // Resets the store state to its initial definition
       localStorage.removeItem('userDetailsStore');
       sessionStorage.removeItem('userAgeData');
-      localStorage.removeItem('authToken'); // Also clear tokens
+      // Also clear the tokens themselves, as they are likely invalid
+      localStorage.removeItem('authToken');
       localStorage.removeItem('tokenExpiry');
     },
 
+    // Your existing saveState action is fine.
     saveState() {
       const state = {
         user: this.user,
@@ -146,11 +142,11 @@ export const useUserDetailsStore = defineStore('userDetails', {
   },
 });
 
-// Helper functions (remain unchanged)
+// These helper functions are fine as they are.
 function calculateAge(dateOfBirth) {
   if (!dateOfBirth) return null;
   const dobDate = new Date(dateOfBirth);
-  const today = new new Date();
+  const today = new Date();
   let age = today.getFullYear() - dobDate.getFullYear();
   const monthDiff = today.getMonth() - dobDate.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {

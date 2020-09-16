@@ -15,9 +15,6 @@
         <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
       </div>
 
-      <!-- =================================== -->
-      <!-- UNFIT CANDIDATES TABLE (CORRECTED)  -->
-      <!-- =================================== -->
       <div class="table-section">
         <h2 class="section-title text-unfit">
           <i class="fas fa-times-circle me-2"></i>Unfit Candidates
@@ -47,13 +44,13 @@
               <tr v-else-if="paginatedUnfitCandidates.length === 0">
                 <td :colspan="7" class="state-cell">No matching unfit candidates found.</td>
               </tr>
-              <!-- Data Display (Corrected Properties) -->
-              <tr v-else v-for="(candidate, index) in paginatedUnfitCandidates" :key="candidate.cid">
+              <!-- Data Display -->
+              <tr v-else v-for="(candidate, index) in paginatedUnfitCandidates" :key="candidate.identity_number">
                 <td>{{ (unfitCurrentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td>{{ candidate.name }}</td>
-                <td>{{ candidate.cid }}</td>
-                <td>{{ candidate.dob }}</td>
-                <td class="reassessment-count">{{ candidate.reassessments || 0 }}</td>
+                <td>{{ candidate.first_name }} {{ candidate.last_name }}</td>
+                <td>{{ candidate.identity_number }}</td>
+                <td>{{ candidate.date_of_birth }}</td>
+                <td class="reassessment-count">{{ candidate.number_of_reassessments }}</td>
                 <td>
                   <span class="status-badge status-unfit">{{ candidate.gyalsung_screening_status }}</span>
                 </td>
@@ -81,9 +78,6 @@
         </nav>
       </div>
 
-      <!-- ================================= -->
-      <!-- FIT CANDIDATES TABLE (CORRECTED)  -->
-      <!-- ================================= -->
       <div class="table-section">
         <h2 class="section-title text-fit">
           <i class="fas fa-check-circle me-2"></i>Fit Candidates
@@ -113,13 +107,13 @@
               <tr v-else-if="paginatedFitCandidates.length === 0">
                 <td :colspan="7" class="state-cell">No matching fit candidates found.</td>
               </tr>
-               <!-- Data Display (Corrected Properties) -->
-              <tr v-else v-for="(candidate, index) in paginatedFitCandidates" :key="candidate.cid">
+               <!-- Data Display -->
+              <tr v-else v-for="(candidate, index) in paginatedFitCandidates" :key="candidate.identity_number">
                 <td>{{ (fitCurrentPage - 1) * itemsPerPage + index + 1 }}</td>
-                <td>{{ candidate.name }}</td>
-                <td>{{ candidate.cid }}</td>
-                <td>{{ candidate.dob }}</td>
-                <td class="reassessment-count">{{ candidate.reassessments || 0 }}</td>
+                <td>{{ candidate.first_name }} {{ candidate.last_name }}</td>
+                <td>{{ candidate.identity_number }}</td>
+                <td>{{ candidate.date_of_birth }}</td>
+                <td class="reassessment-count">{{ candidate.number_of_reassessments }}</td>
                 <td>
                   <span class="status-badge status-fit">{{ candidate.gyalsung_screening_status }}</span>
                 </td>
@@ -148,9 +142,6 @@
       </div>
     </div>
 
-    <!-- ================================= -->
-    <!-- MODAL (CORRECTED)                 -->
-    <!-- ================================= -->
     <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true" ref="historyModalRef">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" v-if="selectedCandidateForHistory">
@@ -165,8 +156,8 @@
             <p><strong>CID:</strong> {{ selectedCandidateForHistory.identity_number }}</p>
             <p><strong>Date of Birth:</strong> {{ selectedCandidateForHistory.date_of_birth }}</p>
             <hr>
-            <p class="fw-bold">Total Reassessments: {{ selectedCandidateForHistory.reassessments || 0 }}</p>
-            <p><strong>Final Status:</strong> <span class="status-badge status-unfit">{{ selectedCandidateForHistory.finalStatus }}</span></p>
+            <p class="fw-bold">Total Reassessments: {{ selectedCandidateForHistory.number_of_reassessments }}</p>
+            <p><strong>Final Status:</strong> <span class="status-badge status-unfit">{{ selectedCandidateForHistory.gyalsung_screening_status }}</span></p>
             <p><small>This is a placeholder for detailed history records.</small></p>
           </div>
           <div class="modal-footer">
@@ -199,23 +190,33 @@ const fitCandidates = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
-// --- API FETCHING LOGIC (CORRECTED) ---
+// --- API FETCHING LOGIC (Corrected and Defensive) ---
 const fetchData = async () => {
   isLoading.value = true;
   error.value = null;
   try {
     const [unfitResponse, fitResponse] = await Promise.all([
-      apiClient.get(endpoints.getUnfitCandidates), // Correct endpoint name
-      apiClient.get(endpoints.getFitCandidates)   // Correct endpoint name
+      apiClient.get(endpoints.getUnfitCandidates),
+      apiClient.get(endpoints.getFitCandidates)
     ]);
 
-    // Use response data directly, default to empty array if response is falsy
-    unfitCandidates.value = unfitResponse.data || [];
-    fitCandidates.value = fitResponse.data || [];
+    // Defensive data handling: Check for .results or use data directly.
+    unfitCandidates.value = Array.isArray(unfitResponse.data.results)
+      ? unfitResponse.data.results
+      : unfitResponse.data;
+
+    fitCandidates.value = Array.isArray(fitResponse.data.results)
+      ? fitResponse.data.results
+      : fitResponse.data;
+
+    // Final sanity check to ensure we always have arrays
+    if (!Array.isArray(unfitCandidates.value)) unfitCandidates.value = [];
+    if (!Array.isArray(fitCandidates.value)) fitCandidates.value = [];
 
   } catch (e) {
     console.error('API Error:', e);
     error.value = e.response?.data?.detail || e.message || 'An unexpected error occurred.';
+    // CRITICAL: Reset to empty arrays on error to prevent template crashes
     unfitCandidates.value = [];
     fitCandidates.value = [];
   } finally {
@@ -235,24 +236,24 @@ onUnmounted(() => {
   historyModalInstance?.dispose();
 });
 
-// --- COMPUTED PROPERTIES for Filtering and Pagination (CORRECTED) ---
+// --- COMPUTED PROPERTIES for Filtering and Pagination ---
 const filteredUnfitCandidates = computed(() => {
-  if (!unfitCandidates.value) return [];
+  if (!unfitCandidates.value) return []; // Safety check
   if (!searchQuery.value) return unfitCandidates.value;
   const lowerCaseQuery = searchQuery.value.toLowerCase();
   return unfitCandidates.value.filter(c =>
-    (c.name && c.name.toLowerCase().includes(lowerCaseQuery)) ||
-    (c.cid && c.cid.toLowerCase().includes(lowerCaseQuery))
+    `${c.first_name} ${c.last_name}`.toLowerCase().includes(lowerCaseQuery) ||
+    (c.identity_number && c.identity_number.toLowerCase().includes(lowerCaseQuery))
   );
 });
 
 const filteredFitCandidates = computed(() => {
-  if (!fitCandidates.value) return [];
+  if (!fitCandidates.value) return []; // Safety check
   if (!searchQuery.value) return fitCandidates.value;
   const lowerCaseQuery = searchQuery.value.toLowerCase();
   return fitCandidates.value.filter(c =>
-    (c.name && c.name.toLowerCase().includes(lowerCaseQuery)) ||
-    (c.cid && c.cid.toLowerCase().includes(lowerCaseQuery))
+    `${c.first_name} ${c.last_name}`.toLowerCase().includes(lowerCaseQuery) ||
+    (c.identity_number && c.identity_number.toLowerCase().includes(lowerCaseQuery))
   );
 });
 
@@ -260,18 +261,18 @@ const fitTotalPages = computed(() => Math.ceil(filteredFitCandidates.value.lengt
 const unfitTotalPages = computed(() => Math.ceil(filteredUnfitCandidates.value.length / itemsPerPage));
 
 const paginatedFitCandidates = computed(() => {
-  if (!filteredFitCandidates.value) return [];
+  if (!filteredFitCandidates.value) return []; // Safety check
   const start = (fitCurrentPage.value - 1) * itemsPerPage;
   return filteredFitCandidates.value.slice(start, start + itemsPerPage);
 });
 
 const paginatedUnfitCandidates = computed(() => {
-  if (!filteredUnfitCandidates.value) return [];
+  if (!filteredUnfitCandidates.value) return []; // Safety check
   const start = (unfitCurrentPage.value - 1) * itemsPerPage;
   return filteredUnfitCandidates.value.slice(start, start + itemsPerPage);
 });
 
-// --- METHODS (CORRECTED) ---
+// --- METHODS ---
 const setFitPage = (page) => {
   if (page > 0 && page <= fitTotalPages.value) fitCurrentPage.value = page;
 };
@@ -281,7 +282,7 @@ const setUnfitPage = (page) => {
 };
 
 const viewDetails = (candidate) => {
-  alert(`Viewing details for ${candidate.name} (CID: ${candidate.cid}).`);
+  alert(`Viewing details for ${candidate.first_name} ${candidate.last_name} (CID: ${candidate.identity_number}).`);
 };
 
 const viewHistory = (candidate) => {
