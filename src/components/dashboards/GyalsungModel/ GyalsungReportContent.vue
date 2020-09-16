@@ -416,10 +416,12 @@ export default {
         })
         
         const csrfToken = csrfResponse.data.csrfToken
-        
+        const token = localStorage.getItem('authToken');
         // Use the Gyalsung API endpoint instead of monitoring
         const response = await axios.get('http://0.0.0.0:8123/api/v1/gyalsung/counselor-users/', {
           headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Token ${token}`,
             'X-CSRFToken': csrfToken
           },
           withCredentials: true

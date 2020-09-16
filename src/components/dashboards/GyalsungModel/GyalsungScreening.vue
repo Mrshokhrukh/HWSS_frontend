@@ -577,20 +577,15 @@
             reassessment_remarks: reassessmentUserId ? "Reassessment completed" : ""
           }
 
-          const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
           console.log("Submitting payload:", payload)
-
-          const submissionEndpoint = endpoints.gyalsungScreenSubmission
-
-          console.log("Using endpoint:", submissionEndpoint)
-
-          const response = await axios.post(
-            submissionEndpoint,
-            payload,
-            { headers }
-          )
-
+          const response = await fetch(endpoints.gyalsungScreenSubmission, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Token ${token}`
+            },
+            body: JSON.stringify(payload)
+          })
           console.log("Screening data submitted successfully:", response.data)
           
           // Clear localStorage and redirect
